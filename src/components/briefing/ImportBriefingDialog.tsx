@@ -25,6 +25,7 @@ interface ParsedImage {
   professional_photo_url: string;
   orientation: string;
   observations: string;
+  extra_info: string;
 }
 
 interface ParsedBriefing {
@@ -172,6 +173,7 @@ export default function ImportBriefingDialog({ onImported }: Props) {
           professional_photo_url: img.professional_photo_url || null,
           orientation: ['horizontal', 'vertical'].includes(img.orientation?.toLowerCase?.()) ? img.orientation.toLowerCase() : null,
           observations: img.observations || null,
+          extra_info: img.extra_info || null,
         } as any);
         if (imgError) throw imgError;
       }
@@ -387,6 +389,7 @@ export default function ImportBriefingDialog({ onImported }: Props) {
                         {img.element_suggestion && <div className="col-span-2"><span className="font-medium text-foreground">Elemento:</span> {img.element_suggestion}</div>}
                         {img.orientation && <div><span className="font-medium text-foreground">Orientação:</span> {img.orientation}</div>}
                         {img.observations && <div className="col-span-2"><span className="font-medium text-foreground">Obs:</span> {img.observations}</div>}
+                        {img.extra_info && <div className="col-span-2"><span className="font-medium text-primary">Outras info:</span> {img.extra_info}</div>}
                       </div>
                     </CardContent>
                   </Card>
