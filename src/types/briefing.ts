@@ -42,6 +42,19 @@ export interface BriefingReferenceImage {
   created_at: string;
 }
 
+export const IMAGE_DIMENSIONS = [
+  { value: '1920x400', label: '1920 × 400 px', hint: 'Banner principal / Vitrine' },
+  { value: '1920x600', label: '1920 × 600 px', hint: 'Banner grande' },
+  { value: '1920x1080', label: '1920 × 1080 px', hint: 'Full HD / Área de conteúdo' },
+  { value: '1280x720', label: '1280 × 720 px', hint: 'HD / Thumbnail' },
+  { value: '1080x1080', label: '1080 × 1080 px', hint: 'Quadrado / Redes sociais' },
+  { value: '1080x1350', label: '1080 × 1350 px', hint: 'Vertical / Stories' },
+  { value: '800x600', label: '800 × 600 px', hint: 'Capa de produto' },
+  { value: '600x600', label: '600 × 600 px', hint: 'Capa quadrada' },
+  { value: '400x400', label: '400 × 400 px', hint: 'Ícone / Avatar' },
+  { value: 'custom', label: 'Personalizado', hint: 'Definir manualmente' },
+] as const;
+
 export interface ImageBriefingFormData {
   enabled: boolean;
   image_text: string;
@@ -54,6 +67,8 @@ export interface ImageBriefingFormData {
   orientation?: string;
   product_name?: string;
   copy_previous?: boolean;
+  dimension?: string;
+  custom_dimension?: string;
   reference_images: { file: File; is_exact_use: boolean }[];
 }
 

@@ -82,7 +82,11 @@ export default function BriefingForm() {
       element_suggestion: elementSuggestion || null,
       professional_photo_url: data.professional_photo_url || null,
       orientation: data.orientation || null,
-      observations: data.observations || null,
+      observations: [
+        data.dimension && data.dimension !== 'custom' ? `Dimensão: ${data.dimension}` : null,
+        data.dimension === 'custom' && data.custom_dimension ? `Dimensão: ${data.custom_dimension}` : null,
+        data.observations || null,
+      ].filter(Boolean).join('\n') || null,
     } as any).select('id').single();
     if (error) throw error;
     if (data.reference_images.length > 0 && img) {
