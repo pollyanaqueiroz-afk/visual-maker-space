@@ -231,6 +231,7 @@ export default function Dashboard() {
                   <TableHead>Tipo de Arte</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Solicitante</TableHead>
+                  <TableHead>Responsável</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Tempo em aberto</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
@@ -261,6 +262,20 @@ export default function Dashboard() {
                     <TableCell>
                       <div className="text-sm">{img.requester_name}</div>
                       <div className="text-xs text-muted-foreground">{img.requester_email}</div>
+                    </TableCell>
+                    <TableCell>
+                      {img.assigned_email ? (
+                        <div>
+                          <div className="text-sm">{img.assigned_email}</div>
+                          {img.deadline && (
+                            <div className="text-xs text-muted-foreground">
+                              Prazo: {new Date(img.deadline).toLocaleDateString('pt-BR')}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">Não atribuído</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge className={STATUS_COLORS[img.status] || ''} variant="secondary">
@@ -299,7 +314,7 @@ export default function Dashboard() {
                 ))}
                 {filtered.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       Nenhuma arte encontrada
                     </TableCell>
                   </TableRow>
