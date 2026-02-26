@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { LogOut, Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle, CalendarIcon } from 'lucide-react';
+import { LogOut, Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle, CalendarIcon, AlertCircle } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -22,6 +22,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import ImportBriefingDialog from '@/components/briefing/ImportBriefingDialog';
 import AssignBriefingDialog from '@/components/briefing/AssignBriefingDialog';
+import BrandAssetsDialog from '@/components/briefing/BrandAssetsDialog';
 
 interface ImageWithRequest {
   id: string;
@@ -137,8 +138,14 @@ export default function Dashboard() {
     return new Date(deadline) < new Date();
   };
 
+  const isBriefingIncomplete = (img: ImageWithRequest) => {
+    return !img.image_text || !img.image_type;
+  };
+
   const filtered = images.filter(i => {
-    if (filterStatus !== 'all' && filterStatus !== 'revision') {
+    if (filterStatus === 'incomplete') {
+      if (!isBriefingIncomplete(i)) return false;
+    } else if (filterStatus !== 'all' && filterStatus !== 'revision') {
       if (i.status !== filterStatus) return false;
     }
     if (filterStatus === 'revision' && i.revision_count === 0) return false;
@@ -156,6 +163,7 @@ export default function Dashboard() {
   const completedImages = images.filter(i => i.status === 'completed').length;
   const reviewImages = images.filter(i => i.status === 'review').length;
   const overdueImages = images.filter(i => isOverdue(i)).length;
+  const incompleteImages = images.filter(i => isBriefingIncomplete(i)).length;
   const openClients = new Set(
     images.filter(i => i.status !== 'completed' && i.status !== 'cancelled').map(i => i.platform_url)
   ).size;
@@ -288,6 +296,9 @@ export default function Dashboard() {
                     <SelectItem key={key} value={key}>{label}</SelectItem>
                   ))}
                   <SelectItem value="revision">Em Refação</SelectItem>
+                  <SelectItem value="incomplete">
+                    Briefing Incompleto ({incompleteImages})
+                  </SelectItem>
                 </SelectContent>
               </Select>
               <Select value={filterType} onValueChange={setFilterType}>
@@ -429,6 +440,11 @@ export default function Dashboard() {
                                   <AlertTriangle className="h-3 w-3 mr-1" /> Atrasada
                                 </Badge>
                               )}
+                              {isBriefingIncomplete(img) && (
+                                <Badge variant="outline" className="text-warning border-warning/30 text-xs">
+                                  <AlertCircle className="h-3 w-3 mr-1" /> Briefing Incompleto
+                                </Badge>
+                              )}
                             </div>
                           </TableCell>
                           <TableCell>
@@ -501,6 +517,7 @@ export default function Dashboard() {
                                 imageLabel={`${IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type}${img.product_name ? ` — ${img.product_name}` : ''}`}
                                 onAssigned={fetchData}
                               />
+                              <BrandAssetsDialog platformUrl={img.platform_url} clientName={extractClientName(img.platform_url)} />
                               <ImageDetailDialog image={img} reviews={reviews.filter(r => r.briefing_image_id === img.id)} />
                             </div>
                           </TableCell>
@@ -684,6 +701,27 @@ function ReviewActionDialog({ image, onReviewed }: { image: ImageWithRequest; on
         .eq('id', image.id);
 
       if (updErr) throw updErr;
+
+      // On approval, save deliveries to brand assets
+      if (action === 'approved') {
+        const { data: deliveries } = await (supabase
+          .from('briefing_deliveries' as any)
+          .select('file_url, delivered_by_email')
+          .eq('briefing_image_id', image.id) as any);
+
+        if (deliveries && deliveries.length > 0) {
+          for (const d of deliveries) {
+            await (supabase.from('brand_assets' as any).insert({
+              platform_url: image.platform_url,
+              file_url: d.file_url,
+              file_name: `Entrega — ${IMAGE_TYPE_LABELS[image.image_type as ImageType] || image.image_type}`,
+              uploaded_by: d.delivered_by_email,
+              source: 'delivery',
+              briefing_image_id: image.id,
+            }) as any);
+          }
+        }
+      }
 
       // Send revision notification email to designer
       if (action === 'revision_requested' && image.assigned_email) {
