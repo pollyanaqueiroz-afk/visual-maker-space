@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { LogOut, Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send } from 'lucide-react';
+import { LogOut, Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import ImportBriefingDialog from '@/components/briefing/ImportBriefingDialog';
@@ -278,9 +278,14 @@ export default function Dashboard() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge className={STATUS_COLORS[img.status] || ''} variant="secondary">
-                        {STATUS_LABELS[img.status] || img.status}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge className={STATUS_COLORS[img.status] || ''} variant="secondary">
+                          {STATUS_LABELS[img.status] || img.status}
+                        </Badge>
+                        {(img.status === 'review' || img.status === 'completed') && (
+                          <PackageCheck className="h-4 w-4 text-primary" />
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1 text-sm">
@@ -330,14 +335,16 @@ export default function Dashboard() {
 
 function ImageDetailDialog({ image }: { image: ImageWithRequest }) {
   const [refs, setRefs] = useState<any[]>([]);
+  const [deliveries, setDeliveries] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
 
   const fetchRefs = async () => {
-    const { data } = await supabase
-      .from('briefing_reference_images')
-      .select('*')
-      .eq('briefing_image_id', image.id);
-    setRefs(data || []);
+    const [refsRes, delRes] = await Promise.all([
+      supabase.from('briefing_reference_images').select('*').eq('briefing_image_id', image.id),
+      (supabase.from('briefing_deliveries' as any).select('*').eq('briefing_image_id', image.id).order('created_at', { ascending: false }) as any),
+    ]);
+    setRefs(refsRes.data || []);
+    setDeliveries(delRes.data || []);
   };
 
   useEffect(() => {
@@ -393,6 +400,31 @@ function ImageDetailDialog({ image }: { image: ImageWithRequest }) {
                         {ref.is_exact_use ? 'Usar exatamente' : 'Referência'}
                       </span>
                     </a>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+          {deliveries.length > 0 && (
+            <>
+              <Separator />
+              <div>
+                <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <PackageCheck className="h-4 w-4 text-primary" />
+                  Entregas ({deliveries.length})
+                </p>
+                <div className="space-y-3">
+                  {deliveries.map((d: any) => (
+                    <div key={d.id} className="border rounded-lg p-3 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">{d.delivered_by_email}</span>
+                        <span className="text-xs text-muted-foreground">{new Date(d.created_at).toLocaleDateString('pt-BR')}</span>
+                      </div>
+                      {d.comments && <p className="text-sm">{d.comments}</p>}
+                      <a href={d.file_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
+                        <Download className="h-3 w-3" /> Baixar arquivo
+                      </a>
+                    </div>
                   ))}
                 </div>
               </div>

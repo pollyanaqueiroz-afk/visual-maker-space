@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import BriefingForm from "./pages/BriefingForm";
 import Dashboard from "./pages/Dashboard";
+import DeliveryPage from "./pages/DeliveryPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/briefing" element={<BriefingForm />} />
             <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/delivery/:token" element={<DeliveryPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
