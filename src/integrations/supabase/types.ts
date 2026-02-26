@@ -171,6 +171,7 @@ export type Database = {
           id: string
           notes: string | null
           platform_url: string
+          received_at: string | null
           requester_email: string
           requester_name: string
           status: Database["public"]["Enums"]["request_status"]
@@ -187,6 +188,7 @@ export type Database = {
           id?: string
           notes?: string | null
           platform_url: string
+          received_at?: string | null
           requester_email: string
           requester_name: string
           status?: Database["public"]["Enums"]["request_status"]
@@ -203,6 +205,7 @@ export type Database = {
           id?: string
           notes?: string | null
           platform_url?: string
+          received_at?: string | null
           requester_email?: string
           requester_name?: string
           status?: Database["public"]["Enums"]["request_status"]

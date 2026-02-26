@@ -66,11 +66,11 @@ export default function Dashboard() {
     const [imgRes, reqRes, revRes] = await Promise.all([
       supabase
         .from('briefing_images')
-        .select('*, briefing_requests!inner(requester_name, requester_email, platform_url)')
+        .select('*, briefing_requests!inner(requester_name, requester_email, platform_url, received_at)')
         .order('created_at', { ascending: false }),
       supabase
         .from('briefing_requests')
-        .select('id, platform_url, status, created_at')
+        .select('id, platform_url, status, created_at, received_at')
         .order('created_at', { ascending: false }),
       (supabase.from('briefing_reviews' as any).select('*').order('created_at', { ascending: false }) as any),
     ]);
@@ -84,6 +84,7 @@ export default function Dashboard() {
         requester_name: img.briefing_requests?.requester_name || '',
         requester_email: img.briefing_requests?.requester_email || '',
         platform_url: img.briefing_requests?.platform_url || '',
+        received_at: img.briefing_requests?.received_at || img.created_at,
       }));
       setImages(mapped);
     }
@@ -109,10 +110,10 @@ export default function Dashboard() {
     if (img.status === 'completed' || img.status === 'cancelled') return false;
     const deadline = img.deadline;
     if (!deadline) {
-      // Default 7 days from creation
-      const created = new Date(img.created_at);
-      created.setDate(created.getDate() + 7);
-      return created < new Date();
+      // SLA: 7 days from received_at (or created_at as fallback)
+      const baseDate = new Date((img as any).received_at || img.created_at);
+      baseDate.setDate(baseDate.getDate() + 7);
+      return baseDate < new Date();
     }
     return new Date(deadline) < new Date();
   };
