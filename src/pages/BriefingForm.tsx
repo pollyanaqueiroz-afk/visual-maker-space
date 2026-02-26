@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { BriefingFormData, defaultImageBriefing, ImageBriefingFormData } from '@/types/briefing';
 import RequesterInfo from '@/components/briefing/RequesterInfo';
 import ImageBriefingSection from '@/components/briefing/ImageBriefingSection';
-import ProductCoversSection from '@/components/briefing/ProductCoversSection';
+import MultiBannerSection from '@/components/briefing/MultiBannerSection';
 import BrandIdentity from '@/components/briefing/BrandIdentity';
 import { CheckCircle, Loader2 } from 'lucide-react';
 
@@ -21,7 +21,7 @@ const initialForm: BriefingFormData = {
   brand_file: null,
   brand_drive_link: '',
   login_image: { ...defaultImageBriefing },
-  banner_vitrine: { ...defaultImageBriefing },
+  banner_vitrine: [],
   product_covers: [],
   trail_banner: { ...defaultImageBriefing },
   challenge_banner: { ...defaultImageBriefing },
@@ -102,7 +102,7 @@ export default function BriefingForm() {
       return;
     }
 
-    const hasAnyImage = form.login_image.enabled || form.banner_vitrine.enabled ||
+    const hasAnyImage = form.login_image.enabled || form.banner_vitrine.length > 0 ||
       form.product_covers.length > 0 ||
       (form.has_trail && form.trail_banner.enabled) ||
       (form.has_challenge && form.challenge_banner.enabled) ||
@@ -142,8 +142,8 @@ export default function BriefingForm() {
       if (form.login_image.enabled) {
         await insertImage(requestId, 'login', form.login_image, sortOrder++);
       }
-      if (form.banner_vitrine.enabled) {
-        await insertImage(requestId, 'banner_vitrine', form.banner_vitrine, sortOrder++);
+      for (const banner of form.banner_vitrine) {
+        await insertImage(requestId, 'banner_vitrine', banner, sortOrder++);
       }
       for (const cover of form.product_covers) {
         await insertImage(requestId, 'product_cover', cover, sortOrder++);
@@ -238,18 +238,24 @@ export default function BriefingForm() {
             onChange={d => update({ login_image: d })}
           />
 
-          <ImageBriefingSection
-            title="2. Banner da Vitrine Principal"
+          <MultiBannerSection
+            title="2. Banners da Vitrine Principal"
             description="Banner principal disponibilizado também na versão mobile"
-            data={form.banner_vitrine}
-            onChange={d => update({ banner_vitrine: d })}
+            itemLabel="Banner"
+            items={form.banner_vitrine}
+            onChange={items => update({ banner_vitrine: items })}
           />
 
           <Separator />
 
-          <ProductCoversSection
-            covers={form.product_covers}
-            onChange={covers => update({ product_covers: covers })}
+          <MultiBannerSection
+            title="3. Capas de Produto / Módulo"
+            description="Imagem que ficará visível na vitrine"
+            itemLabel="Capa"
+            items={form.product_covers}
+            onChange={items => update({ product_covers: items })}
+            showOrientation
+            showProductName
           />
 
           {form.has_trail && (
