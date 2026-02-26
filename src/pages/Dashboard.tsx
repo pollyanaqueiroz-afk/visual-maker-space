@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { LogOut, Clock, FileImage, ExternalLink, Eye } from 'lucide-react';
+import ImportBriefingDialog from '@/components/briefing/ImportBriefingDialog';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -109,6 +110,7 @@ export default function Dashboard() {
 
         {/* Filters */}
         <div className="flex items-center gap-4">
+          <ImportBriefingDialog onImported={fetchRequests} />
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Filtrar por status" />
