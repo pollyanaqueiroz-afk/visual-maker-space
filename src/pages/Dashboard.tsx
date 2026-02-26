@@ -30,6 +30,8 @@ interface ImageWithRequest {
   sort_order: number;
   created_at: string;
   request_id: string;
+  assigned_email: string | null;
+  deadline: string | null;
   // Joined from briefing_requests
   requester_name: string;
   requester_email: string;
@@ -283,6 +285,13 @@ export default function Dashboard() {
                             ))}
                           </SelectContent>
                         </Select>
+                        <AssignBriefingDialog
+                          imageId={img.id}
+                          currentEmail={img.assigned_email}
+                          currentDeadline={img.deadline}
+                          imageLabel={`${IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type}${img.product_name ? ` — ${img.product_name}` : ''}`}
+                          onAssigned={fetchData}
+                        />
                         <ImageDetailDialog image={img} />
                       </div>
                     </TableCell>
