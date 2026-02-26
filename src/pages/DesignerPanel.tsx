@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { IMAGE_TYPE_LABELS, STATUS_LABELS, STATUS_COLORS } from '@/types/briefing';
-import { Search, Loader2, Palette, Clock, ExternalLink, FileImage } from 'lucide-react';
+import { Search, Loader2, Palette, Clock, ExternalLink, FileImage, Filter } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface DesignerImage {
@@ -29,6 +30,7 @@ export default function DesignerPanel() {
   const [images, setImages] = useState<DesignerImage[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [filterStatus, setFilterStatus] = useState<string>('all');
 
   const handleSearch = async () => {
     if (!email.trim()) return;
@@ -97,8 +99,13 @@ export default function DesignerPanel() {
         </Card>
 
         {/* Results */}
-        {searched && !loading && (
-          images.length === 0 ? (
+        {searched && !loading && (() => {
+          const filtered = images.filter(img => {
+            if (filterStatus === 'all') return true;
+            if (filterStatus === 'revision') return img.revision_count > 0 && img.status === 'in_progress';
+            return img.status === filterStatus;
+          });
+          return images.length === 0 ? (
             <Card>
               <CardContent className="pt-6 text-center">
                 <FileImage className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
@@ -108,7 +115,22 @@ export default function DesignerPanel() {
           ) : (
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg">{images.length} arte{images.length !== 1 ? 's' : ''} atribuída{images.length !== 1 ? 's' : ''}</CardTitle>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <CardTitle className="text-lg">{filtered.length} de {images.length} arte{images.length !== 1 ? 's' : ''}</CardTitle>
+                  <Select value={filterStatus} onValueChange={setFilterStatus}>
+                    <SelectTrigger className="w-44 h-8 text-xs">
+                      <Filter className="h-3 w-3 mr-1" />
+                      <SelectValue placeholder="Filtrar status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os status</SelectItem>
+                      {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                        <SelectItem key={key} value={key}>{label}</SelectItem>
+                      ))}
+                      <SelectItem value="revision">Em Refação</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardHeader>
               <CardContent className="p-0">
                 {/* Desktop table */}
@@ -124,7 +146,7 @@ export default function DesignerPanel() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {images.map(img => (
+                      {filtered.map(img => (
                         <TableRow key={img.id}>
                           <TableCell>
                             <div>
@@ -166,7 +188,7 @@ export default function DesignerPanel() {
 
                 {/* Mobile cards */}
                 <div className="md:hidden space-y-3 p-4">
-                  {images.map(img => (
+                  {filtered.map(img => (
                     <Card key={img.id} className="border">
                       <CardContent className="p-4 space-y-3">
                         <div className="flex justify-between items-start">
@@ -196,8 +218,8 @@ export default function DesignerPanel() {
                 </div>
               </CardContent>
             </Card>
-          )
-        )}
+          );
+        })()}
       </div>
     </div>
   );
