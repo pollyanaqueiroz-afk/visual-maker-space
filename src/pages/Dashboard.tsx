@@ -709,9 +709,13 @@ function ImageDetailDialog({ image, reviews }: { image: ImageWithRequest; review
         </DialogHeader>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div>
+            <div className="min-w-0">
               <span className="text-muted-foreground">Cliente:</span>
-              <p className="font-medium">{image.platform_url}</p>
+              <p className="font-medium truncate">
+                <a href={image.platform_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">
+                  {image.platform_url}
+                </a>
+              </p>
             </div>
             <div>
               <span className="text-muted-foreground">Solicitante:</span>
