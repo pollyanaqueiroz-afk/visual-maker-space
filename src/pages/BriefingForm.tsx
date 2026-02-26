@@ -184,12 +184,12 @@ export default function BriefingForm() {
   };
 
   const nextStep = () => {
-    if (step === 1 && !hasAnySelection) {
-      toast.error('Selecione pelo menos um tipo de arte');
+    if (step === 1 && (!form.requester_name || !form.requester_email || !form.platform_url)) {
+      toast.error('Preencha todos os campos obrigatórios');
       return;
     }
-    if (step === 2 && (!form.requester_name || !form.requester_email || !form.platform_url)) {
-      toast.error('Preencha todos os campos obrigatórios');
+    if (step === 2 && !hasAnySelection) {
+      toast.error('Selecione pelo menos um tipo de arte');
       return;
     }
     setStep(s => s + 1);
@@ -249,9 +249,9 @@ export default function BriefingForm() {
               </p>
               <div className="flex flex-col items-center gap-3 mt-8">
                 <div className="flex items-center gap-3 text-white/60 text-sm">
-                  <span className="flex items-center gap-1.5"><span className="w-6 h-6 rounded-full bg-white/20 text-white text-xs flex items-center justify-center font-bold">1</span> Escolha as artes</span>
+                  <span className="flex items-center gap-1.5"><span className="w-6 h-6 rounded-full bg-white/20 text-white text-xs flex items-center justify-center font-bold">1</span> Seus dados</span>
                   <ArrowRight className="h-3 w-3" />
-                  <span className="flex items-center gap-1.5"><span className="w-6 h-6 rounded-full bg-white/20 text-white text-xs flex items-center justify-center font-bold">2</span> Seus dados</span>
+                  <span className="flex items-center gap-1.5"><span className="w-6 h-6 rounded-full bg-white/20 text-white text-xs flex items-center justify-center font-bold">2</span> Escolha as artes</span>
                   <ArrowRight className="h-3 w-3" />
                   <span className="flex items-center gap-1.5"><span className="w-6 h-6 rounded-full bg-white/20 text-white text-xs flex items-center justify-center font-bold">3</span> Briefing</span>
                 </div>
@@ -263,8 +263,8 @@ export default function BriefingForm() {
           ) : (
             <>
               <h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                {step === 1 && 'Passo 1 — Escolha as artes'}
-                {step === 2 && 'Passo 2 — Seus dados e identidade visual'}
+                {step === 1 && 'Passo 1 — Seus dados e identidade visual'}
+                {step === 2 && 'Passo 2 — Escolha as artes'}
                 {step === 3 && 'Passo 3 — Briefing das artes'}
               </h1>
               {/* Progress bar */}
@@ -281,8 +281,24 @@ export default function BriefingForm() {
       {step > 0 && (
         <div className="max-w-3xl mx-auto p-4 py-10">
 
-          {/* STEP 1: Select art types */}
+          {/* STEP 1: Requester + Brand */}
           {step === 1 && (
+            <div className="space-y-8">
+              <Card>
+                <CardContent className="pt-6">
+                  <RequesterInfo data={form} onChange={update} />
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <BrandIdentity data={form} onChange={update} />
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* STEP 2: Select art types */}
+          {step === 2 && (
             <div className="space-y-6">
               <div className="text-center mb-2">
                 <h2 className="text-xl font-semibold text-foreground">O que você precisa?</h2>
@@ -314,22 +330,6 @@ export default function BriefingForm() {
                   );
                 })}
               </div>
-            </div>
-          )}
-
-          {/* STEP 2: Requester + Brand */}
-          {step === 2 && (
-            <div className="space-y-8">
-              <Card>
-                <CardContent className="pt-6">
-                  <RequesterInfo data={form} onChange={update} />
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-6">
-                  <BrandIdentity data={form} onChange={update} />
-                </CardContent>
-              </Card>
             </div>
           )}
 
