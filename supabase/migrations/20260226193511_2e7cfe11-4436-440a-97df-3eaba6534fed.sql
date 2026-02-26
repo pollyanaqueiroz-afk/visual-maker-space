@@ -1,0 +1,1 @@
+ALTER TABLE public.briefing_images ADD COLUMN extra_info TEXT;

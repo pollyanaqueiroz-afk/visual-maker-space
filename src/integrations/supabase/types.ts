@@ -98,6 +98,7 @@ export type Database = {
           deadline: string | null
           delivery_token: string | null
           element_suggestion: string | null
+          extra_info: string | null
           font_suggestion: string | null
           id: string
           image_text: string | null
@@ -118,6 +119,7 @@ export type Database = {
           deadline?: string | null
           delivery_token?: string | null
           element_suggestion?: string | null
+          extra_info?: string | null
           font_suggestion?: string | null
           id?: string
           image_text?: string | null
@@ -138,6 +140,7 @@ export type Database = {
           deadline?: string | null
           delivery_token?: string | null
           element_suggestion?: string | null
+          extra_info?: string | null
           font_suggestion?: string | null
           id?: string
           image_text?: string | null

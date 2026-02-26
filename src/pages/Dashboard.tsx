@@ -857,6 +857,7 @@ function ImageDetailDialog({ image, reviews }: { image: ImageWithRequest; review
             {image.professional_photo_url && <div className="col-span-2"><span className="text-muted-foreground">Foto profissional:</span><p><a href={image.professional_photo_url} target="_blank" className="text-primary hover:underline">{image.professional_photo_url}</a></p></div>}
             {image.orientation && <div><span className="text-muted-foreground">Orientação:</span><p>{image.orientation}</p></div>}
             {image.observations && <div className="col-span-2"><span className="text-muted-foreground">Observações:</span><p>{image.observations}</p></div>}
+            {(image as any).extra_info && <div className="col-span-2 border-l-2 border-primary/30 pl-3"><span className="text-primary font-medium">Outras Informações:</span><p>{(image as any).extra_info}</p></div>}
           </div>
           {refs.length > 0 && (
             <>

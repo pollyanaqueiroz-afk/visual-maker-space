@@ -44,7 +44,8 @@ Para image_type use: "login", "banner_vitrine", "product_cover", "trail_banner",
       "element_suggestion": "elemento ou imagem sugerida",
       "professional_photo_url": "link da foto do profissional",
       "orientation": "horizontal ou vertical (só para capas)",
-      "observations": "observações adicionais"
+      "observations": "observações adicionais",
+      "extra_info": "outras informações relevantes não cobertas pelos campos acima"
     }
   ]
 }
@@ -55,7 +56,9 @@ Regras:
 - Se mencionar trilha, defina has_trail=true. Se mencionar desafio, has_challenge=true. Se comunidade, has_community=true.
 - Inclua banner de trilha/desafio/comunidade como imagens separadas se preenchidos
 - Banners da vitrine principal devem ter image_type "banner_vitrine"
-- Não inclua seções que estejam completamente vazias (sem nenhum campo preenchido)`;
+- Não inclua seções que estejam completamente vazias (sem nenhum campo preenchido)
+- O campo "extra_info" deve conter APENAS informações úteis para o designer que NÃO estejam já nos outros campos (ex: paleta de cores específica, estilo visual, público-alvo, tom de comunicação, referências de marca, instruções especiais). NÃO repita informações já presentes nos outros campos. Se não houver info extra relevante, use "".`;
+
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
