@@ -107,6 +107,17 @@ export default function DeliveryPage() {
         .update({ status: 'review' } as any)
         .eq('id', image.id);
 
+      // Notify requester via email (fire-and-forget)
+      supabase.functions.invoke('notify-delivery', {
+        body: {
+          image_id: image.id,
+          file_url: urlData.publicUrl,
+          delivered_by_email: email,
+          comments: comments || null,
+          app_url: window.location.origin,
+        },
+      }).catch(err => console.error('Notify error:', err));
+
       setDelivered(true);
       toast.success('Arte entregue com sucesso!');
     } catch (err: any) {
