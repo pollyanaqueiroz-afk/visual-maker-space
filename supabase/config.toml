@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.send-briefing-email]
 verify_jwt = false
+
+[functions.notify-revision]
+verify_jwt = false
+
+[functions.notify-delivery]
+verify_jwt = false
