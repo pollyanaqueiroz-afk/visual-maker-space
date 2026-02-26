@@ -82,7 +82,7 @@ export interface BriefingFormData {
   brand_file: File | null;
   brand_drive_link: string;
   login_image: ImageBriefingFormData;
-  banner_vitrine: ImageBriefingFormData;
+  banner_vitrine: ImageBriefingFormData[];
   product_covers: ImageBriefingFormData[];
   trail_banner: ImageBriefingFormData;
   challenge_banner: ImageBriefingFormData;
