@@ -48,7 +48,15 @@ export default function ImportBriefingDialog({ onImported }: Props) {
   const [parsed, setParsed] = useState<ParsedBriefing | null>(null);
   const [fileName, setFileName] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
-  const [duplicateInfo, setDuplicateInfo] = useState<{ date: string; imageCount: number } | null>(null);
+  const [duplicateInfo, setDuplicateInfo] = useState<{
+    date: string;
+    imageCount: number;
+    has_trail: boolean;
+    has_challenge: boolean;
+    has_community: boolean;
+    brand_drive_link: string | null;
+    images: { image_type: string; product_name: string | null; image_text: string | null }[];
+  } | null>(null);
   const [receivedAt, setReceivedAt] = useState<Date>(new Date());
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -100,7 +108,7 @@ export default function ImportBriefingDialog({ onImported }: Props) {
       // Check for duplicate by platform_url
       const { data: existing } = await (supabase
         .from('briefing_requests')
-        .select('id, created_at, briefing_images:briefing_images(id)')
+        .select('id, created_at, has_trail, has_challenge, has_community, brand_drive_link, briefing_images:briefing_images(id, image_type, product_name, image_text)')
         .eq('platform_url', data.platform_url) as any)
         .order('created_at', { ascending: false })
         .limit(1);
@@ -108,9 +116,15 @@ export default function ImportBriefingDialog({ onImported }: Props) {
       setParsed(data);
 
       if (existing && existing.length > 0) {
+        const ex = existing[0];
         setDuplicateInfo({
-          date: new Date(existing[0].created_at).toLocaleDateString('pt-BR'),
-          imageCount: existing[0].briefing_images?.length || 0,
+          date: new Date(ex.created_at).toLocaleDateString('pt-BR'),
+          imageCount: ex.briefing_images?.length || 0,
+          has_trail: ex.has_trail,
+          has_challenge: ex.has_challenge,
+          has_community: ex.has_community,
+          brand_drive_link: ex.brand_drive_link,
+          images: ex.briefing_images || [],
         });
         setStep('duplicate');
       } else {
@@ -218,18 +232,75 @@ export default function ImportBriefingDialog({ onImported }: Props) {
         )}
 
         {step === 'duplicate' && parsed && duplicateInfo && (
-          <div className="flex flex-col items-center gap-4 py-8">
-            <div className="w-16 h-16 rounded-full bg-warning/10 flex items-center justify-center">
-              <AlertCircle className="h-8 w-8 text-warning" />
+          <div className="space-y-4 py-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-warning/10 flex items-center justify-center shrink-0">
+                <AlertCircle className="h-5 w-5 text-warning" />
+              </div>
+              <div>
+                <p className="font-medium">Briefing já existente para esta plataforma</p>
+                <p className="text-sm text-muted-foreground">
+                  Importado em {duplicateInfo.date} — <span className="font-medium text-foreground">{parsed.platform_url}</span>
+                </p>
+              </div>
             </div>
-            <div className="text-center space-y-2">
-              <p className="font-medium">Documento já importado</p>
-              <p className="text-sm text-muted-foreground">
-                Um briefing para <span className="font-medium text-foreground">{parsed.platform_url}</span> já foi importado em {duplicateInfo.date} com {duplicateInfo.imageCount} arte(s).
-              </p>
-              <p className="text-sm text-muted-foreground">Deseja importar novamente mesmo assim?</p>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Card>
+                <CardContent className="pt-3 pb-3 space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Existente</p>
+                  <div className="flex gap-1 flex-wrap">
+                    {duplicateInfo.has_trail && <Badge variant="secondary" className="text-xs">Trilha</Badge>}
+                    {duplicateInfo.has_challenge && <Badge variant="secondary" className="text-xs">Desafio</Badge>}
+                    {duplicateInfo.has_community && <Badge variant="secondary" className="text-xs">Comunidade</Badge>}
+                    {!duplicateInfo.has_trail && !duplicateInfo.has_challenge && !duplicateInfo.has_community && <span className="text-xs text-muted-foreground">Nenhum módulo</span>}
+                  </div>
+                  {duplicateInfo.brand_drive_link && <p className="text-xs text-muted-foreground truncate">Drive: {duplicateInfo.brand_drive_link}</p>}
+                  <Separator />
+                  <p className="text-xs font-medium">{duplicateInfo.imageCount} arte(s):</p>
+                  <div className="space-y-1 max-h-32 overflow-y-auto">
+                    {duplicateInfo.images.map((img, i) => (
+                      <div key={i} className="text-xs text-muted-foreground">
+                        <span className="font-medium text-foreground">
+                          {IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type}
+                        </span>
+                        {img.product_name && <span> — {img.product_name}</span>}
+                        {img.image_text && <span className="block truncate">"{img.image_text}"</span>}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-primary/30">
+                <CardContent className="pt-3 pb-3 space-y-2">
+                  <p className="text-xs font-semibold text-primary uppercase tracking-wider">Novo (importando)</p>
+                  <div className="flex gap-1 flex-wrap">
+                    {parsed.has_trail && <Badge variant="secondary" className="text-xs">Trilha</Badge>}
+                    {parsed.has_challenge && <Badge variant="secondary" className="text-xs">Desafio</Badge>}
+                    {parsed.has_community && <Badge variant="secondary" className="text-xs">Comunidade</Badge>}
+                    {!parsed.has_trail && !parsed.has_challenge && !parsed.has_community && <span className="text-xs text-muted-foreground">Nenhum módulo</span>}
+                  </div>
+                  {parsed.brand_drive_link && <p className="text-xs text-muted-foreground truncate">Drive: {parsed.brand_drive_link}</p>}
+                  <Separator />
+                  <p className="text-xs font-medium">{parsed.images.length} arte(s):</p>
+                  <div className="space-y-1 max-h-32 overflow-y-auto">
+                    {parsed.images.map((img, i) => (
+                      <div key={i} className="text-xs text-muted-foreground">
+                        <span className="font-medium text-foreground">
+                          {IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type}
+                        </span>
+                        {img.product_name && <span> — {img.product_name}</span>}
+                        {img.image_text && <span className="block truncate">"{img.image_text}"</span>}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-            <div className="flex gap-3">
+
+            <p className="text-sm text-muted-foreground text-center">Deseja importar novamente mesmo assim?</p>
+            <div className="flex gap-3 justify-center">
               <Button variant="outline" onClick={reset}>Cancelar</Button>
               <Button variant="default" onClick={() => setStep('preview')}>Importar mesmo assim</Button>
             </div>
