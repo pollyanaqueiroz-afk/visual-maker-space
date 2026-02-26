@@ -2,3 +2,6 @@ project_id = "aqmbaycbwljiohdjputq"
 
 [functions.parse-briefing]
 verify_jwt = false
+
+[functions.send-briefing-email]
+verify_jwt = false
