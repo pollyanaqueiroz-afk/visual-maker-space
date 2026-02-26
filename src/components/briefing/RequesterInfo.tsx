@@ -31,24 +31,6 @@ export default function RequesterInfo({ data, onChange }: Props) {
         <Label htmlFor="url">URL da Plataforma Curseduca *</Label>
         <Input id="url" value={data.platform_url} onChange={e => onChange({ platform_url: e.target.value })} required placeholder="https://suaempresa.curseduca.pro" />
       </div>
-
-      <div>
-        <p className="text-sm font-medium mb-3">Sua plataforma possui:</p>
-        <div className="flex flex-wrap gap-6">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <Checkbox checked={data.has_trail} onCheckedChange={v => onChange({ has_trail: !!v })} />
-            <span className="text-sm">Trilha</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <Checkbox checked={data.has_challenge} onCheckedChange={v => onChange({ has_challenge: !!v })} />
-            <span className="text-sm">Desafio</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <Checkbox checked={data.has_community} onCheckedChange={v => onChange({ has_community: !!v })} />
-            <span className="text-sm">Comunidade</span>
-          </label>
-        </div>
-      </div>
     </div>
   );
 }
