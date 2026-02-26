@@ -16,6 +16,7 @@ interface DesignerImage {
   product_name: string | null;
   deadline: string | null;
   status: string;
+  revision_count: number;
   delivery_token: string | null;
   briefing_requests: {
     requester_name: string;
@@ -36,7 +37,7 @@ export default function DesignerPanel() {
 
     const { data, error } = await (supabase
       .from('briefing_images')
-      .select('id, image_type, product_name, deadline, status, delivery_token, briefing_requests!inner(requester_name, platform_url)')
+      .select('id, image_type, product_name, deadline, status, revision_count, delivery_token, briefing_requests!inner(requester_name, platform_url)')
       .eq('assigned_email', email.trim().toLowerCase()) as any)
       .order('created_at', { ascending: false });
 
@@ -49,9 +50,12 @@ export default function DesignerPanel() {
     setLoading(false);
   };
 
-  const getStatusBadge = (status: string) => {
-    const label = STATUS_LABELS[status as keyof typeof STATUS_LABELS] || status;
-    const color = STATUS_COLORS[status as keyof typeof STATUS_COLORS] || 'bg-muted text-muted-foreground';
+  const getStatusBadge = (img: DesignerImage) => {
+    if (img.revision_count > 0 && img.status === 'in_progress') {
+      return <Badge className="bg-destructive/20 text-destructive border-0">Refação {img.revision_count}</Badge>;
+    }
+    const label = STATUS_LABELS[img.status as keyof typeof STATUS_LABELS] || img.status;
+    const color = STATUS_COLORS[img.status as keyof typeof STATUS_COLORS] || 'bg-muted text-muted-foreground';
     return <Badge className={`${color} border-0`}>{label}</Badge>;
   };
 
@@ -144,7 +148,7 @@ export default function DesignerPanel() {
                               <span className="text-muted-foreground text-sm">—</span>
                             )}
                           </TableCell>
-                          <TableCell>{getStatusBadge(img.status)}</TableCell>
+                          <TableCell>{getStatusBadge(img)}</TableCell>
                           <TableCell className="text-right">
                             {img.delivery_token ? (
                               <Button size="sm" variant="outline" asChild>
@@ -170,7 +174,7 @@ export default function DesignerPanel() {
                             <p className="font-medium">{IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type}</p>
                             {img.product_name && <p className="text-xs text-muted-foreground">{img.product_name}</p>}
                           </div>
-                          {getStatusBadge(img.status)}
+                          {getStatusBadge(img)}
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">{img.briefing_requests.requester_name}</span>

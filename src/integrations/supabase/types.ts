@@ -66,6 +66,7 @@ export type Database = {
           product_name: string | null
           professional_photo_url: string | null
           request_id: string
+          revision_count: number
           sort_order: number
           status: Database["public"]["Enums"]["request_status"]
         }
@@ -85,6 +86,7 @@ export type Database = {
           product_name?: string | null
           professional_photo_url?: string | null
           request_id: string
+          revision_count?: number
           sort_order?: number
           status?: Database["public"]["Enums"]["request_status"]
         }
@@ -104,6 +106,7 @@ export type Database = {
           product_name?: string | null
           professional_photo_url?: string | null
           request_id?: string
+          revision_count?: number
           sort_order?: number
           status?: Database["public"]["Enums"]["request_status"]
         }
