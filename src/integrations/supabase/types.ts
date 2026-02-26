@@ -16,8 +16,10 @@ export type Database = {
     Tables: {
       briefing_images: {
         Row: {
+          assigned_email: string | null
           copy_style_from: string | null
           created_at: string
+          deadline: string | null
           element_suggestion: string | null
           font_suggestion: string | null
           id: string
@@ -32,8 +34,10 @@ export type Database = {
           status: Database["public"]["Enums"]["request_status"]
         }
         Insert: {
+          assigned_email?: string | null
           copy_style_from?: string | null
           created_at?: string
+          deadline?: string | null
           element_suggestion?: string | null
           font_suggestion?: string | null
           id?: string
@@ -48,8 +52,10 @@ export type Database = {
           status?: Database["public"]["Enums"]["request_status"]
         }
         Update: {
+          assigned_email?: string | null
           copy_style_from?: string | null
           created_at?: string
+          deadline?: string | null
           element_suggestion?: string | null
           font_suggestion?: string | null
           id?: string
