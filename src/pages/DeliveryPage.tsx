@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { Upload, FileImage, Clock, CheckCircle2, Loader2 } from 'lucide-react';
+import CursEducaLayout from '@/components/CursEducaLayout';
 
 const IMAGE_TYPE_LABELS: Record<string, string> = {
   login: 'Área de Login',
@@ -130,47 +131,49 @@ export default function DeliveryPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <CursEducaLayout title="Entrega de Arte" subtitle="Carregando...">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </CursEducaLayout>
     );
   }
 
   if (notFound) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="max-w-md w-full mx-4">
-          <CardContent className="pt-6 text-center">
-            <FileImage className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-foreground mb-2">Link inválido</h2>
-            <p className="text-muted-foreground">Este link de entrega não foi encontrado ou já expirou.</p>
-          </CardContent>
-        </Card>
-      </div>
+      <CursEducaLayout title="Link Inválido">
+        <div className="flex justify-center px-4 py-12">
+          <Card className="max-w-md w-full">
+            <CardContent className="pt-6 text-center">
+              <FileImage className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h2 className="text-xl font-bold text-foreground mb-2">Link inválido</h2>
+              <p className="text-muted-foreground">Este link de entrega não foi encontrado ou já expirou.</p>
+            </CardContent>
+          </Card>
+        </div>
+      </CursEducaLayout>
     );
   }
 
   if (delivered) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="max-w-md w-full mx-4">
-          <CardContent className="pt-6 text-center">
-            <CheckCircle2 className="h-12 w-12 text-primary mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-foreground mb-2">Arte entregue!</h2>
-            <p className="text-muted-foreground">Sua entrega foi registrada com sucesso. O solicitante será notificado.</p>
-          </CardContent>
-        </Card>
-      </div>
+      <CursEducaLayout title="Arte Entregue!">
+        <div className="flex justify-center px-4 py-12">
+          <Card className="max-w-md w-full">
+            <CardContent className="pt-6 text-center">
+              <CheckCircle2 className="h-12 w-12 text-primary mx-auto mb-4" />
+              <h2 className="text-xl font-bold text-foreground mb-2">Arte entregue!</h2>
+              <p className="text-muted-foreground">Sua entrega foi registrada com sucesso. O solicitante será notificado.</p>
+            </CardContent>
+          </Card>
+        </div>
+      </CursEducaLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
-      <div className="max-w-xl mx-auto space-y-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-foreground">Entrega de Arte</h1>
-          <p className="text-muted-foreground">Curseduca Design</p>
-        </div>
+    <CursEducaLayout title="Entrega de Arte" subtitle="Curseduca Design">
+      <div className="max-w-xl mx-auto px-4 py-8 space-y-6">
 
         {/* Briefing summary */}
         <Card>
@@ -290,6 +293,6 @@ export default function DeliveryPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </CursEducaLayout>
   );
 }
