@@ -409,7 +409,16 @@ export default function BriefingForm() {
 
           {/* STEP 3: Briefings */}
           {step === 3 && (
-            <div className="flex gap-6 items-start">
+            <div className="space-y-6">
+              {/* AI Assistant - mobile */}
+              <div className="md:hidden">
+                <AIBriefingAssistant
+                  onApply={handleApplySuggestion}
+                  currentForm={{ ...form, selections }}
+                />
+              </div>
+
+              <div className="flex gap-6 items-start">
               {/* Main form column */}
               <div className="flex-1 min-w-0 space-y-8">
               {/* Additional info field */}
@@ -512,13 +521,14 @@ export default function BriefingForm() {
               </div>
               </div>
 
-              {/* AI Assistant sidebar */}
-              <div className="hidden lg:block w-80 shrink-0 sticky top-6">
+              {/* AI Assistant sidebar - desktop */}
+              <div className="hidden md:block w-72 lg:w-80 shrink-0 sticky top-6">
                 <AIBriefingAssistant
                   onApply={handleApplySuggestion}
                   currentForm={{ ...form, selections }}
                 />
               </div>
+            </div>
             </div>
           )}
 
