@@ -207,6 +207,41 @@ export type Database = {
         }
         Relationships: []
       }
+      briefing_reviews: {
+        Row: {
+          action: string
+          briefing_image_id: string
+          created_at: string
+          id: string
+          reviewed_by: string
+          reviewer_comments: string | null
+        }
+        Insert: {
+          action: string
+          briefing_image_id: string
+          created_at?: string
+          id?: string
+          reviewed_by: string
+          reviewer_comments?: string | null
+        }
+        Update: {
+          action?: string
+          briefing_image_id?: string
+          created_at?: string
+          id?: string
+          reviewed_by?: string
+          reviewer_comments?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "briefing_reviews_briefing_image_id_fkey"
+            columns: ["briefing_image_id"]
+            isOneToOne: false
+            referencedRelation: "briefing_images"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
