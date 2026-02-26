@@ -126,6 +126,12 @@ serve(async (req) => {
           <p style="margin-top:8px;color:#999;font-size:12px;">Use este botão para fazer upload da arte finalizada</p>
         </div>
 
+        <div style="margin-top:16px;text-align:center;">
+          <a href="DESIGNER_PANEL_PLACEHOLDER" style="color:#2a9d6a;font-size:13px;text-decoration:underline;">
+            📋 Ver todas as minhas artes
+          </a>
+        </div>
+
         <p style="margin-top:24px;color:#999;font-size:12px;">
           Este email foi enviado automaticamente pelo sistema de gestão de briefings da Curseduca.
         </p>
@@ -141,7 +147,9 @@ serve(async (req) => {
 
     // Replace delivery link placeholder
     const baseUrl = app_url || "https://id-preview--47593e69-3789-4cdb-b901-66106c2c2f6d.lovable.app";
-    const finalHtml = html.replace("DELIVERY_LINK_PLACEHOLDER", `${baseUrl}/delivery/${deliveryToken}`);
+    const finalHtml = html
+      .replace("DELIVERY_LINK_PLACEHOLDER", `${baseUrl}/delivery/${deliveryToken}`)
+      .replace("DESIGNER_PANEL_PLACEHOLDER", `${baseUrl}/designer`);
 
     // Send email via Resend
     const resendRes = await fetch("https://api.resend.com/emails", {
