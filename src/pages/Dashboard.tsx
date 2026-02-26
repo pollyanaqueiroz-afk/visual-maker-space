@@ -364,7 +364,7 @@ export default function Dashboard() {
                     }
                   }}
                 >
-                <table className="w-full caption-bottom text-sm min-w-[1400px]">
+                <table className="w-full caption-bottom text-sm min-w-[2400px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Tipo de Arte</TableHead>
@@ -376,6 +376,13 @@ export default function Dashboard() {
                       <TableHead>Recebido em</TableHead>
                       <TableHead>Tempo em aberto</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
+                      <TableHead>Texto da Imagem</TableHead>
+                      <TableHead>Fonte</TableHead>
+                      <TableHead>Elemento</TableHead>
+                      <TableHead>Foto Profissional</TableHead>
+                      <TableHead>Orientação</TableHead>
+                      <TableHead>Observações</TableHead>
+                      <TableHead>Outras Info</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -521,12 +528,45 @@ export default function Dashboard() {
                               <ImageDetailDialog image={img} reviews={reviews.filter(r => r.briefing_image_id === img.id)} />
                             </div>
                           </TableCell>
+                          <TableCell>
+                            <span className="text-xs max-w-[200px] block truncate" title={img.image_text || ''}>
+                              {img.image_text || <span className="text-muted-foreground">—</span>}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-xs">{img.font_suggestion || <span className="text-muted-foreground">—</span>}</span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-xs max-w-[200px] block truncate" title={img.element_suggestion || ''}>
+                              {img.element_suggestion || <span className="text-muted-foreground">—</span>}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            {img.professional_photo_url ? (
+                              <a href={img.professional_photo_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline max-w-[150px] block truncate">
+                                {img.professional_photo_url}
+                              </a>
+                            ) : <span className="text-xs text-muted-foreground">—</span>}
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-xs">{img.orientation || <span className="text-muted-foreground">—</span>}</span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-xs max-w-[200px] block truncate" title={img.observations || ''}>
+                              {img.observations || <span className="text-muted-foreground">—</span>}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-xs max-w-[200px] block truncate" title={(img as any).extra_info || ''}>
+                              {(img as any).extra_info || <span className="text-muted-foreground">—</span>}
+                            </span>
+                          </TableCell>
                         </TableRow>
                       );
                     })}
                     {filtered.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={16} className="text-center py-8 text-muted-foreground">
                           Nenhuma arte encontrada
                         </TableCell>
                       </TableRow>
