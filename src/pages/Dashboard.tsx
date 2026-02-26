@@ -137,7 +137,7 @@ export default function Dashboard() {
   const reviewImages = images.filter(i => i.status === 'review').length;
   const overdueImages = images.filter(i => isOverdue(i)).length;
   const openClients = new Set(
-    requests.filter(r => r.status !== 'completed' && r.status !== 'cancelled').map(r => r.platform_url)
+    images.filter(i => i.status !== 'completed' && i.status !== 'cancelled').map(i => i.platform_url)
   ).size;
 
   const extractClientName = (url: string) => {
