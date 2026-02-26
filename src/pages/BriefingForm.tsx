@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { BriefingFormData, defaultImageBriefing, ImageBriefingFormData } from '@/types/briefing';
@@ -10,6 +12,7 @@ import RequesterInfo from '@/components/briefing/RequesterInfo';
 import ImageBriefingSection from '@/components/briefing/ImageBriefingSection';
 import MultiBannerSection from '@/components/briefing/MultiBannerSection';
 import BrandIdentity from '@/components/briefing/BrandIdentity';
+import AIBriefingAssistant from '@/components/briefing/AIBriefingAssistant';
 import { CheckCircle, Loader2, ArrowRight, ArrowLeft, Palette, MonitorSmartphone, Image, LayoutGrid, Route, Trophy, Users } from 'lucide-react';
 
 type ArtSelection = {
@@ -50,6 +53,7 @@ const initialForm: BriefingFormData = {
 export default function BriefingForm() {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<BriefingFormData>(initialForm);
+  const [additionalInfo, setAdditionalInfo] = useState('');
   const [selections, setSelections] = useState<ArtSelection>({
     login_image: false,
     banner_vitrine: false,
@@ -63,6 +67,73 @@ export default function BriefingForm() {
 
   const update = (updates: Partial<BriefingFormData>) => setForm(prev => ({ ...prev, ...updates }));
   const toggleSelection = (key: keyof ArtSelection) => setSelections(prev => ({ ...prev, [key]: !prev[key] }));
+
+  const handleApplySuggestion = (suggestion: any) => {
+    if (suggestion.selections) {
+      setSelections(prev => ({ ...prev, ...suggestion.selections }));
+    }
+
+    const newForm = { ...form };
+
+    if (suggestion.images?.login_image) {
+      const s = suggestion.images.login_image;
+      newForm.login_image = {
+        ...defaultImageBriefing,
+        enabled: true,
+        image_text: s.image_text || '',
+        font_suggestion: s.font_suggestion || '',
+        element_suggestion: s.element_suggestion || '',
+        observations: s.observations || '',
+        dimension: s.dimension || '',
+      };
+    }
+
+    if (suggestion.images?.banner_vitrine) {
+      const items = Array.isArray(suggestion.images.banner_vitrine) ? suggestion.images.banner_vitrine : [suggestion.images.banner_vitrine];
+      newForm.banner_vitrine = items.map((s: any) => ({
+        ...defaultImageBriefing,
+        enabled: true,
+        image_text: s.image_text || '',
+        font_suggestion: s.font_suggestion || '',
+        element_suggestion: s.element_suggestion || '',
+        observations: s.observations || '',
+        dimension: s.dimension || '1920x400',
+      }));
+    }
+
+    if (suggestion.images?.product_covers) {
+      const items = Array.isArray(suggestion.images.product_covers) ? suggestion.images.product_covers : [suggestion.images.product_covers];
+      newForm.product_covers = items.map((s: any) => ({
+        ...defaultImageBriefing,
+        enabled: true,
+        product_name: s.product_name || '',
+        image_text: s.image_text || '',
+        font_suggestion: s.font_suggestion || '',
+        element_suggestion: s.element_suggestion || '',
+        orientation: s.orientation || '',
+        observations: s.observations || '',
+        dimension: s.dimension || '800x600',
+      }));
+    }
+
+    ['trail_banner', 'challenge_banner', 'community_banner'].forEach(key => {
+      if (suggestion.images?.[key]) {
+        const s = suggestion.images[key];
+        (newForm as any)[key] = {
+          ...defaultImageBriefing,
+          enabled: true,
+          image_text: s.image_text || '',
+          font_suggestion: s.font_suggestion || '',
+          element_suggestion: s.element_suggestion || '',
+          observations: s.observations || '',
+          dimension: s.dimension || '',
+        };
+      }
+    });
+
+    setForm(newForm);
+    toast.success('Sugestão da IA aplicada! Revise e ajuste os campos antes de enviar.');
+  };
 
   const hasAnySelection = Object.values(selections).some(Boolean);
 
@@ -147,6 +218,7 @@ export default function BriefingForm() {
         has_community: selections.community_banner,
         brand_file_url: brandFileUrl,
         brand_drive_link: form.brand_drive_link || null,
+        additional_info: additionalInfo || null,
       } as any).select('id').single();
 
       if (error) throw error;
@@ -216,7 +288,7 @@ export default function BriefingForm() {
             <p className="text-muted-foreground">
               Sua solicitação foi recebida. Nossa equipe de design entrará em contato em breve através do email informado.
             </p>
-            <Button onClick={() => { setForm(initialForm); setSubmitted(false); setStep(0); setSelections({ login_image: false, banner_vitrine: false, product_covers: false, trail_banner: false, challenge_banner: false, community_banner: false }); }} variant="outline">
+            <Button onClick={() => { setForm(initialForm); setAdditionalInfo(''); setSubmitted(false); setStep(0); setSelections({ login_image: false, banner_vitrine: false, product_covers: false, trail_banner: false, challenge_banner: false, community_banner: false }); }} variant="outline">
               Enviar novo briefing
             </Button>
           </CardContent>
@@ -331,12 +403,35 @@ export default function BriefingForm() {
                   );
                 })}
               </div>
+
+              <Separator />
+
+              <AIBriefingAssistant
+                onApply={handleApplySuggestion}
+                currentForm={{ ...form, selections }}
+              />
             </div>
           )}
 
           {/* STEP 3: Briefings */}
           {step === 3 && (
             <div className="space-y-8">
+              {/* Additional info field */}
+              <Card className="border-border/50">
+                <CardContent className="pt-6 space-y-3">
+                  <Label className="text-lg font-semibold">Informações adicionais sobre o projeto</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Conte-nos mais sobre o contexto do projeto: público-alvo, tom de comunicação, cores da marca, estilo desejado, ou qualquer outra informação que ajude o designer.
+                  </p>
+                  <Textarea
+                    value={additionalInfo}
+                    onChange={e => setAdditionalInfo(e.target.value)}
+                    placeholder="Ex: Nosso público é jovem, entre 18-30 anos. Preferimos cores vibrantes como laranja e azul. O tom deve ser motivacional e moderno..."
+                    rows={4}
+                  />
+                </CardContent>
+              </Card>
+
               {selections.login_image && (
                 <ImageBriefingSection
                   title="Imagem da Área de Login"

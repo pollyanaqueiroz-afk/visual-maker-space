@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.notify-delivery]
 verify_jwt = false
+
+[functions.suggest-briefing]
+verify_jwt = false

@@ -205,6 +205,7 @@ export type Database = {
       }
       briefing_requests: {
         Row: {
+          additional_info: string | null
           assigned_to: string | null
           brand_drive_link: string | null
           brand_file_url: string | null
@@ -222,6 +223,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          additional_info?: string | null
           assigned_to?: string | null
           brand_drive_link?: string | null
           brand_file_url?: string | null
@@ -239,6 +241,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          additional_info?: string | null
           assigned_to?: string | null
           brand_drive_link?: string | null
           brand_file_url?: string | null
