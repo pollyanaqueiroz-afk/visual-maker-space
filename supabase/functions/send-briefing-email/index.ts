@@ -30,7 +30,7 @@ serve(async (req) => {
   }
 
   try {
-    const { image_id, assigned_email, deadline } = await req.json();
+    const { image_id, assigned_email, deadline, app_url } = await req.json();
 
     if (!image_id || !assigned_email) {
       return new Response(
@@ -119,17 +119,29 @@ serve(async (req) => {
           <p style="margin:0;color:#f57c00;font-size:14px;">⏰ <strong>Prazo: ${deadlineDate}</strong></p>
         </div>
 
+        <div style="margin-top:24px;text-align:center;">
+          <a href="DELIVERY_LINK_PLACEHOLDER" style="display:inline-block;padding:14px 32px;background:#2a9d6a;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;font-size:15px;">
+            📤 Entregar Arte
+          </a>
+          <p style="margin-top:8px;color:#999;font-size:12px;">Use este botão para fazer upload da arte finalizada</p>
+        </div>
+
         <p style="margin-top:24px;color:#999;font-size:12px;">
           Este email foi enviado automaticamente pelo sistema de gestão de briefings da Curseduca.
         </p>
       </div>
     `;
 
-    // Update image with assigned_email and deadline
+    // Generate delivery token and update image
+    const deliveryToken = crypto.randomUUID();
     await supabase
       .from("briefing_images")
-      .update({ assigned_email, deadline } as any)
+      .update({ assigned_email, deadline, delivery_token: deliveryToken } as any)
       .eq("id", image_id);
+
+    // Replace delivery link placeholder
+    const baseUrl = app_url || "https://id-preview--47593e69-3789-4cdb-b901-66106c2c2f6d.lovable.app";
+    const finalHtml = html.replace("DELIVERY_LINK_PLACEHOLDER", `${baseUrl}/delivery/${deliveryToken}`);
 
     // Send email via Resend
     const resendRes = await fetch("https://api.resend.com/emails", {
@@ -142,7 +154,7 @@ serve(async (req) => {
         from: "Curseduca Design <onboarding@resend.dev>",
         to: [assigned_email],
         subject: `📋 Briefing: ${imageTypeLabel}${image.product_name ? ` — ${image.product_name}` : ""} | Prazo: ${deadlineDate}`,
-        html,
+        html: finalHtml,
       }),
     });
 

@@ -14,12 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      briefing_deliveries: {
+        Row: {
+          briefing_image_id: string
+          comments: string | null
+          created_at: string
+          delivered_by_email: string
+          file_url: string
+          id: string
+        }
+        Insert: {
+          briefing_image_id: string
+          comments?: string | null
+          created_at?: string
+          delivered_by_email: string
+          file_url: string
+          id?: string
+        }
+        Update: {
+          briefing_image_id?: string
+          comments?: string | null
+          created_at?: string
+          delivered_by_email?: string
+          file_url?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "briefing_deliveries_briefing_image_id_fkey"
+            columns: ["briefing_image_id"]
+            isOneToOne: false
+            referencedRelation: "briefing_images"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       briefing_images: {
         Row: {
           assigned_email: string | null
           copy_style_from: string | null
           created_at: string
           deadline: string | null
+          delivery_token: string | null
           element_suggestion: string | null
           font_suggestion: string | null
           id: string
@@ -38,6 +74,7 @@ export type Database = {
           copy_style_from?: string | null
           created_at?: string
           deadline?: string | null
+          delivery_token?: string | null
           element_suggestion?: string | null
           font_suggestion?: string | null
           id?: string
@@ -56,6 +93,7 @@ export type Database = {
           copy_style_from?: string | null
           created_at?: string
           deadline?: string | null
+          delivery_token?: string | null
           element_suggestion?: string | null
           font_suggestion?: string | null
           id?: string

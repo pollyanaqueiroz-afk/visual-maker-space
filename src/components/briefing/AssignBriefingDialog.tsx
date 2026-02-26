@@ -47,6 +47,7 @@ export default function AssignBriefingDialog({
           image_id: imageId,
           assigned_email: email,
           deadline: new Date(deadline + 'T23:59:59').toISOString(),
+          app_url: window.location.origin,
         },
       });
 
