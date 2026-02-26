@@ -8,8 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { IMAGE_TYPE_LABELS, STATUS_LABELS, STATUS_COLORS } from '@/types/briefing';
-import { Search, Loader2, Palette, Clock, ExternalLink, FileImage, Filter } from 'lucide-react';
+import { Search, Loader2, Clock, ExternalLink, FileImage, Filter } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import CursEducaLayout from '@/components/CursEducaLayout';
 
 interface DesignerImage {
   id: string;
@@ -75,13 +76,8 @@ export default function DesignerPanel() {
   };
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="text-center">
-          <Palette className="h-10 w-10 text-primary mx-auto mb-3" />
-          <h1 className="text-2xl font-bold text-foreground">Minhas Artes</h1>
-          <p className="text-muted-foreground">Curseduca Design — Painel do Designer</p>
-        </div>
+    <CursEducaLayout title="Minhas Artes" subtitle="Painel do Designer">
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
 
         {/* Search */}
         <Card>
@@ -229,6 +225,6 @@ export default function DesignerPanel() {
           );
         })()}
       </div>
-    </div>
+    </CursEducaLayout>
   );
 }

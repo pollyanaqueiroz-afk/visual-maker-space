@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { LogOut, Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle, CalendarIcon, AlertCircle } from 'lucide-react';
+import CursEducaLayout from '@/components/CursEducaLayout';
 import { Checkbox } from '@/components/ui/checkbox';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -202,19 +203,15 @@ export default function Dashboard() {
   }, {});
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Gestão de Briefings</h1>
-            <p className="text-sm text-muted-foreground">Curseduca Design</p>
-          </div>
-          <Button variant="ghost" size="sm" onClick={signOut}>
-            <LogOut className="h-4 w-4 mr-2" /> Sair
-          </Button>
-        </div>
-      </header>
-
+    <CursEducaLayout
+      title="Gestão de Briefings"
+      subtitle="Curseduca Design"
+      actions={
+        <Button variant="ghost" size="sm" onClick={signOut} className="text-white/80 hover:text-white hover:bg-white/10">
+          <LogOut className="h-4 w-4 mr-2" /> Sair
+        </Button>
+      }
+    >
       <main className="max-w-7xl mx-auto px-4 py-8 space-y-8">
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
@@ -705,7 +702,7 @@ export default function Dashboard() {
           </TabsContent>
         </Tabs>
       </main>
-    </div>
+    </CursEducaLayout>
   );
 }
 
