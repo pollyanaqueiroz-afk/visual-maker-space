@@ -2,15 +2,18 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { RequestStatus, STATUS_LABELS, STATUS_COLORS, IMAGE_TYPE_LABELS, ImageType } from '@/types/briefing';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { LogOut, Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck } from 'lucide-react';
+import { LogOut, Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import ImportBriefingDialog from '@/components/briefing/ImportBriefingDialog';
@@ -32,33 +35,48 @@ interface ImageWithRequest {
   request_id: string;
   assigned_email: string | null;
   deadline: string | null;
-  // Joined from briefing_requests
   requester_name: string;
   requester_email: string;
   platform_url: string;
+}
+
+interface ReviewRecord {
+  id: string;
+  briefing_image_id: string;
+  action: string;
+  reviewer_comments: string | null;
+  reviewed_by: string;
+  created_at: string;
 }
 
 export default function Dashboard() {
   const { signOut } = useAuth();
   const [images, setImages] = useState<ImageWithRequest[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<ReviewRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
   const [filterClient, setFilterClient] = useState<string>('all');
 
   const fetchData = async () => {
-    // Fetch all images with their parent request info
-    const { data: imgData, error: imgErr } = await supabase
-      .from('briefing_images')
-      .select('*, briefing_requests!inner(requester_name, requester_email, platform_url)')
-      .order('created_at', { ascending: false });
+    const [imgRes, reqRes, revRes] = await Promise.all([
+      supabase
+        .from('briefing_images')
+        .select('*, briefing_requests!inner(requester_name, requester_email, platform_url)')
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('briefing_requests')
+        .select('id, platform_url, status, created_at')
+        .order('created_at', { ascending: false }),
+      (supabase.from('briefing_reviews' as any).select('*').order('created_at', { ascending: false }) as any),
+    ]);
 
-    if (imgErr) {
-      console.error(imgErr);
+    if (imgRes.error) {
+      console.error(imgRes.error);
       toast.error('Erro ao carregar dados');
     } else {
-      const mapped = (imgData || []).map((img: any) => ({
+      const mapped = (imgRes.data || []).map((img: any) => ({
         ...img,
         requester_name: img.briefing_requests?.requester_name || '',
         requester_email: img.briefing_requests?.requester_email || '',
@@ -67,13 +85,8 @@ export default function Dashboard() {
       setImages(mapped);
     }
 
-    // Fetch requests for client count
-    const { data: reqData } = await supabase
-      .from('briefing_requests')
-      .select('id, platform_url, status, created_at')
-      .order('created_at', { ascending: false });
-    setRequests(reqData || []);
-
+    setRequests(reqRes.data || []);
+    setReviews((revRes.data || []) as ReviewRecord[]);
     setLoading(false);
   };
 
@@ -96,14 +109,13 @@ export default function Dashboard() {
     return true;
   });
 
-  // Unique clients for filter
   const uniqueClients = Array.from(new Set(images.map(i => i.platform_url))).sort();
 
-  // Stats
   const totalImages = images.length;
   const pendingImages = images.filter(i => i.status === 'pending').length;
   const inProgressImages = images.filter(i => i.status === 'in_progress').length;
   const completedImages = images.filter(i => i.status === 'completed').length;
+  const reviewImages = images.filter(i => i.status === 'review').length;
   const openClients = new Set(
     requests.filter(r => r.status !== 'completed' && r.status !== 'cancelled').map(r => r.platform_url)
   ).size;
@@ -116,6 +128,30 @@ export default function Dashboard() {
       return url;
     }
   };
+
+  // Revision stats
+  const revisionRequests = reviews.filter(r => r.action === 'revision_requested');
+
+  const revisionsByEmail = revisionRequests.reduce<Record<string, number>>((acc, r) => {
+    // Find the image to get assigned_email
+    const img = images.find(i => i.id === r.briefing_image_id);
+    const email = img?.assigned_email || 'Desconhecido';
+    acc[email] = (acc[email] || 0) + 1;
+    return acc;
+  }, {});
+
+  const revisionsByImage = revisionRequests.reduce<Record<string, { count: number; label: string; designer: string }>>((acc, r) => {
+    const img = images.find(i => i.id === r.briefing_image_id);
+    if (!acc[r.briefing_image_id]) {
+      acc[r.briefing_image_id] = {
+        count: 0,
+        label: img ? `${IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type}${img.product_name ? ` — ${img.product_name}` : ''}` : r.briefing_image_id,
+        designer: img?.assigned_email || 'Desconhecido',
+      };
+    }
+    acc[r.briefing_image_id].count += 1;
+    return acc;
+  }, {});
 
   return (
     <div className="min-h-screen bg-background">
@@ -133,7 +169,7 @@ export default function Dashboard() {
 
       <main className="max-w-7xl mx-auto px-4 py-8 space-y-8">
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
           <Card>
             <CardContent className="pt-4 pb-4">
               <div className="flex items-center gap-2 mb-1">
@@ -164,6 +200,15 @@ export default function Dashboard() {
           <Card>
             <CardContent className="pt-4 pb-4">
               <div className="flex items-center gap-2 mb-1">
+                <Eye className="h-4 w-4 text-primary" />
+                <p className="text-sm text-muted-foreground">Em Revisão</p>
+              </div>
+              <p className="text-3xl font-bold text-primary">{reviewImages}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 pb-4">
+              <div className="flex items-center gap-2 mb-1">
                 <CheckCircle className="h-4 w-4 text-primary" />
                 <p className="text-sm text-muted-foreground">Concluídas</p>
               </div>
@@ -181,159 +226,405 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-4">
-          <ImportBriefingDialog onImported={fetchData} />
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-44">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os status</SelectItem>
-              {Object.entries(STATUS_LABELS).map(([key, label]) => (
-                <SelectItem key={key} value={key}>{label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Tipo de arte" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os tipos</SelectItem>
-              {Object.entries(IMAGE_TYPE_LABELS).map(([key, label]) => (
-                <SelectItem key={key} value={key}>{label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={filterClient} onValueChange={setFilterClient}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Cliente" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os clientes</SelectItem>
-              {uniqueClients.map(url => (
-                <SelectItem key={url} value={url}>{extractClientName(url)}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <span className="text-sm text-muted-foreground">{filtered.length} arte(s)</span>
-        </div>
+        <Tabs defaultValue="artes" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="artes">Artes</TabsTrigger>
+            <TabsTrigger value="revisoes" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" /> Refações
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Table */}
-        {loading ? (
-          <div className="text-center py-12 text-muted-foreground">Carregando...</div>
-        ) : (
-          <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tipo de Arte</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Solicitante</TableHead>
-                  <TableHead>Responsável</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Tempo em aberto</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map(img => (
-                  <TableRow key={img.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <FileImage className="h-4 w-4 text-primary" />
-                        <div>
-                          <span className="font-medium text-sm">
-                            {IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type}
-                          </span>
-                          {img.product_name && (
-                            <p className="text-xs text-muted-foreground">{img.product_name}</p>
-                          )}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <a href={img.platform_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-primary hover:underline font-medium text-sm">
-                        {extractClientName(img.platform_url)}
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">{img.requester_name}</div>
-                      <div className="text-xs text-muted-foreground">{img.requester_email}</div>
-                    </TableCell>
-                    <TableCell>
-                      {img.assigned_email ? (
-                        <div>
-                          <div className="text-sm">{img.assigned_email}</div>
-                          {img.deadline && (
-                            <div className="text-xs text-muted-foreground">
-                              Prazo: {new Date(img.deadline).toLocaleDateString('pt-BR')}
+          <TabsContent value="artes" className="space-y-6">
+            {/* Filters */}
+            <div className="flex flex-wrap items-center gap-4">
+              <ImportBriefingDialog onImported={fetchData} />
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-44">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os status</SelectItem>
+                  {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Tipo de arte" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os tipos</SelectItem>
+                  {Object.entries(IMAGE_TYPE_LABELS).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={filterClient} onValueChange={setFilterClient}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os clientes</SelectItem>
+                  {uniqueClients.map(url => (
+                    <SelectItem key={url} value={url}>{extractClientName(url)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span className="text-sm text-muted-foreground">{filtered.length} arte(s)</span>
+            </div>
+
+            {/* Table */}
+            {loading ? (
+              <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+            ) : (
+              <Card>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Tipo de Arte</TableHead>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Solicitante</TableHead>
+                      <TableHead>Responsável</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Refações</TableHead>
+                      <TableHead>Tempo em aberto</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.map(img => {
+                      const imgRevisions = reviews.filter(r => r.briefing_image_id === img.id && r.action === 'revision_requested').length;
+                      return (
+                        <TableRow key={img.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <FileImage className="h-4 w-4 text-primary" />
+                              <div>
+                                <span className="font-medium text-sm">
+                                  {IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type}
+                                </span>
+                                {img.product_name && (
+                                  <p className="text-xs text-muted-foreground">{img.product_name}</p>
+                                )}
+                              </div>
                             </div>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">Não atribuído</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Badge className={STATUS_COLORS[img.status] || ''} variant="secondary">
-                          {STATUS_LABELS[img.status] || img.status}
-                        </Badge>
-                        {(img.status === 'review' || img.status === 'completed') && (
-                          <PackageCheck className="h-4 w-4 text-primary" />
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1 text-sm">
-                        <Clock className="h-3 w-3" />
-                        {formatDistanceToNow(new Date(img.created_at), { locale: ptBR, addSuffix: false })}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center gap-2 justify-end">
-                        <Select value={img.status} onValueChange={v => updateImageStatus(img.id, v as RequestStatus)}>
-                          <SelectTrigger className="w-36 h-8 text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(STATUS_LABELS).map(([key, label]) => (
-                              <SelectItem key={key} value={key}>{label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <AssignBriefingDialog
-                          imageId={img.id}
-                          currentEmail={img.assigned_email}
-                          currentDeadline={img.deadline}
-                          imageLabel={`${IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type}${img.product_name ? ` — ${img.product_name}` : ''}`}
-                          onAssigned={fetchData}
-                        />
-                        <ImageDetailDialog image={img} />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {filtered.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      Nenhuma arte encontrada
-                    </TableCell>
-                  </TableRow>
+                          </TableCell>
+                          <TableCell>
+                            <a href={img.platform_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-primary hover:underline font-medium text-sm">
+                              {extractClientName(img.platform_url)}
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">{img.requester_name}</div>
+                            <div className="text-xs text-muted-foreground">{img.requester_email}</div>
+                          </TableCell>
+                          <TableCell>
+                            {img.assigned_email ? (
+                              <div>
+                                <div className="text-sm">{img.assigned_email}</div>
+                                {img.deadline && (
+                                  <div className="text-xs text-muted-foreground">
+                                    Prazo: {new Date(img.deadline).toLocaleDateString('pt-BR')}
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">Não atribuído</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Badge className={STATUS_COLORS[img.status] || ''} variant="secondary">
+                                {STATUS_LABELS[img.status] || img.status}
+                              </Badge>
+                              {(img.status === 'review' || img.status === 'completed') && (
+                                <PackageCheck className="h-4 w-4 text-primary" />
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {imgRevisions > 0 ? (
+                              <Badge variant="outline" className="text-destructive border-destructive/30">
+                                <RefreshCw className="h-3 w-3 mr-1" />
+                                {imgRevisions}
+                              </Badge>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1 text-sm">
+                              <Clock className="h-3 w-3" />
+                              {formatDistanceToNow(new Date(img.created_at), { locale: ptBR, addSuffix: false })}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center gap-2 justify-end">
+                              {img.status === 'review' && (
+                                <ReviewActionDialog image={img} onReviewed={fetchData} />
+                              )}
+                              <Select value={img.status} onValueChange={v => updateImageStatus(img.id, v as RequestStatus)}>
+                                <SelectTrigger className="w-36 h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <AssignBriefingDialog
+                                imageId={img.id}
+                                currentEmail={img.assigned_email}
+                                currentDeadline={img.deadline}
+                                imageLabel={`${IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type}${img.product_name ? ` — ${img.product_name}` : ''}`}
+                                onAssigned={fetchData}
+                              />
+                              <ImageDetailDialog image={img} reviews={reviews.filter(r => r.briefing_image_id === img.id)} />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    {filtered.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                          Nenhuma arte encontrada
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="revisoes" className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Revisions by designer */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Users className="h-5 w-5 text-primary" />
+                    Refações por Designer
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {Object.keys(revisionsByEmail).length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">Nenhuma refação registrada</p>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Designer</TableHead>
+                          <TableHead className="text-right">Refações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {Object.entries(revisionsByEmail)
+                          .sort(([, a], [, b]) => b - a)
+                          .map(([email, count]) => (
+                            <TableRow key={email}>
+                              <TableCell className="text-sm">{email}</TableCell>
+                              <TableCell className="text-right">
+                                <Badge variant="outline" className="text-destructive border-destructive/30">
+                                  {count}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Revisions by design */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <FileImage className="h-5 w-5 text-primary" />
+                    Refações por Arte
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {Object.keys(revisionsByImage).length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">Nenhuma refação registrada</p>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Arte</TableHead>
+                          <TableHead>Designer</TableHead>
+                          <TableHead className="text-right">Refações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {Object.entries(revisionsByImage)
+                          .sort(([, a], [, b]) => b.count - a.count)
+                          .map(([id, data]) => (
+                            <TableRow key={id}>
+                              <TableCell className="text-sm font-medium">{data.label}</TableCell>
+                              <TableCell className="text-sm text-muted-foreground">{data.designer}</TableCell>
+                              <TableCell className="text-right">
+                                <Badge variant="outline" className="text-destructive border-destructive/30">
+                                  {data.count}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Full review history */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Histórico de Revisões</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {reviews.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">Nenhuma revisão registrada</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Arte</TableHead>
+                        <TableHead>Ação</TableHead>
+                        <TableHead>Revisor</TableHead>
+                        <TableHead>Comentários</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {reviews.slice(0, 50).map(rev => {
+                        const img = images.find(i => i.id === rev.briefing_image_id);
+                        return (
+                          <TableRow key={rev.id}>
+                            <TableCell className="text-sm">{new Date(rev.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                            <TableCell className="text-sm">
+                              {img ? `${IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type}${img.product_name ? ` — ${img.product_name}` : ''}` : rev.briefing_image_id.slice(0, 8)}
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={rev.action === 'approved' ? 'bg-primary/20 text-primary border-0' : 'bg-destructive/20 text-destructive border-0'}>
+                                {rev.action === 'approved' ? '✅ Aprovado' : '🔄 Refação'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-sm">{rev.reviewed_by}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">{rev.reviewer_comments || '—'}</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
                 )}
-              </TableBody>
-            </Table>
-          </Card>
-        )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
 }
 
-function ImageDetailDialog({ image }: { image: ImageWithRequest }) {
+// Dialog for approving or requesting revision
+function ReviewActionDialog({ image, onReviewed }: { image: ImageWithRequest; onReviewed: () => void }) {
+  const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [comments, setComments] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleReview = async (action: 'approved' | 'revision_requested') => {
+    setSubmitting(true);
+    try {
+      // Insert review record
+      const { error: revErr } = await (supabase.from('briefing_reviews' as any).insert({
+        briefing_image_id: image.id,
+        action,
+        reviewer_comments: comments || null,
+        reviewed_by: user?.email || 'admin',
+      }) as any);
+
+      if (revErr) throw revErr;
+
+      // Update image status
+      const newStatus = action === 'approved' ? 'completed' : 'in_progress';
+      const { error: updErr } = await supabase
+        .from('briefing_images')
+        .update({ status: newStatus } as any)
+        .eq('id', image.id);
+
+      if (updErr) throw updErr;
+
+      toast.success(action === 'approved' ? 'Arte aprovada!' : 'Refação solicitada — designer será notificado.');
+      setOpen(false);
+      setComments('');
+      onReviewed();
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Erro ao registrar revisão');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="h-8 text-xs gap-1">
+          <ThumbsUp className="h-3 w-3" /> Revisar
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Revisar Entrega</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="text-sm">
+            <span className="text-muted-foreground">Arte:</span>{' '}
+            <span className="font-medium">{IMAGE_TYPE_LABELS[image.image_type as ImageType] || image.image_type}</span>
+            {image.product_name && <span className="text-muted-foreground"> — {image.product_name}</span>}
+          </div>
+          <div className="space-y-2">
+            <Label>Comentários (opcional)</Label>
+            <Textarea
+              value={comments}
+              onChange={e => setComments(e.target.value)}
+              placeholder="Feedback para o designer..."
+              rows={3}
+            />
+          </div>
+          <div className="flex gap-3">
+            <Button
+              className="flex-1"
+              variant="outline"
+              onClick={() => handleReview('revision_requested')}
+              disabled={submitting}
+            >
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <ThumbsDown className="h-4 w-4 mr-1" />}
+              Solicitar Refação
+            </Button>
+            <Button
+              className="flex-1"
+              onClick={() => handleReview('approved')}
+              disabled={submitting}
+            >
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <ThumbsUp className="h-4 w-4 mr-1" />}
+              Aprovar
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ImageDetailDialog({ image, reviews }: { image: ImageWithRequest; reviews: ReviewRecord[] }) {
   const [refs, setRefs] = useState<any[]>([]);
   const [deliveries, setDeliveries] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
@@ -424,6 +715,31 @@ function ImageDetailDialog({ image }: { image: ImageWithRequest }) {
                       <a href={d.file_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
                         <Download className="h-3 w-3" /> Baixar arquivo
                       </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+          {reviews.length > 0 && (
+            <>
+              <Separator />
+              <div>
+                <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <RefreshCw className="h-4 w-4 text-primary" />
+                  Histórico de Revisões ({reviews.length})
+                </p>
+                <div className="space-y-2">
+                  {reviews.map(rev => (
+                    <div key={rev.id} className="border rounded-lg p-3 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <Badge className={rev.action === 'approved' ? 'bg-primary/20 text-primary border-0' : 'bg-destructive/20 text-destructive border-0'} variant="outline">
+                          {rev.action === 'approved' ? '✅ Aprovado' : '🔄 Refação'}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">{new Date(rev.created_at).toLocaleDateString('pt-BR')}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">por {rev.reviewed_by}</p>
+                      {rev.reviewer_comments && <p className="text-sm">{rev.reviewer_comments}</p>}
                     </div>
                   ))}
                 </div>
