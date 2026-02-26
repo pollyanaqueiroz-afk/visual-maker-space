@@ -171,13 +171,31 @@ export default function BriefingForm() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-3xl mx-auto p-4 py-8 space-y-2">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Briefing de Design</h1>
-          <p className="text-muted-foreground mt-2">Plataforma Curseduca — Área de Membros</p>
-          <p className="text-sm text-muted-foreground mt-1">Preencha as seções das artes que você deseja solicitar</p>
+      {/* Hero Welcome Section */}
+      <div className="relative w-full overflow-hidden" style={{ minHeight: '340px' }}>
+        <img
+          src="/images/bg-curseduca.png"
+          alt="Curseduca escritório"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-background" />
+        <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 py-16 min-h-[340px]">
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-5 py-2 mb-6">
+            <span className="text-white/90 text-sm font-medium tracking-wide">Plataforma Curseduca</span>
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-white drop-shadow-lg" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+            Bem-vindo ao Briefing
+          </h1>
+          <p className="text-white/80 mt-3 text-lg max-w-xl leading-relaxed">
+            Solicite as artes da sua área de membros de forma prática e organizada.
+          </p>
+          <p className="text-white/50 mt-2 text-sm">
+            Preencha as seções abaixo com as informações do que você precisa.
+          </p>
         </div>
+      </div>
 
+      <div className="max-w-3xl mx-auto p-4 py-10 space-y-2">
         <form onSubmit={handleSubmit} className="space-y-8">
           <Card>
             <CardContent className="pt-6">
