@@ -130,11 +130,11 @@ export default function AIBriefingAssistant({ onApply, currentForm }: Props) {
               </div>
             )}
 
-            <div className="flex gap-2">
-              <Button size="sm" onClick={() => { onApply(suggestion); setSuggestion(null); setMessage(''); }} className="gap-1.5">
+            <div className="flex flex-col items-center gap-2">
+              <Button size="sm" onClick={() => { onApply(suggestion); setSuggestion(null); setMessage(''); }} className="gap-1.5 w-full">
                 <Check className="h-3.5 w-3.5" /> Usar esta sugestão
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => setSuggestion(null)} className="gap-1.5">
+              <Button size="sm" variant="ghost" onClick={() => setSuggestion(null)} className="gap-1.5 w-full">
                 <X className="h-3.5 w-3.5" /> Descartar
               </Button>
             </div>

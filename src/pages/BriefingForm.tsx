@@ -522,7 +522,7 @@ export default function BriefingForm() {
               </div>
 
               {/* AI Assistant sidebar - desktop */}
-              <div className="hidden md:block w-72 lg:w-80 shrink-0 sticky top-6">
+              <div className="hidden md:flex md:flex-col w-72 lg:w-80 shrink-0 sticky top-6 border-l border-border/50 pl-6">
                 <AIBriefingAssistant
                   onApply={handleApplySuggestion}
                   currentForm={{ ...form, selections }}
