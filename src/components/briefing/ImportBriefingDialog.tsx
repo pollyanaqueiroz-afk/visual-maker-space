@@ -2,13 +2,19 @@ import { useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { IMAGE_TYPE_LABELS } from '@/types/briefing';
 import mammoth from 'mammoth';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { Upload, FileText, Loader2, Check, AlertCircle } from 'lucide-react';
+import { Upload, FileText, Loader2, Check, AlertCircle, CalendarIcon } from 'lucide-react';
 
 interface ParsedImage {
   image_type: string;
@@ -43,6 +49,7 @@ export default function ImportBriefingDialog({ onImported }: Props) {
   const [fileName, setFileName] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [duplicateInfo, setDuplicateInfo] = useState<{ date: string; imageCount: number } | null>(null);
+  const [receivedAt, setReceivedAt] = useState<Date>(new Date());
   const fileRef = useRef<HTMLInputElement>(null);
 
   const reset = () => {
@@ -51,6 +58,7 @@ export default function ImportBriefingDialog({ onImported }: Props) {
     setFileName('');
     setErrorMsg('');
     setDuplicateInfo(null);
+    setReceivedAt(new Date());
   };
 
   const extractText = async (file: File): Promise<string> => {
@@ -131,6 +139,7 @@ export default function ImportBriefingDialog({ onImported }: Props) {
         has_challenge: parsed.has_challenge,
         has_community: parsed.has_community,
         brand_drive_link: parsed.brand_drive_link || null,
+        received_at: receivedAt.toISOString(),
       } as any).select('id').single();
 
       if (error) throw error;
@@ -230,7 +239,7 @@ export default function ImportBriefingDialog({ onImported }: Props) {
         {step === 'preview' && parsed && (
           <div className="space-y-4">
             <Card>
-              <CardContent className="pt-4 space-y-2">
+              <CardContent className="pt-4 space-y-3">
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div><span className="text-muted-foreground">Plataforma:</span> <span className="font-medium">{parsed.platform_url}</span></div>
                   <div><span className="text-muted-foreground">Identidade visual:</span> <span className="font-medium">{parsed.brand_drive_link || '—'}</span></div>
@@ -239,6 +248,50 @@ export default function ImportBriefingDialog({ onImported }: Props) {
                   {parsed.has_trail && <Badge variant="secondary">Trilha</Badge>}
                   {parsed.has_challenge && <Badge variant="secondary">Desafio</Badge>}
                   {parsed.has_community && <Badge variant="secondary">Comunidade</Badge>}
+                </div>
+                <Separator />
+                <div className="space-y-1">
+                  <Label className="text-sm font-medium">Data de recebimento do arquivo</Label>
+                  <p className="text-xs text-muted-foreground">O SLA de 7 dias será contado a partir desta data.</p>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-[240px] justify-start text-left font-normal",
+                          !receivedAt && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {receivedAt ? format(receivedAt, "dd/MM/yyyy", { locale: ptBR }) : "Selecione a data"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={receivedAt}
+                        onSelect={(d) => d && setReceivedAt(d)}
+                        disabled={(date) => date > new Date()}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  {(() => {
+                    const diff = Math.floor((new Date().getTime() - receivedAt.getTime()) / (1000 * 60 * 60 * 24));
+                    if (diff >= 7) {
+                      return (
+                        <p className="text-xs text-destructive font-medium flex items-center gap-1 mt-1">
+                          <AlertCircle className="h-3 w-3" /> SLA excedido — {diff} dias desde o recebimento
+                        </p>
+                      );
+                    }
+                    return (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {7 - diff} dia(s) restante(s) no SLA
+                      </p>
+                    );
+                  })()}
                 </div>
               </CardContent>
             </Card>
