@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,16 +26,24 @@ interface DesignerImage {
 }
 
 export default function DesignerPanel() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => localStorage.getItem('designer_email') || '');
   const [images, setImages] = useState<DesignerImage[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
 
+  // Auto-search on mount if email is saved
+  useEffect(() => {
+    if (email.trim()) {
+      handleSearch();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleSearch = async () => {
     if (!email.trim()) return;
     setLoading(true);
     setSearched(true);
+    localStorage.setItem('designer_email', email.trim().toLowerCase());
 
     const { data, error } = await (supabase
       .from('briefing_images')
