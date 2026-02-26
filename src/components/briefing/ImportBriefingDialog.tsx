@@ -30,7 +30,7 @@ interface ParsedBriefing {
   images: ParsedImage[];
 }
 
-type Step = 'upload' | 'parsing' | 'preview' | 'saving' | 'done' | 'error';
+type Step = 'upload' | 'parsing' | 'duplicate' | 'preview' | 'saving' | 'done' | 'error';
 
 interface Props {
   onImported: () => void;
@@ -42,6 +42,7 @@ export default function ImportBriefingDialog({ onImported }: Props) {
   const [parsed, setParsed] = useState<ParsedBriefing | null>(null);
   const [fileName, setFileName] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [duplicateInfo, setDuplicateInfo] = useState<{ date: string; imageCount: number } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const reset = () => {
@@ -49,6 +50,7 @@ export default function ImportBriefingDialog({ onImported }: Props) {
     setParsed(null);
     setFileName('');
     setErrorMsg('');
+    setDuplicateInfo(null);
   };
 
   const extractText = async (file: File): Promise<string> => {
@@ -87,8 +89,25 @@ export default function ImportBriefingDialog({ onImported }: Props) {
         throw new Error('Não foi possível extrair os dados do briefing');
       }
 
+      // Check for duplicate by platform_url
+      const { data: existing } = await (supabase
+        .from('briefing_requests')
+        .select('id, created_at, briefing_images:briefing_images(id)')
+        .eq('platform_url', data.platform_url) as any)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
       setParsed(data);
-      setStep('preview');
+
+      if (existing && existing.length > 0) {
+        setDuplicateInfo({
+          date: new Date(existing[0].created_at).toLocaleDateString('pt-BR'),
+          imageCount: existing[0].briefing_images?.length || 0,
+        });
+        setStep('duplicate');
+      } else {
+        setStep('preview');
+      }
     } catch (err: any) {
       console.error('Import error:', err);
       setErrorMsg(err.message || 'Erro ao importar documento');
@@ -185,6 +204,25 @@ export default function ImportBriefingDialog({ onImported }: Props) {
               <p className="font-medium">Analisando documento...</p>
               <p className="text-sm text-muted-foreground mt-1">{fileName}</p>
               <p className="text-xs text-muted-foreground mt-2">Extraindo dados com IA</p>
+            </div>
+          </div>
+        )}
+
+        {step === 'duplicate' && parsed && duplicateInfo && (
+          <div className="flex flex-col items-center gap-4 py-8">
+            <div className="w-16 h-16 rounded-full bg-warning/10 flex items-center justify-center">
+              <AlertCircle className="h-8 w-8 text-warning" />
+            </div>
+            <div className="text-center space-y-2">
+              <p className="font-medium">Documento já importado</p>
+              <p className="text-sm text-muted-foreground">
+                Um briefing para <span className="font-medium text-foreground">{parsed.platform_url}</span> já foi importado em {duplicateInfo.date} com {duplicateInfo.imageCount} arte(s).
+              </p>
+              <p className="text-sm text-muted-foreground">Deseja importar novamente mesmo assim?</p>
+            </div>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={reset}>Cancelar</Button>
+              <Button variant="default" onClick={() => setStep('preview')}>Importar mesmo assim</Button>
             </div>
           </div>
         )}
