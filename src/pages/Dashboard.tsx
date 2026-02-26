@@ -13,10 +13,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { LogOut, Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle } from 'lucide-react';
+import { LogOut, Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle, CalendarIcon } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 import ImportBriefingDialog from '@/components/briefing/ImportBriefingDialog';
 import AssignBriefingDialog from '@/components/briefing/AssignBriefingDialog';
 
@@ -403,9 +406,36 @@ export default function Dashboard() {
                             )}
                           </TableCell>
                           <TableCell>
-                            <div className="text-sm">
-                              {new Date(img.received_at).toLocaleDateString('pt-BR')}
-                            </div>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-auto py-1 px-2 text-sm font-normal gap-1">
+                                  <CalendarIcon className="h-3 w-3 text-muted-foreground" />
+                                  {format(new Date(img.received_at), 'dd/MM/yyyy')}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={new Date(img.received_at)}
+                                  onSelect={async (d) => {
+                                    if (!d) return;
+                                    const { error } = await supabase
+                                      .from('briefing_requests')
+                                      .update({ received_at: d.toISOString() } as any)
+                                      .eq('id', img.request_id);
+                                    if (error) {
+                                      toast.error('Erro ao atualizar data');
+                                    } else {
+                                      toast.success('Data de recebimento atualizada');
+                                      fetchData();
+                                    }
+                                  }}
+                                  disabled={(date) => date > new Date()}
+                                  initialFocus
+                                  className={cn("p-3 pointer-events-auto")}
+                                />
+                              </PopoverContent>
+                            </Popover>
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1 text-sm">
