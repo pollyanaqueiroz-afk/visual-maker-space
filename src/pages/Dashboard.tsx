@@ -310,8 +310,9 @@ export default function Dashboard() {
             {loading ? (
               <div className="text-center py-12 text-muted-foreground">Carregando...</div>
             ) : (
-              <Card>
-                <Table>
+              <Card className="overflow-hidden">
+                <div className="overflow-x-auto">
+                <Table className="min-w-[1100px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Tipo de Arte</TableHead>
@@ -441,6 +442,7 @@ export default function Dashboard() {
                     )}
                   </TableBody>
                 </Table>
+                </div>
               </Card>
             )}
           </TabsContent>
