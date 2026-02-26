@@ -170,7 +170,7 @@ export default function ImportBriefingDialog({ onImported }: Props) {
           font_suggestion: img.font_suggestion || null,
           element_suggestion: img.element_suggestion || null,
           professional_photo_url: img.professional_photo_url || null,
-          orientation: img.orientation || null,
+          orientation: ['horizontal', 'vertical'].includes(img.orientation?.toLowerCase?.()) ? img.orientation.toLowerCase() : null,
           observations: img.observations || null,
         } as any);
         if (imgError) throw imgError;
