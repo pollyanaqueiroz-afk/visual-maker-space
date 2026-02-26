@@ -29,6 +29,7 @@ export type Database = {
           professional_photo_url: string | null
           request_id: string
           sort_order: number
+          status: Database["public"]["Enums"]["request_status"]
         }
         Insert: {
           copy_style_from?: string | null
@@ -44,6 +45,7 @@ export type Database = {
           professional_photo_url?: string | null
           request_id: string
           sort_order?: number
+          status?: Database["public"]["Enums"]["request_status"]
         }
         Update: {
           copy_style_from?: string | null
@@ -59,6 +61,7 @@ export type Database = {
           professional_photo_url?: string | null
           request_id?: string
           sort_order?: number
+          status?: Database["public"]["Enums"]["request_status"]
         }
         Relationships: [
           {

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { BriefingRequest, RequestStatus, STATUS_LABELS, STATUS_COLORS, IMAGE_TYPE_LABELS } from '@/types/briefing';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { RequestStatus, STATUS_LABELS, STATUS_COLORS, IMAGE_TYPE_LABELS, ImageType } from '@/types/briefing';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,51 +10,90 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { LogOut, Clock, FileImage, ExternalLink, Eye } from 'lucide-react';
-import ImportBriefingDialog from '@/components/briefing/ImportBriefingDialog';
+import { LogOut, Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import ImportBriefingDialog from '@/components/briefing/ImportBriefingDialog';
+
+interface ImageWithRequest {
+  id: string;
+  image_type: string;
+  product_name: string | null;
+  image_text: string | null;
+  font_suggestion: string | null;
+  element_suggestion: string | null;
+  professional_photo_url: string | null;
+  orientation: string | null;
+  observations: string | null;
+  status: RequestStatus;
+  sort_order: number;
+  created_at: string;
+  request_id: string;
+  // Joined from briefing_requests
+  requester_name: string;
+  requester_email: string;
+  platform_url: string;
+}
 
 export default function Dashboard() {
   const { signOut } = useAuth();
+  const [images, setImages] = useState<ImageWithRequest[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
 
-  const fetchRequests = async () => {
-    const { data, error } = await supabase
-      .from('briefing_requests')
-      .select('*')
+  const fetchData = async () => {
+    // Fetch all images with their parent request info
+    const { data: imgData, error: imgErr } = await supabase
+      .from('briefing_images')
+      .select('*, briefing_requests!inner(requester_name, requester_email, platform_url)')
       .order('created_at', { ascending: false });
-    if (error) {
-      console.error(error);
-      toast.error('Erro ao carregar pedidos');
+
+    if (imgErr) {
+      console.error(imgErr);
+      toast.error('Erro ao carregar dados');
     } else {
-      setRequests(data || []);
+      const mapped = (imgData || []).map((img: any) => ({
+        ...img,
+        requester_name: img.briefing_requests?.requester_name || '',
+        requester_email: img.briefing_requests?.requester_email || '',
+        platform_url: img.briefing_requests?.platform_url || '',
+      }));
+      setImages(mapped);
     }
+
+    // Fetch requests for client count
+    const { data: reqData } = await supabase
+      .from('briefing_requests')
+      .select('id, platform_url, status, created_at')
+      .order('created_at', { ascending: false });
+    setRequests(reqData || []);
+
     setLoading(false);
   };
 
-  useEffect(() => { fetchRequests(); }, []);
+  useEffect(() => { fetchData(); }, []);
 
-  const updateStatus = async (id: string, status: RequestStatus) => {
-    const { error } = await supabase.from('briefing_requests').update({ status } as any).eq('id', id);
+  const updateImageStatus = async (id: string, status: RequestStatus) => {
+    const { error } = await supabase.from('briefing_images').update({ status } as any).eq('id', id);
     if (error) {
       toast.error('Erro ao atualizar status');
     } else {
       toast.success('Status atualizado');
-      fetchRequests();
+      fetchData();
     }
   };
 
-  const filtered = filterStatus === 'all' ? requests : requests.filter(r => r.status === filterStatus);
+  const filtered = filterStatus === 'all' ? images : images.filter(i => i.status === filterStatus);
 
-  const stats = {
-    total: requests.length,
-    pending: requests.filter(r => r.status === 'pending').length,
-    in_progress: requests.filter(r => r.status === 'in_progress').length,
-    completed: requests.filter(r => r.status === 'completed').length,
-  };
+  // Stats
+  const totalImages = images.length;
+  const pendingImages = images.filter(i => i.status === 'pending').length;
+  const inProgressImages = images.filter(i => i.status === 'in_progress').length;
+  const completedImages = images.filter(i => i.status === 'completed').length;
+  const openClients = new Set(
+    requests.filter(r => r.status !== 'completed' && r.status !== 'cancelled').map(r => r.platform_url)
+  ).size;
 
   const extractClientName = (url: string) => {
     try {
@@ -81,36 +120,57 @@ export default function Dashboard() {
 
       <main className="max-w-7xl mx-auto px-4 py-8 space-y-8">
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <Card>
             <CardContent className="pt-4 pb-4">
-              <p className="text-sm text-muted-foreground">Total</p>
-              <p className="text-3xl font-bold">{stats.total}</p>
+              <div className="flex items-center gap-2 mb-1">
+                <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">Total Artes</p>
+              </div>
+              <p className="text-3xl font-bold">{totalImages}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-4 pb-4">
-              <p className="text-sm text-muted-foreground">Pendentes</p>
-              <p className="text-3xl font-bold text-warning">{stats.pending}</p>
+              <div className="flex items-center gap-2 mb-1">
+                <Clock className="h-4 w-4 text-warning" />
+                <p className="text-sm text-muted-foreground">Pendentes</p>
+              </div>
+              <p className="text-3xl font-bold text-warning">{pendingImages}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-4 pb-4">
-              <p className="text-sm text-muted-foreground">Em Produção</p>
-              <p className="text-3xl font-bold text-info">{stats.in_progress}</p>
+              <div className="flex items-center gap-2 mb-1">
+                <Loader2 className="h-4 w-4 text-info" />
+                <p className="text-sm text-muted-foreground">Em Produção</p>
+              </div>
+              <p className="text-3xl font-bold text-info">{inProgressImages}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-4 pb-4">
-              <p className="text-sm text-muted-foreground">Concluídos</p>
-              <p className="text-3xl font-bold text-primary">{stats.completed}</p>
+              <div className="flex items-center gap-2 mb-1">
+                <CheckCircle className="h-4 w-4 text-primary" />
+                <p className="text-sm text-muted-foreground">Concluídas</p>
+              </div>
+              <p className="text-3xl font-bold text-primary">{completedImages}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 pb-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">Clientes Abertos</p>
+              </div>
+              <p className="text-3xl font-bold">{openClients}</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Filters */}
         <div className="flex items-center gap-4">
-          <ImportBriefingDialog onImported={fetchRequests} />
+          <ImportBriefingDialog onImported={fetchData} />
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Filtrar por status" />
@@ -122,7 +182,7 @@ export default function Dashboard() {
               ))}
             </SelectContent>
           </Select>
-          <span className="text-sm text-muted-foreground">{filtered.length} resultado(s)</span>
+          <span className="text-sm text-muted-foreground">{filtered.length} arte(s)</span>
         </div>
 
         {/* Table */}
@@ -133,44 +193,54 @@ export default function Dashboard() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Tipo de Arte</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Solicitante</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Tempo em aberto</TableHead>
-                  <TableHead>Criado em</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map(req => (
-                  <TableRow key={req.id}>
+                {filtered.map(img => (
+                  <TableRow key={img.id}>
                     <TableCell>
-                      <a href={req.platform_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-primary hover:underline font-medium">
-                        {extractClientName(req.platform_url)}
+                      <div className="flex items-center gap-2">
+                        <FileImage className="h-4 w-4 text-primary" />
+                        <div>
+                          <span className="font-medium text-sm">
+                            {IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type}
+                          </span>
+                          {img.product_name && (
+                            <p className="text-xs text-muted-foreground">{img.product_name}</p>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <a href={img.platform_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-primary hover:underline font-medium text-sm">
+                        {extractClientName(img.platform_url)}
                         <ExternalLink className="h-3 w-3" />
                       </a>
                     </TableCell>
                     <TableCell>
-                      <div>{req.requester_name}</div>
-                      <div className="text-xs text-muted-foreground">{req.requester_email}</div>
+                      <div className="text-sm">{img.requester_name}</div>
+                      <div className="text-xs text-muted-foreground">{img.requester_email}</div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={STATUS_COLORS[req.status as RequestStatus] || ''} variant="secondary">
-                        {STATUS_LABELS[req.status as RequestStatus] || req.status}
+                      <Badge className={STATUS_COLORS[img.status] || ''} variant="secondary">
+                        {STATUS_LABELS[img.status] || img.status}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1 text-sm">
                         <Clock className="h-3 w-3" />
-                        {formatDistanceToNow(new Date(req.created_at), { locale: ptBR, addSuffix: false })}
+                        {formatDistanceToNow(new Date(img.created_at), { locale: ptBR, addSuffix: false })}
                       </div>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {new Date(req.created_at).toLocaleDateString('pt-BR')}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center gap-2 justify-end">
-                        <Select value={req.status} onValueChange={v => updateStatus(req.id, v as RequestStatus)}>
+                        <Select value={img.status} onValueChange={v => updateImageStatus(img.id, v as RequestStatus)}>
                           <SelectTrigger className="w-36 h-8 text-xs">
                             <SelectValue />
                           </SelectTrigger>
@@ -180,7 +250,7 @@ export default function Dashboard() {
                             ))}
                           </SelectContent>
                         </Select>
-                        <RequestDetailDialog requestId={req.id} />
+                        <ImageDetailDialog image={img} />
                       </div>
                     </TableCell>
                   </TableRow>
@@ -188,7 +258,7 @@ export default function Dashboard() {
                 {filtered.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      Nenhum pedido encontrado
+                      Nenhuma arte encontrada
                     </TableCell>
                   </TableRow>
                 )}
@@ -201,31 +271,20 @@ export default function Dashboard() {
   );
 }
 
-function RequestDetailDialog({ requestId }: { requestId: string }) {
-  const [images, setImages] = useState<any[]>([]);
+function ImageDetailDialog({ image }: { image: ImageWithRequest }) {
   const [refs, setRefs] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
 
-  const fetchDetails = async () => {
-    const { data: imgs } = await supabase
-      .from('briefing_images')
+  const fetchRefs = async () => {
+    const { data } = await supabase
+      .from('briefing_reference_images')
       .select('*')
-      .eq('request_id', requestId)
-      .order('sort_order');
-    setImages(imgs || []);
-
-    if (imgs && imgs.length > 0) {
-      const ids = imgs.map((i: any) => i.id);
-      const { data: refData } = await supabase
-        .from('briefing_reference_images')
-        .select('*')
-        .in('briefing_image_id', ids);
-      setRefs(refData || []);
-    }
+      .eq('briefing_image_id', image.id);
+    setRefs(data || []);
   };
 
   useEffect(() => {
-    if (open) fetchDetails();
+    if (open) fetchRefs();
   }, [open]);
 
   return (
@@ -235,44 +294,53 @@ function RequestDetailDialog({ requestId }: { requestId: string }) {
           <Eye className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Detalhes do Briefing</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <FileImage className="h-5 w-5 text-primary" />
+            {IMAGE_TYPE_LABELS[image.image_type as ImageType] || image.image_type}
+            {image.product_name && <span className="text-muted-foreground font-normal">— {image.product_name}</span>}
+          </DialogTitle>
         </DialogHeader>
-        <div className="space-y-6">
-          {images.map((img: any) => {
-            const imgRefs = refs.filter((r: any) => r.briefing_image_id === img.id);
-            return (
-              <div key={img.id} className="space-y-2">
-                <h3 className="font-semibold flex items-center gap-2">
-                  <FileImage className="h-4 w-4 text-primary" />
-                  {IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type}
-                  {img.product_name && <span className="text-muted-foreground font-normal">— {img.product_name}</span>}
-                </h3>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  {img.image_text && <div><span className="text-muted-foreground">Texto:</span> {img.image_text}</div>}
-                  {img.font_suggestion && <div><span className="text-muted-foreground">Fonte:</span> {img.font_suggestion}</div>}
-                  {img.element_suggestion && <div className="col-span-2"><span className="text-muted-foreground">Elemento:</span> {img.element_suggestion}</div>}
-                  {img.orientation && <div><span className="text-muted-foreground">Orientação:</span> {img.orientation}</div>}
-                  {img.observations && <div className="col-span-2"><span className="text-muted-foreground">Obs:</span> {img.observations}</div>}
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <span className="text-muted-foreground">Cliente:</span>
+              <p className="font-medium">{image.platform_url}</p>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Solicitante:</span>
+              <p className="font-medium">{image.requester_name}</p>
+              <p className="text-xs text-muted-foreground">{image.requester_email}</p>
+            </div>
+          </div>
+          <Separator />
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            {image.image_text && <div><span className="text-muted-foreground">Texto:</span><p>{image.image_text}</p></div>}
+            {image.font_suggestion && <div><span className="text-muted-foreground">Fonte:</span><p>{image.font_suggestion}</p></div>}
+            {image.element_suggestion && <div className="col-span-2"><span className="text-muted-foreground">Elemento:</span><p>{image.element_suggestion}</p></div>}
+            {image.professional_photo_url && <div className="col-span-2"><span className="text-muted-foreground">Foto profissional:</span><p><a href={image.professional_photo_url} target="_blank" className="text-primary hover:underline">{image.professional_photo_url}</a></p></div>}
+            {image.orientation && <div><span className="text-muted-foreground">Orientação:</span><p>{image.orientation}</p></div>}
+            {image.observations && <div className="col-span-2"><span className="text-muted-foreground">Observações:</span><p>{image.observations}</p></div>}
+          </div>
+          {refs.length > 0 && (
+            <>
+              <Separator />
+              <div>
+                <p className="text-sm font-medium mb-2">Referências</p>
+                <div className="flex flex-wrap gap-2">
+                  {refs.map((ref: any) => (
+                    <a key={ref.id} href={ref.file_url} target="_blank" rel="noopener noreferrer" className="border rounded p-1 text-xs hover:bg-accent">
+                      <img src={ref.file_url} alt="" className="w-16 h-16 object-cover rounded" />
+                      <span className={ref.is_exact_use ? 'text-primary font-medium' : 'text-muted-foreground'}>
+                        {ref.is_exact_use ? 'Usar exatamente' : 'Referência'}
+                      </span>
+                    </a>
+                  ))}
                 </div>
-                {imgRefs.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {imgRefs.map((ref: any) => (
-                      <a key={ref.id} href={ref.file_url} target="_blank" rel="noopener noreferrer" className="border rounded p-1 text-xs hover:bg-accent">
-                        <img src={ref.file_url} alt="" className="w-16 h-16 object-cover rounded" />
-                        <span className={ref.is_exact_use ? 'text-primary font-medium' : 'text-muted-foreground'}>
-                          {ref.is_exact_use ? 'Usar exatamente' : 'Referência'}
-                        </span>
-                      </a>
-                    ))}
-                  </div>
-                )}
-                <Separator />
               </div>
-            );
-          })}
-          {images.length === 0 && <p className="text-muted-foreground text-center py-4">Nenhuma arte solicitada</p>}
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>
