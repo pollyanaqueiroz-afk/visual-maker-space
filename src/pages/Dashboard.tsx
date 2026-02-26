@@ -41,6 +41,8 @@ export default function Dashboard() {
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterType, setFilterType] = useState<string>('all');
+  const [filterClient, setFilterClient] = useState<string>('all');
 
   const fetchData = async () => {
     // Fetch all images with their parent request info
@@ -84,7 +86,15 @@ export default function Dashboard() {
     }
   };
 
-  const filtered = filterStatus === 'all' ? images : images.filter(i => i.status === filterStatus);
+  const filtered = images.filter(i => {
+    if (filterStatus !== 'all' && i.status !== filterStatus) return false;
+    if (filterType !== 'all' && i.image_type !== filterType) return false;
+    if (filterClient !== 'all' && i.platform_url !== filterClient) return false;
+    return true;
+  });
+
+  // Unique clients for filter
+  const uniqueClients = Array.from(new Set(images.map(i => i.platform_url))).sort();
 
   // Stats
   const totalImages = images.length;
@@ -169,16 +179,38 @@ export default function Dashboard() {
         </div>
 
         {/* Filters */}
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <ImportBriefingDialog onImported={fetchData} />
           <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Filtrar por status" />
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="all">Todos os status</SelectItem>
               {Object.entries(STATUS_LABELS).map(([key, label]) => (
                 <SelectItem key={key} value={key}>{label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filterType} onValueChange={setFilterType}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Tipo de arte" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os tipos</SelectItem>
+              {Object.entries(IMAGE_TYPE_LABELS).map(([key, label]) => (
+                <SelectItem key={key} value={key}>{label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filterClient} onValueChange={setFilterClient}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Cliente" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os clientes</SelectItem>
+              {uniqueClients.map(url => (
+                <SelectItem key={url} value={url}>{extractClientName(url)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
