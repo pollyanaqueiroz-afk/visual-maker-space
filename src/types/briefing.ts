@@ -47,6 +47,8 @@ export interface ImageBriefingFormData {
   image_text: string;
   font_suggestion: string;
   element_suggestion: string;
+  element_suggestion_url?: string;
+  element_suggestion_images?: File[];
   professional_photo_url: string;
   observations: string;
   orientation?: string;

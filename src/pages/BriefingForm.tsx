@@ -56,6 +56,22 @@ export default function BriefingForm() {
   };
 
   const insertImage = async (requestId: string, type: string, data: ImageBriefingFormData, sortOrder: number) => {
+    // Upload element suggestion images and build combined element_suggestion text
+    let elementSuggestion = data.element_suggestion || '';
+    const elementImageUrls: string[] = [];
+    if (data.element_suggestion_images && data.element_suggestion_images.length > 0) {
+      for (const file of data.element_suggestion_images) {
+        const url = await uploadFile(file, `elements/${requestId}`);
+        elementImageUrls.push(url);
+      }
+    }
+    if (data.element_suggestion_url) {
+      elementImageUrls.push(data.element_suggestion_url);
+    }
+    if (elementImageUrls.length > 0) {
+      elementSuggestion += (elementSuggestion ? '\n\n' : '') + 'Links/Imagens:\n' + elementImageUrls.join('\n');
+    }
+
     const { data: img, error } = await supabase.from('briefing_images').insert({
       request_id: requestId,
       image_type: type,
@@ -63,7 +79,7 @@ export default function BriefingForm() {
       product_name: data.product_name || null,
       image_text: data.image_text || null,
       font_suggestion: data.font_suggestion || null,
-      element_suggestion: data.element_suggestion || null,
+      element_suggestion: elementSuggestion || null,
       professional_photo_url: data.professional_photo_url || null,
       orientation: data.orientation || null,
       observations: data.observations || null,
