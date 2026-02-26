@@ -29,7 +29,7 @@ export default function AssignBriefingDialog({
       return currentDeadline.slice(0, 10);
     }
     const d = new Date();
-    d.setDate(d.getDate() + 2);
+    d.setDate(d.getDate() + 7);
     return d.toISOString().slice(0, 10);
   });
   const [sending, setSending] = useState(false);

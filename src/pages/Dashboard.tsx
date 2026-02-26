@@ -13,7 +13,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { LogOut, Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw } from 'lucide-react';
+import { LogOut, Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import ImportBriefingDialog from '@/components/briefing/ImportBriefingDialog';
@@ -35,6 +36,7 @@ interface ImageWithRequest {
   request_id: string;
   assigned_email: string | null;
   deadline: string | null;
+  revision_count: number;
   requester_name: string;
   requester_email: string;
   platform_url: string;
@@ -58,6 +60,7 @@ export default function Dashboard() {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
   const [filterClient, setFilterClient] = useState<string>('all');
+  const [filterOverdue, setFilterOverdue] = useState(false);
 
   const fetchData = async () => {
     const [imgRes, reqRes, revRes] = await Promise.all([
@@ -102,10 +105,26 @@ export default function Dashboard() {
     }
   };
 
+  const isOverdue = (img: ImageWithRequest) => {
+    if (img.status === 'completed' || img.status === 'cancelled') return false;
+    const deadline = img.deadline;
+    if (!deadline) {
+      // Default 7 days from creation
+      const created = new Date(img.created_at);
+      created.setDate(created.getDate() + 7);
+      return created < new Date();
+    }
+    return new Date(deadline) < new Date();
+  };
+
   const filtered = images.filter(i => {
-    if (filterStatus !== 'all' && i.status !== filterStatus) return false;
+    if (filterStatus !== 'all' && filterStatus !== 'revision') {
+      if (i.status !== filterStatus) return false;
+    }
+    if (filterStatus === 'revision' && i.revision_count === 0) return false;
     if (filterType !== 'all' && i.image_type !== filterType) return false;
     if (filterClient !== 'all' && i.platform_url !== filterClient) return false;
+    if (filterOverdue && !isOverdue(i)) return false;
     return true;
   });
 
@@ -116,6 +135,7 @@ export default function Dashboard() {
   const inProgressImages = images.filter(i => i.status === 'in_progress').length;
   const completedImages = images.filter(i => i.status === 'completed').length;
   const reviewImages = images.filter(i => i.status === 'review').length;
+  const overdueImages = images.filter(i => isOverdue(i)).length;
   const openClients = new Set(
     requests.filter(r => r.status !== 'completed' && r.status !== 'cancelled').map(r => r.platform_url)
   ).size;
@@ -247,6 +267,7 @@ export default function Dashboard() {
                   {Object.entries(STATUS_LABELS).map(([key, label]) => (
                     <SelectItem key={key} value={key}>{label}</SelectItem>
                   ))}
+                  <SelectItem value="revision">Em Refação</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={filterType} onValueChange={setFilterType}>
@@ -271,6 +292,17 @@ export default function Dashboard() {
                   ))}
                 </SelectContent>
               </Select>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="filter-overdue"
+                  checked={filterOverdue}
+                  onCheckedChange={(v) => setFilterOverdue(!!v)}
+                />
+                <label htmlFor="filter-overdue" className="text-sm text-muted-foreground cursor-pointer flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3 text-destructive" />
+                  Atrasadas ({overdueImages})
+                </label>
+              </div>
               <span className="text-sm text-muted-foreground">{filtered.length} arte(s)</span>
             </div>
 
@@ -294,7 +326,6 @@ export default function Dashboard() {
                   </TableHeader>
                   <TableBody>
                     {filtered.map(img => {
-                      const imgRevisions = reviews.filter(r => r.briefing_image_id === img.id && r.action === 'revision_requested').length;
                       return (
                         <TableRow key={img.id}>
                           <TableCell>
@@ -335,20 +366,33 @@ export default function Dashboard() {
                             )}
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Badge className={STATUS_COLORS[img.status] || ''} variant="secondary">
-                                {STATUS_LABELS[img.status] || img.status}
-                              </Badge>
-                              {(img.status === 'review' || img.status === 'completed') && (
-                                <PackageCheck className="h-4 w-4 text-primary" />
+                            <div className="flex flex-col gap-1">
+                              {img.revision_count > 0 && img.status === 'in_progress' ? (
+                                <Badge className="bg-destructive/20 text-destructive border-0">
+                                  Refação {img.revision_count}
+                                </Badge>
+                              ) : (
+                                <Badge className={STATUS_COLORS[img.status] || ''} variant="secondary">
+                                  {STATUS_LABELS[img.status] || img.status}
+                                </Badge>
+                              )}
+                              {img.status === 'completed' && (
+                                <Badge className="bg-success/20 text-success border-0">
+                                  <CheckCircle className="h-3 w-3 mr-1" /> Aprovada
+                                </Badge>
+                              )}
+                              {isOverdue(img) && (
+                                <Badge variant="outline" className="text-destructive border-destructive/30 text-xs">
+                                  <AlertTriangle className="h-3 w-3 mr-1" /> Atrasada
+                                </Badge>
                               )}
                             </div>
                           </TableCell>
                           <TableCell>
-                            {imgRevisions > 0 ? (
+                            {img.revision_count > 0 ? (
                               <Badge variant="outline" className="text-destructive border-destructive/30">
                                 <RefreshCw className="h-3 w-3 mr-1" />
-                                {imgRevisions}
+                                {img.revision_count}
                               </Badge>
                             ) : (
                               <span className="text-xs text-muted-foreground">—</span>
@@ -552,11 +596,15 @@ function ReviewActionDialog({ image, onReviewed }: { image: ImageWithRequest; on
 
       if (revErr) throw revErr;
 
-      // Update image status
+      // Update image status and revision count
       const newStatus = action === 'approved' ? 'completed' : 'in_progress';
+      const updatePayload: any = { status: newStatus };
+      if (action === 'revision_requested') {
+        updatePayload.revision_count = (image.revision_count || 0) + 1;
+      }
       const { error: updErr } = await supabase
         .from('briefing_images')
-        .update({ status: newStatus } as any)
+        .update(updatePayload)
         .eq('id', image.id);
 
       if (updErr) throw updErr;

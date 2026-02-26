@@ -100,10 +100,10 @@ export const defaultImageBriefing: ImageBriefingFormData = {
 };
 
 export const STATUS_LABELS: Record<RequestStatus, string> = {
-  pending: 'Pendente',
-  in_progress: 'Em Produção',
-  review: 'Em Revisão',
-  completed: 'Concluído',
+  pending: 'Solicitada',
+  in_progress: 'Em Execução',
+  review: 'Em Validação',
+  completed: 'Aprovada',
   cancelled: 'Cancelado',
 };
 

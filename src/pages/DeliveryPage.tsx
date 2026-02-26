@@ -205,7 +205,7 @@ export default function DeliveryPage() {
               </>
             )}
             <Badge variant="secondary" className="mt-2">
-              Status: {image!.status === 'review' ? 'Em revisão' : image!.status === 'in_progress' ? 'Em produção' : image!.status}
+              Status: {image!.status === 'review' ? 'Em Validação' : image!.status === 'in_progress' ? 'Em Execução' : image!.status === 'completed' ? 'Aprovada' : image!.status === 'pending' ? 'Solicitada' : image!.status}
             </Badge>
           </CardContent>
         </Card>
