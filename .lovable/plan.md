@@ -1,57 +1,33 @@
 
 
-## Pagina de Entrega para o Designer
+## Painel do Designer — "Minhas Artes"
 
-Criar uma pagina publica (sem necessidade de login) onde o designer pode fazer upload da arte finalizada, adicionar comentarios e marcar como concluido. O link dessa pagina sera enviado no email do briefing.
+Criar uma pagina publica onde o designer digita seu email e ve todas as artes atribuidas a ele, com status, prazo e link para entregar cada uma.
 
-### 1. Criar tabela `briefing_deliveries`
+### Como funciona
 
-Nova tabela para armazenar as entregas:
-- `id` (uuid, PK)
-- `briefing_image_id` (uuid, FK para briefing_images)
-- `file_url` (text) - URL do arquivo entregue
-- `comments` (text, nullable) - comentarios do designer
-- `delivered_by_email` (text) - email de quem entregou
-- `created_at` (timestamptz)
+1. O designer acessa `/designer` (ou clica num link no email)
+2. Digita seu email
+3. O sistema busca todas as `briefing_images` onde `assigned_email` = email informado
+4. Mostra uma lista com: tipo de arte, cliente, prazo, status e botao para ir direto na pagina de entrega (`/delivery/:token`)
 
-Politicas RLS: INSERT e SELECT publicos (a pagina e acessada sem login, via token).
+### Implementacao
 
-### 2. Adicionar coluna `delivery_token` na tabela `briefing_images`
+**Novo arquivo `src/pages/DesignerPanel.tsx`:**
+- Tela simples com campo de email e botao "Ver minhas artes"
+- Ao buscar, consulta `briefing_images` filtrando por `assigned_email` (com join em `briefing_requests` para pegar nome do cliente)
+- Exibe tabela/cards com: tipo de arte, produto, cliente, prazo, status e link "Entregar" apontando para `/delivery/{delivery_token}`
+- Sem necessidade de login — a filtragem por email ja garante que o designer so ve suas artes
 
-Token unico (UUID) gerado ao atribuir o briefing. Esse token sera usado na URL da pagina de entrega para identificar a arte sem expor o ID real. Tambem serve como autenticacao leve - so quem tem o link pode entregar.
+**Rota no `src/App.tsx`:**
+- Adicionar `<Route path="/designer" element={<DesignerPanel />} />`
 
-### 3. Criar pagina `/delivery/:token`
-
-Nova pagina publica (`src/pages/DeliveryPage.tsx`) com:
-- Resumo do briefing (tipo de arte, produto, prazo)
-- Area de upload de arquivo (usando o bucket `briefing-uploads`)
-- Campo de comentarios opcional
-- Botao "Entregar arte"
-- Ao submeter: salva na tabela `briefing_deliveries`, atualiza status da `briefing_image` para `review`
-
-### 4. Atualizar Edge Function `send-briefing-email`
-
-- Gerar o `delivery_token` ao enviar o briefing
-- Salvar o token na coluna `delivery_token` da `briefing_images`
-- Incluir no email um botao/link "Entregar Arte" apontando para a pagina de entrega
-
-### 5. Mostrar entregas no Dashboard
-
-- Na tabela do dashboard, indicar visualmente quando uma arte foi entregue (icone ou badge)
-- No dialog de detalhes, mostrar link para download do arquivo entregue e os comentarios
+**Link no email de briefing:**
+- Adicionar no email (edge function `send-briefing-email`) um link secundario "Ver todas as minhas artes" apontando para `/designer`
 
 ### Detalhes tecnicos
 
-**Migracao SQL:**
-```text
-- ALTER TABLE briefing_images ADD COLUMN delivery_token uuid DEFAULT gen_random_uuid();
-- CREATE TABLE briefing_deliveries (id, briefing_image_id, file_url, comments, delivered_by_email, created_at)
-- RLS policies para acesso publico de INSERT/SELECT na briefing_deliveries
-```
-
-**Arquivos a criar/editar:**
-- `src/pages/DeliveryPage.tsx` - pagina publica de entrega
-- `src/App.tsx` - adicionar rota `/delivery/:token`
-- `supabase/functions/send-briefing-email/index.ts` - gerar token e incluir link no email
-- `src/pages/Dashboard.tsx` - indicador visual de entrega
+- A query usa `assigned_email` que ja e publica (RLS da `briefing_images` permite SELECT com `true`)
+- Nenhuma migracao necessaria — os dados ja existem
+- O componente reutiliza os mesmos `IMAGE_TYPE_LABELS` e patterns visuais do `DeliveryPage`
 
