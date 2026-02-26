@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
-import { ImageBriefingFormData } from '@/types/briefing';
+import { ImageBriefingFormData, IMAGE_DIMENSIONS } from '@/types/briefing';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -92,6 +92,25 @@ export default function ImageBriefingSection({
               </div>
             </div>
 
+            <div className="space-y-2">
+              <Label>Dimensão da imagem</Label>
+              <Select value={data.dimension || ''} onValueChange={v => update({ dimension: v, custom_dimension: v === 'custom' ? data.custom_dimension : undefined })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a dimensão" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover z-50">
+                  {IMAGE_DIMENSIONS.map(d => (
+                    <SelectItem key={d.value} value={d.value}>
+                      <span>{d.label}</span>
+                      <span className="ml-2 text-muted-foreground text-xs">— {d.hint}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {data.dimension === 'custom' && (
+                <Input value={data.custom_dimension || ''} onChange={e => update({ custom_dimension: e.target.value })} placeholder="Ex: 1200x300" className="mt-2" />
+              )}
+            </div>
             <div className="space-y-3">
               <Label>Elemento ou imagem sugerida</Label>
               <Textarea value={data.element_suggestion} onChange={e => update({ element_suggestion: e.target.value })} placeholder="Descreva o visual desejado, elementos gráficos, estilo..." rows={3} />
