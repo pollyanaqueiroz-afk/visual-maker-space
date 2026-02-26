@@ -67,6 +67,7 @@ export default function Dashboard() {
   const [filterOverdue, setFilterOverdue] = useState(false);
   const topScrollRef = useRef<HTMLDivElement>(null);
   const tableScrollRef = useRef<HTMLDivElement>(null);
+  const topScrollInnerRef = useRef<HTMLDivElement>(null);
 
   const fetchData = async () => {
     const [imgRes, reqRes, revRes] = await Promise.all([
@@ -101,6 +102,18 @@ export default function Dashboard() {
   };
 
   useEffect(() => { fetchData(); }, []);
+
+  // Sync top scrollbar width with actual table scroll width
+  useEffect(() => {
+    const syncWidth = () => {
+      if (tableScrollRef.current && topScrollInnerRef.current) {
+        topScrollInnerRef.current.style.width = tableScrollRef.current.scrollWidth + 'px';
+      }
+    };
+    syncWidth();
+    window.addEventListener('resize', syncWidth);
+    return () => window.removeEventListener('resize', syncWidth);
+  }, [loading, images]);
 
   const updateImageStatus = async (id: string, status: RequestStatus) => {
     const { error } = await supabase.from('briefing_images').update({ status } as any).eq('id', id);
@@ -322,13 +335,14 @@ export default function Dashboard() {
                 <div
                   ref={topScrollRef}
                   className="overflow-x-auto"
+                  style={{ overflowY: 'hidden' }}
                   onScroll={() => {
                     if (tableScrollRef.current && topScrollRef.current) {
                       tableScrollRef.current.scrollLeft = topScrollRef.current.scrollLeft;
                     }
                   }}
                 >
-                  <div style={{ height: 1, minWidth: 1250 }} />
+                  <div ref={topScrollInnerRef} style={{ height: 1 }} />
                 </div>
                 <div
                   ref={tableScrollRef}
@@ -339,7 +353,7 @@ export default function Dashboard() {
                     }
                   }}
                 >
-                <Table className="min-w-[1250px]">
+                <table className="w-full caption-bottom text-sm min-w-[1400px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Tipo de Arte</TableHead>
@@ -501,7 +515,7 @@ export default function Dashboard() {
                       </TableRow>
                     )}
                   </TableBody>
-                </Table>
+                </table>
                 </div>
               </Card>
             )}
