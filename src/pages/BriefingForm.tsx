@@ -177,7 +177,8 @@ export default function BriefingForm() {
       toast.success('Solicitação enviada com sucesso!');
     } catch (err: any) {
       console.error('Error submitting briefing:', err);
-      toast.error('Erro ao enviar. Tente novamente.');
+      const msg = err?.message || 'Erro desconhecido';
+      toast.error(`Erro ao enviar: ${msg}`);
     } finally {
       setSubmitting(false);
     }
