@@ -14,16 +14,225 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      briefing_images: {
+        Row: {
+          copy_style_from: string | null
+          created_at: string
+          element_suggestion: string | null
+          font_suggestion: string | null
+          id: string
+          image_text: string | null
+          image_type: Database["public"]["Enums"]["image_type"]
+          observations: string | null
+          orientation: string | null
+          product_name: string | null
+          professional_photo_url: string | null
+          request_id: string
+          sort_order: number
+        }
+        Insert: {
+          copy_style_from?: string | null
+          created_at?: string
+          element_suggestion?: string | null
+          font_suggestion?: string | null
+          id?: string
+          image_text?: string | null
+          image_type: Database["public"]["Enums"]["image_type"]
+          observations?: string | null
+          orientation?: string | null
+          product_name?: string | null
+          professional_photo_url?: string | null
+          request_id: string
+          sort_order?: number
+        }
+        Update: {
+          copy_style_from?: string | null
+          created_at?: string
+          element_suggestion?: string | null
+          font_suggestion?: string | null
+          id?: string
+          image_text?: string | null
+          image_type?: Database["public"]["Enums"]["image_type"]
+          observations?: string | null
+          orientation?: string | null
+          product_name?: string | null
+          professional_photo_url?: string | null
+          request_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "briefing_images_copy_style_from_fkey"
+            columns: ["copy_style_from"]
+            isOneToOne: false
+            referencedRelation: "briefing_images"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "briefing_images_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "briefing_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      briefing_reference_images: {
+        Row: {
+          briefing_image_id: string
+          created_at: string
+          file_url: string
+          id: string
+          is_exact_use: boolean
+        }
+        Insert: {
+          briefing_image_id: string
+          created_at?: string
+          file_url: string
+          id?: string
+          is_exact_use?: boolean
+        }
+        Update: {
+          briefing_image_id?: string
+          created_at?: string
+          file_url?: string
+          id?: string
+          is_exact_use?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "briefing_reference_images_briefing_image_id_fkey"
+            columns: ["briefing_image_id"]
+            isOneToOne: false
+            referencedRelation: "briefing_images"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      briefing_requests: {
+        Row: {
+          assigned_to: string | null
+          brand_drive_link: string | null
+          brand_file_url: string | null
+          created_at: string
+          has_challenge: boolean
+          has_community: boolean
+          has_trail: boolean
+          id: string
+          notes: string | null
+          platform_url: string
+          requester_email: string
+          requester_name: string
+          status: Database["public"]["Enums"]["request_status"]
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          brand_drive_link?: string | null
+          brand_file_url?: string | null
+          created_at?: string
+          has_challenge?: boolean
+          has_community?: boolean
+          has_trail?: boolean
+          id?: string
+          notes?: string | null
+          platform_url: string
+          requester_email: string
+          requester_name: string
+          status?: Database["public"]["Enums"]["request_status"]
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          brand_drive_link?: string | null
+          brand_file_url?: string | null
+          created_at?: string
+          has_challenge?: boolean
+          has_community?: boolean
+          has_trail?: boolean
+          id?: string
+          notes?: string | null
+          platform_url?: string
+          requester_email?: string
+          requester_name?: string
+          status?: Database["public"]["Enums"]["request_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "member"
+      image_type:
+        | "login"
+        | "banner_vitrine"
+        | "product_cover"
+        | "trail_banner"
+        | "challenge_banner"
+        | "community_banner"
+      request_status:
+        | "pending"
+        | "in_progress"
+        | "review"
+        | "completed"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +359,23 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "member"],
+      image_type: [
+        "login",
+        "banner_vitrine",
+        "product_cover",
+        "trail_banner",
+        "challenge_banner",
+        "community_banner",
+      ],
+      request_status: [
+        "pending",
+        "in_progress",
+        "review",
+        "completed",
+        "cancelled",
+      ],
+    },
   },
 } as const
