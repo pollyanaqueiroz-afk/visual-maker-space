@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      brand_assets: {
+        Row: {
+          briefing_image_id: string | null
+          created_at: string
+          file_name: string | null
+          file_url: string
+          id: string
+          platform_url: string
+          source: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          briefing_image_id?: string | null
+          created_at?: string
+          file_name?: string | null
+          file_url: string
+          id?: string
+          platform_url: string
+          source?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          briefing_image_id?: string | null
+          created_at?: string
+          file_name?: string | null
+          file_url?: string
+          id?: string
+          platform_url?: string
+          source?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_assets_briefing_image_id_fkey"
+            columns: ["briefing_image_id"]
+            isOneToOne: false
+            referencedRelation: "briefing_images"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       briefing_deliveries: {
         Row: {
           briefing_image_id: string
