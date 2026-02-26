@@ -92,9 +92,38 @@ export default function ImageBriefingSection({
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label>Elemento ou imagem sugerida</Label>
               <Textarea value={data.element_suggestion} onChange={e => update({ element_suggestion: e.target.value })} placeholder="Descreva o visual desejado, elementos gráficos, estilo..." rows={3} />
+              <div className="space-y-2">
+                <Label className="text-sm text-muted-foreground font-normal">Ou envie imagens / cole um link com referências</Label>
+                <Input value={data.element_suggestion_url || ''} onChange={e => update({ element_suggestion_url: e.target.value })} placeholder="https://drive.google.com/... ou link com imagens" />
+                <div className="flex flex-wrap gap-3">
+                  {(data.element_suggestion_images || []).map((file, idx) => (
+                    <div key={idx} className="relative group border rounded-lg p-2 flex flex-col items-center gap-1 w-32">
+                      <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                      <span className="text-xs truncate w-full text-center">{file.name}</span>
+                      <button type="button" onClick={() => {
+                        const updated = (data.element_suggestion_images || []).filter((_, i) => i !== idx);
+                        update({ element_suggestion_images: updated });
+                      }} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <label className="inline-flex items-center gap-2 cursor-pointer text-sm text-primary hover:underline">
+                  <Upload className="h-4 w-4" />
+                  Adicionar imagem de elemento
+                  <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => {
+                    const files = e.target.files;
+                    if (!files) return;
+                    const current = data.element_suggestion_images || [];
+                    update({ element_suggestion_images: [...current, ...Array.from(files)] });
+                    e.target.value = '';
+                  }} />
+                </label>
+              </div>
             </div>
 
             <div className="space-y-2">
