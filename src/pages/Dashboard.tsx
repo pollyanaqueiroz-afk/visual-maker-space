@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { RequestStatus, STATUS_LABELS, STATUS_COLORS, IMAGE_TYPE_LABELS, ImageType } from '@/types/briefing';
@@ -65,6 +65,8 @@ export default function Dashboard() {
   const [filterType, setFilterType] = useState<string>('all');
   const [filterClient, setFilterClient] = useState<string>('all');
   const [filterOverdue, setFilterOverdue] = useState(false);
+  const topScrollRef = useRef<HTMLDivElement>(null);
+  const tableScrollRef = useRef<HTMLDivElement>(null);
 
   const fetchData = async () => {
     const [imgRes, reqRes, revRes] = await Promise.all([
@@ -316,7 +318,27 @@ export default function Dashboard() {
               <div className="text-center py-12 text-muted-foreground">Carregando...</div>
             ) : (
               <Card className="overflow-hidden">
-                <div className="overflow-x-auto">
+                {/* Top scrollbar */}
+                <div
+                  ref={topScrollRef}
+                  className="overflow-x-auto"
+                  onScroll={() => {
+                    if (tableScrollRef.current && topScrollRef.current) {
+                      tableScrollRef.current.scrollLeft = topScrollRef.current.scrollLeft;
+                    }
+                  }}
+                >
+                  <div style={{ height: 1, minWidth: 1250 }} />
+                </div>
+                <div
+                  ref={tableScrollRef}
+                  className="overflow-x-auto"
+                  onScroll={() => {
+                    if (topScrollRef.current && tableScrollRef.current) {
+                      topScrollRef.current.scrollLeft = tableScrollRef.current.scrollLeft;
+                    }
+                  }}
+                >
                 <Table className="min-w-[1250px]">
                   <TableHeader>
                     <TableRow>
