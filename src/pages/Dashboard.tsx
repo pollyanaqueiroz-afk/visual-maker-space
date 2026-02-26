@@ -611,6 +611,20 @@ function ReviewActionDialog({ image, onReviewed }: { image: ImageWithRequest; on
 
       if (updErr) throw updErr;
 
+      // Send revision notification email to designer
+      if (action === 'revision_requested' && image.assigned_email) {
+        supabase.functions.invoke('notify-revision', {
+          body: {
+            image_id: image.id,
+            reviewer_comments: comments || null,
+            reviewed_by: user?.email || 'admin',
+            app_url: window.location.origin,
+          },
+        }).then(({ error }) => {
+          if (error) console.error('Failed to send revision email:', error);
+        });
+      }
+
       toast.success(action === 'approved' ? 'Arte aprovada!' : 'Refação solicitada — designer será notificado.');
       setOpen(false);
       setComments('');
