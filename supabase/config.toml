@@ -1,1 +1,4 @@
 project_id = "aqmbaycbwljiohdjputq"
+
+[functions.parse-briefing]
+verify_jwt = false
