@@ -40,6 +40,7 @@ interface ImageWithRequest {
   requester_name: string;
   requester_email: string;
   platform_url: string;
+  received_at: string;
 }
 
 interface ReviewRecord {
@@ -313,7 +314,7 @@ export default function Dashboard() {
             ) : (
               <Card className="overflow-hidden">
                 <div className="overflow-x-auto">
-                <Table className="min-w-[1100px]">
+                <Table className="min-w-[1250px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Tipo de Arte</TableHead>
@@ -322,6 +323,7 @@ export default function Dashboard() {
                       <TableHead>Responsável</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Refações</TableHead>
+                      <TableHead>Recebido em</TableHead>
                       <TableHead>Tempo em aberto</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
@@ -401,9 +403,14 @@ export default function Dashboard() {
                             )}
                           </TableCell>
                           <TableCell>
+                            <div className="text-sm">
+                              {new Date(img.received_at).toLocaleDateString('pt-BR')}
+                            </div>
+                          </TableCell>
+                          <TableCell>
                             <div className="flex items-center gap-1 text-sm">
                               <Clock className="h-3 w-3" />
-                              {formatDistanceToNow(new Date(img.created_at), { locale: ptBR, addSuffix: false })}
+                              {formatDistanceToNow(new Date(img.received_at), { locale: ptBR, addSuffix: false })}
                             </div>
                           </TableCell>
                           <TableCell className="text-right">
