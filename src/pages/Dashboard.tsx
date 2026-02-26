@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import ImportBriefingDialog from '@/components/briefing/ImportBriefingDialog';
 import AssignBriefingDialog from '@/components/briefing/AssignBriefingDialog';
 import BrandAssetsDialog from '@/components/briefing/BrandAssetsDialog';
+import BulkPhotoUploadDialog from '@/components/briefing/BulkPhotoUploadDialog';
 
 interface ImageWithRequest {
   id: string;
@@ -283,6 +284,7 @@ export default function Dashboard() {
             {/* Filters */}
             <div className="flex flex-wrap items-center gap-4">
               <ImportBriefingDialog onImported={fetchData} />
+              <BulkPhotoUploadDialog onUploaded={fetchData} />
               <Select value={filterStatus} onValueChange={setFilterStatus}>
                 <SelectTrigger className="w-44">
                   <SelectValue placeholder="Status" />
