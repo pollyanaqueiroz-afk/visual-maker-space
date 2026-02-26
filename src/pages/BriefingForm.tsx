@@ -300,8 +300,31 @@ export default function BriefingForm() {
           {/* STEP 2: Select art types */}
           {step === 2 && (
             <div className="space-y-6">
-              <div className="text-center mb-2">
-                <h2 className="text-xl font-semibold text-foreground">O que você precisa?</h2>
+              <Card>
+                <CardContent className="pt-6">
+                  <div>
+                    <h2 className="text-lg font-semibold text-foreground mb-1">Sua plataforma possui:</h2>
+                    <p className="text-sm text-muted-foreground mb-4">Marque os recursos disponíveis na sua área de membros</p>
+                    <div className="flex flex-wrap gap-6">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <Checkbox checked={form.has_trail} onCheckedChange={v => update({ has_trail: !!v })} />
+                        <span className="text-sm">Trilha</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <Checkbox checked={form.has_challenge} onCheckedChange={v => update({ has_challenge: !!v })} />
+                        <span className="text-sm">Desafio</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <Checkbox checked={form.has_community} onCheckedChange={v => update({ has_community: !!v })} />
+                        <span className="text-sm">Comunidade</span>
+                      </label>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="text-center">
+                <h2 className="text-xl font-semibold text-foreground">Quais artes você precisa?</h2>
                 <p className="text-sm text-muted-foreground mt-1">Selecione todos os tipos de arte que deseja solicitar</p>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
