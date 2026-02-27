@@ -44,6 +44,10 @@ export default function AssignBriefingDialog({
       toast.error('Informe o email do responsável');
       return;
     }
+    if (designerType === 'externo' && (!pricePerArt || pricePerArt <= 0)) {
+      toast.error('Informe o preço por arte para designer externo');
+      return;
+    }
 
     setSending(true);
     try {
