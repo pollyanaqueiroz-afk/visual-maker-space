@@ -433,27 +433,44 @@ export default function SchedulingPage() {
 
   return (
     <div className="space-y-6">
-      {/* Pending loyalty alert */}
+      {/* Pending loyalty - interactive list */}
       {pendingLoyalty.length > 0 && (
-        <Alert className="border-warning/40 bg-warning/5">
-          <AlertCircle className="h-4 w-4 text-warning" />
-          <AlertDescription className="flex items-center justify-between">
-            <span className="text-sm">
-              Você tem <strong className="text-foreground">{pendingLoyalty.length} {pendingLoyalty.length === 1 ? 'reunião realizada' : 'reuniões realizadas'}</strong> sem índice de fidelidade preenchido.
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs border-warning/40 text-warning hover:bg-warning/10 shrink-0 ml-3"
-              onClick={() => {
-                setFilterStatus('completed');
-                setFilterReason('all');
-              }}
-            >
-              <Star className="h-3 w-3 mr-1" /> Ver pendentes
-            </Button>
-          </AlertDescription>
-        </Alert>
+        <Card className="border-warning/40 bg-warning/5">
+          <CardHeader className="pb-2 pt-4 px-4">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground">
+              <AlertCircle className="h-4 w-4 text-warning" />
+              {pendingLoyalty.length} {pendingLoyalty.length === 1 ? 'reunião pendente' : 'reuniões pendentes'} de índice de fidelidade
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-4 pb-4 space-y-2">
+            {pendingLoyalty.map(m => (
+              <div
+                key={m.id}
+                className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-background border border-border/50 hover:border-warning/40 hover:shadow-sm transition-all cursor-pointer group"
+                onClick={() => handleOpenConfirm(m)}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-warning/10">
+                    <Star className="h-3.5 w-3.5 text-warning" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{m.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {format(parseISO(m.meeting_date), "dd/MM/yyyy")} · {m.client_name || 'Sem cliente'}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs shrink-0 border-warning/30 text-warning hover:bg-warning/10 group-hover:border-warning/60"
+                >
+                  Preencher
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       )}
 
       {/* Header */}
