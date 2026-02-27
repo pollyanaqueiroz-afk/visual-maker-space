@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -14,6 +14,7 @@ import MultiBannerSection from '@/components/briefing/MultiBannerSection';
 import BrandIdentity from '@/components/briefing/BrandIdentity';
 import AIBriefingAssistant from '@/components/briefing/AIBriefingAssistant';
 import { CheckCircle, Loader2, ArrowRight, ArrowLeft, Palette, MonitorSmartphone, Image, LayoutGrid, Route, Trophy, Users, Smartphone } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 type ArtSelection = {
   login_image: boolean;
@@ -52,6 +53,7 @@ const initialForm: BriefingFormData = {
 };
 
 export default function BriefingForm() {
+  const { user } = useAuth();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<BriefingFormData>(initialForm);
   const [additionalInfo, setAdditionalInfo] = useState('');
@@ -66,6 +68,17 @@ export default function BriefingForm() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+
+  // Auto-fill requester info from logged-in user
+  useEffect(() => {
+    if (user) {
+      const meta = user.user_metadata;
+      update({
+        requester_email: user.email || '',
+        requester_name: meta?.full_name || meta?.name || '',
+      });
+    }
+  }, [user]);
 
   const update = (updates: Partial<BriefingFormData>) => setForm(prev => ({ ...prev, ...updates }));
   const toggleSelection = (key: keyof ArtSelection) => setSelections(prev => ({ ...prev, [key]: !prev[key] }));
@@ -232,6 +245,7 @@ export default function BriefingForm() {
         brand_file_url: brandFileUrl,
         brand_drive_link: form.brand_drive_link || null,
         additional_info: additionalInfo || null,
+        submitted_by: user?.email || null,
       } as any).select('id').single();
 
       if (error) throw error;
