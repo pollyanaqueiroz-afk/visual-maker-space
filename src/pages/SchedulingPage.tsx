@@ -13,8 +13,9 @@ import { Calendar } from '@/components/ui/calendar';
 import { toast } from 'sonner';
 import { format, isSameDay, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, Video, Clock, User, Trash2, Edit2, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Loader2, CheckCircle, FileText, Star, RefreshCw } from 'lucide-react';
+import { Plus, Video, Clock, User, Trash2, Edit2, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Loader2, CheckCircle, FileText, Star, RefreshCw, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface Meeting {
   id: string;
@@ -417,6 +418,11 @@ export default function SchedulingPage() {
     setDialogOpen(true);
   };
 
+  const pendingLoyalty = useMemo(() =>
+    meetings.filter(m => m.status === 'completed' && !(m as any).loyalty_index),
+    [meetings]
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -427,6 +433,29 @@ export default function SchedulingPage() {
 
   return (
     <div className="space-y-6">
+      {/* Pending loyalty alert */}
+      {pendingLoyalty.length > 0 && (
+        <Alert className="border-warning/40 bg-warning/5">
+          <AlertCircle className="h-4 w-4 text-warning" />
+          <AlertDescription className="flex items-center justify-between">
+            <span className="text-sm">
+              Você tem <strong className="text-foreground">{pendingLoyalty.length} {pendingLoyalty.length === 1 ? 'reunião realizada' : 'reuniões realizadas'}</strong> sem índice de fidelidade preenchido.
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs border-warning/40 text-warning hover:bg-warning/10 shrink-0 ml-3"
+              onClick={() => {
+                setFilterStatus('completed');
+                setFilterReason('all');
+              }}
+            >
+              <Star className="h-3 w-3 mr-1" /> Ver pendentes
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
