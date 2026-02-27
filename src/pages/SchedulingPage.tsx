@@ -67,6 +67,7 @@ const emptyForm = {
   meeting_url: '',
   client_name: '',
   client_email: '',
+  client_url: '',
   participants: '',
   notes: '',
   meeting_reason: '',
@@ -173,6 +174,7 @@ export default function SchedulingPage() {
       meeting_url: m.meeting_url || '',
       client_name: m.client_name || '',
       client_email: m.client_email || '',
+      client_url: (m as any).client_url || '',
       participants: (m.participants || []).join(', '),
       notes: m.notes || '',
       meeting_reason: (m as any).meeting_reason || '',
@@ -191,6 +193,7 @@ export default function SchedulingPage() {
       meeting_url: m.meeting_url || '',
       client_name: m.client_name || '',
       client_email: m.client_email || '',
+      client_url: (m as any).client_url || '',
       participants: (m.participants || []).join(', '),
       notes: m.notes || '',
       meeting_reason: (m as any).meeting_reason || '',
@@ -218,6 +221,7 @@ export default function SchedulingPage() {
         meeting_url: form.meeting_url || null,
         client_name: form.client_name || null,
         client_email: form.client_email || null,
+        client_url: form.client_url || null,
         participants: form.participants ? form.participants.split(',').map(p => p.trim()).filter(Boolean) : [],
         notes: form.notes || null,
         meeting_reason: form.meeting_reason,
@@ -447,6 +451,10 @@ export default function SchedulingPage() {
                   <Label>Email do cliente</Label>
                   <Input value={form.client_email} onChange={e => setForm(f => ({ ...f, client_email: e.target.value }))} placeholder="joao@email.com" />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label>URL do cliente (plataforma)</Label>
+                <Input value={form.client_url} onChange={e => setForm(f => ({ ...f, client_url: e.target.value }))} placeholder="https://cliente.curseduca.com" />
               </div>
               <div className="space-y-2">
                 <Label>Participantes (separados por vírgula)</Label>
