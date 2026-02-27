@@ -127,8 +127,8 @@ export default function HubWelcome() {
 
   const getPendingIcon = (type: string) => {
     switch (type) {
-      case 'loyalty': return <Star className="h-4 w-4 text-warning" />;
-      default: return <AlertTriangle className="h-4 w-4 text-warning" />;
+      case 'loyalty': return <Star className="h-4 w-4 text-destructive" />;
+      default: return <AlertTriangle className="h-4 w-4 text-destructive" />;
     }
   };
 
@@ -197,11 +197,8 @@ export default function HubWelcome() {
           </p>
         </motion.div>
 
-        <Tabs defaultValue={pendingItems.length > 0 ? 'pendencias' : 'modulos'} className="w-full">
+        <Tabs defaultValue="pendencias" className="w-full">
           <TabsList className="mb-4">
-            <TabsTrigger value="modulos" className="flex items-center gap-1.5">
-              <BarChart3 className="h-4 w-4" /> Módulos
-            </TabsTrigger>
             <TabsTrigger value="pendencias" className="flex items-center gap-1.5 relative">
               <AlertTriangle className="h-4 w-4" /> Pendências
               {pendingItems.length > 0 && (
@@ -209,6 +206,9 @@ export default function HubWelcome() {
                   {pendingItems.length}
                 </Badge>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="modulos" className="flex items-center gap-1.5">
+              <BarChart3 className="h-4 w-4" /> Módulos
             </TabsTrigger>
           </TabsList>
 
@@ -271,16 +271,16 @@ export default function HubWelcome() {
                     transition={{ delay: i * 0.05, duration: 0.3 }}
                   >
                     <Card
-                      className="cursor-pointer transition-all hover:shadow-sm hover:border-warning/40"
+                      className="cursor-pointer transition-all hover:shadow-sm border-destructive/40 hover:border-destructive/60 bg-destructive/5"
                       onClick={() => navigate(item.url)}
                     >
                       <CardContent className="flex items-center gap-4 p-4">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-warning/10">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
                           {getPendingIcon(item.type)}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-warning/30 text-warning">
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-destructive/30 text-destructive">
                               {getPendingLabel(item.type)}
                             </Badge>
                           </div>
