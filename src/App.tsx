@@ -16,6 +16,7 @@ import ClientReviewPage from "./pages/ClientReviewPage";
 import ClientAssetsPage from "./pages/ClientAssetsPage";
 import SchedulingPage from "./pages/SchedulingPage";
 import MeetingsDashboard from "./pages/MeetingsDashboard";
+import LeadershipDashboard from "./pages/LeadershipDashboard";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => (
               <Route path="briefings" element={<Dashboard />} />
               <Route path="agendamento" element={<SchedulingPage />} />
               <Route path="dashboards" element={<MeetingsDashboard />} />
+              <Route path="lideranca" element={<LeadershipDashboard />} />
             </Route>
             {/* Legacy route redirect */}
             <Route path="/dashboard" element={<Navigate to="/hub/briefings" replace />} />
