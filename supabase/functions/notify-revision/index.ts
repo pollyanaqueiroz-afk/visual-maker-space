@@ -30,11 +30,17 @@ serve(async (req) => {
   }
 
   try {
-    const { image_id, reviewer_comments, reviewed_by, app_url } = await req.json();
+    const body = await req.json();
+    const image_id = typeof body.image_id === "string" ? body.image_id.trim().slice(0, 100) : "";
+    const reviewer_comments = typeof body.reviewer_comments === "string" ? body.reviewer_comments.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "").slice(0, 2000) : null;
+    const reviewed_by = typeof body.reviewed_by === "string" ? body.reviewed_by.replace(/<[^>]*>/g, "").slice(0, 255) : null;
+    const app_url = typeof body.app_url === "string" ? body.app_url.slice(0, 500) : null;
 
-    if (!image_id) {
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!image_id || !uuidRegex.test(image_id)) {
       return new Response(
-        JSON.stringify({ error: "image_id is required" }),
+        JSON.stringify({ error: "image_id must be a valid UUID" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -105,14 +111,14 @@ serve(async (req) => {
           </tr>
           <tr>
             <td style="padding:10px 12px;border-bottom:1px solid #eee;color:#888;font-size:13px;">Revisor</td>
-            <td style="padding:10px 12px;border-bottom:1px solid #eee;color:#333;font-size:14px;">${reviewed_by || "—"}</td>
+            <td style="padding:10px 12px;border-bottom:1px solid #eee;color:#333;font-size:14px;">${(reviewed_by || "—").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</td>
           </tr>
         </table>
 
         ${reviewer_comments ? `
         <div style="margin:20px 0;padding:16px;background:#fce4ec;border-radius:8px;border-left:4px solid #e65100;">
           <p style="margin:0 0 4px;color:#888;font-size:12px;font-weight:bold;">COMENTÁRIOS DO REVISOR</p>
-          <p style="margin:0;color:#333;font-size:14px;white-space:pre-wrap;">${reviewer_comments}</p>
+          <p style="margin:0;color:#333;font-size:14px;white-space:pre-wrap;">${(reviewer_comments || "").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
         </div>` : ""}
 
         <div style="margin-top:32px;text-align:center;">

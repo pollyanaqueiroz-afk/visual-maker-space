@@ -31,11 +31,18 @@ serve(async (req) => {
   }
 
   try {
-    const { image_id, file_url, delivered_by_email, comments, app_url } = await req.json();
+    const body = await req.json();
+    const image_id = typeof body.image_id === "string" ? body.image_id.trim().slice(0, 100) : "";
+    const file_url = typeof body.file_url === "string" ? body.file_url.slice(0, 2000) : null;
+    const delivered_by_email = typeof body.delivered_by_email === "string" ? body.delivered_by_email.replace(/<[^>]*>/g, "").trim().slice(0, 255) : null;
+    const comments = typeof body.comments === "string" ? body.comments.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "").replace(/<[^>]*>/g, "").slice(0, 2000) : null;
+    const app_url = typeof body.app_url === "string" ? body.app_url.slice(0, 500) : null;
 
-    if (!image_id) {
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!image_id || !uuidRegex.test(image_id)) {
       return new Response(
-        JSON.stringify({ error: "image_id is required" }),
+        JSON.stringify({ error: "image_id must be a valid UUID" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -96,12 +103,12 @@ serve(async (req) => {
               </tr>` : ""}
               <tr>
                 <td style="padding:8px 0;color:#888;font-size:13px;">🎨 Designer</td>
-                <td style="padding:8px 0;color:#333;font-size:14px;">${delivered_by_email}</td>
+                <td style="padding:8px 0;color:#333;font-size:14px;">${(delivered_by_email || "").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</td>
               </tr>
               ${comments ? `
               <tr>
                 <td style="padding:8px 0;color:#888;font-size:13px;vertical-align:top;">💬 Observação</td>
-                <td style="padding:8px 0;color:#333;font-size:14px;">${comments}</td>
+                <td style="padding:8px 0;color:#333;font-size:14px;">${(comments || "").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</td>
               </tr>` : ""}
             </table>
           </div>
