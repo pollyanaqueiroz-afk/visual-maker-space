@@ -151,12 +151,13 @@ export default function ClientReviewPage() {
     setBriefingDetailId(imageId);
     setLoadingDetail(true);
     try {
-      const { data } = await supabase
-        .from('briefing_images')
-        .select('id, image_type, product_name, image_text, font_suggestion, element_suggestion, orientation, observations, deadline, assigned_email, status, revision_count, created_at')
-        .eq('id', imageId)
-        .single();
-      setBriefingDetail(data);
+      // Use edge function to fetch detail securely
+      const { data: result } = await supabase.functions.invoke('client-review-data', {
+        body: { email, image_id: imageId },
+      });
+      const allImgs = result?.images?.all || [];
+      const detail = allImgs.find((i: any) => i.id === imageId);
+      setBriefingDetail(detail || null);
     } catch {
       toast.error('Erro ao carregar detalhes');
     } finally {
@@ -180,10 +181,9 @@ export default function ClientReviewPage() {
     setDirection('right');
 
     try {
-      await supabase
-        .from('briefing_images')
-        .update({ status: 'completed' })
-        .eq('id', currentImage.id);
+      await supabase.functions.invoke('delivery-data', {
+        body: { action: 'update_status', image_id: currentImage.id, status: 'completed' },
+      });
 
       await supabase
         .from('briefing_reviews')
@@ -240,13 +240,14 @@ export default function ClientReviewPage() {
     setDirection('left');
 
     try {
-      await supabase
-        .from('briefing_images')
-        .update({
-          status: 'in_progress' as any,
+      await supabase.functions.invoke('delivery-data', {
+        body: {
+          action: 'update_status',
+          image_id: currentImage.id,
+          status: 'in_progress',
           revision_count: currentImage.revision_count + 1,
-        })
-        .eq('id', currentImage.id);
+        },
+      });
 
       await supabase
         .from('briefing_reviews')

@@ -112,25 +112,20 @@ export default function ClientAssetsPage() {
       let requestMap = new Map<string, { requester_name: string; created_at: string }>();
 
       if (imageIds.length > 0) {
-        const { data: imgData } = await supabase
-          .from('briefing_images')
-          .select('id, image_type, request_id')
-          .in('id', imageIds);
+        try {
+          const { data: enrichResult } = await supabase.functions.invoke('delivery-data', {
+            body: { action: 'enrich_assets', image_ids: imageIds },
+          });
 
-        if (imgData) {
-          imgData.forEach(i => imageMap.set(i.id, { image_type: i.image_type, request_id: i.request_id }));
-
-          const requestIds = [...new Set(imgData.map(i => i.request_id))];
-          if (requestIds.length > 0) {
-            const { data: reqData } = await supabase
-              .from('briefing_requests')
-              .select('id, requester_name, created_at')
-              .in('id', requestIds);
-
-            if (reqData) {
-              reqData.forEach(r => requestMap.set(r.id, { requester_name: r.requester_name, created_at: r.created_at }));
-            }
+          if (enrichResult?.images) {
+            enrichResult.images.forEach((i: any) => imageMap.set(i.id, { image_type: i.image_type, request_id: i.request_id }));
           }
+          if (enrichResult?.requests) {
+            enrichResult.requests.forEach((r: any) => requestMap.set(r.id, { requester_name: r.requester_name, created_at: r.created_at }));
+          }
+        } catch {
+          // Graceful fallback - enrichment data is optional
+          console.warn('Could not enrich assets with briefing data');
         }
       }
 

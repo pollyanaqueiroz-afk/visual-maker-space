@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { email } = await req.json();
+    const { email, image_id } = await req.json();
 
     if (!email || typeof email !== "string") {
       return new Response(
@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
         .order("deadline", { ascending: true, nullsFirst: false }),
       supabase
         .from("briefing_images")
-        .select("id, image_type, product_name, deadline, assigned_email, status, image_text, observations")
+        .select("id, image_type, product_name, deadline, assigned_email, status, image_text, observations, font_suggestion, element_suggestion, orientation, revision_count, created_at")
         .in("request_id", requestIds)
         .order("created_at", { ascending: false }),
     ]);
@@ -107,6 +107,14 @@ Deno.serve(async (req) => {
       });
     }
 
+    // 4. Fetch review history for this email
+    const { data: reviewHistory } = await supabase
+      .from("briefing_reviews")
+      .select("id, action, reviewer_comments, created_at, briefing_image_id")
+      .eq("reviewed_by", cleanEmail)
+      .order("created_at", { ascending: true })
+      .limit(200);
+
     return new Response(
       JSON.stringify({
         requests,
@@ -120,6 +128,7 @@ Deno.serve(async (req) => {
           completed: completedResult.count || 0,
           total: totalResult.count || 0,
         },
+        reviewHistory: reviewHistory || [],
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

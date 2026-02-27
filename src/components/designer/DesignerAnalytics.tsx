@@ -50,34 +50,32 @@ export default function DesignerAnalytics({ designerEmail }: Props) {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Get image IDs first to filter reviews
-      const [imgResult, delResult] = await Promise.all([
-        supabase
-          .from('briefing_images')
-          .select('id, status, deadline, created_at, revision_count, price_per_art, image_type')
-          .eq('assigned_email', designerEmail)
-          .order('created_at', { ascending: true }),
-        supabase
-          .from('briefing_deliveries')
-          .select('briefing_image_id, created_at')
-          .eq('delivered_by_email', designerEmail)
-          .order('created_at', { ascending: true }),
-      ]);
+      const { data: result, error } = await supabase.functions.invoke('designer-data', {
+        body: { email: designerEmail },
+      });
 
-      const imgs = (imgResult.data || []) as AnalyticsImage[];
+      if (error) throw error;
+
+      const imgs = (result?.images || []).map((i: any) => ({
+        id: i.id,
+        status: i.status,
+        deadline: i.deadline,
+        created_at: i.created_at,
+        revision_count: i.revision_count,
+        price_per_art: i.price_per_art,
+        image_type: i.image_type,
+      })) as AnalyticsImage[];
+
       setImages(imgs);
-      setDeliveries((delResult.data || []) as DeliveryRecord[]);
+      setDeliveries((result?.deliveries || []) as DeliveryRecord[]);
 
-      // Fetch reviews for designer's images
-      if (imgs.length > 0) {
-        const imageIds = imgs.map(i => i.id);
-        const { data: revData } = await supabase
-          .from('briefing_reviews')
-          .select('briefing_image_id, action, created_at')
-          .in('briefing_image_id', imageIds)
-          .order('created_at', { ascending: true });
-        setReviews((revData || []) as ReviewRecord[]);
-      }
+      // Reviews from the same endpoint
+      const revs = (result?.reviews || []).map((r: any) => ({
+        briefing_image_id: r.briefing_image_id,
+        action: r.action,
+        created_at: r.created_at,
+      })) as ReviewRecord[];
+      setReviews(revs);
     } catch (err) {
       console.error('Error fetching analytics:', err);
     } finally {
