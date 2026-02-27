@@ -7,10 +7,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { IMAGE_TYPE_LABELS, ImageType } from '@/types/briefing';
-import { Heart, X, Loader2, Mail, CheckCircle, ImageIcon, Download, Sparkles, ThumbsDown, FolderOpen, Clock, Eye } from 'lucide-react';
+import { Heart, X, Loader2, Mail, CheckCircle, ImageIcon, Download, Sparkles, ThumbsDown, FolderOpen, Clock, Eye, Archive } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
+import JSZip from 'jszip';
 import ReviewHistory from '@/components/client-review/ReviewHistory';
 
 interface ReviewableImage {
@@ -49,6 +50,7 @@ export default function ClientReviewPage() {
   const [totalImages, setTotalImages] = useState(0);
   const [platformUrls, setPlatformUrls] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [downloadingZip, setDownloadingZip] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -264,6 +266,64 @@ export default function ClientReviewPage() {
   const allDone = currentIndex >= images.length && images.length > 0;
   const imageTypeLabel = currentImage ? (IMAGE_TYPE_LABELS[currentImage.image_type as ImageType] || currentImage.image_type) : '';
 
+  const handleDownloadZip = async () => {
+    if (!platformUrls.length) return;
+    setDownloadingZip(true);
+    try {
+      // Fetch approved assets for this platform
+      const { data: assets, error } = await supabase
+        .from('brand_assets')
+        .select('file_url, file_name')
+        .eq('platform_url', platformUrls[0]);
+
+      if (error) throw error;
+      if (!assets || assets.length === 0) {
+        toast.error('Nenhuma arte aprovada encontrada para download');
+        setDownloadingZip(false);
+        return;
+      }
+
+      const zip = new JSZip();
+      let fileIndex = 0;
+
+      for (const asset of assets) {
+        try {
+          const response = await fetch(asset.file_url);
+          if (!response.ok) continue;
+          const blob = await response.blob();
+
+          // Extract extension from URL or default to .png
+          const urlPath = new URL(asset.file_url).pathname;
+          const ext = urlPath.substring(urlPath.lastIndexOf('.')) || '.png';
+          const fileName = asset.file_name
+            ? `${asset.file_name}${ext}`
+            : `arte-${++fileIndex}${ext}`;
+
+          zip.file(fileName, blob);
+        } catch {
+          console.warn('Failed to fetch file:', asset.file_url);
+        }
+      }
+
+      const content = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(content);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `artes-aprovadas-${new Date().toISOString().slice(0, 10)}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast.success(`${assets.length} arte(s) baixada(s) com sucesso! 📦`);
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Erro ao gerar ZIP: ' + (err.message || ''));
+    } finally {
+      setDownloadingZip(false);
+    }
+  };
+
   // Stats bar for authenticated views
   const StatsBar = () => (
     <div className="flex flex-col sm:flex-row items-center justify-center gap-3 px-4 mb-6 flex-wrap">
@@ -354,6 +414,34 @@ export default function ClientReviewPage() {
             <div className="text-left">
               <p className="text-sm font-bold text-foreground leading-none">Minha Pasta</p>
               <p className="text-xs text-muted-foreground">Todos os arquivos</p>
+            </div>
+          </Button>
+        </motion.div>
+      )}
+
+      {/* Download ZIP button */}
+      {totalApproved > 0 && platformUrls.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.25 }}
+        >
+          <Button
+            variant="outline"
+            onClick={handleDownloadZip}
+            disabled={downloadingZip}
+            className="h-auto py-3 px-5 rounded-2xl border-border gap-3"
+          >
+            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+              {downloadingZip ? (
+                <Loader2 className="h-5 w-5 text-foreground animate-spin" />
+              ) : (
+                <Archive className="h-5 w-5 text-foreground" />
+              )}
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-bold text-foreground leading-none">Baixar ZIP</p>
+              <p className="text-xs text-muted-foreground">{totalApproved} arte(s) aprovada(s)</p>
             </div>
           </Button>
         </motion.div>
