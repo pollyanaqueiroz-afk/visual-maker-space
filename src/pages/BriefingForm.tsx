@@ -42,7 +42,7 @@ const initialForm: BriefingFormData = {
   has_community: false,
   brand_file: null,
   brand_drive_link: '',
-  login_image: { ...defaultImageBriefing },
+  login_image: [],
   banner_vitrine: [],
   product_covers: [],
   trail_banner: { ...defaultImageBriefing },
@@ -76,8 +76,8 @@ export default function BriefingForm() {
     const newForm = { ...form };
 
     if (suggestion.images?.login_image) {
-      const s = suggestion.images.login_image;
-      newForm.login_image = {
+      const items = Array.isArray(suggestion.images.login_image) ? suggestion.images.login_image : [suggestion.images.login_image];
+      newForm.login_image = items.map((s: any) => ({
         ...defaultImageBriefing,
         enabled: true,
         image_text: s.image_text || '',
@@ -85,7 +85,7 @@ export default function BriefingForm() {
         element_suggestion: s.element_suggestion || '',
         observations: s.observations || '',
         dimension: s.dimension || '',
-      };
+      }));
     }
 
     if (suggestion.images?.banner_vitrine) {
@@ -226,8 +226,10 @@ export default function BriefingForm() {
 
       let sortOrder = 0;
 
-      if (selections.login_image && form.login_image.enabled) {
-        await insertImage(requestId, 'login', form.login_image, sortOrder++);
+      if (selections.login_image) {
+        for (const loginImg of form.login_image) {
+          await insertImage(requestId, 'login', loginImg, sortOrder++);
+        }
       }
       for (const banner of form.banner_vitrine) {
         await insertImage(requestId, 'banner_vitrine', banner, sortOrder++);
@@ -438,12 +440,12 @@ export default function BriefingForm() {
               </Card>
 
               {selections.login_image && (
-                <ImageBriefingSection
-                  title="Imagem da Área de Login"
+                <MultiBannerSection
+                  title="Imagens da Área de Login"
                   description="Imagem onde o aluno insere email e senha para acessar a plataforma"
-                  data={form.login_image}
-                  onChange={d => update({ login_image: d })}
-                  required
+                  itemLabel="Imagem de Login"
+                  items={form.login_image}
+                  onChange={items => update({ login_image: items })}
                 />
               )}
 

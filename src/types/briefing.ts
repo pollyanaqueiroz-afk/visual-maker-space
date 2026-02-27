@@ -81,7 +81,7 @@ export interface BriefingFormData {
   has_community: boolean;
   brand_file: File | null;
   brand_drive_link: string;
-  login_image: ImageBriefingFormData;
+  login_image: ImageBriefingFormData[];
   banner_vitrine: ImageBriefingFormData[];
   product_covers: ImageBriefingFormData[];
   trail_banner: ImageBriefingFormData;
