@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -58,12 +59,15 @@ export default function MeetingsDashboard() {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [periodFilter, setPeriodFilter] = useState('current');
+  const { user } = useAuth();
 
   useEffect(() => {
+    if (!user) return;
     (async () => {
       const { data, error } = await (supabase
         .from('meetings' as any)
-        .select('id, title, meeting_date, meeting_time, status, client_email, client_name, client_url, meeting_reason, loyalty_index, loyalty_reason, duration_minutes')
+        .select('id, title, meeting_date, meeting_time, status, client_email, client_name, client_url, meeting_reason, loyalty_index, loyalty_reason, duration_minutes, created_by')
+        .eq('created_by', user.id)
         .order('meeting_date', { ascending: false }) as any);
       if (error) {
         console.error(error);
@@ -73,7 +77,7 @@ export default function MeetingsDashboard() {
       }
       setLoading(false);
     })();
-  }, []);
+  }, [user]);
 
   const filtered = useMemo(() => {
     if (periodFilter === 'all') return meetings;
