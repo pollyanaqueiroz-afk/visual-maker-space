@@ -458,15 +458,6 @@ export default function ClientReviewPage() {
           </Button>
         )}
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate('/briefing')}
-          className="rounded-full gap-2 h-9 px-4 bg-primary/5 border-primary/20 text-primary hover:bg-primary/10 hover:text-primary"
-        >
-          <PlusCircle className="h-4 w-4" />
-          Nova Solicitação
-        </Button>
       </motion.div>
 
       {/* Production images dialog */}
