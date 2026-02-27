@@ -46,6 +46,7 @@ interface ImageWithRequest {
   requester_email: string;
   platform_url: string;
   received_at: string;
+  submitted_by: string | null;
 }
 
 interface ReviewRecord {
@@ -76,7 +77,7 @@ export default function Dashboard() {
     const [imgRes, reqRes, revRes] = await Promise.all([
       supabase
         .from('briefing_images')
-        .select('*, briefing_requests!inner(requester_name, requester_email, platform_url, received_at)')
+        .select('*, briefing_requests!inner(requester_name, requester_email, platform_url, received_at, submitted_by)')
         .order('created_at', { ascending: false }),
       supabase
         .from('briefing_requests')
@@ -95,6 +96,7 @@ export default function Dashboard() {
         requester_email: img.briefing_requests?.requester_email || '',
         platform_url: img.briefing_requests?.platform_url || '',
         received_at: img.briefing_requests?.received_at || img.created_at,
+        submitted_by: img.briefing_requests?.submitted_by || null,
       }));
       setImages(mapped);
     }
@@ -487,6 +489,11 @@ export default function Dashboard() {
                           <TableCell>
                             <div className="text-sm">{img.requester_name}</div>
                             <div className="text-xs text-muted-foreground">{img.requester_email}</div>
+                            {img.submitted_by && img.submitted_by !== img.requester_email && (
+                              <div className="text-xs text-muted-foreground/70 mt-0.5">
+                                Enviado por: {img.submitted_by}
+                              </div>
+                            )}
                           </TableCell>
                           <TableCell>
                             {img.assigned_email ? (
