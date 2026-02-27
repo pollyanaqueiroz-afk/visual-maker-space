@@ -14,6 +14,7 @@ import {
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid,
 } from 'recharts';
+import { KpiCard } from '@/components/dashboard/KpiCard';
 
 interface MeetingRow {
   id: string;
@@ -230,54 +231,30 @@ export default function ProductivityTab() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center text-center gap-1">
-            <CalendarDays className="h-5 w-5 text-foreground" />
-            <span className="text-2xl font-bold text-foreground">{totalStats.total}</span>
-            <span className="text-[11px] text-muted-foreground">Total de Reuniões</span>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center text-center gap-1">
-            <CheckCircle className="h-5 w-5 text-success" />
-            <span className="text-2xl font-bold text-foreground">{totalStats.completed}</span>
-            <span className="text-[11px] text-muted-foreground">Realizadas</span>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center text-center gap-1">
-            <XCircle className="h-5 w-5 text-destructive" />
-            <span className="text-2xl font-bold text-foreground">{totalStats.cancelled}</span>
-            <span className="text-[11px] text-muted-foreground">Canceladas</span>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center text-center gap-1">
-            <Users className="h-5 w-5 text-primary" />
-            <span className="text-2xl font-bold text-foreground">{totalStats.people}</span>
-            <span className="text-[11px] text-muted-foreground">Pessoas Ativas</span>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <KpiCard label="Total de Reuniões" value={totalStats.total} icon={CalendarDays} color="bg-primary/10 text-primary" />
+        <KpiCard label="Realizadas" value={totalStats.completed} icon={CheckCircle} color="bg-success/10 text-success" />
+        <KpiCard label="Canceladas" value={totalStats.cancelled} icon={XCircle} color="bg-destructive/10 text-destructive" />
+        <KpiCard label="Pessoas Ativas" value={totalStats.people} icon={Users} color="bg-accent text-accent-foreground" />
       </div>
 
       {/* Monthly Chart */}
       {monthlyData.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Reuniões por Mês</CardTitle>
+        <Card className="border-none shadow-[var(--shadow-kpi)]">
+          <CardHeader className="pb-1">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Reuniões por Mês</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={260}>
+            <ResponsiveContainer width="100%" height={280}>
               <BarChart data={monthlyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                 <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Legend />
+                <Tooltip contentStyle={{ borderRadius: 8, border: 'none', boxShadow: 'var(--shadow-elevated)' }} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
                 <Bar dataKey="realizadas" name="Realizadas" stackId="a" fill="hsl(var(--success))" />
                 <Bar dataKey="agendadas" name="Agendadas" stackId="a" fill="hsl(var(--info))" />
-                <Bar dataKey="canceladas" name="Canceladas" stackId="a" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="canceladas" name="Canceladas" stackId="a" fill="hsl(var(--destructive))" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -285,10 +262,9 @@ export default function ProductivityTab() {
       )}
 
       <div className="grid md:grid-cols-2 gap-4">
-        {/* By Reason */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Por Motivo</CardTitle>
+        <Card className="border-none shadow-[var(--shadow-kpi)]">
+          <CardHeader className="pb-1">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Por Motivo</CardTitle>
           </CardHeader>
           <CardContent>
             {byReason.length === 0 ? (
@@ -296,20 +272,20 @@ export default function ProductivityTab() {
             ) : (
               <ResponsiveContainer width="100%" height={Math.max(180, byReason.length * 32)}>
                 <BarChart data={byReason} layout="vertical" margin={{ left: 10, right: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
                   <XAxis type="number" allowDecimals={false} />
                   <YAxis type="category" dataKey="name" width={200} tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(v: number, _: string, props: any) => [v, props.payload.fullName]} />
-                  <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                  <Tooltip contentStyle={{ borderRadius: 8, border: 'none', boxShadow: 'var(--shadow-elevated)' }} formatter={(v: number, _: string, props: any) => [v, props.payload.fullName]} />
+                  <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 6, 6, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
           </CardContent>
         </Card>
 
-        {/* Per person chart */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Reuniões por Pessoa</CardTitle>
+        <Card className="border-none shadow-[var(--shadow-kpi)]">
+          <CardHeader className="pb-1">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Por Pessoa</CardTitle>
           </CardHeader>
           <CardContent>
             {personStats.length === 0 ? (
@@ -317,10 +293,11 @@ export default function ProductivityTab() {
             ) : (
               <ResponsiveContainer width="100%" height={Math.max(180, personStats.length * 44)}>
                 <BarChart data={personStats} layout="vertical" margin={{ left: 10, right: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
                   <XAxis type="number" allowDecimals={false} />
                   <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Legend />
+                  <Tooltip contentStyle={{ borderRadius: 8, border: 'none', boxShadow: 'var(--shadow-elevated)' }} />
+                  <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
                   <Bar dataKey="completed" name="Realizadas" stackId="a" fill="hsl(var(--success))" />
                   <Bar dataKey="cancelled" name="Canceladas" stackId="a" fill="hsl(var(--destructive))" radius={[0, 4, 4, 0]} />
                 </BarChart>
@@ -333,71 +310,68 @@ export default function ProductivityTab() {
       {/* Ranking Cards */}
       {personStats.length > 1 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
             <Trophy className="h-4 w-4 text-warning" /> Ranking de Produtividade
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {/* Mais reuniões realizadas */}
-            <Card>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="border-none shadow-[var(--shadow-kpi)]">
               <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <Medal className="h-3.5 w-3.5 text-warning" /> Mais Reuniões Realizadas
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
+              <CardContent className="space-y-3">
                 {[...personStats].sort((a, b) => b.completed - a.completed).slice(0, 5).map((p, i) => (
                   <div key={p.uid} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs font-bold w-5 text-center ${i === 0 ? 'text-warning' : i === 1 ? 'text-muted-foreground' : i === 2 ? 'text-orange-400' : 'text-muted-foreground/60'}`}>
-                        {i + 1}º
-                      </span>
-                      <span className="text-sm">{p.name}</span>
+                    <div className="flex items-center gap-2.5">
+                      <div className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${i === 0 ? 'bg-warning/20 text-warning' : i === 1 ? 'bg-muted text-muted-foreground' : i === 2 ? 'bg-primary/10 text-primary' : 'bg-muted/50 text-muted-foreground/60'}`}>
+                        {i + 1}
+                      </div>
+                      <span className="text-sm font-medium">{p.name}</span>
                     </div>
-                    <Badge className="bg-success/20 text-success">{p.completed}</Badge>
+                    <span className="text-lg font-bold text-success">{p.completed}</span>
                   </div>
                 ))}
               </CardContent>
             </Card>
 
-            {/* Melhor taxa de realização */}
-            <Card>
+            <Card className="border-none shadow-[var(--shadow-kpi)]">
               <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <Award className="h-3.5 w-3.5 text-primary" /> Melhor Taxa de Realização
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
+              <CardContent className="space-y-3">
                 {[...personStats].filter(p => p.total >= 3).sort((a, b) => b.rate - a.rate).slice(0, 5).map((p, i) => (
                   <div key={p.uid} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs font-bold w-5 text-center ${i === 0 ? 'text-warning' : i === 1 ? 'text-muted-foreground' : i === 2 ? 'text-orange-400' : 'text-muted-foreground/60'}`}>
-                        {i + 1}º
-                      </span>
-                      <span className="text-sm">{p.name}</span>
+                    <div className="flex items-center gap-2.5">
+                      <div className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${i === 0 ? 'bg-warning/20 text-warning' : i === 1 ? 'bg-muted text-muted-foreground' : i === 2 ? 'bg-primary/10 text-primary' : 'bg-muted/50 text-muted-foreground/60'}`}>
+                        {i + 1}
+                      </div>
+                      <span className="text-sm font-medium">{p.name}</span>
                     </div>
-                    <span className={`text-sm font-semibold ${p.rate >= 70 ? 'text-success' : p.rate >= 40 ? 'text-warning' : 'text-destructive'}`}>{p.rate}%</span>
+                    <span className={`text-lg font-bold ${p.rate >= 70 ? 'text-success' : p.rate >= 40 ? 'text-warning' : 'text-destructive'}`}>{p.rate}%</span>
                   </div>
                 ))}
               </CardContent>
             </Card>
 
-            {/* Mais horas */}
-            <Card>
+            <Card className="border-none shadow-[var(--shadow-kpi)]">
               <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <TrendingUp className="h-3.5 w-3.5 text-info" /> Mais Horas de Reunião
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
+              <CardContent className="space-y-3">
                 {[...personStats].sort((a, b) => b.hoursFormatted - a.hoursFormatted).slice(0, 5).map((p, i) => (
                   <div key={p.uid} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs font-bold w-5 text-center ${i === 0 ? 'text-warning' : i === 1 ? 'text-muted-foreground' : i === 2 ? 'text-orange-400' : 'text-muted-foreground/60'}`}>
-                        {i + 1}º
-                      </span>
-                      <span className="text-sm">{p.name}</span>
+                    <div className="flex items-center gap-2.5">
+                      <div className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${i === 0 ? 'bg-warning/20 text-warning' : i === 1 ? 'bg-muted text-muted-foreground' : i === 2 ? 'bg-primary/10 text-primary' : 'bg-muted/50 text-muted-foreground/60'}`}>
+                        {i + 1}
+                      </div>
+                      <span className="text-sm font-medium">{p.name}</span>
                     </div>
-                    <span className="text-sm font-semibold text-foreground">{p.hoursFormatted}h</span>
+                    <span className="text-lg font-bold text-foreground">{p.hoursFormatted}h</span>
                   </div>
                 ))}
               </CardContent>
@@ -407,10 +381,10 @@ export default function ProductivityTab() {
       )}
 
       {/* Produtividade Individual Table */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
+      <Card className="border-none shadow-[var(--shadow-kpi)]">
+        <CardHeader className="pb-1">
+          <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-primary" />
             Produtividade Individual
           </CardTitle>
         </CardHeader>
@@ -420,36 +394,34 @@ export default function ProductivityTab() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead className="w-10 text-center">#</TableHead>
-                  <TableHead>Pessoa</TableHead>
-                  <TableHead className="text-center">Total</TableHead>
-                  <TableHead className="text-center">Realizadas</TableHead>
-                  <TableHead className="text-center">Canceladas</TableHead>
-                  <TableHead className="text-center">Taxa</TableHead>
-                  <TableHead className="text-center">Horas</TableHead>
-                  <TableHead>Principal Motivo</TableHead>
+                <TableRow className="border-border/50">
+                  <TableHead className="w-10 text-center text-[11px] uppercase tracking-wider">#</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider">Pessoa</TableHead>
+                  <TableHead className="text-center text-[11px] uppercase tracking-wider">Total</TableHead>
+                  <TableHead className="text-center text-[11px] uppercase tracking-wider">Realizadas</TableHead>
+                  <TableHead className="text-center text-[11px] uppercase tracking-wider">Canceladas</TableHead>
+                  <TableHead className="text-center text-[11px] uppercase tracking-wider">Taxa</TableHead>
+                  <TableHead className="text-center text-[11px] uppercase tracking-wider">Horas</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider">Principal Motivo</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {personStats.map((row, i) => (
-                  <TableRow key={row.uid}>
+                  <TableRow key={row.uid} className="border-border/30">
                     <TableCell className="text-center">
                       {i === 0 ? <Trophy className="h-4 w-4 text-warning mx-auto" /> :
-                       i === 1 ? <span className="text-xs font-bold text-muted-foreground">2º</span> :
-                       i === 2 ? <span className="text-xs font-bold text-orange-400">3º</span> :
-                       <span className="text-xs text-muted-foreground/60">{i + 1}º</span>}
+                       <span className={`text-xs font-bold ${i <= 2 ? 'text-foreground' : 'text-muted-foreground/60'}`}>{i + 1}º</span>}
                     </TableCell>
                     <TableCell className="font-medium text-sm">{row.name}</TableCell>
-                    <TableCell className="text-center font-semibold">{row.total}</TableCell>
-                    <TableCell className="text-center"><Badge className="bg-success/20 text-success">{row.completed}</Badge></TableCell>
-                    <TableCell className="text-center"><Badge className="bg-destructive/20 text-destructive">{row.cancelled}</Badge></TableCell>
+                    <TableCell className="text-center font-bold text-lg">{row.total}</TableCell>
+                    <TableCell className="text-center"><Badge className="bg-success/10 text-success border-success/20">{row.completed}</Badge></TableCell>
+                    <TableCell className="text-center"><Badge className="bg-destructive/10 text-destructive border-destructive/20">{row.cancelled}</Badge></TableCell>
                     <TableCell className="text-center">
-                      <span className={row.rate >= 70 ? 'text-success font-semibold' : row.rate >= 40 ? 'text-warning font-semibold' : 'text-destructive font-semibold'}>
+                      <span className={`font-bold ${row.rate >= 70 ? 'text-success' : row.rate >= 40 ? 'text-warning' : 'text-destructive'}`}>
                         {row.rate}%
                       </span>
                     </TableCell>
-                    <TableCell className="text-center text-sm">{row.hoursFormatted}h</TableCell>
+                    <TableCell className="text-center font-semibold">{row.hoursFormatted}h</TableCell>
                     <TableCell className="text-xs text-muted-foreground max-w-[180px] truncate">{row.topReason}</TableCell>
                   </TableRow>
                 ))}
