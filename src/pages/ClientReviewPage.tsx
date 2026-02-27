@@ -7,8 +7,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { IMAGE_TYPE_LABELS, ImageType } from '@/types/briefing';
-import { Heart, X, Loader2, Mail, CheckCircle, ImageIcon, Download, Sparkles, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Heart, X, Loader2, Mail, CheckCircle, ImageIcon, Download, Sparkles, ThumbsDown, FolderOpen, Clock, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 interface ReviewableImage {
   id: string;
@@ -29,6 +30,7 @@ interface ReviewableImage {
 }
 
 export default function ClientReviewPage() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -40,6 +42,8 @@ export default function ClientReviewPage() {
   const [direction, setDirection] = useState<'left' | 'right' | null>(null);
   const [completedCount, setCompletedCount] = useState(0);
   const [clientName, setClientName] = useState('');
+  const [pendingCount, setPendingCount] = useState(0); // images still being worked on
+  const [platformUrls, setPlatformUrls] = useState<string[]>([]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -55,7 +59,7 @@ export default function ClientReviewPage() {
     try {
       const { data: requests, error: reqErr } = await supabase
         .from('briefing_requests')
-        .select('id, requester_name')
+        .select('id, requester_name, platform_url')
         .eq('requester_email', clientEmail);
 
       if (reqErr) throw reqErr;
@@ -69,19 +73,32 @@ export default function ClientReviewPage() {
         setClientName(requests[0].requester_name.split(' ')[0]);
       }
 
+      // Collect unique platform URLs
+      const urls = [...new Set(requests.map(r => r.platform_url).filter(Boolean))];
+      setPlatformUrls(urls);
+
       const requestIds = requests.map(r => r.id);
 
-      const { data: imgs, error: imgErr } = await supabase
-        .from('briefing_images')
-        .select('id, image_type, product_name, assigned_email, revision_count, request_id, briefing_requests!inner(requester_name, platform_url)')
-        .in('request_id', requestIds)
-        .eq('status', 'review')
-        .order('created_at', { ascending: true });
+      // Fetch review images and pending/in_progress count in parallel
+      const [reviewResult, pendingResult] = await Promise.all([
+        supabase
+          .from('briefing_images')
+          .select('id, image_type, product_name, assigned_email, revision_count, request_id, briefing_requests!inner(requester_name, platform_url)')
+          .in('request_id', requestIds)
+          .eq('status', 'review')
+          .order('created_at', { ascending: true }),
+        supabase
+          .from('briefing_images')
+          .select('id', { count: 'exact', head: true })
+          .in('request_id', requestIds)
+          .in('status', ['pending', 'in_progress'] as any),
+      ]);
 
-      if (imgErr) throw imgErr;
+      if (reviewResult.error) throw reviewResult.error;
+      setPendingCount(pendingResult.count || 0);
 
       const imagesWithDelivery: ReviewableImage[] = [];
-      for (const img of (imgs || [])) {
+      for (const img of (reviewResult.data || [])) {
         const { data: deliveries } = await supabase
           .from('briefing_deliveries')
           .select('file_url, comments, created_at')
@@ -224,8 +241,71 @@ export default function ClientReviewPage() {
   const allDone = currentIndex >= images.length && images.length > 0;
   const imageTypeLabel = currentImage ? (IMAGE_TYPE_LABELS[currentImage.image_type as ImageType] || currentImage.image_type) : '';
 
+  // Stats bar for authenticated views
+  const StatsBar = () => (
+    <div className="flex flex-col sm:flex-row items-center justify-center gap-3 px-4 mb-6">
+      {/* Pending arts indicator */}
+      {pendingCount > 0 && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl px-5 py-3"
+        >
+          <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+            <Clock className="h-5 w-5 text-amber-500" />
+          </div>
+          <div>
+            <p className="text-2xl font-extrabold text-amber-500 leading-none">{pendingCount}</p>
+            <p className="text-xs text-muted-foreground">arte(s) ainda em produção</p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Review count */}
+      {images.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.1 }}
+          className="flex items-center gap-3 bg-primary/10 border border-primary/30 rounded-2xl px-5 py-3"
+        >
+          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+            <Eye className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <p className="text-2xl font-extrabold text-primary leading-none">{images.length}</p>
+            <p className="text-xs text-muted-foreground">para aprovar agora</p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Assets folder button */}
+      {platformUrls.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Button
+            variant="outline"
+            onClick={() => navigate(`/assets/${encodeURIComponent(platformUrls[0])}`)}
+            className="h-auto py-3 px-5 rounded-2xl border-border gap-3"
+          >
+            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+              <FolderOpen className="h-5 w-5 text-foreground" />
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-bold text-foreground leading-none">Minha Pasta</p>
+              <p className="text-xs text-muted-foreground">Artes aprovadas</p>
+            </div>
+          </Button>
+        </motion.div>
+      )}
+    </div>
+  );
+
   // Wrapper with CursEduca header
-  const PageWrapper = ({ children, headerTitle, headerSubtitle }: { children: React.ReactNode; headerTitle: string; headerSubtitle?: string }) => (
+  const PageWrapper = ({ children, headerTitle, headerSubtitle, showStats = false }: { children: React.ReactNode; headerTitle: string; headerSubtitle?: string; showStats?: boolean }) => (
     <div className="min-h-screen bg-background">
       {/* CursEduca Hero Header */}
       <div className="relative w-full overflow-hidden" style={{ minHeight: '160px' }}>
@@ -254,6 +334,7 @@ export default function ClientReviewPage() {
 
       {/* Content */}
       <div className="relative z-10 -mt-6">
+        {showStats && <StatsBar />}
         {children}
       </div>
     </div>
@@ -318,6 +399,7 @@ export default function ClientReviewPage() {
       <PageWrapper
         headerTitle="Tudo revisado! 🎉"
         headerSubtitle={`Obrigado pela sua avaliação${clientName ? `, ${clientName}` : ''}!`}
+        showStats
       >
         <div className="flex items-center justify-center px-4 pb-12">
           <motion.div
@@ -378,6 +460,7 @@ export default function ClientReviewPage() {
       <PageWrapper
         headerTitle="Validação de Artes"
         headerSubtitle={clientName ? `Olá, ${clientName}!` : undefined}
+        showStats
       >
         <div className="flex items-center justify-center px-4 pb-12">
           <motion.div
@@ -408,6 +491,7 @@ export default function ClientReviewPage() {
     <PageWrapper
       headerTitle={clientName ? `Olá, ${clientName}! 👋` : 'Validação de Artes'}
       headerSubtitle="Aprove ou solicite ajustes nas suas artes"
+      showStats
     >
       <div className="flex flex-col items-center px-4 pb-12">
         {/* Progress */}
