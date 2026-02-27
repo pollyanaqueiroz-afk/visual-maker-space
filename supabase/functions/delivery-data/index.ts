@@ -138,6 +138,37 @@ Deno.serve(async (req) => {
 
       if (error) throw error;
 
+      // Archive approved delivery as brand asset
+      if (status === "completed") {
+        const { data: imgData } = await supabase
+          .from("briefing_images")
+          .select("id, image_type, product_name, briefing_requests!inner(platform_url)")
+          .eq("id", image_id)
+          .single();
+
+        if (imgData) {
+          const platformUrl = (imgData as any).briefing_requests?.platform_url;
+          if (platformUrl) {
+            const { data: deliveries } = await supabase
+              .from("briefing_deliveries")
+              .select("file_url")
+              .eq("briefing_image_id", image_id)
+              .order("created_at", { ascending: false })
+              .limit(1);
+
+            if (deliveries && deliveries.length > 0) {
+              await supabase.from("brand_assets").insert({
+                file_url: deliveries[0].file_url,
+                platform_url: platformUrl,
+                briefing_image_id: image_id,
+                source: "approved_delivery",
+                file_name: `${imgData.image_type}${imgData.product_name ? ` — ${imgData.product_name}` : ""}`,
+              });
+            }
+          }
+        }
+      }
+
       return new Response(
         JSON.stringify({ success: true }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }

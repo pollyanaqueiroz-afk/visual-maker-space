@@ -194,18 +194,7 @@ export default function ClientReviewPage() {
           reviewer_comments: null,
         });
 
-      if (currentImage.delivery?.file_url) {
-        const platformUrl = currentImage.briefing_requests?.platform_url;
-        if (platformUrl) {
-          await supabase.from('brand_assets').insert({
-            file_url: currentImage.delivery.file_url,
-            platform_url: platformUrl,
-            briefing_image_id: currentImage.id,
-            source: 'approved_delivery',
-            file_name: `${IMAGE_TYPE_LABELS[currentImage.image_type as ImageType] || currentImage.image_type}${currentImage.product_name ? ` — ${currentImage.product_name}` : ''}`,
-          } as any);
-        }
-      }
+      // Brand asset archiving is now handled server-side in the delivery-data edge function
 
       confetti({
         particleCount: 100,
