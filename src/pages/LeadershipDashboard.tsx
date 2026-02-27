@@ -12,9 +12,10 @@ import {
   CalendarDays, CheckCircle, XCircle, Clock, Star, TrendingUp, Users, Globe, UserCheck, Loader2, BarChart3, Activity,
 } from 'lucide-react';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, CartesianGrid,
 } from 'recharts';
 import ProductivityTab from '@/components/leadership/ProductivityTab';
+import { KpiCard } from '@/components/dashboard/KpiCard';
 
 const PIE_COLORS = ['hsl(var(--info))', 'hsl(var(--success))', 'hsl(var(--destructive))'];
 
@@ -248,65 +249,54 @@ export default function LeadershipDashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-        {[
-          { label: 'Total', value: stats.total, icon: CalendarDays, color: 'text-foreground' },
-          { label: 'Realizadas', value: stats.completed, icon: CheckCircle, color: 'text-success' },
-          { label: 'Agendadas', value: stats.scheduled, icon: Clock, color: 'text-info' },
-          { label: 'Canceladas', value: stats.cancelled, icon: XCircle, color: 'text-destructive' },
-          { label: 'Fidelidade Média', value: stats.avgLoyalty, icon: Star, color: 'text-warning' },
-          { label: 'Horas realizadas', value: `${Math.round(stats.totalMinutes / 60)}h`, icon: TrendingUp, color: 'text-primary' },
-          { label: 'Clientes únicos', value: stats.uniqueClients, icon: Globe, color: 'text-accent-foreground' },
-        ].map(kpi => (
-          <Card key={kpi.label}>
-            <CardContent className="p-4 flex flex-col items-center text-center gap-1">
-              <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
-              <span className="text-2xl font-bold text-foreground">{kpi.value}</span>
-              <span className="text-[11px] text-muted-foreground">{kpi.label}</span>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+        <KpiCard label="Total" value={stats.total} icon={CalendarDays} color="bg-primary/10 text-primary" />
+        <KpiCard label="Realizadas" value={stats.completed} icon={CheckCircle} color="bg-success/10 text-success" />
+        <KpiCard label="Agendadas" value={stats.scheduled} icon={Clock} color="bg-info/10 text-info" />
+        <KpiCard label="Canceladas" value={stats.cancelled} icon={XCircle} color="bg-destructive/10 text-destructive" />
+        <KpiCard label="Fidelidade" value={stats.avgLoyalty} icon={Star} color="bg-warning/10 text-warning" />
+        <KpiCard label="Horas" value={`${Math.round(stats.totalMinutes / 60)}h`} icon={TrendingUp} color="bg-primary/10 text-primary" />
+        <KpiCard label="Clientes" value={stats.uniqueClients} icon={Globe} color="bg-accent text-accent-foreground" />
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
-        {/* Status Pie */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Distribuição por Status</CardTitle>
+        <Card className="border-none shadow-[var(--shadow-kpi)]">
+          <CardHeader className="pb-1">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Distribuição por Status</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={240}>
               <PieChart>
-                <Pie data={byStatus} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                <Pie data={byStatus} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={85} strokeWidth={2} stroke="hsl(var(--card))">
                   {byStatus.map((_, i) => (
                     <Cell key={i} fill={PIE_COLORS[i]} />
                   ))}
                 </Pie>
-                <Legend />
-                <Tooltip />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
+                <Tooltip contentStyle={{ borderRadius: 8, border: 'none', boxShadow: 'var(--shadow-elevated)' }} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* By Creator Bar Chart */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Reuniões por Membro do Time</CardTitle>
+        <Card className="border-none shadow-[var(--shadow-kpi)]">
+          <CardHeader className="pb-1">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Reuniões por Membro</CardTitle>
           </CardHeader>
           <CardContent>
             {byCreator.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">Nenhum dado</p>
             ) : (
-              <ResponsiveContainer width="100%" height={Math.max(180, byCreator.length * 44)}>
+              <ResponsiveContainer width="100%" height={Math.max(200, byCreator.length * 44)}>
                 <BarChart data={byCreator} layout="vertical" margin={{ left: 10, right: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
                   <XAxis type="number" allowDecimals={false} />
                   <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Legend />
+                  <Tooltip contentStyle={{ borderRadius: 8, border: 'none', boxShadow: 'var(--shadow-elevated)' }} />
+                  <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
                   <Bar dataKey="completed" name="Realizadas" stackId="a" fill="hsl(var(--success))" />
                   <Bar dataKey="scheduled" name="Agendadas" stackId="a" fill="hsl(var(--info))" />
-                  <Bar dataKey="cancelled" name="Canceladas" stackId="a" fill="hsl(var(--destructive))" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="cancelled" name="Canceladas" stackId="a" fill="hsl(var(--destructive))" radius={[0, 6, 6, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -315,45 +305,45 @@ export default function LeadershipDashboard() {
       </div>
 
       {/* Performance by Creator Table */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2">
-            <UserCheck className="h-4 w-4" />
+      <Card className="border-none shadow-[var(--shadow-kpi)]">
+        <CardHeader className="pb-1">
+          <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+            <UserCheck className="h-4 w-4 text-primary" />
             Performance do Time
           </CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Membro</TableHead>
-                <TableHead className="text-center">Total</TableHead>
-                <TableHead className="text-center">Realizadas</TableHead>
-                <TableHead className="text-center">Agendadas</TableHead>
-                <TableHead className="text-center">Canceladas</TableHead>
-                <TableHead className="text-center">Taxa Realização</TableHead>
-                <TableHead className="text-center">Fidelidade Média</TableHead>
+              <TableRow className="border-border/50">
+                <TableHead className="text-[11px] uppercase tracking-wider">Membro</TableHead>
+                <TableHead className="text-center text-[11px] uppercase tracking-wider">Total</TableHead>
+                <TableHead className="text-center text-[11px] uppercase tracking-wider">Realizadas</TableHead>
+                <TableHead className="text-center text-[11px] uppercase tracking-wider">Agendadas</TableHead>
+                <TableHead className="text-center text-[11px] uppercase tracking-wider">Canceladas</TableHead>
+                <TableHead className="text-center text-[11px] uppercase tracking-wider">Taxa</TableHead>
+                <TableHead className="text-center text-[11px] uppercase tracking-wider">Fidelidade</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {byCreator.map(row => {
                 const rate = row.total > 0 ? Math.round((row.completed / row.total) * 100) : 0;
                 return (
-                  <TableRow key={row.uid}>
+                  <TableRow key={row.uid} className="border-border/30">
                     <TableCell className="font-medium text-sm">{row.name}</TableCell>
-                    <TableCell className="text-center font-semibold">{row.total}</TableCell>
-                    <TableCell className="text-center"><Badge className="bg-success/20 text-success">{row.completed}</Badge></TableCell>
-                    <TableCell className="text-center"><Badge className="bg-info/20 text-info">{row.scheduled}</Badge></TableCell>
-                    <TableCell className="text-center"><Badge className="bg-destructive/20 text-destructive">{row.cancelled}</Badge></TableCell>
+                    <TableCell className="text-center font-bold text-lg">{row.total}</TableCell>
+                    <TableCell className="text-center"><Badge className="bg-success/10 text-success border-success/20">{row.completed}</Badge></TableCell>
+                    <TableCell className="text-center"><Badge className="bg-info/10 text-info border-info/20">{row.scheduled}</Badge></TableCell>
+                    <TableCell className="text-center"><Badge className="bg-destructive/10 text-destructive border-destructive/20">{row.cancelled}</Badge></TableCell>
                     <TableCell className="text-center">
-                      <span className={rate >= 70 ? 'text-success font-semibold' : rate >= 40 ? 'text-warning font-semibold' : 'text-destructive font-semibold'}>
+                      <span className={`font-bold ${rate >= 70 ? 'text-success' : rate >= 40 ? 'text-warning' : 'text-destructive'}`}>
                         {rate}%
                       </span>
                     </TableCell>
                     <TableCell className="text-center">
                       <span className="flex items-center justify-center gap-1">
                         <Star className="h-3 w-3 text-warning" />
-                        {row.avgLoyalty}
+                        <span className="font-semibold">{row.avgLoyalty}</span>
                       </span>
                     </TableCell>
                   </TableRow>
@@ -365,11 +355,11 @@ export default function LeadershipDashboard() {
       </Card>
 
       {/* By Client URL Table */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2">
-            <Globe className="h-4 w-4" />
-            Reuniões por Cliente (URL)
+      <Card className="border-none shadow-[var(--shadow-kpi)]">
+        <CardHeader className="pb-1">
+          <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+            <Globe className="h-4 w-4 text-primary" />
+            Reuniões por Cliente
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -378,17 +368,17 @@ export default function LeadershipDashboard() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>URL do Cliente</TableHead>
-                  <TableHead className="text-center">Total</TableHead>
-                  <TableHead className="text-center">Realizadas</TableHead>
-                  <TableHead className="text-center">Agendadas</TableHead>
-                  <TableHead className="text-center">Canceladas</TableHead>
+                <TableRow className="border-border/50">
+                  <TableHead className="text-[11px] uppercase tracking-wider">URL do Cliente</TableHead>
+                  <TableHead className="text-center text-[11px] uppercase tracking-wider">Total</TableHead>
+                  <TableHead className="text-center text-[11px] uppercase tracking-wider">Realizadas</TableHead>
+                  <TableHead className="text-center text-[11px] uppercase tracking-wider">Agendadas</TableHead>
+                  <TableHead className="text-center text-[11px] uppercase tracking-wider">Canceladas</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {byUrl.map(row => (
-                  <TableRow key={row.url}>
+                  <TableRow key={row.url} className="border-border/30">
                     <TableCell className="font-medium text-sm">
                       {row.url !== 'Sem URL' ? (
                         <a href={row.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{row.url}</a>
@@ -396,10 +386,10 @@ export default function LeadershipDashboard() {
                         <span className="text-muted-foreground">Sem URL</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-center font-semibold">{row.total}</TableCell>
-                    <TableCell className="text-center"><Badge className="bg-success/20 text-success">{row.completed}</Badge></TableCell>
-                    <TableCell className="text-center"><Badge className="bg-info/20 text-info">{row.scheduled}</Badge></TableCell>
-                    <TableCell className="text-center"><Badge className="bg-destructive/20 text-destructive">{row.cancelled}</Badge></TableCell>
+                    <TableCell className="text-center font-bold text-lg">{row.total}</TableCell>
+                    <TableCell className="text-center"><Badge className="bg-success/10 text-success border-success/20">{row.completed}</Badge></TableCell>
+                    <TableCell className="text-center"><Badge className="bg-info/10 text-info border-info/20">{row.scheduled}</Badge></TableCell>
+                    <TableCell className="text-center"><Badge className="bg-destructive/10 text-destructive border-destructive/20">{row.cancelled}</Badge></TableCell>
                   </TableRow>
                 ))}
               </TableBody>

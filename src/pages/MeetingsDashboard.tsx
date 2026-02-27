@@ -13,9 +13,10 @@ import {
   CalendarDays, CheckCircle, XCircle, Clock, Star, TrendingUp, Users, BarChart3, Globe, Heart,
 } from 'lucide-react';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, CartesianGrid,
 } from 'recharts';
 import LoyaltyTrackingTab from '@/components/dashboard/LoyaltyTrackingTab';
+import { KpiCard } from '@/components/dashboard/KpiCard';
 
 const MEETING_REASONS = [
   'Passagem de bastão Closer <> Onboarding',
@@ -211,60 +212,49 @@ export default function MeetingsDashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-        {[
-          { label: 'Total', value: stats.total, icon: CalendarDays, color: 'text-foreground' },
-          { label: 'Realizadas', value: stats.completed, icon: CheckCircle, color: 'text-success' },
-          { label: 'Agendadas', value: stats.scheduled, icon: Clock, color: 'text-info' },
-          { label: 'Canceladas', value: stats.cancelled, icon: XCircle, color: 'text-destructive' },
-          { label: 'Fidelidade Média', value: stats.avgLoyalty, icon: Star, color: 'text-warning' },
-          { label: 'Horas realizadas', value: `${Math.round(stats.totalMinutes / 60)}h`, icon: TrendingUp, color: 'text-primary' },
-          { label: 'Clientes únicos', value: stats.uniqueClients, icon: Users, color: 'text-accent-foreground' },
-        ].map(kpi => (
-          <Card key={kpi.label}>
-            <CardContent className="p-4 flex flex-col items-center text-center gap-1">
-              <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
-              <span className="text-2xl font-bold text-foreground">{kpi.value}</span>
-              <span className="text-[11px] text-muted-foreground">{kpi.label}</span>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+        <KpiCard label="Total" value={stats.total} icon={CalendarDays} color="bg-primary/10 text-primary" />
+        <KpiCard label="Realizadas" value={stats.completed} icon={CheckCircle} color="bg-success/10 text-success" />
+        <KpiCard label="Agendadas" value={stats.scheduled} icon={Clock} color="bg-info/10 text-info" />
+        <KpiCard label="Canceladas" value={stats.cancelled} icon={XCircle} color="bg-destructive/10 text-destructive" />
+        <KpiCard label="Fidelidade" value={stats.avgLoyalty} icon={Star} color="bg-warning/10 text-warning" />
+        <KpiCard label="Horas" value={`${Math.round(stats.totalMinutes / 60)}h`} icon={TrendingUp} color="bg-primary/10 text-primary" />
+        <KpiCard label="Clientes" value={stats.uniqueClients} icon={Users} color="bg-accent text-accent-foreground" />
       </div>
 
       {/* Charts Row */}
       <div className="grid md:grid-cols-2 gap-4">
-        {/* By Status Pie */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Por Status</CardTitle>
+        <Card className="border-none shadow-[var(--shadow-kpi)]">
+          <CardHeader className="pb-1">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Distribuição por Status</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={240}>
               <PieChart>
-                <Pie data={byStatus} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                <Pie data={byStatus} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={85} strokeWidth={2} stroke="hsl(var(--card))">
                   {byStatus.map((_, i) => (
                     <Cell key={i} fill={PIE_COLORS[i]} />
                   ))}
                 </Pie>
-                <Legend />
-                <Tooltip />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
+                <Tooltip contentStyle={{ borderRadius: 8, border: 'none', boxShadow: 'var(--shadow-elevated)' }} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Loyalty Distribution */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Índice de Fidelidade</CardTitle>
+        <Card className="border-none shadow-[var(--shadow-kpi)]">
+          <CardHeader className="pb-1">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Índice de Fidelidade</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={240}>
               <BarChart data={loyaltyDist}>
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                 <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                <Tooltip contentStyle={{ borderRadius: 8, border: 'none', boxShadow: 'var(--shadow-elevated)' }} />
+                <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                   {loyaltyDist.map((_, i) => (
                     <Cell key={i} fill={LOYALTY_COLORS[i]} />
                   ))}
@@ -276,9 +266,9 @@ export default function MeetingsDashboard() {
       </div>
 
       {/* By Reason Bar Chart */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold">Reuniões por Motivo</CardTitle>
+      <Card className="border-none shadow-[var(--shadow-kpi)]">
+        <CardHeader className="pb-1">
+          <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Reuniões por Motivo</CardTitle>
         </CardHeader>
         <CardContent>
           {byReason.length === 0 ? (
@@ -286,10 +276,11 @@ export default function MeetingsDashboard() {
           ) : (
             <ResponsiveContainer width="100%" height={Math.max(200, byReason.length * 36)}>
               <BarChart data={byReason} layout="vertical" margin={{ left: 10, right: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
                 <XAxis type="number" allowDecimals={false} />
                 <YAxis type="category" dataKey="name" width={200} tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(v: number, _: string, props: any) => [v, props.payload.fullName]} />
-                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                <Tooltip contentStyle={{ borderRadius: 8, border: 'none', boxShadow: 'var(--shadow-elevated)' }} formatter={(v: number, _: string, props: any) => [v, props.payload.fullName]} />
+                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 6, 6, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -297,10 +288,10 @@ export default function MeetingsDashboard() {
       </Card>
 
       {/* By Client URL Table */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2">
-            <Globe className="h-4 w-4" />
+      <Card className="border-none shadow-[var(--shadow-kpi)]">
+        <CardHeader className="pb-1">
+          <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+            <Globe className="h-4 w-4 text-primary" />
             Reuniões por URL do Cliente
           </CardTitle>
         </CardHeader>
