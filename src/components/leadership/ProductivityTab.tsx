@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { format, parseISO, startOfMonth, endOfMonth, subMonths, isWithinInterval, eachMonthOfInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
-  CalendarDays, CheckCircle, XCircle, Users, UserCheck, Loader2, TrendingUp, Filter, Download,
+  CalendarDays, CheckCircle, XCircle, Users, UserCheck, Loader2, TrendingUp, Filter, Download, Trophy, Medal, Award,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid,
@@ -330,7 +330,83 @@ export default function ProductivityTab() {
         </Card>
       </div>
 
-      {/* Person Detail Table */}
+      {/* Ranking Cards */}
+      {personStats.length > 1 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
+            <Trophy className="h-4 w-4 text-warning" /> Ranking de Produtividade
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* Mais reuniões realizadas */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                  <Medal className="h-3.5 w-3.5 text-warning" /> Mais Reuniões Realizadas
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {[...personStats].sort((a, b) => b.completed - a.completed).slice(0, 5).map((p, i) => (
+                  <div key={p.uid} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-bold w-5 text-center ${i === 0 ? 'text-warning' : i === 1 ? 'text-muted-foreground' : i === 2 ? 'text-orange-400' : 'text-muted-foreground/60'}`}>
+                        {i + 1}º
+                      </span>
+                      <span className="text-sm">{p.name}</span>
+                    </div>
+                    <Badge className="bg-success/20 text-success">{p.completed}</Badge>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Melhor taxa de realização */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                  <Award className="h-3.5 w-3.5 text-primary" /> Melhor Taxa de Realização
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {[...personStats].filter(p => p.total >= 3).sort((a, b) => b.rate - a.rate).slice(0, 5).map((p, i) => (
+                  <div key={p.uid} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-bold w-5 text-center ${i === 0 ? 'text-warning' : i === 1 ? 'text-muted-foreground' : i === 2 ? 'text-orange-400' : 'text-muted-foreground/60'}`}>
+                        {i + 1}º
+                      </span>
+                      <span className="text-sm">{p.name}</span>
+                    </div>
+                    <span className={`text-sm font-semibold ${p.rate >= 70 ? 'text-success' : p.rate >= 40 ? 'text-warning' : 'text-destructive'}`}>{p.rate}%</span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Mais horas */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                  <TrendingUp className="h-3.5 w-3.5 text-info" /> Mais Horas de Reunião
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {[...personStats].sort((a, b) => b.hoursFormatted - a.hoursFormatted).slice(0, 5).map((p, i) => (
+                  <div key={p.uid} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-bold w-5 text-center ${i === 0 ? 'text-warning' : i === 1 ? 'text-muted-foreground' : i === 2 ? 'text-orange-400' : 'text-muted-foreground/60'}`}>
+                        {i + 1}º
+                      </span>
+                      <span className="text-sm">{p.name}</span>
+                    </div>
+                    <span className="text-sm font-semibold text-foreground">{p.hoursFormatted}h</span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {/* Produtividade Individual Table */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -345,6 +421,7 @@ export default function ProductivityTab() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10 text-center">#</TableHead>
                   <TableHead>Pessoa</TableHead>
                   <TableHead className="text-center">Total</TableHead>
                   <TableHead className="text-center">Realizadas</TableHead>
@@ -355,8 +432,14 @@ export default function ProductivityTab() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {personStats.map(row => (
+                {personStats.map((row, i) => (
                   <TableRow key={row.uid}>
+                    <TableCell className="text-center">
+                      {i === 0 ? <Trophy className="h-4 w-4 text-warning mx-auto" /> :
+                       i === 1 ? <span className="text-xs font-bold text-muted-foreground">2º</span> :
+                       i === 2 ? <span className="text-xs font-bold text-orange-400">3º</span> :
+                       <span className="text-xs text-muted-foreground/60">{i + 1}º</span>}
+                    </TableCell>
                     <TableCell className="font-medium text-sm">{row.name}</TableCell>
                     <TableCell className="text-center font-semibold">{row.total}</TableCell>
                     <TableCell className="text-center"><Badge className="bg-success/20 text-success">{row.completed}</Badge></TableCell>
