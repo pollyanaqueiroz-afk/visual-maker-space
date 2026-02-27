@@ -138,6 +138,19 @@ export default function CarteiraGeralPage() {
       responsibles: Set<string>; reasons: Record<string, number>;
     }> = {};
 
+    // Seed map with all imported clients so they always appear
+    for (const cr of clientRecords) {
+      if (cr.client_url && !map[cr.client_url]) {
+        map[cr.client_url] = {
+          url: cr.client_url,
+          clientName: cr.client_name || '',
+          total: 0, completed: 0, scheduled: 0, cancelled: 0,
+          loyaltySum: 0, loyaltyCount: 0, totalMinutes: 0, lastDate: '',
+          responsibles: new Set(), reasons: {},
+        };
+      }
+    }
+
     for (const m of filtered) {
       const url = m.client_url || 'Sem URL';
       if (!map[url]) {
@@ -168,7 +181,7 @@ export default function CarteiraGeralPage() {
       const csUid = cr?.cs_user_id || null;
       return {
         url: c.url,
-        clientName: c.clientName,
+        clientName: cr?.client_name || c.clientName,
         total: c.total,
         completed: c.completed,
         scheduled: c.scheduled,
@@ -183,7 +196,7 @@ export default function CarteiraGeralPage() {
         topReason,
       } as ClientRow;
     });
-  }, [filtered, profileMap, clientRecordMap]);
+  }, [filtered, profileMap, clientRecordMap, clientRecords]);
 
   const sorted = useMemo(() => {
     let list = clients;
