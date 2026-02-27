@@ -21,6 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import ImportBriefingDialog from '@/components/briefing/ImportBriefingDialog';
+import GlobalAnalytics from '@/components/dashboard/GlobalAnalytics';
 import AssignBriefingDialog from '@/components/briefing/AssignBriefingDialog';
 import BrandAssetsDialog from '@/components/briefing/BrandAssetsDialog';
 import BulkPhotoUploadDialog from '@/components/briefing/BulkPhotoUploadDialog';
@@ -270,7 +271,10 @@ export default function Dashboard() {
             <TabsList>
               <TabsTrigger value="artes">Artes</TabsTrigger>
               <TabsTrigger value="revisoes" className="flex items-center gap-2">
-                <BarChart3 className="h-4 w-4" /> Refações
+                <RefreshCw className="h-4 w-4" /> Refações
+              </TabsTrigger>
+              <TabsTrigger value="analytics" className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" /> Analytics
               </TabsTrigger>
             </TabsList>
             <div className="flex items-center gap-2">
@@ -792,6 +796,10 @@ export default function Dashboard() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-6">
+            <GlobalAnalytics />
           </TabsContent>
         </Tabs>
       </div>
