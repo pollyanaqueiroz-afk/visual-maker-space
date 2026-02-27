@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle, CalendarIcon, AlertCircle, Link2, FolderOpen, FileText, Palette, UserCheck } from 'lucide-react';
+import { Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle, CalendarIcon, AlertCircle, Link2, FolderOpen, FileText, Palette, UserCheck, FileSpreadsheet } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -108,6 +108,52 @@ export default function Dashboard() {
   };
 
   useEffect(() => { fetchData(); }, []);
+
+  const [downloadingReport, setDownloadingReport] = useState(false);
+
+  const handleDownloadReport = async () => {
+    setDownloadingReport(true);
+    try {
+      const now = new Date();
+      const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || 'aqmbaycbwljiohdjputq';
+      const res = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/monthly-designer-report?month=${month}&send=false`,
+        {
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      const data = await res.json();
+      if (!data.designers || data.designers.length === 0) {
+        toast.info('Nenhuma entrega encontrada neste mês.');
+        setDownloadingReport(false);
+        return;
+      }
+
+      // Build CSV
+      const lines = ['Designer,Artes Entregues,Valor Total (R$)'];
+      for (const d of data.designers) {
+        lines.push(`"${d.email}",${d.count},${d.total.toFixed(2)}`);
+      }
+      lines.push(`"TOTAL",${data.grandCount},${data.grandTotal.toFixed(2)}`);
+
+      const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `relatorio-designers-${month}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Relatório baixado!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao gerar relatório');
+    }
+    setDownloadingReport(false);
+  };
 
   // Sync top scrollbar width with actual table scroll width
   useEffect(() => {
@@ -313,6 +359,16 @@ export default function Dashboard() {
               >
                 <UserCheck className="h-4 w-4" />
                 Link Validação Cliente
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+                onClick={handleDownloadReport}
+                disabled={downloadingReport}
+              >
+                {downloadingReport ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />}
+                Relatório Externo
               </Button>
             </div>
           </div>
