@@ -306,55 +306,172 @@ export type Database = {
       }
       clients: {
         Row: {
+          armazenamento_contratado: string | null
+          armazenamento_utilizado: string | null
+          banda_contratada: string | null
+          banda_utilizada: string | null
+          certificado_mec_contratado: string | null
+          certificado_mec_utilizado: string | null
           client_name: string | null
-          client_status: string | null
           client_url: string
           created_at: string
-          cs_user_id: string | null
+          data_da_10_compra: string | null
+          data_da_100_compra: string | null
+          data_da_200_compra: string | null
+          data_da_50_compra: string | null
+          data_da_primeira_compra: string | null
           data_da_primeira_parcela_vencida: string | null
+          data_do_10_conteudo_finalizado: string | null
+          data_do_100_conteudo_finalizado: string | null
+          data_do_200_conteudo_finalizado: string | null
+          data_do_50_conteudo_finalizado: string | null
+          data_do_dado: string | null
+          data_do_fechamento_do_contrato: string | null
+          data_do_primeiro_conteudo_finalizado: string | null
+          data_do_processamento_do_dado: string | null
+          data_do_ultimo_login: string | null
+          desconto_concedido: string | null
+          dias_desde_o_ultimo_login: string | null
+          email_do_cliente: string | null
+          email_do_closer: string | null
+          email_do_cs_antigo: string | null
+          email_do_cs_atual: string | null
+          etapa_antiga_sensedata: string | null
           forma_de_pagamento: string | null
           id: string
-          loyalty_index: number | null
-          monthly_value: number | null
-          plan: string | null
+          id_curseduca: string | null
+          membros_do_mes_atual: string | null
+          metrica_de_sucesso_acordada_na_venda: string | null
+          nome_antigo: string | null
+          nome_da_plataforma: string | null
+          nome_do_closer: string | null
+          nome_do_cs_atual: string | null
+          origem_do_dado: string | null
+          plano_contratado: string | null
+          plano_detalhado: string | null
           portal_do_cliente: string | null
+          status_financeiro: string | null
           telefone_do_cliente: string | null
+          tempo_medio_de_uso_em_min: string | null
           tipo_de_cs: string | null
+          token_de_ia_contratado: string | null
+          token_de_ia_utilizado: string | null
           updated_at: string
+          valor_mensal: string | null
+          valor_total_devido: string | null
+          variacao_de_quantidade_de_membros_por_mes: string | null
         }
         Insert: {
+          armazenamento_contratado?: string | null
+          armazenamento_utilizado?: string | null
+          banda_contratada?: string | null
+          banda_utilizada?: string | null
+          certificado_mec_contratado?: string | null
+          certificado_mec_utilizado?: string | null
           client_name?: string | null
-          client_status?: string | null
           client_url: string
           created_at?: string
-          cs_user_id?: string | null
+          data_da_10_compra?: string | null
+          data_da_100_compra?: string | null
+          data_da_200_compra?: string | null
+          data_da_50_compra?: string | null
+          data_da_primeira_compra?: string | null
           data_da_primeira_parcela_vencida?: string | null
+          data_do_10_conteudo_finalizado?: string | null
+          data_do_100_conteudo_finalizado?: string | null
+          data_do_200_conteudo_finalizado?: string | null
+          data_do_50_conteudo_finalizado?: string | null
+          data_do_dado?: string | null
+          data_do_fechamento_do_contrato?: string | null
+          data_do_primeiro_conteudo_finalizado?: string | null
+          data_do_processamento_do_dado?: string | null
+          data_do_ultimo_login?: string | null
+          desconto_concedido?: string | null
+          dias_desde_o_ultimo_login?: string | null
+          email_do_cliente?: string | null
+          email_do_closer?: string | null
+          email_do_cs_antigo?: string | null
+          email_do_cs_atual?: string | null
+          etapa_antiga_sensedata?: string | null
           forma_de_pagamento?: string | null
           id?: string
-          loyalty_index?: number | null
-          monthly_value?: number | null
-          plan?: string | null
+          id_curseduca?: string | null
+          membros_do_mes_atual?: string | null
+          metrica_de_sucesso_acordada_na_venda?: string | null
+          nome_antigo?: string | null
+          nome_da_plataforma?: string | null
+          nome_do_closer?: string | null
+          nome_do_cs_atual?: string | null
+          origem_do_dado?: string | null
+          plano_contratado?: string | null
+          plano_detalhado?: string | null
           portal_do_cliente?: string | null
+          status_financeiro?: string | null
           telefone_do_cliente?: string | null
+          tempo_medio_de_uso_em_min?: string | null
           tipo_de_cs?: string | null
+          token_de_ia_contratado?: string | null
+          token_de_ia_utilizado?: string | null
           updated_at?: string
+          valor_mensal?: string | null
+          valor_total_devido?: string | null
+          variacao_de_quantidade_de_membros_por_mes?: string | null
         }
         Update: {
+          armazenamento_contratado?: string | null
+          armazenamento_utilizado?: string | null
+          banda_contratada?: string | null
+          banda_utilizada?: string | null
+          certificado_mec_contratado?: string | null
+          certificado_mec_utilizado?: string | null
           client_name?: string | null
-          client_status?: string | null
           client_url?: string
           created_at?: string
-          cs_user_id?: string | null
+          data_da_10_compra?: string | null
+          data_da_100_compra?: string | null
+          data_da_200_compra?: string | null
+          data_da_50_compra?: string | null
+          data_da_primeira_compra?: string | null
           data_da_primeira_parcela_vencida?: string | null
+          data_do_10_conteudo_finalizado?: string | null
+          data_do_100_conteudo_finalizado?: string | null
+          data_do_200_conteudo_finalizado?: string | null
+          data_do_50_conteudo_finalizado?: string | null
+          data_do_dado?: string | null
+          data_do_fechamento_do_contrato?: string | null
+          data_do_primeiro_conteudo_finalizado?: string | null
+          data_do_processamento_do_dado?: string | null
+          data_do_ultimo_login?: string | null
+          desconto_concedido?: string | null
+          dias_desde_o_ultimo_login?: string | null
+          email_do_cliente?: string | null
+          email_do_closer?: string | null
+          email_do_cs_antigo?: string | null
+          email_do_cs_atual?: string | null
+          etapa_antiga_sensedata?: string | null
           forma_de_pagamento?: string | null
           id?: string
-          loyalty_index?: number | null
-          monthly_value?: number | null
-          plan?: string | null
+          id_curseduca?: string | null
+          membros_do_mes_atual?: string | null
+          metrica_de_sucesso_acordada_na_venda?: string | null
+          nome_antigo?: string | null
+          nome_da_plataforma?: string | null
+          nome_do_closer?: string | null
+          nome_do_cs_atual?: string | null
+          origem_do_dado?: string | null
+          plano_contratado?: string | null
+          plano_detalhado?: string | null
           portal_do_cliente?: string | null
+          status_financeiro?: string | null
           telefone_do_cliente?: string | null
+          tempo_medio_de_uso_em_min?: string | null
           tipo_de_cs?: string | null
+          token_de_ia_contratado?: string | null
+          token_de_ia_utilizado?: string | null
           updated_at?: string
+          valor_mensal?: string | null
+          valor_total_devido?: string | null
+          variacao_de_quantidade_de_membros_por_mes?: string | null
         }
         Relationships: []
       }

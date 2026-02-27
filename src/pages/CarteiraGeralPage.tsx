@@ -1,13 +1,10 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
   Globe, Users, Search, Loader2, Upload, DollarSign,
 } from 'lucide-react';
@@ -17,28 +14,65 @@ interface ClientRecord {
   [key: string]: any;
 }
 
-const HIDDEN_COLS = ['id', 'cs_user_id', 'created_at', 'updated_at'];
+const HIDDEN_COLS = ['id', 'created_at', 'updated_at'];
 
-const COLUMN_LABELS: Record<string, string> = {
-  client_url: 'URL do Cliente',
-  client_name: 'Nome do Cliente',
-  loyalty_index: 'Índice de Fidelidade',
-  plan: 'Plano Contratado',
-  monthly_value: 'Valor Mensal',
-  client_status: 'Status',
-};
+// Fixed columns in exact order requested
+const FIXED_COLUMNS: { key: string; label: string }[] = [
+  { key: 'id_curseduca', label: 'ID Curseduca' },
+  { key: 'client_url', label: 'URL do Cliente' },
+  { key: 'client_name', label: 'Nome do Cliente' },
+  { key: 'email_do_cliente', label: 'E-mail do Cliente' },
+  { key: 'telefone_do_cliente', label: 'Telefone do Cliente' },
+  { key: 'portal_do_cliente', label: 'Portal do Cliente' },
+  { key: 'status_financeiro', label: 'Status Financeiro' },
+  { key: 'forma_de_pagamento', label: 'Forma de Pagamento' },
+  { key: 'valor_mensal', label: 'Valor Mensal' },
+  { key: 'valor_total_devido', label: 'Valor Total Devido' },
+  { key: 'data_da_primeira_parcela_vencida', label: 'Data da Primeira Parcela Vencida' },
+  { key: 'plano_detalhado', label: 'Plano Detalhado' },
+  { key: 'plano_contratado', label: 'Plano Contratado' },
+  { key: 'tipo_de_cs', label: 'Tipo de CS' },
+  { key: 'nome_antigo', label: 'Nome Antigo' },
+  { key: 'email_do_cs_antigo', label: 'E-mail do CS Antigo' },
+  { key: 'nome_do_cs_atual', label: 'Nome do CS Atual' },
+  { key: 'email_do_cs_atual', label: 'E-mail do CS Atual' },
+  { key: 'etapa_antiga_sensedata', label: 'Etapa Antiga Sensedata' },
+  { key: 'origem_do_dado', label: 'Origem do Dado' },
+  { key: 'nome_da_plataforma', label: 'Nome da Plataforma' },
+  { key: 'data_do_dado', label: 'Data do Dado' },
+  { key: 'data_do_processamento_do_dado', label: 'Data do Processamento do Dado' },
+  { key: 'banda_contratada', label: 'Banda Contratada' },
+  { key: 'banda_utilizada', label: 'Banda Utilizada' },
+  { key: 'armazenamento_contratado', label: 'Armazenamento Contratado' },
+  { key: 'armazenamento_utilizado', label: 'Armazenamento Utilizado' },
+  { key: 'token_de_ia_contratado', label: 'Token de IA Contratado' },
+  { key: 'token_de_ia_utilizado', label: 'Token de IA Utilizado' },
+  { key: 'certificado_mec_contratado', label: 'Certificado MEC Contratado' },
+  { key: 'certificado_mec_utilizado', label: 'Certificado MEC Utilizado' },
+  { key: 'data_da_primeira_compra', label: 'Data da Primeira Compra' },
+  { key: 'data_da_10_compra', label: 'Data da 10ª Compra' },
+  { key: 'data_da_50_compra', label: 'Data da 50ª Compra' },
+  { key: 'data_da_100_compra', label: 'Data da 100ª Compra' },
+  { key: 'data_da_200_compra', label: 'Data da 200ª Compra' },
+  { key: 'data_do_primeiro_conteudo_finalizado', label: 'Data do 1º Conteúdo Finalizado' },
+  { key: 'data_do_10_conteudo_finalizado', label: 'Data do 10º Conteúdo Finalizado' },
+  { key: 'data_do_50_conteudo_finalizado', label: 'Data do 50º Conteúdo Finalizado' },
+  { key: 'data_do_100_conteudo_finalizado', label: 'Data do 100º Conteúdo Finalizado' },
+  { key: 'data_do_200_conteudo_finalizado', label: 'Data do 200º Conteúdo Finalizado' },
+  { key: 'nome_do_closer', label: 'Nome do Closer' },
+  { key: 'email_do_closer', label: 'E-mail do Closer' },
+  { key: 'data_do_fechamento_do_contrato', label: 'Data do Fechamento do Contrato' },
+  { key: 'metrica_de_sucesso_acordada_na_venda', label: 'Métrica de Sucesso Acordada na Venda' },
+  { key: 'desconto_concedido', label: 'Desconto Concedido' },
+  { key: 'data_do_ultimo_login', label: 'Data do Último Login' },
+  { key: 'tempo_medio_de_uso_em_min', label: 'Tempo Médio de Uso (min)' },
+  { key: 'membros_do_mes_atual', label: 'Membros do Mês Atual' },
+  { key: 'variacao_de_quantidade_de_membros_por_mes', label: 'Variação de Membros por Mês' },
+  { key: 'dias_desde_o_ultimo_login', label: 'Dias Desde o Último Login' },
+];
 
-function formatLabel(col: string): string {
-  if (COLUMN_LABELS[col]) return COLUMN_LABELS[col];
-  return col.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-}
-
-function formatCellValue(col: string, value: any): string {
+function formatCellValue(value: any): string {
   if (value == null || value === '') return '—';
-  if (col === 'monthly_value') {
-    const num = Number(value);
-    if (!isNaN(num)) return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num);
-  }
   return String(value);
 }
 
@@ -46,7 +80,6 @@ export default function CarteiraGeralPage() {
   const [clientRecords, setClientRecords] = useState<ClientRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [importOpen, setImportOpen] = useState(false);
 
   const loadData = useCallback(async () => {
@@ -64,54 +97,19 @@ export default function CarteiraGeralPage() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // Detect all visible columns from data
-  const allColumns = useMemo(() => {
-    if (clientRecords.length === 0) return [];
-    const allKeys = new Set<string>();
-    clientRecords.forEach(cr => Object.keys(cr).forEach(k => allKeys.add(k)));
-    // Put known columns first in order, then extras
-    const priority = ['client_url', 'client_name', 'plan', 'monthly_value', 'client_status', 'loyalty_index'];
-    const visible = Array.from(allKeys).filter(k => !HIDDEN_COLS.includes(k));
-    const ordered: string[] = [];
-    for (const p of priority) {
-      if (visible.includes(p)) ordered.push(p);
-    }
-    for (const k of visible) {
-      if (!ordered.includes(k)) ordered.push(k);
-    }
-    return ordered;
-  }, [clientRecords]);
-
-  // Unique statuses for filter
-  const uniqueStatuses = useMemo(() => {
-    const set = new Set<string>();
-    clientRecords.forEach(cr => {
-      if (cr.client_status) set.add(cr.client_status);
-    });
-    return Array.from(set).sort();
-  }, [clientRecords]);
-
-  // Filter
+  // Filter by search only
   const filtered = useMemo(() => {
-    let list = clientRecords;
-    if (statusFilter !== 'all') {
-      list = list.filter(cr => (cr.client_status || 'ativo') === statusFilter);
-    }
-    if (search) {
-      const q = search.toLowerCase();
-      list = list.filter(cr =>
-        Object.values(cr).some(v => v != null && String(v).toLowerCase().includes(q))
-      );
-    }
-    return list;
-  }, [clientRecords, search, statusFilter]);
+    if (!search) return clientRecords;
+    const q = search.toLowerCase();
+    return clientRecords.filter(cr =>
+      Object.values(cr).some(v => v != null && String(v).toLowerCase().includes(q))
+    );
+  }, [clientRecords, search]);
 
-  // KPIs
-  const stats = useMemo(() => {
-    const total = clientRecords.length;
-    const totalRevenue = clientRecords.reduce((s, c) => s + (Number(c.monthly_value) || 0), 0);
-    return { total, totalRevenue };
-  }, [clientRecords]);
+  const stats = useMemo(() => ({
+    total: clientRecords.length,
+    totalRevenue: clientRecords.reduce((s, c) => s + (Number(c.valor_mensal) || 0), 0),
+  }), [clientRecords]);
 
   if (loading) {
     return (
@@ -163,7 +161,7 @@ export default function CarteiraGeralPage() {
         </Card>
       </div>
 
-      {/* Filters */}
+      {/* Search */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -174,19 +172,6 @@ export default function CarteiraGeralPage() {
             className="pl-9 h-9 text-sm"
           />
         </div>
-        {uniqueStatuses.length > 0 && (
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px] h-9 text-sm">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os status</SelectItem>
-              {uniqueStatuses.map(s => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
       </div>
 
       {/* Client Table */}
@@ -202,14 +187,14 @@ export default function CarteiraGeralPage() {
             <p className="text-sm text-muted-foreground text-center py-8">Nenhum cliente encontrado</p>
           ) : (
             <div className="w-full overflow-x-auto border rounded-md">
-              <div className="min-w-[1200px]">
+              <div className="min-w-[4000px]">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="text-[11px] uppercase tracking-wider">#</TableHead>
-                      {allColumns.map(col => (
-                        <TableHead key={col} className="text-[11px] uppercase tracking-wider whitespace-nowrap">
-                          {formatLabel(col)}
+                      {FIXED_COLUMNS.map(col => (
+                        <TableHead key={col.key} className="text-[11px] uppercase tracking-wider whitespace-nowrap">
+                          {col.label}
                         </TableHead>
                       ))}
                     </TableRow>
@@ -218,16 +203,14 @@ export default function CarteiraGeralPage() {
                     {filtered.map((row, i) => (
                       <TableRow key={row.id || i}>
                         <TableCell className="text-xs text-muted-foreground">{i + 1}</TableCell>
-                        {allColumns.map(col => (
-                          <TableCell key={col} className="text-xs whitespace-nowrap max-w-[250px] truncate">
-                            {col === 'client_url' && row[col] ? (
-                              <a href={row[col]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                                {row[col]}
+                        {FIXED_COLUMNS.map(col => (
+                          <TableCell key={col.key} className="text-xs whitespace-nowrap max-w-[250px] truncate">
+                            {col.key === 'client_url' && row[col.key] ? (
+                              <a href={row[col.key]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                                {row[col.key]}
                               </a>
-                            ) : col === 'client_status' && row[col] ? (
-                              <Badge variant="outline" className="text-[10px]">{row[col]}</Badge>
                             ) : (
-                              formatCellValue(col, row[col])
+                              formatCellValue(row[col.key])
                             )}
                           </TableCell>
                         ))}
