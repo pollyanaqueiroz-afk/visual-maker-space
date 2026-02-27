@@ -68,12 +68,15 @@ serve(async (req) => {
     const imageTypeLabel = IMAGE_TYPE_LABELS[image.image_type] || image.image_type;
 
     // Build email HTML
+    const pricePerArt = image.price_per_art;
+
     const detailRows = [
       { label: "Tipo de Arte", value: imageTypeLabel },
       image.product_name && { label: "Produto", value: image.product_name },
       { label: "Cliente (URL)", value: `<a href="${request.platform_url}">${request.platform_url}</a>` },
       { label: "Solicitante", value: `${request.requester_name} (${request.requester_email})` },
       { label: "Prazo de Entrega", value: `<strong>${deadlineDate}</strong>` },
+      pricePerArt && { label: "Valor por Arte", value: `<strong>R$ ${Number(pricePerArt).toFixed(2)}</strong>` },
       image.image_text && { label: "Texto da Imagem", value: image.image_text },
       image.font_suggestion && { label: "Sugestão de Fonte", value: image.font_suggestion },
       image.element_suggestion && { label: "Sugestão de Elemento", value: image.element_suggestion },

@@ -24,7 +24,7 @@ import ImportBriefingDialog from '@/components/briefing/ImportBriefingDialog';
 import AssignBriefingDialog from '@/components/briefing/AssignBriefingDialog';
 import BrandAssetsDialog from '@/components/briefing/BrandAssetsDialog';
 import BulkPhotoUploadDialog from '@/components/briefing/BulkPhotoUploadDialog';
-
+import BulkAssignDialog from '@/components/briefing/BulkAssignDialog';
 interface ImageWithRequest {
   id: string;
   image_type: string;
@@ -66,6 +66,8 @@ export default function Dashboard() {
   const [filterType, setFilterType] = useState<string>('all');
   const [filterClient, setFilterClient] = useState<string>('all');
   const [filterOverdue, setFilterOverdue] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
   const topScrollRef = useRef<HTMLDivElement>(null);
   const tableScrollRef = useRef<HTMLDivElement>(null);
   const topScrollInnerRef = useRef<HTMLDivElement>(null);
@@ -338,6 +340,18 @@ export default function Dashboard() {
                 </label>
               </div>
               <span className="text-sm text-muted-foreground">{filtered.length} arte(s)</span>
+              {selectedIds.size > 0 && (
+                <div className="flex items-center gap-3 ml-auto bg-primary/10 rounded-lg px-4 py-2">
+                  <span className="text-sm font-medium">{selectedIds.size} selecionada(s)</span>
+                  <Button size="sm" onClick={() => setBulkAssignOpen(true)}>
+                    <Send className="h-4 w-4 mr-1" />
+                    Enviar para Designer
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
+                    Limpar seleção
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Table */}
@@ -370,6 +384,18 @@ export default function Dashboard() {
                 <table className="w-full caption-bottom text-sm min-w-[2400px]">
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-10">
+                        <Checkbox
+                          checked={filtered.length > 0 && filtered.every(i => selectedIds.has(i.id))}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedIds(new Set(filtered.map(i => i.id)));
+                            } else {
+                              setSelectedIds(new Set());
+                            }
+                          }}
+                        />
+                      </TableHead>
                       <TableHead>Tipo de Arte</TableHead>
                       <TableHead>Cliente</TableHead>
                       <TableHead>Solicitante</TableHead>
@@ -391,7 +417,17 @@ export default function Dashboard() {
                   <TableBody>
                     {filtered.map(img => {
                       return (
-                        <TableRow key={img.id}>
+                         <TableRow key={img.id} className={selectedIds.has(img.id) ? 'bg-primary/5' : ''}>
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedIds.has(img.id)}
+                              onCheckedChange={(checked) => {
+                                const next = new Set(selectedIds);
+                                if (checked) next.add(img.id); else next.delete(img.id);
+                                setSelectedIds(next);
+                              }}
+                            />
+                          </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <FileImage className="h-4 w-4 text-primary" />
@@ -569,7 +605,7 @@ export default function Dashboard() {
                     })}
                     {filtered.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={16} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={17} className="text-center py-8 text-muted-foreground">
                           Nenhuma arte encontrada
                         </TableCell>
                       </TableRow>
@@ -579,6 +615,13 @@ export default function Dashboard() {
                 </div>
               </Card>
             )}
+
+            <BulkAssignDialog
+              open={bulkAssignOpen}
+              onOpenChange={setBulkAssignOpen}
+              imageIds={Array.from(selectedIds)}
+              onAssigned={() => { setSelectedIds(new Set()); fetchData(); }}
+            />
           </TabsContent>
 
           <TabsContent value="revisoes" className="space-y-6">

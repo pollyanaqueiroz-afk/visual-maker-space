@@ -105,6 +105,7 @@ export type Database = {
           image_type: Database["public"]["Enums"]["image_type"]
           observations: string | null
           orientation: string | null
+          price_per_art: number | null
           product_name: string | null
           professional_photo_url: string | null
           request_id: string
@@ -126,6 +127,7 @@ export type Database = {
           image_type: Database["public"]["Enums"]["image_type"]
           observations?: string | null
           orientation?: string | null
+          price_per_art?: number | null
           product_name?: string | null
           professional_photo_url?: string | null
           request_id: string
@@ -147,6 +149,7 @@ export type Database = {
           image_type?: Database["public"]["Enums"]["image_type"]
           observations?: string | null
           orientation?: string | null
+          price_per_art?: number | null
           product_name?: string | null
           professional_photo_url?: string | null
           request_id?: string
