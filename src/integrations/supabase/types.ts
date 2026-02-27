@@ -223,6 +223,7 @@ export type Database = {
           requester_email: string
           requester_name: string
           status: Database["public"]["Enums"]["request_status"]
+          submitted_by: string | null
           updated_at: string
         }
         Insert: {
@@ -241,6 +242,7 @@ export type Database = {
           requester_email: string
           requester_name: string
           status?: Database["public"]["Enums"]["request_status"]
+          submitted_by?: string | null
           updated_at?: string
         }
         Update: {
@@ -259,6 +261,7 @@ export type Database = {
           requester_email?: string
           requester_name?: string
           status?: Database["public"]["Enums"]["request_status"]
+          submitted_by?: string | null
           updated_at?: string
         }
         Relationships: []

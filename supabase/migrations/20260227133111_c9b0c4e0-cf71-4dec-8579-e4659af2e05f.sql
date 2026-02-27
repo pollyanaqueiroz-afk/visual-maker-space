@@ -1,0 +1,1 @@
+ALTER TABLE public.briefing_requests ADD COLUMN submitted_by text NULL;
