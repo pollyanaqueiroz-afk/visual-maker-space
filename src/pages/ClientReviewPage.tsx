@@ -10,6 +10,7 @@ import { IMAGE_TYPE_LABELS, ImageType } from '@/types/briefing';
 import { Heart, X, Loader2, Mail, CheckCircle, ImageIcon, Download, Sparkles, ThumbsDown, FolderOpen, Clock, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import confetti from 'canvas-confetti';
 
 interface ReviewableImage {
   id: string;
@@ -167,6 +168,14 @@ export default function ClientReviewPage() {
           } as any);
         }
       }
+
+      // 🎉 Confetti burst!
+      confetti({
+        particleCount: 80,
+        spread: 70,
+        origin: { y: 0.7 },
+        colors: ['#22c55e', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6'],
+      });
 
       toast.success('Arte aprovada! 🎉');
       setCompletedCount(c => c + 1);
