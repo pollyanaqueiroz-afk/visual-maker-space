@@ -1,4 +1,4 @@
-import { FileImage, LayoutDashboard, Settings, Users, BarChart3, LogOut, CalendarDays, Crown } from 'lucide-react';
+import { FileImage, LayoutDashboard, Settings, Users, BarChart3, LogOut, CalendarDays, Crown, Briefcase } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -19,6 +19,7 @@ const modules = [
   { title: 'Gestão de Briefings', url: '/hub/briefings', icon: FileImage },
   { title: 'Agendamento', url: '/hub/agendamento', icon: CalendarDays },
   { title: 'Dashboards', url: '/hub/dashboards', icon: BarChart3 },
+  { title: 'Carteira Geral', url: '/hub/carteira', icon: Briefcase },
   { title: 'Dashboard Liderança', url: '/hub/lideranca', icon: Crown },
 ];
 
