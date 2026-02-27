@@ -12,45 +12,77 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { email, image_id } = await req.json();
+    const body = await req.json();
+    const review_token = typeof body.review_token === "string" ? body.review_token.trim().slice(0, 100) : "";
+    const email = typeof body.email === "string" ? body.email.trim().slice(0, 255) : "";
+    const image_id = typeof body.image_id === "string" ? body.image_id.trim().slice(0, 100) : "";
 
-    if (!email || typeof email !== "string") {
-      return new Response(
-        JSON.stringify({ error: "Email é obrigatório" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email) || email.length > 255) {
-      return new Response(
-        JSON.stringify({ error: "Email inválido" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const cleanEmail = email.trim().toLowerCase();
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // 1. Get requests for this email only
-    const { data: requests, error: reqErr } = await supabase
-      .from("briefing_requests")
-      .select("id, requester_name, platform_url")
-      .eq("requester_email", cleanEmail);
+    let requests: any[] = [];
 
-    if (reqErr) throw reqErr;
+    // Prefer token-based auth (secure), fall back to email (manual login)
+    if (review_token) {
+      if (!uuidRegex.test(review_token)) {
+        return new Response(
+          JSON.stringify({ error: "Token inválido" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
-    if (!requests || requests.length === 0) {
+      const { data: tokenRequests, error: tErr } = await supabase
+        .from("briefing_requests")
+        .select("id, requester_name, platform_url, requester_email")
+        .eq("review_token", review_token);
+
+      if (tErr) throw tErr;
+      if (!tokenRequests || tokenRequests.length === 0) {
+        return new Response(
+          JSON.stringify({ error: "Token não encontrado" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      requests = tokenRequests;
+    } else if (email) {
+      // Email-based login (manual form entry)
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email) || email.length > 255) {
+        return new Response(
+          JSON.stringify({ error: "Email inválido" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const cleanEmail = email.trim().toLowerCase();
+      const { data: emailRequests, error: reqErr } = await supabase
+        .from("briefing_requests")
+        .select("id, requester_name, platform_url")
+        .eq("requester_email", cleanEmail);
+
+      if (reqErr) throw reqErr;
+      requests = emailRequests || [];
+    } else {
+      return new Response(
+        JSON.stringify({ error: "review_token ou email é obrigatório" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (requests.length === 0) {
       return new Response(
         JSON.stringify({ requests: [], images: { review: [], production: [], all: [] }, counts: { pending: 0, completed: 0, total: 0 } }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Return the email from token-based auth so client can use it for reviews
+    const resolvedEmail = requests[0]?.requester_email || email;
 
     const requestIds = requests.map((r) => r.id);
 
@@ -107,17 +139,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 4. Fetch review history for this email
+    // 4. Fetch review history using resolved email
     const { data: reviewHistory } = await supabase
       .from("briefing_reviews")
       .select("id, action, reviewer_comments, created_at, briefing_image_id")
-      .eq("reviewed_by", cleanEmail)
+      .eq("reviewed_by", resolvedEmail.trim().toLowerCase())
       .order("created_at", { ascending: true })
       .limit(200);
 
     return new Response(
       JSON.stringify({
         requests,
+        resolvedEmail: resolvedEmail.trim().toLowerCase(),
         images: {
           review: imagesWithDelivery,
           production: prodResult.data || [],

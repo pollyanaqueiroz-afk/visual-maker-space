@@ -54,7 +54,7 @@ serve(async (req) => {
     // Fetch image + request data
     const { data: image, error: imgErr } = await supabase
       .from("briefing_images")
-      .select("*, briefing_requests!inner(requester_name, requester_email, platform_url)")
+      .select("*, briefing_requests!inner(requester_name, requester_email, platform_url, review_token)")
       .eq("id", image_id)
       .single();
 
@@ -68,7 +68,9 @@ serve(async (req) => {
     const request = image.briefing_requests;
     const imageTypeLabel = IMAGE_TYPE_LABELS[image.image_type] || image.image_type;
     const productLabel = image.product_name ? ` — ${image.product_name}` : "";
-    const reviewUrl = `${app_url || 'https://visual-maker-space.lovable.app'}/client-review?email=${encodeURIComponent(request.requester_email)}`;
+    const reviewUrl = request.review_token
+      ? `${app_url || 'https://visual-maker-space.lovable.app'}/client-review?token=${request.review_token}`
+      : `${app_url || 'https://visual-maker-space.lovable.app'}/client-review?email=${encodeURIComponent(request.requester_email)}`;
 
     const html = `
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;padding:0;background:#ffffff;">
