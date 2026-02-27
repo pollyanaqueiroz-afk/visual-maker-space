@@ -1,0 +1,1 @@
+ALTER TABLE public.briefing_requests ADD COLUMN review_token uuid DEFAULT gen_random_uuid() NOT NULL;

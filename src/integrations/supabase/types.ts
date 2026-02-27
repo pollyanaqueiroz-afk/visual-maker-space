@@ -222,6 +222,7 @@ export type Database = {
           received_at: string | null
           requester_email: string
           requester_name: string
+          review_token: string
           status: Database["public"]["Enums"]["request_status"]
           submitted_by: string | null
           updated_at: string
@@ -241,6 +242,7 @@ export type Database = {
           received_at?: string | null
           requester_email: string
           requester_name: string
+          review_token?: string
           status?: Database["public"]["Enums"]["request_status"]
           submitted_by?: string | null
           updated_at?: string
@@ -260,6 +262,7 @@ export type Database = {
           received_at?: string | null
           requester_email?: string
           requester_name?: string
+          review_token?: string
           status?: Database["public"]["Enums"]["request_status"]
           submitted_by?: string | null
           updated_at?: string

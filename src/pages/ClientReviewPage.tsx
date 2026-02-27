@@ -85,23 +85,37 @@ export default function ClientReviewPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const tokenParam = params.get('token');
     const emailParam = params.get('email');
-    if (emailParam) {
+    if (tokenParam) {
+      fetchImages(undefined, tokenParam.trim());
+    } else if (emailParam) {
       setEmail(emailParam);
       fetchImages(emailParam.trim().toLowerCase());
     }
   }, []);
 
-  const fetchImages = async (clientEmail: string) => {
+  const fetchImages = async (clientEmail?: string, reviewToken?: string) => {
     setLoading(true);
     try {
-      // Use secure edge function instead of direct anon queries
+      const body: Record<string, string> = {};
+      if (reviewToken) {
+        body.review_token = reviewToken;
+      } else if (clientEmail) {
+        body.email = clientEmail;
+      }
+
       const { data: result, error: fnError } = await supabase.functions.invoke('client-review-data', {
-        body: { email: clientEmail },
+        body,
       });
 
       if (fnError) throw fnError;
       if (result?.error) throw new Error(result.error);
+
+      // Set email from server response (resolved from token or echoed back)
+      if (result?.resolvedEmail) {
+        setEmail(result.resolvedEmail);
+      }
 
       const requests = result.requests || [];
       if (requests.length === 0) {
