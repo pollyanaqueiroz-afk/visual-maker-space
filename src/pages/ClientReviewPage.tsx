@@ -41,6 +41,16 @@ export default function ClientReviewPage() {
   const [direction, setDirection] = useState<'left' | 'right' | null>(null);
   const [completedCount, setCompletedCount] = useState(0);
 
+  // Auto-login from URL param (e.g., ?email=client@example.com)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const emailParam = params.get('email');
+    if (emailParam) {
+      setEmail(emailParam);
+      fetchImages(emailParam.trim().toLowerCase());
+    }
+  }, []);
+
   const fetchImages = async (clientEmail: string) => {
     setLoading(true);
     try {
