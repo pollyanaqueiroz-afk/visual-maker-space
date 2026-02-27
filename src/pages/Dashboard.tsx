@@ -13,8 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { LogOut, Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle, CalendarIcon, AlertCircle } from 'lucide-react';
-import CursEducaLayout from '@/components/CursEducaLayout';
+import { Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle, CalendarIcon, AlertCircle } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -59,7 +58,6 @@ interface ReviewRecord {
 }
 
 export default function Dashboard() {
-  const { signOut } = useAuth();
   const [images, setImages] = useState<ImageWithRequest[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
   const [reviews, setReviews] = useState<ReviewRecord[]>([]);
@@ -204,16 +202,7 @@ export default function Dashboard() {
   }, {});
 
   return (
-    <CursEducaLayout
-      title="Gestão de Briefings"
-      subtitle="Curseduca Design"
-      actions={
-        <Button variant="ghost" size="sm" onClick={signOut} className="text-white/80 hover:text-white hover:bg-white/10">
-          <LogOut className="h-4 w-4 mr-2" /> Sair
-        </Button>
-      }
-    >
-      <main className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+      <div className="p-6 space-y-8 max-w-[1800px] mx-auto">
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
           <Card>
@@ -703,8 +692,7 @@ export default function Dashboard() {
             </Card>
           </TabsContent>
         </Tabs>
-      </main>
-    </CursEducaLayout>
+      </div>
   );
 }
 
