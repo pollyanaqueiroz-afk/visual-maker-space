@@ -53,6 +53,7 @@ export default function ClientReviewPage() {
   const [completedCount, setCompletedCount] = useState(0);
   const [clientName, setClientName] = useState('');
   const [pendingCount, setPendingCount] = useState(0);
+  const [requestedCount, setRequestedCount] = useState(0);
   const [totalApproved, setTotalApproved] = useState(0);
   const [totalImages, setTotalImages] = useState(0);
   const [platformUrls, setPlatformUrls] = useState<string[]>([]);
@@ -139,7 +140,7 @@ export default function ClientReviewPage() {
       ]);
 
       if (reviewResult.error) throw reviewResult.error;
-      setPendingCount(pendingResult.count || 0);
+      // pendingCount will be computed from productionImages below
       setTotalApproved(completedResult.count || 0);
       setTotalImages(totalResult.count || 0);
 
@@ -156,7 +157,12 @@ export default function ClientReviewPage() {
           .in('request_id', requestIds)
           .order('created_at', { ascending: false }),
       ]);
-      setProductionImages(prodResult.data || []);
+      const prodData = prodResult.data || [];
+      const inProduction = prodData.filter(i => !!i.assigned_email);
+      const requested = prodData.filter(i => !i.assigned_email);
+      setProductionImages(inProduction);
+      setPendingCount(inProduction.length);
+      setRequestedCount(requested.length);
       setAllImagesData((allResult.data || []) as any);
 
       const imagesWithDelivery: ReviewableImage[] = [];
@@ -406,11 +412,29 @@ export default function ClientReviewPage() {
           </motion.div>
         )}
 
-        {pendingCount > 0 && (
+        {requestedCount > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
+            className="relative overflow-hidden rounded-2xl border border-border bg-card/80 backdrop-blur-sm p-4 text-center shadow-sm"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-muted/5 to-transparent" />
+            <div className="relative">
+              <div className="mx-auto w-10 h-10 rounded-xl bg-muted flex items-center justify-center mb-2">
+                <Clock className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <p className="text-2xl font-extrabold text-foreground">{requestedCount}</p>
+              <p className="text-[11px] text-muted-foreground font-medium">Solicitado</p>
+            </div>
+          </motion.div>
+        )}
+
+        {pendingCount > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
             onClick={() => setShowProductionDialog(true)}
             className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-card/80 backdrop-blur-sm p-4 text-center shadow-sm hover:shadow-md transition-all cursor-pointer group"
           >
