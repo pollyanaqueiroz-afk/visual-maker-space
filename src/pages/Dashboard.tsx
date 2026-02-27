@@ -271,19 +271,44 @@ export default function Dashboard() {
                 <BarChart3 className="h-4 w-4" /> Refações
               </TabsTrigger>
             </TabsList>
-            <Button
-              variant="destructive"
-              size="sm"
-              className="flex items-center gap-2"
-              onClick={() => {
-                const formUrl = `${window.location.origin}/briefing`;
-                navigator.clipboard.writeText(formUrl);
-                toast.success('Link do formulário copiado!');
-              }}
-            >
-              <Link2 className="h-4 w-4" />
-              Copiar Link do Formulário para o Cliente
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="destructive"
+                size="sm"
+                className="flex items-center gap-2"
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/briefing`);
+                  toast.success('Link do formulário copiado!');
+                }}
+              >
+                <Link2 className="h-4 w-4" />
+                Formulário
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/designer`);
+                  toast.success('Link do painel do designer copiado!');
+                }}
+              >
+                <Link2 className="h-4 w-4" />
+                Painel Designer
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/client-review`);
+                  toast.success('Link da validação do cliente copiado!');
+                }}
+              >
+                <Link2 className="h-4 w-4" />
+                Validação Cliente
+              </Button>
+            </div>
           </div>
 
           <TabsContent value="artes" className="space-y-6">
