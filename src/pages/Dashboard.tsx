@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle, CalendarIcon, AlertCircle } from 'lucide-react';
+import { Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle, CalendarIcon, AlertCircle, Link2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -262,12 +262,27 @@ export default function Dashboard() {
         </div>
 
         <Tabs defaultValue="artes" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="artes">Artes</TabsTrigger>
-            <TabsTrigger value="revisoes" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" /> Refações
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex items-center justify-between">
+            <TabsList>
+              <TabsTrigger value="artes">Artes</TabsTrigger>
+              <TabsTrigger value="revisoes" className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" /> Refações
+              </TabsTrigger>
+            </TabsList>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="flex items-center gap-2"
+              onClick={() => {
+                const formUrl = `${window.location.origin}/briefing`;
+                navigator.clipboard.writeText(formUrl);
+                toast.success('Link do formulário copiado!');
+              }}
+            >
+              <Link2 className="h-4 w-4" />
+              Copiar Link do Formulário
+            </Button>
+          </div>
 
           <TabsContent value="artes" className="space-y-6">
             {/* Filters */}
