@@ -133,6 +133,12 @@ export default function ImportClientsDialog({ open, onOpenChange, onSuccess }: I
             autoMap[h] = 'client_name';
           } else if (lower.includes('fidelidade') || lower.includes('loyalty') || lower.includes('indice') || lower.includes('índice') || lower.includes('index')) {
             autoMap[h] = 'loyalty_index';
+          } else if (lower.includes('plano') || lower.includes('plan')) {
+            autoMap[h] = 'plan';
+          } else if (lower.includes('valor') || lower.includes('receita') || lower.includes('revenue') || lower.includes('monthly')) {
+            autoMap[h] = 'monthly_value';
+          } else if (lower === 'status' || lower.includes('client_status') || lower.includes('status do cliente')) {
+            autoMap[h] = 'client_status';
           }
         }
         setMapping(autoMap);
