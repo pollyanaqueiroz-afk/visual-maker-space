@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Send, Loader2 } from 'lucide-react';
@@ -25,13 +26,14 @@ export default function BulkAssignDialog({ open, onOpenChange, imageIds, onAssig
     return d.toISOString().slice(0, 10);
   });
   const [totalPrice, setTotalPrice] = useState(count * DEFAULT_PRICE_PER_ART);
+  const [designerType, setDesignerType] = useState<'externo' | 'interno'>('externo');
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
     setTotalPrice(count * DEFAULT_PRICE_PER_ART);
   }, [count]);
 
-  const pricePerArt = count > 0 ? totalPrice / count : 0;
+  const pricePerArt = designerType === 'interno' ? 0 : (count > 0 ? totalPrice / count : 0);
 
   const handleSend = async () => {
     if (!email) {
@@ -87,6 +89,19 @@ export default function BulkAssignDialog({ open, onOpenChange, imageIds, onAssig
         </DialogHeader>
         <div className="space-y-4 pt-2">
           <div className="space-y-2">
+            <Label>Tipo de designer</Label>
+            <RadioGroup value={designerType} onValueChange={(v) => setDesignerType(v as 'interno' | 'externo')} className="flex gap-4">
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="interno" id="bulk-tipo-interno" />
+                <Label htmlFor="bulk-tipo-interno" className="cursor-pointer font-normal">Interno</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="externo" id="bulk-tipo-externo" />
+                <Label htmlFor="bulk-tipo-externo" className="cursor-pointer font-normal">Externo</Label>
+              </div>
+            </RadioGroup>
+          </div>
+          <div className="space-y-2">
             <Label>Email do responsável</Label>
             <Input
               type="email"
@@ -103,23 +118,27 @@ export default function BulkAssignDialog({ open, onOpenChange, imageIds, onAssig
               onChange={e => setDeadline(e.target.value)}
             />
           </div>
-          <div className="space-y-2">
-            <Label>Preço total (R$)</Label>
-            <Input
-              type="number"
-              min={0}
-              step={0.01}
-              value={totalPrice}
-              onChange={e => setTotalPrice(Number(e.target.value))}
-            />
-            <p className="text-xs text-muted-foreground">
-              Padrão: {count} arte(s) × R$ {DEFAULT_PRICE_PER_ART.toFixed(2)} = R$ {(count * DEFAULT_PRICE_PER_ART).toFixed(2)}
-            </p>
-          </div>
-          <div className="rounded-lg bg-muted p-3 text-sm">
-            <span className="text-muted-foreground">Preço por arte: </span>
-            <span className="font-semibold">R$ {pricePerArt.toFixed(2)}</span>
-          </div>
+          {designerType === 'externo' && (
+            <>
+              <div className="space-y-2">
+                <Label>Preço total (R$)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={totalPrice}
+                  onChange={e => setTotalPrice(Number(e.target.value))}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Padrão: {count} arte(s) × R$ {DEFAULT_PRICE_PER_ART.toFixed(2)} = R$ {(count * DEFAULT_PRICE_PER_ART).toFixed(2)}
+                </p>
+              </div>
+              <div className="rounded-lg bg-muted p-3 text-sm">
+                <span className="text-muted-foreground">Preço por arte: </span>
+                <span className="font-semibold">R$ {pricePerArt.toFixed(2)}</span>
+              </div>
+            </>
+          )}
           <Button onClick={handleSend} disabled={sending} className="w-full">
             {sending ? (
               <>
