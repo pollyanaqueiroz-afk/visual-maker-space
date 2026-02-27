@@ -11,7 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Upload, FileSpreadsheet, AlertTriangle, CheckCircle, Loader2, Plus, Columns } from 'lucide-react';
+import { Upload, FileSpreadsheet, AlertTriangle, CheckCircle, Loader2, Plus, Columns, Link } from 'lucide-react';
 
 interface ImportClientsDialogProps {
   open: boolean;
@@ -57,6 +57,8 @@ export default function ImportClientsDialog({ open, onOpenChange, onSuccess }: I
   const [fileName, setFileName] = useState('');
   const [importResult, setImportResult] = useState<{ success: number; errors: number } | null>(null);
   const [creatingColumns, setCreatingColumns] = useState(false);
+  const [sheetUrl, setSheetUrl] = useState('');
+  const [loadingSheet, setLoadingSheet] = useState(false);
 
   const mappableDbColumns = dbColumns.filter(c => !RESERVED_COLUMNS.includes(c.column_name));
 
@@ -69,6 +71,8 @@ export default function ImportClientsDialog({ open, onOpenChange, onSuccess }: I
     setFileName('');
     setImportResult(null);
     setCreatingColumns(false);
+    setSheetUrl('');
+    setLoadingSheet(false);
   }, []);
 
   // Load existing DB columns when dialog opens
@@ -85,6 +89,31 @@ export default function ImportClientsDialog({ open, onOpenChange, onSuccess }: I
     loadColumns();
   }, [open]);
 
+  const processParsedData = (data: Record<string, string>[], sourceName: string) => {
+    if (data.length === 0) {
+      toast.error('Nenhum dado válido encontrado');
+      return;
+    }
+    const headers = Object.keys(data[0]);
+    setCsvHeaders(headers);
+    setRawData(data);
+
+    // Auto-map columns by similarity
+    const autoMap: ColumnMapping = {};
+    const existingNames = dbColumns.map(c => c.column_name);
+
+    for (const h of headers) {
+      const sanitized = sanitizeColumnName(h);
+      if (existingNames.includes(sanitized)) {
+        autoMap[h] = sanitized;
+      }
+    }
+    setMapping(autoMap);
+    setFileName(sourceName);
+    setStep('mapping');
+    toast.success(`${data.length} registros encontrados`);
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -95,8 +124,6 @@ export default function ImportClientsDialog({ open, onOpenChange, onSuccess }: I
       return;
     }
 
-    setFileName(file.name);
-
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
@@ -105,50 +132,48 @@ export default function ImportClientsDialog({ open, onOpenChange, onSuccess }: I
         if (results.errors.length > 0) {
           console.warn('CSV parse warnings:', results.errors);
         }
-        const data = results.data as Record<string, string>[];
-        if (data.length === 0) {
-          toast.error('Arquivo vazio ou sem dados válidos');
-          return;
-        }
-        const headers = Object.keys(data[0]);
-        setCsvHeaders(headers);
-        setRawData(data);
-
-        // Auto-map columns by similarity
-        const autoMap: ColumnMapping = {};
-        const existingNames = dbColumns.map(c => c.column_name);
-
-        for (const h of headers) {
-          const lower = h.toLowerCase().trim();
-          // Try exact match first
-          const sanitized = sanitizeColumnName(h);
-          if (existingNames.includes(sanitized)) {
-            autoMap[h] = sanitized;
-            continue;
-          }
-          // Heuristics for known columns
-          if (lower.includes('url') || lower.includes('link') || lower.includes('site') || lower.includes('dominio') || lower.includes('domínio')) {
-            autoMap[h] = 'client_url';
-          } else if (lower.includes('nome') || lower.includes('name') || lower.includes('cliente') || lower.includes('client')) {
-            autoMap[h] = 'client_name';
-          } else if (lower.includes('fidelidade') || lower.includes('loyalty') || lower.includes('indice') || lower.includes('índice') || lower.includes('index')) {
-            autoMap[h] = 'loyalty_index';
-          } else if (lower.includes('plano') || lower.includes('plan')) {
-            autoMap[h] = 'plan';
-          } else if (lower.includes('valor') || lower.includes('receita') || lower.includes('revenue') || lower.includes('monthly')) {
-            autoMap[h] = 'monthly_value';
-          } else if (lower === 'status' || lower.includes('client_status') || lower.includes('status do cliente')) {
-            autoMap[h] = 'client_status';
-          }
-        }
-        setMapping(autoMap);
-        setStep('mapping');
-        toast.success(`${data.length} registros encontrados`);
+        processParsedData(results.data as Record<string, string>[], file.name);
       },
       error: (err) => {
         toast.error(`Erro ao ler arquivo: ${err.message}`);
       },
     });
+  };
+
+  const handleGoogleSheetImport = async () => {
+    if (!sheetUrl.trim()) {
+      toast.error('Cole o link da planilha do Google Sheets');
+      return;
+    }
+
+    if (!sheetUrl.includes('docs.google.com/spreadsheets')) {
+      toast.error('Link inválido. Use um link do Google Sheets.');
+      return;
+    }
+
+    setLoadingSheet(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('import-google-sheet', {
+        body: { url: sheetUrl.trim() },
+      });
+
+      if (error || !data?.success) {
+        toast.error(data?.error || error?.message || 'Erro ao acessar planilha');
+        return;
+      }
+
+      // Parse the CSV text returned from the edge function
+      const parsed = Papa.parse(data.csv, {
+        header: true,
+        skipEmptyLines: true,
+      });
+
+      processParsedData(parsed.data as Record<string, string>[], 'Google Sheets');
+    } catch (err: any) {
+      toast.error('Erro ao importar: ' + err.message);
+    } finally {
+      setLoadingSheet(false);
+    }
   };
 
   const handleMappingNext = () => {
@@ -289,7 +314,7 @@ export default function ImportClientsDialog({ open, onOpenChange, onSuccess }: I
             Importar Base de Clientes
           </DialogTitle>
           <DialogDescription>
-            Importe um arquivo CSV com os dados dos clientes. Registros com URL duplicada serão atualizados.
+            Importe via link do Google Sheets ou arquivo CSV. Registros com URL duplicada serão atualizados.
           </DialogDescription>
         </DialogHeader>
 
@@ -312,10 +337,40 @@ export default function ImportClientsDialog({ open, onOpenChange, onSuccess }: I
         </div>
 
         {step === 'upload' && (
-          <div className="flex flex-col items-center justify-center py-10 gap-4">
-            <div className="w-full border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary/50 transition-colors">
-              <Upload className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground mb-3">Arraste um arquivo CSV ou clique para selecionar</p>
+          <div className="flex flex-col gap-6 py-6">
+            {/* Google Sheets option */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <Link className="h-4 w-4 text-primary" />
+                Importar do Google Sheets
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Cole o link da planilha do Google Sheets..."
+                  value={sheetUrl}
+                  onChange={e => setSheetUrl(e.target.value)}
+                  className="flex-1 h-9 text-sm"
+                />
+                <Button size="sm" onClick={handleGoogleSheetImport} disabled={loadingSheet || !sheetUrl.trim()}>
+                  {loadingSheet ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Importar'}
+                </Button>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                A planilha precisa estar compartilhada como "Qualquer pessoa com o link pode ver".
+              </p>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">ou</span>
+              </div>
+            </div>
+
+            {/* CSV upload option */}
+            <div className="w-full border-2 border-dashed border-border rounded-xl p-6 text-center hover:border-primary/50 transition-colors">
+              <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground mb-2">Upload de arquivo CSV</p>
               <Label htmlFor="csv-upload">
                 <Button variant="outline" size="sm" asChild>
                   <span>Selecionar Arquivo</span>
@@ -329,9 +384,6 @@ export default function ImportClientsDialog({ open, onOpenChange, onSuccess }: I
                 className="hidden"
               />
             </div>
-            <p className="text-xs text-muted-foreground">
-              Formato aceito: CSV (separado por vírgula ou ponto e vírgula). Colunas extras serão detectadas automaticamente.
-            </p>
           </div>
         )}
 
