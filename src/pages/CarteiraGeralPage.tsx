@@ -201,8 +201,8 @@ export default function CarteiraGeralPage() {
           {filtered.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">Nenhum cliente encontrado</p>
           ) : (
-            <ScrollArea className="w-full whitespace-nowrap">
-              <div className="min-w-max">
+            <div className="w-full overflow-x-auto border rounded-md">
+              <div className="min-w-[1200px]">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -236,8 +236,7 @@ export default function CarteiraGeralPage() {
                   </TableBody>
                 </Table>
               </div>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
+            </div>
           )}
         </CardContent>
       </Card>
