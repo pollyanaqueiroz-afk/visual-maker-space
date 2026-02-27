@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Send, Loader2 } from 'lucide-react';
@@ -35,6 +36,7 @@ export default function AssignBriefingDialog({
     return d.toISOString().slice(0, 10);
   });
   const [pricePerArt, setPricePerArt] = useState(DEFAULT_PRICE_PER_ART);
+  const [designerType, setDesignerType] = useState<'externo' | 'interno'>('externo');
   const [sending, setSending] = useState(false);
 
   const handleSend = async () => {
@@ -45,9 +47,9 @@ export default function AssignBriefingDialog({
 
     setSending(true);
     try {
-      // Update price
+      // Update price (0 for internal designers)
       await supabase.from('briefing_images').update({
-        price_per_art: pricePerArt,
+        price_per_art: designerType === 'interno' ? 0 : pricePerArt,
       } as any).eq('id', imageId);
 
       const { data, error } = await supabase.functions.invoke('send-briefing-email', {
@@ -91,6 +93,19 @@ export default function AssignBriefingDialog({
         </DialogHeader>
         <div className="space-y-4 pt-2">
           <div className="space-y-2">
+            <Label>Tipo de designer</Label>
+            <RadioGroup value={designerType} onValueChange={(v) => setDesignerType(v as 'interno' | 'externo')} className="flex gap-4">
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="interno" id="tipo-interno" />
+                <Label htmlFor="tipo-interno" className="cursor-pointer font-normal">Interno</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="externo" id="tipo-externo" />
+                <Label htmlFor="tipo-externo" className="cursor-pointer font-normal">Externo</Label>
+              </div>
+            </RadioGroup>
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="assign-email">Email do responsável</Label>
             <Input
               id="assign-email"
@@ -109,17 +124,19 @@ export default function AssignBriefingDialog({
               onChange={e => setDeadline(e.target.value)}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="assign-price">Preço por arte (R$)</Label>
-            <Input
-              id="assign-price"
-              type="number"
-              min={0}
-              step={0.01}
-              value={pricePerArt}
-              onChange={e => setPricePerArt(Number(e.target.value))}
-            />
-          </div>
+          {designerType === 'externo' && (
+            <div className="space-y-2">
+              <Label htmlFor="assign-price">Preço por arte (R$)</Label>
+              <Input
+                id="assign-price"
+                type="number"
+                min={0}
+                step={0.01}
+                value={pricePerArt}
+                onChange={e => setPricePerArt(Number(e.target.value))}
+              />
+            </div>
+          )}
           <Button onClick={handleSend} disabled={sending} className="w-full">
             {sending ? (
               <>
