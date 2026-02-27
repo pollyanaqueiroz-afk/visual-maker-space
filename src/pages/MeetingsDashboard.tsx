@@ -3,11 +3,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import { format, parseISO, startOfMonth, endOfMonth, subMonths, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
-  CalendarDays, CheckCircle, XCircle, Clock, Star, TrendingUp, Users, BarChart3,
+  CalendarDays, CheckCircle, XCircle, Clock, Star, TrendingUp, Users, BarChart3, Globe,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend,
@@ -46,6 +47,7 @@ interface Meeting {
   status: string;
   client_email: string | null;
   client_name: string | null;
+  client_url: string | null;
   meeting_reason: string | null;
   loyalty_index: number | null;
   loyalty_reason: string | null;
@@ -61,7 +63,7 @@ export default function MeetingsDashboard() {
     (async () => {
       const { data, error } = await (supabase
         .from('meetings' as any)
-        .select('id, title, meeting_date, meeting_time, status, client_email, client_name, meeting_reason, loyalty_index, loyalty_reason, duration_minutes')
+        .select('id, title, meeting_date, meeting_time, status, client_email, client_name, client_url, meeting_reason, loyalty_index, loyalty_reason, duration_minutes')
         .order('meeting_date', { ascending: false }) as any);
       if (error) {
         console.error(error);
@@ -135,6 +137,19 @@ export default function MeetingsDashboard() {
       { name: '3 — Alto', value: dist[2] },
       { name: '4 — Muito alto', value: dist[3] },
     ];
+  }, [filtered]);
+
+  const byClientUrl = useMemo(() => {
+    const map: Record<string, { url: string; scheduled: number; completed: number; cancelled: number; total: number }> = {};
+    for (const m of filtered) {
+      const url = m.client_url || 'Sem URL';
+      if (!map[url]) map[url] = { url, scheduled: 0, completed: 0, cancelled: 0, total: 0 };
+      map[url].total++;
+      if (m.status === 'completed') map[url].completed++;
+      else if (m.status === 'scheduled') map[url].scheduled++;
+      else if (m.status === 'cancelled') map[url].cancelled++;
+    }
+    return Object.values(map).sort((a, b) => b.total - a.total);
   }, [filtered]);
 
   const LOYALTY_COLORS = ['hsl(var(--destructive))', 'hsl(var(--warning, 30 90% 50%))', 'hsl(var(--info))', 'hsl(var(--success))'];
@@ -249,6 +264,50 @@ export default function MeetingsDashboard() {
                 <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* By Client URL Table */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <Globe className="h-4 w-4" />
+            Reuniões por URL do Cliente
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {byClientUrl.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">Nenhuma reunião no período</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>URL do Cliente</TableHead>
+                  <TableHead className="text-center">Total</TableHead>
+                  <TableHead className="text-center">Realizadas</TableHead>
+                  <TableHead className="text-center">Agendadas</TableHead>
+                  <TableHead className="text-center">Canceladas</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {byClientUrl.map(row => (
+                  <TableRow key={row.url}>
+                    <TableCell className="font-medium text-sm">
+                      {row.url !== 'Sem URL' ? (
+                        <a href={row.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{row.url}</a>
+                      ) : (
+                        <span className="text-muted-foreground">Sem URL</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center font-semibold">{row.total}</TableCell>
+                    <TableCell className="text-center"><Badge className="bg-success/20 text-success">{row.completed}</Badge></TableCell>
+                    <TableCell className="text-center"><Badge className="bg-info/20 text-info">{row.scheduled}</Badge></TableCell>
+                    <TableCell className="text-center"><Badge className="bg-destructive/20 text-destructive">{row.cancelled}</Badge></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
