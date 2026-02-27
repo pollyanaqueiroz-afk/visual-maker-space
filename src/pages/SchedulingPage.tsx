@@ -13,7 +13,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { toast } from 'sonner';
 import { format, isSameDay, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, Video, Clock, User, Trash2, Edit2, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Loader2 } from 'lucide-react';
+import { Plus, Video, Clock, User, Trash2, Edit2, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Loader2, CheckCircle, FileText, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Meeting {
@@ -109,6 +109,15 @@ export default function SchedulingPage() {
   const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [sendInvite, setSendInvite] = useState(true);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [confirmingMeeting, setConfirmingMeeting] = useState<Meeting | null>(null);
+  const [confirmForm, setConfirmForm] = useState({
+    minutes_url: '',
+    recording_url: '',
+    loyalty_index: '',
+    loyalty_reason: '',
+  });
+  const [confirmSubmitting, setConfirmSubmitting] = useState(false);
 
   const fetchMeetings = async () => {
     const { data, error } = await (supabase
@@ -238,6 +247,48 @@ export default function SchedulingPage() {
     const { error } = await (supabase.from('meetings' as any).delete().eq('id', id) as any);
     if (error) toast.error('Erro ao remover');
     else { toast.success('Reunião removida'); fetchMeetings(); }
+  };
+
+  const handleOpenConfirm = (m: Meeting) => {
+    setConfirmingMeeting(m);
+    setConfirmForm({
+      minutes_url: (m as any).minutes_url || '',
+      recording_url: (m as any).recording_url || '',
+      loyalty_index: (m as any).loyalty_index ? String((m as any).loyalty_index) : '',
+      loyalty_reason: (m as any).loyalty_reason || '',
+    });
+    setConfirmDialogOpen(true);
+  };
+
+  const handleConfirmSubmit = async () => {
+    if (!confirmingMeeting) return;
+    if (!confirmForm.loyalty_index) {
+      toast.error('Selecione o índice de fidelidade');
+      return;
+    }
+    if (!confirmForm.loyalty_reason.trim()) {
+      toast.error('Preencha o motivo do índice de fidelidade');
+      return;
+    }
+    setConfirmSubmitting(true);
+    try {
+      const { error } = await (supabase.from('meetings' as any).update({
+        status: 'completed',
+        minutes_url: confirmForm.minutes_url || null,
+        recording_url: confirmForm.recording_url || null,
+        loyalty_index: Number(confirmForm.loyalty_index),
+        loyalty_reason: confirmForm.loyalty_reason,
+      }).eq('id', confirmingMeeting.id) as any);
+      if (error) throw error;
+      toast.success('Reunião confirmada!');
+      setConfirmDialogOpen(false);
+      setConfirmingMeeting(null);
+      fetchMeetings();
+    } catch (err: any) {
+      toast.error('Erro: ' + err.message);
+    } finally {
+      setConfirmSubmitting(false);
+    }
   };
 
   const handleStatusChange = async (id: string, status: string) => {
@@ -485,6 +536,33 @@ export default function SchedulingPage() {
                             )}
                           </div>
                           {m.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{m.description}</p>}
+                          {/* Loyalty info for completed meetings */}
+                          {m.status === 'completed' && (m as any).loyalty_index && (
+                            <div className="flex items-center gap-3 mt-2 pt-2 border-t border-border">
+                              <div className="flex items-center gap-1">
+                                <Star className="h-3.5 w-3.5 text-amber-500" />
+                                <span className="text-xs font-semibold text-foreground">Fidelidade: {(m as any).loyalty_index}/4</span>
+                              </div>
+                              {(m as any).loyalty_reason && (
+                                <span className="text-xs text-muted-foreground line-clamp-1">— {(m as any).loyalty_reason}</span>
+                              )}
+                            </div>
+                          )}
+                          {/* Links for completed meetings */}
+                          {m.status === 'completed' && ((m as any).minutes_url || (m as any).recording_url) && (
+                            <div className="flex items-center gap-2 mt-1">
+                              {(m as any).minutes_url && (
+                                <a href={(m as any).minutes_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
+                                  <FileText className="h-3 w-3" /> Ata
+                                </a>
+                              )}
+                              {(m as any).recording_url && (
+                                <a href={(m as any).recording_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
+                                  <Video className="h-3 w-3" /> Gravação
+                                </a>
+                              )}
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
                           {m.meeting_url && (
@@ -502,16 +580,25 @@ export default function SchedulingPage() {
                             </Button>
                           )}
                           {m.status === 'scheduled' && (
-                            <Select value={m.status} onValueChange={v => handleStatusChange(m.id, v)}>
-                              <SelectTrigger className="h-8 w-8 p-0 border-0 [&>svg]:hidden">
-                                <span className="sr-only">Status</span>
-                                <div className="w-2 h-2 rounded-full bg-info mx-auto" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="completed">Marcar como realizada</SelectItem>
-                                <SelectItem value="cancelled">Cancelar</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 gap-1 text-xs"
+                              onClick={() => handleOpenConfirm(m)}
+                            >
+                              <CheckCircle className="h-3.5 w-3.5" />
+                              Confirmar
+                            </Button>
+                          )}
+                          {m.status === 'scheduled' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 text-xs text-destructive hover:text-destructive"
+                              onClick={() => handleStatusChange(m.id, 'cancelled')}
+                            >
+                              Cancelar
+                            </Button>
                           )}
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(m)}>
                             <Edit2 className="h-3.5 w-3.5" />
@@ -529,6 +616,71 @@ export default function SchedulingPage() {
           )}
         </div>
       </div>
+
+      {/* Confirm Meeting Dialog */}
+      <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-primary" />
+              Confirmar Reunião
+            </DialogTitle>
+          </DialogHeader>
+          {confirmingMeeting && (
+            <div className="space-y-4 pt-2">
+              <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                <p className="text-sm font-semibold text-foreground">{confirmingMeeting.title}</p>
+                <p className="text-xs text-muted-foreground">
+                  {format(parseISO(confirmingMeeting.meeting_date), "dd/MM/yyyy")} às {confirmingMeeting.meeting_time.slice(0, 5)}
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label>Link da Ata da Reunião</Label>
+                <Input
+                  value={confirmForm.minutes_url}
+                  onChange={e => setConfirmForm(f => ({ ...f, minutes_url: e.target.value }))}
+                  placeholder="https://docs.google.com/..."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Link da Gravação</Label>
+                <Input
+                  value={confirmForm.recording_url}
+                  onChange={e => setConfirmForm(f => ({ ...f, recording_url: e.target.value }))}
+                  placeholder="https://meet.google.com/recording/..."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Índice de Fidelidade *</Label>
+                <Select value={confirmForm.loyalty_index} onValueChange={v => setConfirmForm(f => ({ ...f, loyalty_index: v }))}>
+                  <SelectTrigger className={!confirmForm.loyalty_index ? 'text-muted-foreground' : ''}>
+                    <SelectValue placeholder="Selecione de 1 a 4" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 — Muito baixo</SelectItem>
+                    <SelectItem value="2">2 — Baixo</SelectItem>
+                    <SelectItem value="3">3 — Alto</SelectItem>
+                    <SelectItem value="4">4 — Muito alto</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Motivo do Índice *</Label>
+                <Textarea
+                  value={confirmForm.loyalty_reason}
+                  onChange={e => setConfirmForm(f => ({ ...f, loyalty_reason: e.target.value }))}
+                  placeholder="Explique o motivo pelo qual você atribuiu esse índice..."
+                  rows={3}
+                />
+              </div>
+              <Button className="w-full" onClick={handleConfirmSubmit} disabled={confirmSubmitting}>
+                {confirmSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle className="h-4 w-4 mr-2" />}
+                Confirmar Reunião
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
