@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.monthly-designer-report]
 verify_jwt = false
+
+[functions.client-review-data]
+verify_jwt = false

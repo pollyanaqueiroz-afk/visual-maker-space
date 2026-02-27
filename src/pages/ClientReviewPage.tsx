@@ -95,13 +95,16 @@ export default function ClientReviewPage() {
   const fetchImages = async (clientEmail: string) => {
     setLoading(true);
     try {
-      const { data: requests, error: reqErr } = await supabase
-        .from('briefing_requests')
-        .select('id, requester_name, platform_url')
-        .eq('requester_email', clientEmail);
+      // Use secure edge function instead of direct anon queries
+      const { data: result, error: fnError } = await supabase.functions.invoke('client-review-data', {
+        body: { email: clientEmail },
+      });
 
-      if (reqErr) throw reqErr;
-      if (!requests || requests.length === 0) {
+      if (fnError) throw fnError;
+      if (result?.error) throw new Error(result.error);
+
+      const requests = result.requests || [];
+      if (requests.length === 0) {
         toast.error('Nenhuma solicitação encontrada para este email');
         setLoading(false);
         return;
@@ -111,74 +114,25 @@ export default function ClientReviewPage() {
         setClientName(requests[0].requester_name.split(' ')[0]);
       }
 
-      const urls = [...new Set(requests.map(r => r.platform_url).filter(Boolean))];
+      const urls = [...new Set(requests.map((r: any) => r.platform_url).filter(Boolean))] as string[];
       setPlatformUrls(urls);
 
-      const requestIds = requests.map(r => r.id);
+      const counts = result.counts || {};
+      setTotalApproved(counts.completed || 0);
+      setTotalImages(counts.total || 0);
 
-      const [reviewResult, pendingResult, completedResult, totalResult] = await Promise.all([
-        supabase
-          .from('briefing_images')
-          .select('id, image_type, product_name, assigned_email, revision_count, request_id, briefing_requests!inner(requester_name, platform_url)')
-          .in('request_id', requestIds)
-          .eq('status', 'review')
-          .order('created_at', { ascending: true }),
-        supabase
-          .from('briefing_images')
-          .select('id', { count: 'exact', head: true })
-          .in('request_id', requestIds)
-          .in('status', ['pending', 'in_progress'] as any),
-        supabase
-          .from('briefing_images')
-          .select('id', { count: 'exact', head: true })
-          .in('request_id', requestIds)
-          .eq('status', 'completed'),
-        supabase
-          .from('briefing_images')
-          .select('id', { count: 'exact', head: true })
-          .in('request_id', requestIds),
-      ]);
-
-      if (reviewResult.error) throw reviewResult.error;
-      // pendingCount will be computed from productionImages below
-      setTotalApproved(completedResult.count || 0);
-      setTotalImages(totalResult.count || 0);
-
-      const [prodResult, allResult] = await Promise.all([
-        supabase
-          .from('briefing_images')
-          .select('id, image_type, product_name, deadline, assigned_email, status')
-          .in('request_id', requestIds)
-          .in('status', ['pending', 'in_progress'] as any)
-          .order('deadline', { ascending: true, nullsFirst: false }),
-        supabase
-          .from('briefing_images')
-          .select('id, image_type, product_name, deadline, assigned_email, status, image_text, observations')
-          .in('request_id', requestIds)
-          .order('created_at', { ascending: false }),
-      ]);
-      const prodData = prodResult.data || [];
-      const inProduction = prodData.filter(i => !!i.assigned_email);
-      const requested = prodData.filter(i => !i.assigned_email);
+      const prodData = result.images?.production || [];
+      const inProduction = prodData.filter((i: any) => !!i.assigned_email);
+      const requested = prodData.filter((i: any) => !i.assigned_email);
       setProductionImages(inProduction);
       setPendingCount(inProduction.length);
       setRequestedCount(requested.length);
-      setAllImagesData((allResult.data || []) as any);
+      setAllImagesData((result.images?.all || []) as any);
 
-      const imagesWithDelivery: ReviewableImage[] = [];
-      for (const img of (reviewResult.data || [])) {
-        const { data: deliveries } = await supabase
-          .from('briefing_deliveries')
-          .select('file_url, comments, created_at')
-          .eq('briefing_image_id', img.id)
-          .order('created_at', { ascending: false })
-          .limit(1);
-
-        imagesWithDelivery.push({
-          ...img,
-          delivery: deliveries && deliveries.length > 0 ? deliveries[0] : null,
-        } as ReviewableImage);
-      }
+      const imagesWithDelivery: ReviewableImage[] = (result.images?.review || []).map((img: any) => ({
+        ...img,
+        delivery: img.delivery || null,
+      }));
 
       setImages(imagesWithDelivery);
       setAuthenticated(true);
