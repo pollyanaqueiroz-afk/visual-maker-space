@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Download, ImageIcon, FolderOpen, ExternalLink, Search, Calendar, User, SlidersHorizontal } from 'lucide-react';
+import { Download, ImageIcon, FolderOpen, ExternalLink, Search, Calendar, User, SlidersHorizontal, PackageCheck, Loader2 } from 'lucide-react';
 import { IMAGE_TYPE_LABELS, ImageType } from '@/types/briefing';
+import JSZip from 'jszip';
 
 interface AssetFile {
   id: string;
@@ -30,6 +31,7 @@ export default function ClientAssetsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'date_desc' | 'date_asc' | 'name'>('date_desc');
   const [filterSource, setFilterSource] = useState<string>('all');
+  const [zipping, setZipping] = useState(false);
 
   const extractClientSlug = (url: string) => {
     try {
@@ -218,22 +220,76 @@ export default function ClientAssetsPage() {
     return Array.from(sources);
   }, [assets]);
 
+  const handleDownloadZip = async () => {
+    if (filteredAssets.length === 0) return;
+    setZipping(true);
+    const toastId = toast.loading(`Preparando ZIP com ${filteredAssets.length} arquivo(s)...`);
+    try {
+      const zip = new JSZip();
+      const usedNames = new Set<string>();
+
+      await Promise.all(
+        filteredAssets.map(async (asset) => {
+          try {
+            const response = await fetch(asset.file_url);
+            if (!response.ok) return;
+            const blob = await response.blob();
+            const ext = asset.file_url.match(/\.(\w+)(\?|$)/)?.[1] || 'png';
+            let name = `${asset.display_name}.${ext}`;
+            // Deduplicate names
+            let counter = 1;
+            while (usedNames.has(name)) {
+              name = `${asset.display_name}_${counter}.${ext}`;
+              counter++;
+            }
+            usedNames.add(name);
+            zip.file(name, blob);
+          } catch {
+            // Skip failed downloads
+          }
+        })
+      );
+
+      const content = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(content);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${extractClientSlug(decodedUrl)}_assets.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Download concluído!', { id: toastId });
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Erro ao gerar ZIP', { id: toastId });
+    } finally {
+      setZipping(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 max-w-6xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
-          <FolderOpen className="h-6 w-6 text-primary" />
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+            <FolderOpen className="h-6 w-6 text-primary" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold capitalize truncate">{clientName}</h1>
+            <p className="text-sm text-muted-foreground">
+              {assets.length} arquivo(s) · {filteredAssets.length} exibido(s)
+            </p>
+            <a href={decodedUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline inline-flex items-center gap-1">
+              {decodedUrl} <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
         </div>
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold capitalize truncate">{clientName}</h1>
-          <p className="text-sm text-muted-foreground">
-            {assets.length} arquivo(s) · {filteredAssets.length} exibido(s)
-          </p>
-          <a href={decodedUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline inline-flex items-center gap-1">
-            {decodedUrl} <ExternalLink className="h-3 w-3" />
-          </a>
-        </div>
+        {filteredAssets.length > 0 && (
+          <Button onClick={handleDownloadZip} disabled={zipping} variant="outline" className="shrink-0">
+            {zipping ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <PackageCheck className="h-4 w-4 mr-2" />}
+            Baixar ZIP ({filteredAssets.length})
+          </Button>
+        )}
       </div>
 
       {/* Search & Filters */}
