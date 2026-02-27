@@ -373,6 +373,41 @@ export default function SchedulingPage() {
       .map(m => parseISO(m.meeting_date));
   }, [meetings]);
 
+  // Available time slots for selected date
+  const ALL_SLOTS = ['08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00'];
+
+  const availableSlots = useMemo(() => {
+    if (!selectedDate) return ALL_SLOTS;
+    const dateStr = format(selectedDate, 'yyyy-MM-dd');
+    const dayMeetings = meetingsByDate[dateStr] || [];
+    const busySlots = new Set<string>();
+    dayMeetings.forEach(m => {
+      if (m.status === 'cancelled') return;
+      const [h, min] = m.meeting_time.split(':').map(Number);
+      const startMin = h * 60 + min;
+      const endMin = startMin + m.duration_minutes;
+      ALL_SLOTS.forEach(slot => {
+        const [sh, sm] = slot.split(':').map(Number);
+        const slotStart = sh * 60 + sm;
+        const slotEnd = slotStart + 30;
+        if (slotStart < endMin && slotEnd > startMin) {
+          busySlots.add(slot);
+        }
+      });
+    });
+    return ALL_SLOTS.filter(s => !busySlots.has(s));
+  }, [selectedDate, meetingsByDate]);
+
+  const handleSlotClick = (time: string) => {
+    setEditingId(null);
+    setForm({
+      ...emptyForm,
+      meeting_date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
+      meeting_time: time,
+    });
+    setDialogOpen(true);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -519,6 +554,32 @@ export default function SchedulingPage() {
               <div className="w-3 h-3 rounded bg-primary/15" />
               <span>Dias com reuniões</span>
             </div>
+
+            {/* Available time slots */}
+            {selectedDate && (
+              <div className="mt-4 pt-4 border-t border-border">
+                <p className="text-xs font-semibold text-foreground mb-2">
+                  Horários disponíveis — {format(selectedDate, "dd/MM")}
+                </p>
+                {availableSlots.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Nenhum horário disponível</p>
+                ) : (
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {availableSlots.map(slot => (
+                      <Button
+                        key={slot}
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs font-medium hover:bg-primary hover:text-primary-foreground transition-colors"
+                        onClick={() => handleSlotClick(slot)}
+                      >
+                        {slot}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 
