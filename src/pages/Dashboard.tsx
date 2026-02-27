@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle, CalendarIcon, AlertCircle, Link2, FolderOpen } from 'lucide-react';
+import { Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle, CalendarIcon, AlertCircle, Link2, FolderOpen, FileText, Palette, UserCheck } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -281,7 +281,7 @@ export default function Dashboard() {
                   toast.success('Link do formulário copiado!');
                 }}
               >
-                <Link2 className="h-4 w-4" />
+                <FileText className="h-4 w-4" />
                 Formulário
               </Button>
               <Button
@@ -293,7 +293,7 @@ export default function Dashboard() {
                   toast.success('Link do painel do designer copiado!');
                 }}
               >
-                <Link2 className="h-4 w-4" />
+                <Palette className="h-4 w-4" />
                 Painel Designer
               </Button>
               <Button
@@ -305,7 +305,7 @@ export default function Dashboard() {
                   toast.success('Link da validação do cliente copiado!');
                 }}
               >
-                <Link2 className="h-4 w-4" />
+                <UserCheck className="h-4 w-4" />
                 Validação Cliente
               </Button>
             </div>
