@@ -282,7 +282,7 @@ export default function Dashboard() {
                 }}
               >
                 <FileText className="h-4 w-4" />
-                Formulário
+                Link Formulário
               </Button>
               <Button
                 variant="outline"
@@ -294,7 +294,7 @@ export default function Dashboard() {
                 }}
               >
                 <Palette className="h-4 w-4" />
-                Painel Designer
+                Link Painel Designer
               </Button>
               <Button
                 variant="outline"
@@ -306,7 +306,7 @@ export default function Dashboard() {
                 }}
               >
                 <UserCheck className="h-4 w-4" />
-                Validação Cliente
+                Link Validação Cliente
               </Button>
             </div>
           </div>
