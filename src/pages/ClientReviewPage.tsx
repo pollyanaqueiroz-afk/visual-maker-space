@@ -11,6 +11,7 @@ import { Heart, X, Loader2, Mail, CheckCircle, ImageIcon, Download, Sparkles, Th
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
+import ReviewHistory from '@/components/client-review/ReviewHistory';
 
 interface ReviewableImage {
   id: string;
@@ -43,8 +44,9 @@ export default function ClientReviewPage() {
   const [direction, setDirection] = useState<'left' | 'right' | null>(null);
   const [completedCount, setCompletedCount] = useState(0);
   const [clientName, setClientName] = useState('');
-  const [pendingCount, setPendingCount] = useState(0); // images still being worked on
+  const [pendingCount, setPendingCount] = useState(0);
   const [platformUrls, setPlatformUrls] = useState<string[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -344,6 +346,7 @@ export default function ClientReviewPage() {
       {/* Content */}
       <div className="relative z-10 -mt-6">
         {showStats && <StatsBar />}
+        {showStats && <ReviewHistory email={email} visible={showHistory} onToggle={() => setShowHistory(v => !v)} />}
         {children}
       </div>
     </div>
