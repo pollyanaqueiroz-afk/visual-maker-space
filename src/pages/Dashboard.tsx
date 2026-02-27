@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle, CalendarIcon, AlertCircle, Link2 } from 'lucide-react';
+import { Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle, CalendarIcon, AlertCircle, Link2, FolderOpen } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -421,6 +421,7 @@ export default function Dashboard() {
                           }}
                         />
                       </TableHead>
+                      <TableHead>Pasta</TableHead>
                       <TableHead>Tipo de Arte</TableHead>
                       <TableHead>Cliente</TableHead>
                       <TableHead>Solicitante</TableHead>
@@ -452,6 +453,17 @@ export default function Dashboard() {
                                 setSelectedIds(next);
                               }}
                             />
+                          </TableCell>
+                          <TableCell>
+                            <a
+                              href={`/assets/${encodeURIComponent(img.platform_url)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline text-xs flex items-center gap-1"
+                            >
+                              <FolderOpen className="h-3 w-3" />
+                              Ver
+                            </a>
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
@@ -630,7 +642,7 @@ export default function Dashboard() {
                     })}
                     {filtered.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={17} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={18} className="text-center py-8 text-muted-foreground">
                           Nenhuma arte encontrada
                         </TableCell>
                       </TableRow>
