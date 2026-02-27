@@ -304,6 +304,36 @@ export type Database = {
           },
         ]
       }
+      clients: {
+        Row: {
+          client_name: string | null
+          client_url: string
+          created_at: string
+          cs_user_id: string | null
+          id: string
+          loyalty_index: number | null
+          updated_at: string
+        }
+        Insert: {
+          client_name?: string | null
+          client_url: string
+          created_at?: string
+          cs_user_id?: string | null
+          id?: string
+          loyalty_index?: number | null
+          updated_at?: string
+        }
+        Update: {
+          client_name?: string | null
+          client_url?: string
+          created_at?: string
+          cs_user_id?: string | null
+          id?: string
+          loyalty_index?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       meetings: {
         Row: {
           client_email: string | null

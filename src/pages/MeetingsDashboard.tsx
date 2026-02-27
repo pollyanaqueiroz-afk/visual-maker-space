@@ -5,15 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { format, parseISO, startOfMonth, endOfMonth, subMonths, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
-  CalendarDays, CheckCircle, XCircle, Clock, Star, TrendingUp, Users, BarChart3, Globe,
+  CalendarDays, CheckCircle, XCircle, Clock, Star, TrendingUp, Users, BarChart3, Globe, Heart,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from 'recharts';
+import LoyaltyTrackingTab from '@/components/dashboard/LoyaltyTrackingTab';
 
 const MEETING_REASONS = [
   'Passagem de bastão Closer <> Onboarding',
@@ -176,6 +178,26 @@ export default function MeetingsDashboard() {
             Logado como <span className="font-medium text-foreground">{user?.email}</span>
           </p>
         </div>
+      </div>
+
+      <Tabs defaultValue="reunioes" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="reunioes" className="flex items-center gap-1.5">
+            <CalendarDays className="h-4 w-4" /> Reuniões
+          </TabsTrigger>
+          <TabsTrigger value="fidelidade" className="flex items-center gap-1.5">
+            <Heart className="h-4 w-4" /> Fidelidade
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="fidelidade">
+          <LoyaltyTrackingTab />
+        </TabsContent>
+
+        <TabsContent value="reunioes" className="space-y-6">
+
+      {/* Period filter */}
+      <div className="flex justify-end">
         <Select value={periodFilter} onValueChange={setPeriodFilter}>
           <SelectTrigger className="w-[180px] h-9 text-sm">
             <SelectValue />
@@ -317,6 +339,9 @@ export default function MeetingsDashboard() {
           )}
         </CardContent>
       </Card>
+
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
