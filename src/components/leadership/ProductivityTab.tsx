@@ -4,11 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { format, parseISO, startOfMonth, endOfMonth, subMonths, isWithinInterval, eachMonthOfInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
-  CalendarDays, CheckCircle, XCircle, Users, UserCheck, Loader2, TrendingUp, Filter,
+  CalendarDays, CheckCircle, XCircle, Users, UserCheck, Loader2, TrendingUp, Filter, Download,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid,
@@ -157,6 +158,21 @@ export default function ProductivityTab() {
     people: new Set(filtered.map(m => m.created_by).filter(Boolean)).size,
   }), [filtered]);
 
+  const exportCSV = () => {
+    const headers = ['Pessoa', 'Total', 'Realizadas', 'Canceladas', 'Taxa (%)', 'Horas', 'Principal Motivo'];
+    const rows = personStats.map(r => [r.name, r.total, r.completed, r.cancelled, r.rate, r.hoursFormatted, r.topReason]);
+    const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+    const bom = '\uFEFF';
+    const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `produtividade_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('CSV exportado com sucesso');
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -168,10 +184,11 @@ export default function ProductivityTab() {
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <Filter className="h-4 w-4" /> Filtros:
-        </div>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <Filter className="h-4 w-4" /> Filtros:
+          </div>
         <Select value={filterPerson} onValueChange={setFilterPerson}>
           <SelectTrigger className="w-[220px] h-9 text-sm">
             <UserCheck className="h-3.5 w-3.5 mr-1 shrink-0 text-muted-foreground" />
@@ -206,6 +223,10 @@ export default function ProductivityTab() {
             <SelectItem value="cancelled">Canceladas</SelectItem>
           </SelectContent>
         </Select>
+        </div>
+        <Button variant="outline" size="sm" onClick={exportCSV} className="h-9 gap-1.5">
+          <Download className="h-4 w-4" /> Exportar CSV
+        </Button>
       </div>
 
       {/* KPIs */}
