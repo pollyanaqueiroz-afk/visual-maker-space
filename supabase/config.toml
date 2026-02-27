@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.suggest-briefing]
 verify_jwt = false
+
+[functions.monthly-designer-report]
+verify_jwt = false
