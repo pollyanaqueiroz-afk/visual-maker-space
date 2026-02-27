@@ -353,7 +353,7 @@ export default function ClientReviewPage() {
             </div>
             <div className="text-left">
               <p className="text-sm font-bold text-foreground leading-none">Minha Pasta</p>
-              <p className="text-xs text-muted-foreground">Artes aprovadas</p>
+              <p className="text-xs text-muted-foreground">Todos os arquivos</p>
             </div>
           </Button>
         </motion.div>
