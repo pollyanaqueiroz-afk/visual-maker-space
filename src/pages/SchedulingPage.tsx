@@ -137,6 +137,21 @@ export default function SchedulingPage() {
 
   useEffect(() => { fetchMeetings(); }, []);
 
+  // Compute per-email meeting stats
+  const emailStats = useMemo(() => {
+    const stats: Record<string, { total: number; completed: number; scheduled: number; cancelled: number }> = {};
+    for (const m of meetings) {
+      const email = m.client_email?.toLowerCase();
+      if (!email) continue;
+      if (!stats[email]) stats[email] = { total: 0, completed: 0, scheduled: 0, cancelled: 0 };
+      stats[email].total++;
+      if (m.status === 'completed') stats[email].completed++;
+      else if (m.status === 'scheduled') stats[email].scheduled++;
+      else if (m.status === 'cancelled') stats[email].cancelled++;
+    }
+    return stats;
+  }, [meetings]);
+
   const handleOpenNew = (date?: Date) => {
     setEditingId(null);
     setForm({
@@ -535,6 +550,18 @@ export default function SchedulingPage() {
                               </span>
                             )}
                           </div>
+                          {/* Email meeting stats */}
+                          {m.client_email && emailStats[m.client_email.toLowerCase()] && (
+                            <div className="flex items-center gap-3 text-[10px] mt-1">
+                              <span className="text-muted-foreground">
+                                Reuniões com este cliente:
+                              </span>
+                              <span className="font-medium text-foreground">{emailStats[m.client_email.toLowerCase()].total} total</span>
+                              <span className="text-success">{emailStats[m.client_email.toLowerCase()].completed} realizadas</span>
+                              <span className="text-info">{emailStats[m.client_email.toLowerCase()].scheduled} agendadas</span>
+                              <span className="text-destructive">{emailStats[m.client_email.toLowerCase()].cancelled} canceladas</span>
+                            </div>
+                          )}
                           {m.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{m.description}</p>}
                           {/* Loyalty info for completed meetings */}
                           {m.status === 'completed' && (m as any).loyalty_index && (
