@@ -45,6 +45,7 @@ export default function ClientReviewPage() {
   const [completedCount, setCompletedCount] = useState(0);
   const [clientName, setClientName] = useState('');
   const [pendingCount, setPendingCount] = useState(0);
+  const [totalApproved, setTotalApproved] = useState(0);
   const [platformUrls, setPlatformUrls] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
 
@@ -82,8 +83,7 @@ export default function ClientReviewPage() {
 
       const requestIds = requests.map(r => r.id);
 
-      // Fetch review images and pending/in_progress count in parallel
-      const [reviewResult, pendingResult] = await Promise.all([
+      const [reviewResult, pendingResult, completedResult] = await Promise.all([
         supabase
           .from('briefing_images')
           .select('id, image_type, product_name, assigned_email, revision_count, request_id, briefing_requests!inner(requester_name, platform_url)')
@@ -95,10 +95,16 @@ export default function ClientReviewPage() {
           .select('id', { count: 'exact', head: true })
           .in('request_id', requestIds)
           .in('status', ['pending', 'in_progress'] as any),
+        supabase
+          .from('briefing_images')
+          .select('id', { count: 'exact', head: true })
+          .in('request_id', requestIds)
+          .eq('status', 'completed'),
       ]);
 
       if (reviewResult.error) throw reviewResult.error;
       setPendingCount(pendingResult.count || 0);
+      setTotalApproved(completedResult.count || 0);
 
       const imagesWithDelivery: ReviewableImage[] = [];
       for (const img of (reviewResult.data || [])) {
@@ -290,7 +296,24 @@ export default function ClientReviewPage() {
         </motion.div>
       )}
 
-      {/* Assets folder button */}
+      {/* Total approved */}
+      {totalApproved > 0 && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.15 }}
+          className="flex items-center gap-3 bg-primary/10 border border-primary/30 rounded-2xl px-5 py-3"
+        >
+          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+            <CheckCircle className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <p className="text-2xl font-extrabold text-primary leading-none">{totalApproved}</p>
+            <p className="text-xs text-muted-foreground">já aprovada(s)</p>
+          </div>
+        </motion.div>
+      )}
+
       {platformUrls.length > 0 && (
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
