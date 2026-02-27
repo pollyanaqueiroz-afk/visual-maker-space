@@ -78,15 +78,17 @@ export default function ClientsTab() {
   }, [clients, statusFilter, planFilter]);
 
   const stats = useMemo(() => {
-    const total = filtered.length;
+    // Total always counts ALL clients, not filtered
+    const total = clients.length;
+    const ativos = clients.filter(c => (c.client_status || 'ativo') === 'ativo').length;
+    const inadimplentes = clients.filter(c => c.client_status === 'inadimplente').length;
+    const churned = clients.filter(c => c.client_status === 'churned').length;
+    const emTrial = clients.filter(c => c.client_status === 'em_trial').length;
+    // Revenue and averages use filtered list
     const totalRevenue = filtered.reduce((s, c) => s + (c.monthly_value || 0), 0);
-    const avgRevenue = total > 0 ? totalRevenue / total : 0;
-    const ativos = filtered.filter(c => (c.client_status || 'ativo') === 'ativo').length;
-    const inadimplentes = filtered.filter(c => c.client_status === 'inadimplente').length;
-    const churned = filtered.filter(c => c.client_status === 'churned').length;
-    const emTrial = filtered.filter(c => c.client_status === 'em_trial').length;
+    const avgRevenue = filtered.length > 0 ? totalRevenue / filtered.length : 0;
     return { total, totalRevenue, avgRevenue, ativos, inadimplentes, churned, emTrial };
-  }, [filtered]);
+  }, [clients, filtered]);
 
   const byPlan = useMemo(() => {
     const map: Record<string, { name: string; count: number; revenue: number }> = {};
