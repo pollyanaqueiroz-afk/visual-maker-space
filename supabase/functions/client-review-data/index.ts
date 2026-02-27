@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
     const [reviewResult, pendingResult, completedResult, totalResult, prodResult, allResult] = await Promise.all([
       supabase
         .from("briefing_images")
-        .select("id, image_type, product_name, assigned_email, revision_count, request_id, briefing_requests!inner(requester_name, platform_url)")
+        .select("id, image_type, product_name, revision_count, request_id, briefing_requests!inner(requester_name, platform_url)")
         .in("request_id", requestIds)
         .eq("status", "review")
         .order("created_at", { ascending: true }),
@@ -110,13 +110,13 @@ Deno.serve(async (req) => {
         .in("request_id", requestIds),
       supabase
         .from("briefing_images")
-        .select("id, image_type, product_name, deadline, assigned_email, status")
+        .select("id, image_type, product_name, deadline, status")
         .in("request_id", requestIds)
         .in("status", ["pending", "in_progress"])
         .order("deadline", { ascending: true, nullsFirst: false }),
       supabase
         .from("briefing_images")
-        .select("id, image_type, product_name, deadline, assigned_email, status, image_text, observations, font_suggestion, element_suggestion, orientation, revision_count, created_at")
+        .select("id, image_type, product_name, deadline, status, image_text, observations, font_suggestion, element_suggestion, orientation, revision_count, created_at")
         .in("request_id", requestIds)
         .order("created_at", { ascending: false }),
     ]);
@@ -147,9 +147,12 @@ Deno.serve(async (req) => {
       .order("created_at", { ascending: true })
       .limit(200);
 
+    // Strip sensitive internal data before returning to client
+    const safeRequests = requests.map(({ requester_email, ...rest }: any) => rest);
+
     return new Response(
       JSON.stringify({
-        requests,
+        requests: safeRequests,
         resolvedEmail: resolvedEmail.trim().toLowerCase(),
         images: {
           review: imagesWithDelivery,
