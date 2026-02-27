@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const IMAGE_TYPE_LABELS: Record<string, string> = {
@@ -14,6 +14,7 @@ const IMAGE_TYPE_LABELS: Record<string, string> = {
   trail_banner: "Banner de Trilha",
   challenge_banner: "Banner de Desafio",
   community_banner: "Banner de Comunidade",
+  app_mockup: "Mockup do Aplicativo",
 };
 
 serve(async (req) => {
@@ -60,59 +61,76 @@ serve(async (req) => {
     const request = image.briefing_requests;
     const imageTypeLabel = IMAGE_TYPE_LABELS[image.image_type] || image.image_type;
     const productLabel = image.product_name ? ` — ${image.product_name}` : "";
+    const reviewUrl = `${app_url || 'https://visual-maker-space.lovable.app'}/client-review?email=${encodeURIComponent(request.requester_email)}`;
 
     const html = `
-      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;">
-        <div style="background:#e8f5e9;border-radius:12px;padding:24px;margin-bottom:24px;">
-          <h1 style="color:#2e7d32;margin:0 0 4px;">✅ Arte Entregue!</h1>
-          <p style="color:#666;margin:0;">${imageTypeLabel}${productLabel}</p>
+      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;padding:0;background:#ffffff;">
+        <!-- Header -->
+        <div style="background:linear-gradient(135deg,#2a9d6a,#34b87a);border-radius:16px 16px 0 0;padding:32px 24px;text-align:center;">
+          <div style="font-size:48px;margin-bottom:8px;">🎨</div>
+          <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:700;">Sua arte está pronta!</h1>
+          <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:14px;">Hora de aprovar ou solicitar ajustes</p>
         </div>
 
-        <p style="color:#333;font-size:14px;">
-          Olá <strong>${request.requester_name}</strong>,
-        </p>
-        <p style="color:#333;font-size:14px;">
-          O designer <strong>${delivered_by_email}</strong> entregou a arte solicitada. 
-          A imagem está aguardando sua validação.
-        </p>
+        <!-- Body -->
+        <div style="padding:28px 24px;">
+          <p style="color:#333;font-size:15px;line-height:1.6;margin:0 0 20px;">
+            Olá <strong>${request.requester_name}</strong>,
+          </p>
+          <p style="color:#555;font-size:14px;line-height:1.6;margin:0 0 24px;">
+            A arte <strong>${imageTypeLabel}${productLabel}</strong> foi finalizada pelo designer e está aguardando sua aprovação.
+            Você pode aprovar com um clique ou solicitar ajustes diretamente pelo nosso painel.
+          </p>
 
-        <table style="width:100%;border-collapse:collapse;margin:20px 0;">
-          <tr>
-            <td style="padding:10px 12px;border-bottom:1px solid #eee;color:#888;font-size:13px;width:140px;">Tipo de Arte</td>
-            <td style="padding:10px 12px;border-bottom:1px solid #eee;color:#333;font-size:14px;">${imageTypeLabel}</td>
-          </tr>
-          ${image.product_name ? `
-          <tr>
-            <td style="padding:10px 12px;border-bottom:1px solid #eee;color:#888;font-size:13px;">Produto</td>
-            <td style="padding:10px 12px;border-bottom:1px solid #eee;color:#333;font-size:14px;">${image.product_name}</td>
-          </tr>` : ""}
-          <tr>
-            <td style="padding:10px 12px;border-bottom:1px solid #eee;color:#888;font-size:13px;">Designer</td>
-            <td style="padding:10px 12px;border-bottom:1px solid #eee;color:#333;font-size:14px;">${delivered_by_email}</td>
-          </tr>
-          ${comments ? `
-          <tr>
-            <td style="padding:10px 12px;border-bottom:1px solid #eee;color:#888;font-size:13px;">Comentários</td>
-            <td style="padding:10px 12px;border-bottom:1px solid #eee;color:#333;font-size:14px;">${comments}</td>
-          </tr>` : ""}
-        </table>
+          <!-- Info card -->
+          <div style="background:#f8faf9;border:1px solid #e8ede9;border-radius:12px;padding:20px;margin-bottom:24px;">
+            <table style="width:100%;border-collapse:collapse;">
+              <tr>
+                <td style="padding:8px 0;color:#888;font-size:13px;width:130px;">📌 Tipo</td>
+                <td style="padding:8px 0;color:#333;font-size:14px;font-weight:600;">${imageTypeLabel}</td>
+              </tr>
+              ${image.product_name ? `
+              <tr>
+                <td style="padding:8px 0;color:#888;font-size:13px;">📦 Produto</td>
+                <td style="padding:8px 0;color:#333;font-size:14px;">${image.product_name}</td>
+              </tr>` : ""}
+              <tr>
+                <td style="padding:8px 0;color:#888;font-size:13px;">🎨 Designer</td>
+                <td style="padding:8px 0;color:#333;font-size:14px;">${delivered_by_email}</td>
+              </tr>
+              ${comments ? `
+              <tr>
+                <td style="padding:8px 0;color:#888;font-size:13px;vertical-align:top;">💬 Observação</td>
+                <td style="padding:8px 0;color:#333;font-size:14px;">${comments}</td>
+              </tr>` : ""}
+            </table>
+          </div>
 
-        <div style="margin-top:24px;text-align:center;">
-          <a href="${file_url}" style="display:inline-block;padding:14px 32px;background:#1976d2;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;font-size:15px;">
-            📥 Baixar Arte
-          </a>
+          <!-- CTA Button -->
+          <div style="text-align:center;margin-bottom:16px;">
+            <a href="${reviewUrl}" style="display:inline-block;padding:16px 40px;background:linear-gradient(135deg,#2a9d6a,#34b87a);color:#ffffff;text-decoration:none;border-radius:12px;font-weight:700;font-size:16px;box-shadow:0 4px 14px rgba(42,157,106,0.3);">
+              ✅ Aprovar ou Revisar Arte
+            </a>
+          </div>
+
+          <p style="text-align:center;color:#999;font-size:12px;margin:0 0 20px;">
+            Clique acima para acessar o painel de validação
+          </p>
+
+          ${file_url ? `
+          <div style="text-align:center;border-top:1px solid #eee;padding-top:16px;">
+            <a href="${file_url}" style="color:#2a9d6a;font-size:13px;text-decoration:underline;">
+              📥 Baixar arquivo diretamente
+            </a>
+          </div>` : ""}
         </div>
 
-        <div style="margin-top:16px;text-align:center;">
-          <a href="${app_url || 'https://visual-maker-space.lovable.app'}/client-review?email=${encodeURIComponent(request.requester_email)}" style="display:inline-block;padding:12px 28px;background:#2a9d6a;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;font-size:14px;">
-            ✅ Aprovar ou Solicitar Refação
-          </a>
-          <p style="margin-top:8px;color:#999;font-size:12px;">Acesse o painel para aprovar ou solicitar ajustes</p>
+        <!-- Footer -->
+        <div style="background:#f5f5f5;border-radius:0 0 16px 16px;padding:16px 24px;text-align:center;">
+          <p style="margin:0;color:#aaa;font-size:11px;">
+            Enviado automaticamente pelo sistema de gestão de artes • Curseduca Design
+          </p>
         </div>
-
-        <p style="margin-top:24px;color:#999;font-size:12px;">
-          Este email foi enviado automaticamente pelo sistema de gestão de briefings da Curseduca.
-        </p>
       </div>
     `;
 
@@ -125,7 +143,7 @@ serve(async (req) => {
       body: JSON.stringify({
         from: "Curseduca Design <onboarding@resend.dev>",
         to: [request.requester_email],
-        subject: `✅ Arte Entregue: ${imageTypeLabel}${productLabel}`,
+        subject: `🎨 Sua arte está pronta para aprovação: ${imageTypeLabel}${productLabel}`,
         html,
       }),
     });
@@ -134,9 +152,10 @@ serve(async (req) => {
 
     if (!resendRes.ok) {
       console.error("Resend error:", resendData);
+      // Non-blocking: return success with warning
       return new Response(
-        JSON.stringify({ error: "Failed to send email", details: resendData }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ success: true, email_warning: "Email sending failed but delivery was recorded", details: resendData }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
