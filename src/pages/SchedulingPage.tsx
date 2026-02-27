@@ -658,6 +658,9 @@ export default function SchedulingPage() {
               {filteredMeetings.map(m => {
                 const config = STATUS_CONFIG[m.status] || STATUS_CONFIG.scheduled;
                 const isPast = isBefore(parseISO(m.meeting_date), new Date()) && m.status === 'scheduled';
+                const hasLoyalty = !!(m as any).loyalty_index;
+                const hasMinutes = !!(m as any).minutes_url;
+                const hasRecording = !!(m as any).recording_url;
                 return (
                   <Card key={m.id} className={cn('transition-all hover:shadow-md', m.status === 'cancelled' && 'opacity-60')}>
                     <CardContent className="p-4">
@@ -698,31 +701,68 @@ export default function SchedulingPage() {
                             </div>
                           )}
                           {m.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{m.description}</p>}
-                          {/* Loyalty info for completed meetings */}
-                          {m.status === 'completed' && (m as any).loyalty_index && (
-                            <div className="flex items-center gap-3 mt-2 pt-2 border-t border-border">
-                              <div className="flex items-center gap-1">
-                                <Star className="h-3.5 w-3.5 text-amber-500" />
-                                <span className="text-xs font-semibold text-foreground">Fidelidade: {(m as any).loyalty_index}/4</span>
+
+                          {/* Completed meeting details section */}
+                          {m.status === 'completed' && (
+                            <div className="mt-2 pt-2 border-t border-border space-y-2">
+                              <div className="flex items-center gap-3 flex-wrap">
+                                {hasMinutes && (
+                                  <a href={(m as any).minutes_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors">
+                                    <FileText className="h-3.5 w-3.5" /> Ata da reunião
+                                  </a>
+                                )}
+                                {hasRecording && (
+                                  <a href={(m as any).recording_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors">
+                                    <Video className="h-3.5 w-3.5" /> Gravação
+                                  </a>
+                                )}
+                                {!hasMinutes && !hasRecording && (
+                                  <span className="text-xs text-muted-foreground/60 italic">Sem ata ou gravação</span>
+                                )}
                               </div>
-                              {(m as any).loyalty_reason && (
-                                <span className="text-xs text-muted-foreground line-clamp-1">— {(m as any).loyalty_reason}</span>
+                              {hasLoyalty ? (
+                                <div className="flex items-center gap-3">
+                                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-warning/10">
+                                    <Star className="h-3.5 w-3.5 text-warning" />
+                                    <span className="text-xs font-bold text-foreground">Fidelidade: {(m as any).loyalty_index}/4</span>
+                                  </div>
+                                  {(m as any).loyalty_reason && (
+                                    <span className="text-xs text-muted-foreground line-clamp-1">— {(m as any).loyalty_reason}</span>
+                                  )}
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 text-[10px] text-muted-foreground hover:text-foreground px-2"
+                                    onClick={() => handleOpenConfirm(m)}
+                                  >
+                                    <Edit2 className="h-3 w-3 mr-1" /> Editar
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 gap-1.5 text-xs border-warning/40 text-warning hover:bg-warning/10 hover:text-warning"
+                                  onClick={() => handleOpenConfirm(m)}
+                                >
+                                  <Star className="h-3.5 w-3.5" />
+                                  Preencher índice de fidelidade
+                                </Button>
                               )}
                             </div>
                           )}
-                          {/* Links for completed meetings */}
-                          {m.status === 'completed' && ((m as any).minutes_url || (m as any).recording_url) && (
-                            <div className="flex items-center gap-2 mt-1">
-                              {(m as any).minutes_url && (
-                                <a href={(m as any).minutes_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
-                                  <FileText className="h-3 w-3" /> Ata
-                                </a>
-                              )}
-                              {(m as any).recording_url && (
-                                <a href={(m as any).recording_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
-                                  <Video className="h-3 w-3" /> Gravação
-                                </a>
-                              )}
+
+                          {/* Scheduled meeting: prominent confirm CTA */}
+                          {m.status === 'scheduled' && (
+                            <div className="mt-2 pt-2 border-t border-border">
+                              <Button
+                                size="sm"
+                                className="h-8 gap-1.5 text-xs bg-success/90 hover:bg-success text-white"
+                                onClick={() => handleOpenConfirm(m)}
+                              >
+                                <CheckCircle className="h-3.5 w-3.5" />
+                                Concluir reunião
+                              </Button>
                             </div>
                           )}
                         </div>
@@ -739,17 +779,6 @@ export default function SchedulingPage() {
                               <a href={buildGoogleCalendarUrl(m)} target="_blank" rel="noopener noreferrer">
                                 <CalendarDays className="h-4 w-4 text-success" />
                               </a>
-                            </Button>
-                          )}
-                          {m.status === 'scheduled' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-8 gap-1 text-xs"
-                              onClick={() => handleOpenConfirm(m)}
-                            >
-                              <CheckCircle className="h-3.5 w-3.5" />
-                              Confirmar
                             </Button>
                           )}
                           {m.status === 'scheduled' && (
