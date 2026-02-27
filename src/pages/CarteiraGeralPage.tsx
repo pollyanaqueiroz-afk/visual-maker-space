@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import { parseISO, startOfMonth, endOfMonth, subMonths, isWithinInterval, differenceInDays } from 'date-fns';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
   Globe, Users, CheckCircle, XCircle, Clock, Star, TrendingUp, Search, Loader2, CalendarDays, Upload,
 } from 'lucide-react';
@@ -321,7 +322,8 @@ export default function CarteiraGeralPage() {
           {sorted.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">Nenhum cliente encontrado</p>
           ) : (
-            <div className="overflow-x-auto">
+            <ScrollArea className="w-full whitespace-nowrap">
+              <div className="min-w-[1100px]">
                <Table>
                 <TableHeader>
                   <TableRow>
@@ -377,7 +379,9 @@ export default function CarteiraGeralPage() {
                   ))}
                 </TableBody>
               </Table>
-            </div>
+              </div>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
           )}
         </CardContent>
       </Card>
