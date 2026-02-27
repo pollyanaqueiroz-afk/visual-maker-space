@@ -301,6 +301,60 @@ export type Database = {
           },
         ]
       }
+      meetings: {
+        Row: {
+          client_email: string | null
+          client_name: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          duration_minutes: number
+          id: string
+          meeting_date: string
+          meeting_time: string
+          meeting_url: string | null
+          notes: string | null
+          participants: string[] | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          client_email?: string | null
+          client_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          meeting_date: string
+          meeting_time: string
+          meeting_url?: string | null
+          notes?: string | null
+          participants?: string[] | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          client_email?: string | null
+          client_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          meeting_date?: string
+          meeting_time?: string
+          meeting_url?: string | null
+          notes?: string | null
+          participants?: string[] | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
