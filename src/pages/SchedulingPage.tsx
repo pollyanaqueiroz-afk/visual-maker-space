@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -89,6 +90,7 @@ export default function SchedulingPage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [sendInvite, setSendInvite] = useState(true);
 
   const fetchMeetings = async () => {
     const { data, error } = await (supabase
@@ -161,7 +163,46 @@ export default function SchedulingPage() {
       } else {
         const { error } = await (supabase.from('meetings' as any).insert(payload) as any);
         if (error) throw error;
-        toast.success('Reunião agendada!');
+
+        // Send invite email if checkbox is checked and client email exists
+        if (sendInvite && form.client_email) {
+          try {
+            const gcalUrl = buildGoogleCalendarUrl({
+              title: form.title,
+              description: form.description || null,
+              meeting_date: form.meeting_date,
+              meeting_time: form.meeting_time,
+              duration_minutes: form.duration_minutes,
+              meeting_url: form.meeting_url || null,
+              client_name: form.client_name || null,
+              client_email: form.client_email || null,
+            });
+
+            const { data: inviteData } = await supabase.functions.invoke('notify-meeting', {
+              body: {
+                client_email: form.client_email,
+                client_name: form.client_name || null,
+                title: form.title,
+                meeting_date: form.meeting_date,
+                meeting_time: form.meeting_time,
+                duration_minutes: form.duration_minutes,
+                meeting_url: form.meeting_url || null,
+                description: form.description || null,
+                google_calendar_url: gcalUrl,
+              },
+            });
+
+            if (inviteData?.email_warning) {
+              toast.success('Reunião agendada! ⚠️ Convite não enviado (domínio não verificado).');
+            } else {
+              toast.success('Reunião agendada e convite enviado!');
+            }
+          } catch {
+            toast.success('Reunião agendada! ⚠️ Erro ao enviar convite.');
+          }
+        } else {
+          toast.success('Reunião agendada!');
+        }
       }
       setDialogOpen(false);
       fetchMeetings();
@@ -286,6 +327,18 @@ export default function SchedulingPage() {
                 <Label>Observações</Label>
                 <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Notas internas..." rows={2} />
               </div>
+              {!editingId && form.client_email && (
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="send-invite"
+                    checked={sendInvite}
+                    onCheckedChange={(v) => setSendInvite(!!v)}
+                  />
+                  <label htmlFor="send-invite" className="text-sm text-muted-foreground cursor-pointer">
+                    Enviar convite por email ao cliente
+                  </label>
+                </div>
+              )}
               <Button className="w-full" onClick={handleSubmit} disabled={submitting}>
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 {editingId ? 'Salvar Alterações' : 'Agendar Reunião'}

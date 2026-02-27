@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.client-review-data]
 verify_jwt = false
+
+[functions.notify-meeting]
+verify_jwt = false
