@@ -313,12 +313,16 @@ export type Database = {
           description: string | null
           duration_minutes: number
           id: string
+          loyalty_index: number | null
+          loyalty_reason: string | null
           meeting_date: string
           meeting_reason: string | null
           meeting_time: string
           meeting_url: string | null
+          minutes_url: string | null
           notes: string | null
           participants: string[] | null
+          recording_url: string | null
           status: string
           title: string
           updated_at: string
@@ -331,12 +335,16 @@ export type Database = {
           description?: string | null
           duration_minutes?: number
           id?: string
+          loyalty_index?: number | null
+          loyalty_reason?: string | null
           meeting_date: string
           meeting_reason?: string | null
           meeting_time: string
           meeting_url?: string | null
+          minutes_url?: string | null
           notes?: string | null
           participants?: string[] | null
+          recording_url?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -349,12 +357,16 @@ export type Database = {
           description?: string | null
           duration_minutes?: number
           id?: string
+          loyalty_index?: number | null
+          loyalty_reason?: string | null
           meeting_date?: string
           meeting_reason?: string | null
           meeting_time?: string
           meeting_url?: string | null
+          minutes_url?: string | null
           notes?: string | null
           participants?: string[] | null
+          recording_url?: string | null
           status?: string
           title?: string
           updated_at?: string
