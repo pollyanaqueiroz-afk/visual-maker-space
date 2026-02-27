@@ -59,6 +59,20 @@ export default function ClientReviewPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [downloadingZip, setDownloadingZip] = useState(false);
   const [showProductionDialog, setShowProductionDialog] = useState(false);
+  const [showAllImagesDialog, setShowAllImagesDialog] = useState(false);
+  const [briefingDetailId, setBriefingDetailId] = useState<string | null>(null);
+  const [briefingDetail, setBriefingDetail] = useState<any>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [allImagesData, setAllImagesData] = useState<Array<{
+    id: string;
+    image_type: string;
+    product_name: string | null;
+    deadline: string | null;
+    assigned_email: string | null;
+    status: string;
+    image_text: string | null;
+    observations: string | null;
+  }>>([]);
   const [productionImages, setProductionImages] = useState<Array<{
     id: string;
     image_type: string;
@@ -129,13 +143,21 @@ export default function ClientReviewPage() {
       setTotalApproved(completedResult.count || 0);
       setTotalImages(totalResult.count || 0);
 
-      const { data: prodImages } = await supabase
-        .from('briefing_images')
-        .select('id, image_type, product_name, deadline, assigned_email, status')
-        .in('request_id', requestIds)
-        .in('status', ['pending', 'in_progress'] as any)
-        .order('deadline', { ascending: true, nullsFirst: false });
-      setProductionImages(prodImages || []);
+      const [prodResult, allResult] = await Promise.all([
+        supabase
+          .from('briefing_images')
+          .select('id, image_type, product_name, deadline, assigned_email, status')
+          .in('request_id', requestIds)
+          .in('status', ['pending', 'in_progress'] as any)
+          .order('deadline', { ascending: true, nullsFirst: false }),
+        supabase
+          .from('briefing_images')
+          .select('id, image_type, product_name, deadline, assigned_email, status, image_text, observations')
+          .in('request_id', requestIds)
+          .order('created_at', { ascending: false }),
+      ]);
+      setProductionImages(prodResult.data || []);
+      setAllImagesData((allResult.data || []) as any);
 
       const imagesWithDelivery: ReviewableImage[] = [];
       for (const img of (reviewResult.data || [])) {
@@ -162,6 +184,23 @@ export default function ClientReviewPage() {
       toast.error('Erro ao buscar artes: ' + (err.message || ''));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchBriefingDetail = async (imageId: string) => {
+    setBriefingDetailId(imageId);
+    setLoadingDetail(true);
+    try {
+      const { data } = await supabase
+        .from('briefing_images')
+        .select('id, image_type, product_name, image_text, font_suggestion, element_suggestion, orientation, observations, deadline, assigned_email, status, revision_count, created_at')
+        .eq('id', imageId)
+        .single();
+      setBriefingDetail(data);
+    } catch {
+      toast.error('Erro ao carregar detalhes');
+    } finally {
+      setLoadingDetail(false);
     }
   };
 
@@ -351,15 +390,18 @@ export default function ClientReviewPage() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 }}
-            className="relative overflow-hidden rounded-2xl border border-border bg-card/80 backdrop-blur-sm p-4 text-center shadow-sm hover:shadow-md transition-shadow"
+            onClick={() => setShowAllImagesDialog(true)}
+            className="relative overflow-hidden rounded-2xl border border-border bg-card/80 backdrop-blur-sm p-4 text-center shadow-sm hover:shadow-md transition-all cursor-pointer group"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent group-hover:from-primary/10 transition-colors" />
             <div className="relative">
               <div className="mx-auto w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
                 <ImageIcon className="h-5 w-5 text-primary" />
               </div>
               <p className="text-2xl font-extrabold text-foreground">{totalImages}</p>
-              <p className="text-[11px] text-muted-foreground font-medium">Solicitadas</p>
+              <p className="text-[11px] text-muted-foreground font-medium flex items-center justify-center gap-1">
+                Solicitadas <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </p>
             </div>
           </motion.div>
         )}
@@ -498,14 +540,154 @@ export default function ClientReviewPage() {
                         <p className="text-xs text-muted-foreground mt-1">📅 Sem prazo definido</p>
                       )}
                     </div>
-                    <Badge variant="outline" className="shrink-0 text-xs">
-                      {img.status === 'pending' ? 'Aguardando' : 'Em andamento'}
-                    </Badge>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge variant="outline" className="text-xs">
+                        {img.status === 'pending' ? 'Aguardando' : 'Em andamento'}
+                      </Badge>
+                      <button
+                        onClick={() => fetchBriefingDetail(img.id)}
+                        className="w-8 h-8 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center transition-colors"
+                        title="Ver detalhes do briefing"
+                      >
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      </button>
+                    </div>
                   </div>
                 );
               })
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* All images dialog */}
+      <Dialog open={showAllImagesDialog} onOpenChange={setShowAllImagesDialog}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ImageIcon className="h-5 w-5 text-primary" />
+              Todas as Artes Solicitadas
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            {allImagesData.length === 0 ? (
+              <p className="text-muted-foreground text-sm text-center py-4">Nenhuma arte encontrada</p>
+            ) : (
+              allImagesData.map((img) => {
+                const typeLabel = IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type;
+                const statusMap: Record<string, { label: string; color: string }> = {
+                  pending: { label: 'Aguardando', color: 'text-amber-500 border-amber-500/30' },
+                  in_progress: { label: 'Em andamento', color: 'text-info border-info/30' },
+                  review: { label: 'Em validação', color: 'text-primary border-primary/30' },
+                  completed: { label: 'Aprovada', color: 'text-primary border-primary/30' },
+                  cancelled: { label: 'Cancelada', color: 'text-destructive border-destructive/30' },
+                };
+                const st = statusMap[img.status] || statusMap.pending;
+                return (
+                  <div
+                    key={img.id}
+                    className="flex items-center gap-4 p-4 rounded-xl border border-border bg-muted/30"
+                  >
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-primary/10">
+                      <ImageIcon className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">
+                        {img.product_name || typeLabel}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{typeLabel}</p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge variant="outline" className={`text-xs ${st.color}`}>
+                        {st.label}
+                      </Badge>
+                      <button
+                        onClick={() => fetchBriefingDetail(img.id)}
+                        className="w-8 h-8 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center transition-colors"
+                        title="Ver detalhes do briefing"
+                      >
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Briefing detail dialog */}
+      <Dialog open={!!briefingDetailId} onOpenChange={(open) => { if (!open) { setBriefingDetailId(null); setBriefingDetail(null); } }}>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5 text-primary" />
+              Detalhes do Briefing
+            </DialogTitle>
+          </DialogHeader>
+          {loadingDetail ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : briefingDetail ? (
+            <div className="space-y-4 mt-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-[11px] text-muted-foreground uppercase font-semibold mb-1">Tipo</p>
+                  <p className="text-sm font-medium">{IMAGE_TYPE_LABELS[briefingDetail.image_type as ImageType] || briefingDetail.image_type}</p>
+                </div>
+                {briefingDetail.product_name && (
+                  <div>
+                    <p className="text-[11px] text-muted-foreground uppercase font-semibold mb-1">Produto</p>
+                    <p className="text-sm font-medium">{briefingDetail.product_name}</p>
+                  </div>
+                )}
+                {briefingDetail.orientation && (
+                  <div>
+                    <p className="text-[11px] text-muted-foreground uppercase font-semibold mb-1">Orientação</p>
+                    <p className="text-sm font-medium">{briefingDetail.orientation}</p>
+                  </div>
+                )}
+                {briefingDetail.deadline && (
+                  <div>
+                    <p className="text-[11px] text-muted-foreground uppercase font-semibold mb-1">Prazo</p>
+                    <p className="text-sm font-medium">{format(new Date(briefingDetail.deadline), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>
+                  </div>
+                )}
+              </div>
+              {briefingDetail.image_text && (
+                <div>
+                  <p className="text-[11px] text-muted-foreground uppercase font-semibold mb-1">Texto da Arte</p>
+                  <p className="text-sm bg-muted/50 rounded-lg p-3">{briefingDetail.image_text}</p>
+                </div>
+              )}
+              {briefingDetail.font_suggestion && (
+                <div>
+                  <p className="text-[11px] text-muted-foreground uppercase font-semibold mb-1">Sugestão de Fonte</p>
+                  <p className="text-sm">{briefingDetail.font_suggestion}</p>
+                </div>
+              )}
+              {briefingDetail.element_suggestion && (
+                <div>
+                  <p className="text-[11px] text-muted-foreground uppercase font-semibold mb-1">Sugestão de Elementos</p>
+                  <p className="text-sm">{briefingDetail.element_suggestion}</p>
+                </div>
+              )}
+              {briefingDetail.observations && (
+                <div>
+                  <p className="text-[11px] text-muted-foreground uppercase font-semibold mb-1">Observações</p>
+                  <p className="text-sm bg-muted/50 rounded-lg p-3">{briefingDetail.observations}</p>
+                </div>
+              )}
+              <div className="flex items-center gap-4 pt-2 border-t border-border text-xs text-muted-foreground">
+                <span>Refações: {briefingDetail.revision_count}</span>
+                {briefingDetail.assigned_email && <span>Designer: {briefingDetail.assigned_email}</span>}
+              </div>
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-sm text-center py-4">Nenhum detalhe encontrado</p>
+          )}
         </DialogContent>
       </Dialog>
     </div>
