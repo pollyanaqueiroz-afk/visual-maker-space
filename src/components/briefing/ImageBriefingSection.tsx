@@ -152,16 +152,19 @@ export default function ImageBriefingSection({
 
             {showOrientation && (
               <div className="space-y-2">
-                <Label>Orientação da capa</Label>
-                <Select value={data.orientation || ''} onValueChange={v => update({ orientation: v })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
+                <Label>Orientação da capa *</Label>
+                <Select value={data.orientation || ''} onValueChange={v => update({ orientation: v })} required>
+                  <SelectTrigger className={!data.orientation ? 'border-destructive' : ''}>
+                    <SelectValue placeholder="Selecione a orientação" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="horizontal">Horizontal</SelectItem>
                     <SelectItem value="vertical">Vertical</SelectItem>
                   </SelectContent>
                 </Select>
+                {!data.orientation && (
+                  <p className="text-xs text-destructive">Selecione a orientação da imagem</p>
+                )}
               </div>
             )}
 

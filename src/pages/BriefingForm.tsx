@@ -202,6 +202,11 @@ export default function BriefingForm() {
       return;
     }
 
+    if (selections.product_covers && form.product_covers.some(c => !c.orientation)) {
+      toast.error('Selecione a orientação (horizontal/vertical) em todas as capas de produto');
+      return;
+    }
+
     setSubmitting(true);
     try {
       let brandFileUrl: string | null = null;
