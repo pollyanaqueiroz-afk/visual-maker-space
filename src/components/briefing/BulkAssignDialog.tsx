@@ -41,6 +41,7 @@ export default function BulkAssignDialog({ open, onOpenChange, imageIds, onAssig
 
     setSending(true);
     try {
+      let hasEmailWarning = false;
       // Send each image one by one through the edge function
       for (const imageId of imageIds) {
         // First update price
@@ -59,9 +60,14 @@ export default function BulkAssignDialog({ open, onOpenChange, imageIds, onAssig
 
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
+        if (data?.email_warning) hasEmailWarning = true;
       }
 
-      toast.success(`${count} briefing(s) enviado(s) com sucesso!`);
+      if (hasEmailWarning) {
+        toast.success(`${count} briefing(s) atribuído(s)! ⚠️ E-mails não enviados (domínio Resend não verificado).`);
+      } else {
+        toast.success(`${count} briefing(s) enviado(s) com sucesso!`);
+      }
       onOpenChange(false);
       onAssigned();
     } catch (err: any) {

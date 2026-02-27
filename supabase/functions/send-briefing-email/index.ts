@@ -173,9 +173,10 @@ serve(async (req) => {
 
     if (!resendRes.ok) {
       console.error("Resend error:", resendData);
+      // DB was already updated — return 200 with email_warning so the UI doesn't block
       return new Response(
-        JSON.stringify({ error: "Failed to send email", details: resendData }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ success: true, email_sent: false, email_warning: resendData.message || "Email sending failed", delivery_token: deliveryToken }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 

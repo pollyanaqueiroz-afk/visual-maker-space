@@ -62,7 +62,11 @@ export default function AssignBriefingDialog({
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast.success('Briefing enviado com sucesso!');
+      if (data?.email_warning) {
+        toast.success('Briefing atribuído! ⚠️ E-mail não enviado (domínio Resend não verificado). O designer pode acessar pelo painel.');
+      } else {
+        toast.success('Briefing enviado com sucesso!');
+      }
       setOpen(false);
       onAssigned();
     } catch (err: any) {
