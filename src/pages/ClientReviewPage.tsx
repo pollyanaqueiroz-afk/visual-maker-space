@@ -7,7 +7,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { IMAGE_TYPE_LABELS, ImageType } from '@/types/briefing';
-import { Heart, X, Loader2, Mail, CheckCircle, ImageIcon, Download, Sparkles, ThumbsDown, FolderOpen, Clock, Eye, Archive, ChevronRight } from 'lucide-react';
+import {
+  Heart, X, Loader2, Mail, CheckCircle, ImageIcon, Download,
+  Sparkles, ThumbsDown, FolderOpen, Clock, Eye, Archive,
+  ChevronRight, PlusCircle, ArrowRight, Palette
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
@@ -92,7 +96,6 @@ export default function ClientReviewPage() {
         setClientName(requests[0].requester_name.split(' ')[0]);
       }
 
-      // Collect unique platform URLs
       const urls = [...new Set(requests.map(r => r.platform_url).filter(Boolean))];
       setPlatformUrls(urls);
 
@@ -126,7 +129,6 @@ export default function ClientReviewPage() {
       setTotalApproved(completedResult.count || 0);
       setTotalImages(totalResult.count || 0);
 
-      // Fetch production images details for the dialog
       const { data: prodImages } = await supabase
         .from('briefing_images')
         .select('id, image_type, product_name, deadline, assigned_email, status')
@@ -206,11 +208,10 @@ export default function ClientReviewPage() {
         }
       }
 
-      // 🎉 Confetti burst!
       confetti({
-        particleCount: 80,
-        spread: 70,
-        origin: { y: 0.7 },
+        particleCount: 100,
+        spread: 80,
+        origin: { y: 0.65 },
         colors: ['#22c55e', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6'],
       });
 
@@ -291,7 +292,6 @@ export default function ClientReviewPage() {
     if (!platformUrls.length) return;
     setDownloadingZip(true);
     try {
-      // Fetch approved assets for this platform
       const { data: assets, error } = await supabase
         .from('brand_assets')
         .select('file_url, file_name')
@@ -312,14 +312,11 @@ export default function ClientReviewPage() {
           const response = await fetch(asset.file_url);
           if (!response.ok) continue;
           const blob = await response.blob();
-
-          // Extract extension from URL or default to .png
           const urlPath = new URL(asset.file_url).pathname;
           const ext = urlPath.substring(urlPath.lastIndexOf('.')) || '.png';
           const fileName = asset.file_name
             ? `${asset.file_name}${ext}`
             : `arte-${++fileIndex}${ext}`;
-
           zip.file(fileName, blob);
         } catch {
           console.warn('Failed to fetch file:', asset.file_url);
@@ -345,132 +342,132 @@ export default function ClientReviewPage() {
     }
   };
 
-  // Stats bar for authenticated views
   const StatsBar = () => (
-    <div className="flex flex-col sm:flex-row items-center justify-center gap-3 px-4 mb-6 flex-wrap">
-      {/* Total images requested */}
-      {totalImages > 0 && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="flex items-center gap-3 bg-muted border border-border rounded-2xl px-5 py-3"
-        >
-          <div className="w-10 h-10 rounded-full bg-foreground/10 flex items-center justify-center">
-            <ImageIcon className="h-5 w-5 text-foreground" />
-          </div>
-          <div>
-            <p className="text-2xl font-extrabold text-foreground leading-none">{totalImages}</p>
-            <p className="text-xs text-muted-foreground">total solicitada(s)</p>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Pending arts indicator */}
-      {pendingCount > 0 && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="cursor-pointer"
-          onClick={() => setShowProductionDialog(true)}
-        >
-          <div className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl px-5 py-3 hover:bg-amber-500/15 transition-colors">
-            <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
-              <Clock className="h-5 w-5 text-amber-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-extrabold text-amber-500 leading-none">{pendingCount}</p>
-              <p className="text-xs text-muted-foreground">arte(s) ainda em produção</p>
-            </div>
-            <ChevronRight className="h-4 w-4 text-amber-500/60 ml-1" />
-          </div>
-        </motion.div>
-      )}
-
-      {/* Review count */}
-      {images.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.1 }}
-          className="flex items-center gap-3 bg-primary/10 border border-primary/30 rounded-2xl px-5 py-3"
-        >
-          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-            <Eye className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <p className="text-2xl font-extrabold text-primary leading-none">{images.length}</p>
-            <p className="text-xs text-muted-foreground">para aprovar agora</p>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Total approved */}
-      {totalApproved > 0 && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.15 }}
-          className="flex items-center gap-3 bg-primary/10 border border-primary/30 rounded-2xl px-5 py-3"
-        >
-          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-            <CheckCircle className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <p className="text-2xl font-extrabold text-primary leading-none">{totalApproved}</p>
-            <p className="text-xs text-muted-foreground">já aprovada(s)</p>
-          </div>
-        </motion.div>
-      )}
-
-      {platformUrls.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          <Button
-            variant="outline"
-            onClick={() => navigate(`/assets/${encodeURIComponent(platformUrls[0])}`)}
-            className="h-auto py-3 px-5 rounded-2xl border-border gap-3"
+    <div className="px-4 mb-8">
+      {/* Stats grid */}
+      <div className="max-w-3xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+        {totalImages > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="relative overflow-hidden rounded-2xl border border-border bg-card/80 backdrop-blur-sm p-4 text-center shadow-sm hover:shadow-md transition-shadow"
           >
-            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-              <FolderOpen className="h-5 w-5 text-foreground" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
+            <div className="relative">
+              <div className="mx-auto w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
+                <ImageIcon className="h-5 w-5 text-primary" />
+              </div>
+              <p className="text-2xl font-extrabold text-foreground">{totalImages}</p>
+              <p className="text-[11px] text-muted-foreground font-medium">Solicitadas</p>
             </div>
-            <div className="text-left">
-              <p className="text-sm font-bold text-foreground leading-none">Minha Pasta</p>
-              <p className="text-xs text-muted-foreground">Todos os arquivos</p>
-            </div>
-          </Button>
-        </motion.div>
-      )}
+          </motion.div>
+        )}
 
-      {/* Download ZIP button */}
-      {totalApproved > 0 && platformUrls.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.25 }}
-        >
+        {pendingCount > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            onClick={() => setShowProductionDialog(true)}
+            className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-card/80 backdrop-blur-sm p-4 text-center shadow-sm hover:shadow-md transition-all cursor-pointer group"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent group-hover:from-amber-500/10 transition-colors" />
+            <div className="relative">
+              <div className="mx-auto w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center mb-2">
+                <Clock className="h-5 w-5 text-amber-500" />
+              </div>
+              <p className="text-2xl font-extrabold text-amber-500">{pendingCount}</p>
+              <p className="text-[11px] text-muted-foreground font-medium flex items-center justify-center gap-1">
+                Em produção <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </p>
+            </div>
+          </motion.div>
+        )}
+
+        {images.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="relative overflow-hidden rounded-2xl border border-primary/20 bg-card/80 backdrop-blur-sm p-4 text-center shadow-sm"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
+            <div className="relative">
+              <div className="mx-auto w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
+                <Eye className="h-5 w-5 text-primary" />
+              </div>
+              <p className="text-2xl font-extrabold text-primary">{images.length}</p>
+              <p className="text-[11px] text-muted-foreground font-medium">Para aprovar</p>
+            </div>
+          </motion.div>
+        )}
+
+        {totalApproved > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="relative overflow-hidden rounded-2xl border border-primary/20 bg-card/80 backdrop-blur-sm p-4 text-center shadow-sm"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
+            <div className="relative">
+              <div className="mx-auto w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
+                <CheckCircle className="h-5 w-5 text-primary" />
+              </div>
+              <p className="text-2xl font-extrabold text-primary">{totalApproved}</p>
+              <p className="text-[11px] text-muted-foreground font-medium">Aprovadas</p>
+            </div>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Action buttons row */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25 }}
+        className="max-w-3xl mx-auto flex flex-wrap items-center justify-center gap-2"
+      >
+        {platformUrls.length > 0 && (
           <Button
             variant="outline"
+            size="sm"
+            onClick={() => navigate(`/assets/${encodeURIComponent(platformUrls[0])}`)}
+            className="rounded-full gap-2 h-9 px-4 bg-card/60 backdrop-blur-sm border-border hover:bg-card"
+          >
+            <FolderOpen className="h-4 w-4" />
+            Minha Pasta
+          </Button>
+        )}
+
+        {totalApproved > 0 && platformUrls.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
             onClick={handleDownloadZip}
             disabled={downloadingZip}
-            className="h-auto py-3 px-5 rounded-2xl border-border gap-3"
+            className="rounded-full gap-2 h-9 px-4 bg-card/60 backdrop-blur-sm border-border hover:bg-card"
           >
-            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-              {downloadingZip ? (
-                <Loader2 className="h-5 w-5 text-foreground animate-spin" />
-              ) : (
-                <Archive className="h-5 w-5 text-foreground" />
-              )}
-            </div>
-            <div className="text-left">
-              <p className="text-sm font-bold text-foreground leading-none">Baixar ZIP</p>
-              <p className="text-xs text-muted-foreground">{totalApproved} arte(s) aprovada(s)</p>
-            </div>
+            {downloadingZip ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Archive className="h-4 w-4" />
+            )}
+            Baixar ZIP ({totalApproved})
           </Button>
-        </motion.div>
-      )}
+        )}
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate('/briefing')}
+          className="rounded-full gap-2 h-9 px-4 bg-primary/5 border-primary/20 text-primary hover:bg-primary/10 hover:text-primary"
+        >
+          <PlusCircle className="h-4 w-4" />
+          Nova Solicitação
+        </Button>
+      </motion.div>
 
       {/* Production images dialog */}
       <Dialog open={showProductionDialog} onOpenChange={setShowProductionDialog}>
@@ -523,36 +520,54 @@ export default function ClientReviewPage() {
     </div>
   );
 
-  // Wrapper with CursEduca header
   const PageWrapper = ({ children, headerTitle, headerSubtitle, showStats = false }: { children: React.ReactNode; headerTitle: string; headerSubtitle?: string; showStats?: boolean }) => (
     <div className="min-h-screen bg-background">
-      {/* CursEduca Hero Header */}
-      <div className="relative w-full overflow-hidden" style={{ minHeight: '160px' }}>
+      {/* Hero header with enhanced gradient */}
+      <div className="relative w-full overflow-hidden" style={{ minHeight: '200px' }}>
         <img
           src="/images/bg-curseduca.png"
           alt="Curseduca"
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-background" />
-        <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 py-8 min-h-[160px]">
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-5 py-2 mb-3">
-            <Sparkles className="h-4 w-4 text-white/80" />
-            <span className="text-white/90 text-sm font-medium tracking-wide">Validação de Artes</span>
-          </div>
-          <h1
-            className="text-2xl sm:text-3xl font-extrabold text-white drop-shadow-lg"
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-background" />
+        {/* Decorative blur orbs */}
+        <div className="absolute top-8 left-1/4 w-48 h-48 bg-primary/20 rounded-full blur-[80px]" />
+        <div className="absolute bottom-4 right-1/4 w-32 h-32 bg-primary/15 rounded-full blur-[60px]" />
+
+        <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 py-10 min-h-[200px]">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full px-5 py-2 mb-4 shadow-lg"
+          >
+            <Sparkles className="h-4 w-4 text-primary-foreground" />
+            <span className="text-primary-foreground/90 text-sm font-semibold tracking-wide">Validação de Artes</span>
+          </motion.div>
+          <motion.h1
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="text-3xl sm:text-4xl font-extrabold text-primary-foreground drop-shadow-xl"
             style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
           >
             {headerTitle}
-          </h1>
+          </motion.h1>
           {headerSubtitle && (
-            <p className="text-white/70 mt-2 text-sm max-w-xl">{headerSubtitle}</p>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-primary-foreground/70 mt-3 text-sm sm:text-base max-w-xl"
+            >
+              {headerSubtitle}
+            </motion.p>
           )}
         </div>
       </div>
 
-      {/* Content */}
-      <div className="relative z-10 -mt-6">
+      {/* Content area */}
+      <div className="relative z-10 -mt-8">
         {showStats && <StatsBar />}
         {showStats && <ReviewHistory email={email} visible={showHistory} onToggle={() => setShowHistory(v => !v)} />}
         {children}
@@ -560,32 +575,42 @@ export default function ClientReviewPage() {
     </div>
   );
 
-  // Login screen
   if (!authenticated) {
     return (
       <PageWrapper
         headerTitle="Validação de Artes"
-        headerSubtitle="Aprove ou solicite ajustes nas suas artes de forma rápida e divertida!"
+        headerSubtitle="Aprove ou solicite ajustes nas suas artes de forma rápida e visual"
       >
-        <div className="flex items-center justify-center px-4 pb-12">
+        <div className="flex items-center justify-center px-4 pb-16">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.6, type: 'spring' }}
             className="w-full max-w-md"
           >
-            <div className="bg-card border border-border rounded-2xl shadow-xl p-8 space-y-6">
-              <div className="text-center space-y-2">
-                <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-                  <Mail className="h-8 w-8 text-primary" />
-                </div>
+            <div className="relative overflow-hidden bg-card border border-border rounded-3xl shadow-2xl p-8 space-y-6">
+              {/* Decorative gradient */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary/60 to-primary rounded-t-3xl" />
+
+              <div className="text-center space-y-3 pt-2">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+                  className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shadow-inner"
+                >
+                  <Mail className="h-7 w-7 text-primary" />
+                </motion.div>
                 <h2 className="text-xl font-bold text-foreground">Acesse suas artes</h2>
-                <p className="text-muted-foreground text-sm">
-                  Informe o email utilizado na solicitação do briefing para visualizar e aprovar suas artes.
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Informe o email utilizado na solicitação para visualizar e aprovar suas artes.
                 </p>
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="client-email">Seu email</Label>
+                <Label htmlFor="client-email" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Seu email
+                </Label>
                 <Input
                   id="client-email"
                   type="email"
@@ -593,19 +618,34 @@ export default function ClientReviewPage() {
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                  className="h-12 text-base"
+                  className="h-12 text-base rounded-xl bg-muted/50 border-border focus:bg-card"
                 />
               </div>
-              <Button onClick={handleLogin} disabled={loading} className="w-full h-12 text-base font-semibold">
+
+              <Button
+                onClick={handleLogin}
+                disabled={loading}
+                className="w-full h-12 text-base font-semibold rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-shadow"
+              >
                 {loading ? (
                   <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Buscando...</>
                 ) : (
                   <>
-                    <Sparkles className="h-4 w-4 mr-2" />
+                    <ArrowRight className="h-4 w-4 mr-2" />
                     Acessar minhas artes
                   </>
                 )}
               </Button>
+
+              <div className="text-center">
+                <button
+                  onClick={() => navigate('/briefing')}
+                  className="text-xs text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
+                >
+                  <PlusCircle className="h-3 w-3" />
+                  Precisa solicitar novas artes?
+                </button>
+              </div>
             </div>
           </motion.div>
         </div>
@@ -613,7 +653,6 @@ export default function ClientReviewPage() {
     );
   }
 
-  // All reviewed
   if (allDone) {
     return (
       <PageWrapper
@@ -621,19 +660,20 @@ export default function ClientReviewPage() {
         headerSubtitle={`Obrigado pela sua avaliação${clientName ? `, ${clientName}` : ''}!`}
         showStats
       >
-        <div className="flex items-center justify-center px-4 pb-12">
+        <div className="flex items-center justify-center px-4 pb-16">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, type: 'spring' }}
             className="w-full max-w-md"
           >
-            <div className="bg-card border border-border rounded-2xl shadow-xl p-8 text-center space-y-6">
+            <div className="relative overflow-hidden bg-card border border-border rounded-3xl shadow-2xl p-8 text-center space-y-6">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary/60 to-primary rounded-t-3xl" />
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-                className="mx-auto w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center"
+                className="mx-auto w-24 h-24 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shadow-inner"
               >
                 <CheckCircle className="h-12 w-12 text-primary" />
               </motion.div>
@@ -656,17 +696,27 @@ export default function ClientReviewPage() {
                   </motion.span>
                 ))}
               </div>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setCurrentIndex(0);
-                  setCompletedCount(0);
-                  fetchImages(email);
-                }}
-                className="w-full"
-              >
-                Verificar novamente
-              </Button>
+              <div className="space-y-2 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setCurrentIndex(0);
+                    setCompletedCount(0);
+                    fetchImages(email);
+                  }}
+                  className="w-full rounded-xl"
+                >
+                  Verificar novamente
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => navigate('/briefing')}
+                  className="w-full rounded-xl gap-2 text-primary hover:text-primary"
+                >
+                  <PlusCircle className="h-4 w-4" />
+                  Solicitar novas artes
+                </Button>
+              </div>
             </div>
           </motion.div>
         </div>
@@ -674,7 +724,6 @@ export default function ClientReviewPage() {
     );
   }
 
-  // No images to review
   if (images.length === 0) {
     return (
       <PageWrapper
@@ -682,23 +731,34 @@ export default function ClientReviewPage() {
         headerSubtitle={clientName ? `Olá, ${clientName}!` : undefined}
         showStats
       >
-        <div className="flex items-center justify-center px-4 pb-12">
+        <div className="flex items-center justify-center px-4 pb-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="w-full max-w-md"
           >
-            <div className="bg-card border border-border rounded-2xl shadow-xl p-8 text-center space-y-4">
+            <div className="relative overflow-hidden bg-card border border-border rounded-3xl shadow-2xl p-8 text-center space-y-5">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-muted-foreground/20 via-muted-foreground/10 to-muted-foreground/20 rounded-t-3xl" />
               <div className="mx-auto w-20 h-20 rounded-full bg-muted flex items-center justify-center">
-                <ImageIcon className="h-10 w-10 text-muted-foreground" />
+                <Palette className="h-10 w-10 text-muted-foreground" />
               </div>
               <h2 className="text-xl font-bold text-foreground">Nenhuma arte para validar</h2>
-              <p className="text-muted-foreground text-sm">
-                Não há artes aguardando sua aprovação no momento. Volte mais tarde!
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Não há artes aguardando sua aprovação no momento.<br/>Volte mais tarde ou solicite novas artes!
               </p>
-              <Button variant="outline" onClick={() => fetchImages(email)} className="w-full">
-                Atualizar
-              </Button>
+              <div className="space-y-2 pt-2">
+                <Button variant="outline" onClick={() => fetchImages(email)} className="w-full rounded-xl">
+                  Atualizar
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => navigate('/briefing')}
+                  className="w-full rounded-xl gap-2 text-primary hover:text-primary"
+                >
+                  <PlusCircle className="h-4 w-4" />
+                  Solicitar novas artes
+                </Button>
+              </div>
             </div>
           </motion.div>
         </div>
@@ -706,32 +766,38 @@ export default function ClientReviewPage() {
     );
   }
 
-  // Tinder-like review card
   return (
     <PageWrapper
       headerTitle={clientName ? `Olá, ${clientName}! 👋` : 'Validação de Artes'}
       headerSubtitle="Aprove ou solicite ajustes nas suas artes"
       showStats
     >
-      <div className="flex flex-col items-center px-4 pb-12">
-        {/* Progress */}
-        <div className="mb-6 text-center">
-          <div className="inline-flex items-center gap-2 bg-card border border-border rounded-full px-4 py-2 shadow-sm">
-            <span className="text-sm font-medium text-foreground">
-              Arte {currentIndex + 1} de {images.length}
+      <div className="flex flex-col items-center px-4 pb-16">
+        {/* Progress indicator */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 text-center"
+        >
+          <div className="inline-flex items-center gap-3 bg-card/80 backdrop-blur-sm border border-border rounded-full px-5 py-2.5 shadow-sm">
+            <span className="text-sm font-semibold text-foreground">
+              {currentIndex + 1}
+            </span>
+            <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full"
+                initial={false}
+                animate={{ width: `${((currentIndex) / images.length) * 100}%` }}
+                transition={{ duration: 0.4, ease: 'easeOut' }}
+              />
+            </div>
+            <span className="text-sm text-muted-foreground font-medium">
+              {images.length}
             </span>
           </div>
-          <div className="w-48 h-2 bg-muted rounded-full mt-3 overflow-hidden mx-auto">
-            <motion.div
-              className="h-full bg-primary rounded-full"
-              initial={false}
-              animate={{ width: `${((currentIndex) / images.length) * 100}%` }}
-              transition={{ duration: 0.4, ease: 'easeOut' }}
-            />
-          </div>
-        </div>
+        </motion.div>
 
-        {/* Card */}
+        {/* Review card */}
         <AnimatePresence mode="wait">
           <motion.div
             key={currentImage.id}
@@ -747,10 +813,13 @@ export default function ClientReviewPage() {
             transition={{ duration: 0.35, ease: 'easeOut' }}
             className="w-full max-w-lg"
           >
-            <div className="bg-card border border-border rounded-2xl shadow-xl overflow-hidden">
+            <div className="relative bg-card border border-border rounded-3xl shadow-2xl overflow-hidden">
+              {/* Top accent */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary/60 to-primary z-10" />
+
               {/* Delivery preview */}
               {currentImage.delivery ? (
-                <div className="relative bg-muted aspect-video flex items-center justify-center overflow-hidden">
+                <div className="relative bg-muted/50 aspect-video flex items-center justify-center overflow-hidden">
                   {currentImage.delivery.file_url.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i) ? (
                     <img
                       src={currentImage.delivery.file_url}
@@ -770,13 +839,16 @@ export default function ClientReviewPage() {
                       </a>
                     </div>
                   )}
-                  <Badge className="absolute top-3 right-3 bg-background/90 text-foreground backdrop-blur-sm border border-border">
+                  <Badge className="absolute top-4 right-4 bg-card/90 text-foreground backdrop-blur-xl border border-border shadow-md text-xs font-semibold">
                     {imageTypeLabel}
                   </Badge>
                 </div>
               ) : (
-                <div className="bg-muted aspect-video flex items-center justify-center">
-                  <p className="text-muted-foreground text-sm">Sem preview disponível</p>
+                <div className="bg-muted/30 aspect-video flex items-center justify-center">
+                  <div className="text-center">
+                    <ImageIcon className="h-10 w-10 text-muted-foreground/50 mx-auto mb-2" />
+                    <p className="text-muted-foreground text-sm">Sem preview disponível</p>
+                  </div>
                 </div>
               )}
 
@@ -787,16 +859,16 @@ export default function ClientReviewPage() {
                   </h2>
                   <p className="text-sm text-muted-foreground">{imageTypeLabel}</p>
                   {currentImage.revision_count > 0 && (
-                    <Badge variant="outline" className="mt-2 text-destructive border-destructive/30">
+                    <Badge variant="outline" className="mt-2 text-destructive border-destructive/30 bg-destructive/5">
                       ⚠️ Refação {currentImage.revision_count}
                     </Badge>
                   )}
                 </div>
 
                 {currentImage.delivery?.comments && (
-                  <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
-                    <p className="text-xs text-muted-foreground font-semibold mb-1 uppercase tracking-wider">💬 Comentário do designer</p>
-                    <p className="text-sm text-foreground">{currentImage.delivery.comments}</p>
+                  <div className="bg-muted/40 rounded-2xl p-4 border border-border/50">
+                    <p className="text-[11px] text-muted-foreground font-bold mb-1.5 uppercase tracking-widest">💬 Designer</p>
+                    <p className="text-sm text-foreground leading-relaxed">{currentImage.delivery.comments}</p>
                   </div>
                 )}
 
@@ -807,7 +879,7 @@ export default function ClientReviewPage() {
                     animate={{ opacity: 1, height: 'auto' }}
                     className="space-y-3 border-t border-border pt-4"
                   >
-                    <Label className="text-destructive font-semibold flex items-center gap-2">
+                    <Label className="text-destructive font-semibold flex items-center gap-2 text-sm">
                       <ThumbsDown className="h-4 w-4" />
                       Por que você está reprovando? *
                     </Label>
@@ -816,14 +888,14 @@ export default function ClientReviewPage() {
                       value={rejectionReason}
                       onChange={e => setRejectionReason(e.target.value)}
                       rows={3}
-                      className="border-destructive/30 focus-visible:ring-destructive"
+                      className="rounded-xl border-destructive/20 focus-visible:ring-destructive bg-destructive/5"
                     />
                     <div className="flex gap-2">
                       <Button
                         variant="destructive"
                         onClick={handleReject}
                         disabled={submitting || !rejectionReason.trim()}
-                        className="flex-1"
+                        className="flex-1 rounded-xl"
                       >
                         {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <X className="h-4 w-4 mr-2" />}
                         Confirmar Reprovação
@@ -832,6 +904,7 @@ export default function ClientReviewPage() {
                         variant="outline"
                         onClick={() => { setRejecting(false); setRejectionReason(''); }}
                         disabled={submitting}
+                        className="rounded-xl"
                       >
                         Cancelar
                       </Button>
@@ -849,35 +922,37 @@ export default function ClientReviewPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="flex items-center gap-8 mt-8"
+            className="flex items-center gap-6 mt-8"
           >
-            {/* Reject button */}
-            <motion.button
-              whileHover={{ scale: 1.12 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => setRejecting(true)}
-              disabled={submitting}
-              className="w-16 h-16 rounded-full bg-destructive/10 hover:bg-destructive/20 border-2 border-destructive/30 hover:border-destructive flex items-center justify-center transition-colors disabled:opacity-50 shadow-lg"
-            >
-              <X className="h-8 w-8 text-destructive" />
-            </motion.button>
+            {/* Reject */}
+            <div className="flex flex-col items-center gap-2">
+              <motion.button
+                whileHover={{ scale: 1.12 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setRejecting(true)}
+                disabled={submitting}
+                className="w-16 h-16 rounded-full bg-destructive/10 hover:bg-destructive/20 border-2 border-destructive/30 hover:border-destructive flex items-center justify-center transition-all disabled:opacity-50 shadow-lg hover:shadow-destructive/20"
+              >
+                <X className="h-7 w-7 text-destructive" />
+              </motion.button>
+              <span className="text-[11px] font-medium text-muted-foreground">Reprovar</span>
+            </div>
 
-            {/* Approve button */}
-            <motion.button
-              whileHover={{ scale: 1.12 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={handleApprove}
-              disabled={submitting}
-              className="w-20 h-20 rounded-full bg-primary/10 hover:bg-primary/20 border-2 border-primary/40 hover:border-primary flex items-center justify-center transition-colors disabled:opacity-50 shadow-lg"
-            >
-              <Heart className="h-10 w-10 text-primary fill-primary" />
-            </motion.button>
+            {/* Approve */}
+            <div className="flex flex-col items-center gap-2">
+              <motion.button
+                whileHover={{ scale: 1.12 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={handleApprove}
+                disabled={submitting}
+                className="w-20 h-20 rounded-full bg-primary/10 hover:bg-primary/20 border-2 border-primary/40 hover:border-primary flex items-center justify-center transition-all disabled:opacity-50 shadow-lg hover:shadow-primary/25"
+              >
+                <Heart className="h-10 w-10 text-primary fill-primary" />
+              </motion.button>
+              <span className="text-[11px] font-medium text-muted-foreground">Aprovar</span>
+            </div>
           </motion.div>
         )}
-
-        <p className="text-xs text-muted-foreground mt-5">
-          {rejecting ? '👆 Justifique a reprovação acima' : '❌ Reprovar   •   💚 Aprovar'}
-        </p>
       </div>
     </PageWrapper>
   );
