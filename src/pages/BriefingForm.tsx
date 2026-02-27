@@ -13,7 +13,8 @@ import ImageBriefingSection from '@/components/briefing/ImageBriefingSection';
 import MultiBannerSection from '@/components/briefing/MultiBannerSection';
 import BrandIdentity from '@/components/briefing/BrandIdentity';
 import AIBriefingAssistant from '@/components/briefing/AIBriefingAssistant';
-import { CheckCircle, Loader2, ArrowRight, ArrowLeft, Palette, MonitorSmartphone, Image, LayoutGrid, Route, Trophy, Users, Smartphone } from 'lucide-react';
+import { CheckCircle, Loader2, ArrowRight, ArrowLeft, Palette, MonitorSmartphone, Image, LayoutGrid, Route, Trophy, Users, Smartphone, PartyPopper } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { useAuth } from '@/hooks/useAuth';
 
 type ArtSelection = {
@@ -316,23 +317,82 @@ export default function BriefingForm() {
 
   const TOTAL_STEPS = 3;
 
+  // Fire confetti on success
+  useEffect(() => {
+    if (submitted) {
+      const duration = 2000;
+      const end = Date.now() + duration;
+      const colors = ['#10b981', '#34d399', '#6ee7b7', '#ffffff', '#a7f3d0'];
+
+      const frame = () => {
+        confetti({
+          particleCount: 3,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0, y: 0.7 },
+          colors,
+        });
+        confetti({
+          particleCount: 3,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1, y: 0.7 },
+          colors,
+        });
+        if (Date.now() < end) requestAnimationFrame(frame);
+      };
+      frame();
+    }
+  }, [submitted]);
+
   if (submitted) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="max-w-md w-full text-center">
-          <CardContent className="pt-8 pb-8 space-y-4">
-            <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-              <CheckCircle className="h-8 w-8 text-primary" />
+      <div className="min-h-screen bg-background">
+        {/* Curseduca hero header */}
+        <div className="relative w-full overflow-hidden" style={{ minHeight: '100vh' }}>
+          <img
+            src="/images/bg-curseduca.png"
+            alt="Curseduca"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
+          <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 min-h-screen">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-5 py-2 mb-6">
+              <Palette className="h-4 w-4 text-white/80" />
+              <span className="text-white/90 text-sm font-medium tracking-wide">Plataforma Curseduca</span>
             </div>
-            <h2 className="text-2xl font-semibold">Briefing Enviado!</h2>
-            <p className="text-muted-foreground">
-              Sua solicitação foi recebida. Nossa equipe de design entrará em contato em breve através do email informado.
-            </p>
-            <Button onClick={() => { setForm(initialForm); setAdditionalInfo(''); setSubmitted(false); setStep(0); setSelections({ login_image: false, banner_vitrine: false, product_covers: false, trail_banner: false, challenge_banner: false, community_banner: false, has_app: false }); }} variant="outline">
-              Enviar novo briefing
-            </Button>
-          </CardContent>
-        </Card>
+
+            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 max-w-md w-full space-y-5">
+              <div className="mx-auto w-20 h-20 rounded-full bg-emerald-500/20 border-2 border-emerald-400/40 flex items-center justify-center">
+                <PartyPopper className="h-10 w-10 text-emerald-300" />
+              </div>
+              <h2
+                className="text-3xl font-extrabold text-white drop-shadow-lg"
+                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+              >
+                Briefing Enviado!
+              </h2>
+              <p className="text-white/70 leading-relaxed">
+                Sua solicitação foi recebida com sucesso. Nossa equipe de design entrará em contato em breve através do email informado.
+              </p>
+              <div className="pt-2">
+                <Button
+                  onClick={() => {
+                    setForm(initialForm);
+                    setAdditionalInfo('');
+                    setSubmitted(false);
+                    setStep(0);
+                    setSelections({ login_image: false, banner_vitrine: false, product_covers: false, trail_banner: false, challenge_banner: false, community_banner: false, has_app: false });
+                  }}
+                  variant="outline"
+                  className="border-white/30 text-white hover:bg-white/10"
+                >
+                  Enviar novo briefing
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
