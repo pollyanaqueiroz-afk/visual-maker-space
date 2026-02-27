@@ -202,6 +202,12 @@ export default function BriefingForm() {
       return;
     }
 
+    if (!form.brand_file && !form.brand_drive_link) {
+      toast.error('Envie o arquivo de identidade visual ou informe o link do Google Drive');
+      setStep(2);
+      return;
+    }
+
     if (selections.product_covers && form.product_covers.some(c => !c.orientation)) {
       toast.error('Selecione a orientação (horizontal/vertical) em todas as capas de produto');
       return;
@@ -371,7 +377,7 @@ export default function BriefingForm() {
               </Card>
               <Card>
                 <CardContent className="pt-6">
-                  <BrandIdentity data={form} onChange={update} />
+                  <BrandIdentity data={form} onChange={update} showRequired={!form.brand_file && !form.brand_drive_link} />
                 </CardContent>
               </Card>
             </div>
