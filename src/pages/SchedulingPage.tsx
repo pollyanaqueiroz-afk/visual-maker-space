@@ -335,6 +335,16 @@ export default function SchedulingPage() {
     else fetchMeetings();
   };
 
+  // Count meetings by reason
+  const reasonCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const m of meetings) {
+      const r = (m as any).meeting_reason;
+      if (r) counts[r] = (counts[r] || 0) + 1;
+    }
+    return counts;
+  }, [meetings]);
+
   // Calendar helpers
   const meetingsByDate = useMemo(() => {
     const map: Record<string, Meeting[]> = {};
@@ -531,9 +541,9 @@ export default function SchedulingPage() {
                   <SelectValue placeholder="Motivo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os motivos</SelectItem>
+                  <SelectItem value="all">Todos os motivos ({meetings.length})</SelectItem>
                   {MEETING_REASONS.map(r => (
-                    <SelectItem key={r} value={r}>{r}</SelectItem>
+                    <SelectItem key={r} value={r}>{r} {reasonCounts[r] ? `(${reasonCounts[r]})` : '(0)'}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
