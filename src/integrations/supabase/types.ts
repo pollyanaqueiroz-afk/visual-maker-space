@@ -311,10 +311,15 @@ export type Database = {
           client_url: string
           created_at: string
           cs_user_id: string | null
+          data_da_primeira_parcela_vencida: string | null
+          forma_de_pagamento: string | null
           id: string
           loyalty_index: number | null
           monthly_value: number | null
           plan: string | null
+          portal_do_cliente: string | null
+          telefone_do_cliente: string | null
+          tipo_de_cs: string | null
           updated_at: string
         }
         Insert: {
@@ -323,10 +328,15 @@ export type Database = {
           client_url: string
           created_at?: string
           cs_user_id?: string | null
+          data_da_primeira_parcela_vencida?: string | null
+          forma_de_pagamento?: string | null
           id?: string
           loyalty_index?: number | null
           monthly_value?: number | null
           plan?: string | null
+          portal_do_cliente?: string | null
+          telefone_do_cliente?: string | null
+          tipo_de_cs?: string | null
           updated_at?: string
         }
         Update: {
@@ -335,10 +345,15 @@ export type Database = {
           client_url?: string
           created_at?: string
           cs_user_id?: string | null
+          data_da_primeira_parcela_vencida?: string | null
+          forma_de_pagamento?: string | null
           id?: string
           loyalty_index?: number | null
           monthly_value?: number | null
           plan?: string | null
+          portal_do_cliente?: string | null
+          telefone_do_cliente?: string | null
+          tipo_de_cs?: string | null
           updated_at?: string
         }
         Relationships: []
