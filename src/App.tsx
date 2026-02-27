@@ -13,6 +13,7 @@ import DeliveryPage from "./pages/DeliveryPage";
 import DesignerPanel from "./pages/DesignerPanel";
 import HubPage from "./pages/HubPage";
 import ClientReviewPage from "./pages/ClientReviewPage";
+import ClientAssetsPage from "./pages/ClientAssetsPage";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/delivery/:token" element={<DeliveryPage />} />
             <Route path="/designer" element={<DesignerPanel />} />
             <Route path="/client-review" element={<ClientReviewPage />} />
+            <Route path="/assets/:platformUrl" element={<ClientAssetsPage />} />
             <Route path="*" element={<NotFound />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
