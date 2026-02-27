@@ -280,7 +280,7 @@ export default function Dashboard() {
               }}
             >
               <Link2 className="h-4 w-4" />
-              Copiar Link do Formulário
+              Copiar Link do Formulário para o Cliente
             </Button>
           </div>
 
