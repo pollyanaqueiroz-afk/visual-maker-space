@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.designer-data]
 verify_jwt = false
+
+[functions.manage-client-columns]
+verify_jwt = false
