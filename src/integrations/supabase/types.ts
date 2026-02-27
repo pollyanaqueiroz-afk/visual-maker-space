@@ -334,6 +334,45 @@ export type Database = {
         }
         Relationships: []
       }
+      meeting_csat: {
+        Row: {
+          client_email: string
+          client_name: string | null
+          comment: string | null
+          created_at: string
+          id: string
+          meeting_id: string
+          responded_at: string | null
+          score: number | null
+          sent_at: string
+          token: string
+        }
+        Insert: {
+          client_email: string
+          client_name?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          meeting_id: string
+          responded_at?: string | null
+          score?: number | null
+          sent_at?: string
+          token?: string
+        }
+        Update: {
+          client_email?: string
+          client_name?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          meeting_id?: string
+          responded_at?: string | null
+          score?: number | null
+          sent_at?: string
+          token?: string
+        }
+        Relationships: []
+      }
       meetings: {
         Row: {
           client_email: string | null

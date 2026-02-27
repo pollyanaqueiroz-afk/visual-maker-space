@@ -332,6 +332,25 @@ export default function SchedulingPage() {
       }).eq('id', confirmingMeeting.id) as any);
       if (error) throw error;
       toast.success('Reunião confirmada!');
+
+      // Send CSAT email if client has email
+      if (confirmingMeeting.client_email) {
+        try {
+          await supabase.functions.invoke('send-csat-email', {
+            body: {
+              meeting_id: confirmingMeeting.id,
+              client_email: confirmingMeeting.client_email,
+              client_name: confirmingMeeting.client_name,
+              meeting_title: confirmingMeeting.title,
+              meeting_date: confirmingMeeting.meeting_date,
+            },
+          });
+          toast.success('Pesquisa CSAT enviada ao cliente!');
+        } catch {
+          toast.warning('Reunião confirmada, mas erro ao enviar pesquisa CSAT.');
+        }
+      }
+
       setConfirmDialogOpen(false);
       setConfirmingMeeting(null);
       fetchMeetings();
