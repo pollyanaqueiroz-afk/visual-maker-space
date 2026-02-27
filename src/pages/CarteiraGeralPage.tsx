@@ -1,15 +1,17 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import { parseISO, startOfMonth, endOfMonth, subMonths, isWithinInterval, differenceInDays } from 'date-fns';
 import {
-  Globe, Users, CheckCircle, XCircle, Clock, Star, TrendingUp, Search, Loader2, CalendarDays,
+  Globe, Users, CheckCircle, XCircle, Clock, Star, TrendingUp, Search, Loader2, CalendarDays, Upload,
 } from 'lucide-react';
+import ImportClientsDialog from '@/components/carteira/ImportClientsDialog';
 
 interface MeetingRow {
   id: string;
@@ -61,9 +63,10 @@ export default function CarteiraGeralPage() {
   const [search, setSearch] = useState('');
   const [periodFilter, setPeriodFilter] = useState('all');
   const [sortBy, setSortBy] = useState<'total' | 'lastMeeting' | 'loyalty'>('total');
+  const [importOpen, setImportOpen] = useState(false);
 
-  useEffect(() => {
-    (async () => {
+  const loadData = useCallback(async () => {
+    setLoading(true);
       const [meetingsRes, profilesRes, clientsRes] = await Promise.all([
         supabase.from('meetings' as any)
           .select('id, meeting_date, status, client_url, client_name, meeting_reason, loyalty_index, duration_minutes, created_by')
@@ -88,8 +91,9 @@ export default function CarteiraGeralPage() {
       }
 
       setLoading(false);
-    })();
   }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   const profileMap = useMemo(() => {
     const map: Record<string, Profile> = {};
@@ -227,10 +231,18 @@ export default function CarteiraGeralPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Carteira Geral</h1>
-        <p className="text-sm text-muted-foreground">Visão geral de todos os clientes e suas métricas de relacionamento</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Carteira Geral</h1>
+          <p className="text-sm text-muted-foreground">Visão geral de todos os clientes e suas métricas de relacionamento</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+          <Upload className="h-4 w-4 mr-1.5" />
+          Importar CSV
+        </Button>
       </div>
+
+      <ImportClientsDialog open={importOpen} onOpenChange={setImportOpen} onSuccess={loadData} />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
