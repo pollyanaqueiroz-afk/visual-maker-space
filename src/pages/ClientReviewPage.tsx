@@ -7,12 +7,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { IMAGE_TYPE_LABELS, ImageType } from '@/types/briefing';
-import { Heart, X, Loader2, Mail, CheckCircle, ImageIcon, Download, Sparkles, ThumbsDown, FolderOpen, Clock, Eye, Archive } from 'lucide-react';
+import { Heart, X, Loader2, Mail, CheckCircle, ImageIcon, Download, Sparkles, ThumbsDown, FolderOpen, Clock, Eye, Archive, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import JSZip from 'jszip';
 import ReviewHistory from '@/components/client-review/ReviewHistory';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface ReviewableImage {
   id: string;
@@ -51,6 +54,15 @@ export default function ClientReviewPage() {
   const [platformUrls, setPlatformUrls] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [downloadingZip, setDownloadingZip] = useState(false);
+  const [showProductionDialog, setShowProductionDialog] = useState(false);
+  const [productionImages, setProductionImages] = useState<Array<{
+    id: string;
+    image_type: string;
+    product_name: string | null;
+    deadline: string | null;
+    assigned_email: string | null;
+    status: string;
+  }>>([]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -113,6 +125,15 @@ export default function ClientReviewPage() {
       setPendingCount(pendingResult.count || 0);
       setTotalApproved(completedResult.count || 0);
       setTotalImages(totalResult.count || 0);
+
+      // Fetch production images details for the dialog
+      const { data: prodImages } = await supabase
+        .from('briefing_images')
+        .select('id, image_type, product_name, deadline, assigned_email, status')
+        .in('request_id', requestIds)
+        .in('status', ['pending', 'in_progress'] as any)
+        .order('deadline', { ascending: true, nullsFirst: false });
+      setProductionImages(prodImages || []);
 
       const imagesWithDelivery: ReviewableImage[] = [];
       for (const img of (reviewResult.data || [])) {
@@ -349,14 +370,18 @@ export default function ClientReviewPage() {
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl px-5 py-3"
+          className="cursor-pointer"
+          onClick={() => setShowProductionDialog(true)}
         >
-          <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
-            <Clock className="h-5 w-5 text-amber-500" />
-          </div>
-          <div>
-            <p className="text-2xl font-extrabold text-amber-500 leading-none">{pendingCount}</p>
-            <p className="text-xs text-muted-foreground">arte(s) ainda em produção</p>
+          <div className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl px-5 py-3 hover:bg-amber-500/15 transition-colors">
+            <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+              <Clock className="h-5 w-5 text-amber-500" />
+            </div>
+            <div>
+              <p className="text-2xl font-extrabold text-amber-500 leading-none">{pendingCount}</p>
+              <p className="text-xs text-muted-foreground">arte(s) ainda em produção</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-amber-500/60 ml-1" />
           </div>
         </motion.div>
       )}
@@ -446,6 +471,55 @@ export default function ClientReviewPage() {
           </Button>
         </motion.div>
       )}
+
+      {/* Production images dialog */}
+      <Dialog open={showProductionDialog} onOpenChange={setShowProductionDialog}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-amber-500" />
+              Artes em Produção
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            {productionImages.length === 0 ? (
+              <p className="text-muted-foreground text-sm text-center py-4">Nenhuma arte em produção</p>
+            ) : (
+              productionImages.map((img) => {
+                const typeLabel = IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type;
+                const isLate = img.deadline && new Date(img.deadline) < new Date();
+                return (
+                  <div
+                    key={img.id}
+                    className="flex items-center gap-4 p-4 rounded-xl border border-border bg-muted/30"
+                  >
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isLate ? 'bg-destructive/15' : 'bg-amber-500/15'}`}>
+                      <ImageIcon className={`h-5 w-5 ${isLate ? 'text-destructive' : 'text-amber-500'}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">
+                        {img.product_name || typeLabel}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{typeLabel}</p>
+                      {img.deadline ? (
+                        <p className={`text-xs mt-1 font-medium ${isLate ? 'text-destructive' : 'text-muted-foreground'}`}>
+                          {isLate ? '⚠️ Atrasada — ' : '📅 Prazo: '}
+                          {format(new Date(img.deadline), "dd 'de' MMM', ' HH:mm", { locale: ptBR })}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground mt-1">📅 Sem prazo definido</p>
+                      )}
+                    </div>
+                    <Badge variant="outline" className="shrink-0 text-xs">
+                      {img.status === 'pending' ? 'Aguardando' : 'Em andamento'}
+                    </Badge>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 
