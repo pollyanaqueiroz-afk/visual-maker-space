@@ -104,7 +104,7 @@ serve(async (req) => {
         </div>
 
         <div style="margin-top:16px;text-align:center;">
-          <a href="${app_url || 'https://id-preview--47593e69-3789-4cdb-b901-66106c2c2f6d.lovable.app'}/dashboard" style="display:inline-block;padding:12px 28px;background:#2a9d6a;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;font-size:14px;">
+          <a href="${app_url || 'https://visual-maker-space.lovable.app'}/client-review?email=${encodeURIComponent(request.requester_email)}" style="display:inline-block;padding:12px 28px;background:#2a9d6a;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;font-size:14px;">
             ✅ Aprovar ou Solicitar Refação
           </a>
           <p style="margin-top:8px;color:#999;font-size:12px;">Acesse o painel para aprovar ou solicitar ajustes</p>
