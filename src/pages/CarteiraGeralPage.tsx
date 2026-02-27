@@ -37,6 +37,7 @@ interface ClientRecord {
   client_name: string | null;
   loyalty_index: number | null;
   cs_user_id: string | null;
+  [key: string]: any; // dynamic columns
 }
 
 interface ClientRow {
@@ -54,6 +55,7 @@ interface ClientRow {
   responsibles: string[];
   csName: string;
   topReason: string;
+  extraData: Record<string, any>; // dynamic columns from CSV
 }
 
 export default function CarteiraGeralPage() {
@@ -73,7 +75,7 @@ export default function CarteiraGeralPage() {
           .select('id, meeting_date, status, client_url, client_name, meeting_reason, loyalty_index, duration_minutes, created_by')
           .order('meeting_date', { ascending: false }) as any,
         supabase.from('profiles').select('user_id, email, display_name'),
-        supabase.from('clients' as any).select('client_url, client_name, loyalty_index, cs_user_id') as any,
+        supabase.from('clients' as any).select('*') as any,
       ]);
 
       if (meetingsRes.error) {
@@ -125,6 +127,15 @@ export default function CarteiraGeralPage() {
       return isWithinInterval(d, { start, end });
     });
   }, [meetings, periodFilter]);
+
+  const KNOWN_COLS = ['id', 'client_url', 'client_name', 'loyalty_index', 'cs_user_id', 'created_at', 'updated_at'];
+
+  const extraColumns = useMemo(() => {
+    if (clientRecords.length === 0) return [];
+    const allKeys = new Set<string>();
+    clientRecords.forEach(cr => Object.keys(cr).forEach(k => allKeys.add(k)));
+    return Array.from(allKeys).filter(k => !KNOWN_COLS.includes(k));
+  }, [clientRecords]);
 
   const clientRecordMap = useMemo(() => {
     const map: Record<string, ClientRecord> = {};
@@ -180,6 +191,12 @@ export default function CarteiraGeralPage() {
       const topReason = Object.entries(c.reasons).sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
       const cr = clientRecordMap[c.url];
       const csUid = cr?.cs_user_id || null;
+      const extra: Record<string, any> = {};
+      if (cr) {
+        for (const col of extraColumns) {
+          extra[col] = cr[col] ?? null;
+        }
+      }
       return {
         url: c.url,
         clientName: cr?.client_name || c.clientName,
@@ -195,6 +212,7 @@ export default function CarteiraGeralPage() {
         responsibles: Array.from(c.responsibles).map(uid => getCreatorLabel(uid)),
         csName: getCreatorLabel(csUid),
         topReason,
+        extraData: extra,
       } as ClientRow;
     });
   }, [filtered, profileMap, clientRecordMap, clientRecords]);
@@ -338,6 +356,9 @@ export default function CarteiraGeralPage() {
                     <TableHead className="text-center">Fid. Média</TableHead>
                     <TableHead className="text-center">Horas</TableHead>
                     <TableHead>Principal Motivo</TableHead>
+                    {extraColumns.map(col => (
+                      <TableHead key={col} className="text-center whitespace-nowrap">{col.replace(/_/g, ' ')}</TableHead>
+                    ))}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -375,6 +396,11 @@ export default function CarteiraGeralPage() {
                       </TableCell>
                       <TableCell className="text-center text-sm">{row.totalHours}h</TableCell>
                       <TableCell className="text-xs text-muted-foreground max-w-[140px] truncate">{row.topReason}</TableCell>
+                      {extraColumns.map(col => (
+                        <TableCell key={col} className="text-xs text-center whitespace-nowrap">
+                          {row.extraData[col] != null ? String(row.extraData[col]) : '—'}
+                        </TableCell>
+                      ))}
                     </TableRow>
                   ))}
                 </TableBody>
