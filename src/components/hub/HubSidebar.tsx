@@ -77,7 +77,7 @@ export function HubSidebar() {
 
         {/* Implantação Group */}
         <SidebarGroup>
-          <Collapsible defaultOpen={isInGroup(implantacaoModules)}>
+          <Collapsible defaultOpen={true}>
             <CollapsibleTrigger className="w-full">
               <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground transition-colors">
                 <span className="flex items-center gap-2">
@@ -97,7 +97,7 @@ export function HubSidebar() {
 
         {/* CS Group */}
         <SidebarGroup>
-          <Collapsible defaultOpen={isInGroup(csModules)}>
+          <Collapsible defaultOpen={true}>
             <CollapsibleTrigger className="w-full">
               <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground transition-colors">
                 <span className="flex items-center gap-2">
