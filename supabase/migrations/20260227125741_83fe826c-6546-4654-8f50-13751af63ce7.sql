@@ -1,0 +1,1 @@
+ALTER TABLE public.briefing_images ADD COLUMN price_per_art numeric(10,2) DEFAULT NULL;

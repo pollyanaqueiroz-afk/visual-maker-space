@@ -15,6 +15,8 @@ interface AssignBriefingDialogProps {
   onAssigned: () => void;
 }
 
+const DEFAULT_PRICE_PER_ART = 35;
+
 export default function AssignBriefingDialog({
   imageId,
   currentEmail,
@@ -32,6 +34,7 @@ export default function AssignBriefingDialog({
     d.setDate(d.getDate() + 7);
     return d.toISOString().slice(0, 10);
   });
+  const [pricePerArt, setPricePerArt] = useState(DEFAULT_PRICE_PER_ART);
   const [sending, setSending] = useState(false);
 
   const handleSend = async () => {
@@ -42,6 +45,11 @@ export default function AssignBriefingDialog({
 
     setSending(true);
     try {
+      // Update price
+      await supabase.from('briefing_images').update({
+        price_per_art: pricePerArt,
+      } as any).eq('id', imageId);
+
       const { data, error } = await supabase.functions.invoke('send-briefing-email', {
         body: {
           image_id: imageId,
@@ -95,6 +103,17 @@ export default function AssignBriefingDialog({
               type="date"
               value={deadline}
               onChange={e => setDeadline(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="assign-price">Preço por arte (R$)</Label>
+            <Input
+              id="assign-price"
+              type="number"
+              min={0}
+              step={0.01}
+              value={pricePerArt}
+              onChange={e => setPricePerArt(Number(e.target.value))}
             />
           </div>
           <Button onClick={handleSend} disabled={sending} className="w-full">
