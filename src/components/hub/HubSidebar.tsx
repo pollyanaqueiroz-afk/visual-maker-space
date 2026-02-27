@@ -1,6 +1,7 @@
-import { FileImage, LayoutDashboard, Settings, Users, BarChart3, LogOut, CalendarDays, Crown, Briefcase } from 'lucide-react';
+import { FileImage, LayoutDashboard, LogOut, CalendarDays, Crown, Briefcase, BarChart3, Package, Headset } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/hooks/useAuth';
+import { useLocation } from 'react-router-dom';
 import {
   Sidebar,
   SidebarContent,
@@ -14,9 +15,15 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChevronDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-const modules = [
+const implantacaoModules = [
   { title: 'Gestão de Briefings', url: '/hub/briefings', icon: FileImage },
+];
+
+const csModules = [
   { title: 'Agendamento', url: '/hub/agendamento', icon: CalendarDays },
   { title: 'Dashboards', url: '/hub/dashboards', icon: BarChart3 },
   { title: 'Carteira Geral', url: '/hub/carteira', icon: Briefcase },
@@ -26,7 +33,31 @@ const modules = [
 export function HubSidebar() {
   const { state } = useSidebar();
   const { signOut } = useAuth();
+  const location = useLocation();
   const collapsed = state === 'collapsed';
+
+  const isInGroup = (items: typeof implantacaoModules) =>
+    items.some(i => location.pathname.startsWith(i.url));
+
+  const renderItems = (items: typeof implantacaoModules) => (
+    <SidebarMenu>
+      {items.map((item) => (
+        <SidebarMenuItem key={item.title}>
+          <SidebarMenuButton asChild>
+            <NavLink
+              to={item.url}
+              end
+              className="hover:bg-muted/50"
+              activeClassName="bg-muted text-primary font-medium"
+            >
+              <item.icon className="mr-2 h-4 w-4" />
+              {!collapsed && <span>{item.title}</span>}
+            </NavLink>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      ))}
+    </SidebarMenu>
+  );
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border/50">
@@ -44,27 +75,44 @@ export function HubSidebar() {
           )}
         </div>
 
+        {/* Implantação Group */}
         <SidebarGroup>
-          <SidebarGroupLabel>Módulos</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {modules.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end
-                      className="hover:bg-muted/50"
-                      activeClassName="bg-muted text-primary font-medium"
-                    >
-                      <item.icon className="mr-2 h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
+          <Collapsible defaultOpen={isInGroup(implantacaoModules)}>
+            <CollapsibleTrigger className="w-full">
+              <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground transition-colors">
+                <span className="flex items-center gap-2">
+                  <Package className="h-3.5 w-3.5" />
+                  {!collapsed && 'Implantação'}
+                </span>
+                {!collapsed && <ChevronDown className="h-3.5 w-3.5 transition-transform [[data-state=open]_&]:rotate-180" />}
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                {renderItems(implantacaoModules)}
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
+
+        {/* CS Group */}
+        <SidebarGroup>
+          <Collapsible defaultOpen={isInGroup(csModules)}>
+            <CollapsibleTrigger className="w-full">
+              <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground transition-colors">
+                <span className="flex items-center gap-2">
+                  <Headset className="h-3.5 w-3.5" />
+                  {!collapsed && 'CS'}
+                </span>
+                {!collapsed && <ChevronDown className="h-3.5 w-3.5 transition-transform [[data-state=open]_&]:rotate-180" />}
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                {renderItems(csModules)}
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
         </SidebarGroup>
       </SidebarContent>
 
