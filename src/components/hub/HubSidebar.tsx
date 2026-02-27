@@ -18,10 +18,7 @@ import { Button } from '@/components/ui/button';
 const modules = [
   { title: 'Gestão de Briefings', url: '/hub/briefings', icon: FileImage },
   { title: 'Agendamento', url: '/hub/agendamento', icon: CalendarDays },
-  // Módulos futuros:
-  // { title: 'Gestão de Equipe', url: '/hub/equipe', icon: Users },
-  // { title: 'Relatórios', url: '/hub/relatorios', icon: BarChart3 },
-  // { title: 'Configurações', url: '/hub/configuracoes', icon: Settings },
+  { title: 'Dashboards', url: '/hub/dashboards', icon: BarChart3 },
 ];
 
 export function HubSidebar() {
