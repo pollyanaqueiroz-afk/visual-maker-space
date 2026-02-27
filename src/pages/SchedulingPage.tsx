@@ -108,6 +108,7 @@ export default function SchedulingPage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterReason, setFilterReason] = useState<string>('all');
   const [sendInvite, setSendInvite] = useState(true);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmingMeeting, setConfirmingMeeting] = useState<Meeting | null>(null);
@@ -325,9 +326,10 @@ export default function SchedulingPage() {
   const filteredMeetings = useMemo(() => {
     let list = meetings;
     if (filterStatus !== 'all') list = list.filter(m => m.status === filterStatus);
+    if (filterReason !== 'all') list = list.filter(m => (m as any).meeting_reason === filterReason);
     if (selectedDate) list = list.filter(m => isSameDay(parseISO(m.meeting_date), selectedDate));
     return list;
-  }, [meetings, filterStatus, selectedDate]);
+  }, [meetings, filterStatus, filterReason, selectedDate]);
 
   const daysWithMeetings = useMemo(() => {
     return meetings
@@ -490,16 +492,27 @@ export default function SchedulingPage() {
                   : `Reuniões — ${format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}`
                 : 'Todas as reuniões'}
             </h2>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Select value={filterStatus} onValueChange={setFilterStatus}>
                 <SelectTrigger className="w-[140px] h-8 text-xs">
-                  <SelectValue placeholder="Filtrar" />
+                  <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="all">Todos os status</SelectItem>
                   <SelectItem value="scheduled">Agendadas</SelectItem>
                   <SelectItem value="completed">Realizadas</SelectItem>
                   <SelectItem value="cancelled">Canceladas</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterReason} onValueChange={setFilterReason}>
+                <SelectTrigger className="w-[220px] h-8 text-xs">
+                  <SelectValue placeholder="Motivo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os motivos</SelectItem>
+                  {MEETING_REASONS.map(r => (
+                    <SelectItem key={r} value={r}>{r}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <Button variant="outline" size="sm" onClick={() => handleOpenNew(selectedDate)}>
