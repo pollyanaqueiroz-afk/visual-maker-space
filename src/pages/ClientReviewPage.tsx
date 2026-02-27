@@ -46,6 +46,7 @@ export default function ClientReviewPage() {
   const [clientName, setClientName] = useState('');
   const [pendingCount, setPendingCount] = useState(0);
   const [totalApproved, setTotalApproved] = useState(0);
+  const [totalImages, setTotalImages] = useState(0);
   const [platformUrls, setPlatformUrls] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
 
@@ -83,7 +84,7 @@ export default function ClientReviewPage() {
 
       const requestIds = requests.map(r => r.id);
 
-      const [reviewResult, pendingResult, completedResult] = await Promise.all([
+      const [reviewResult, pendingResult, completedResult, totalResult] = await Promise.all([
         supabase
           .from('briefing_images')
           .select('id, image_type, product_name, assigned_email, revision_count, request_id, briefing_requests!inner(requester_name, platform_url)')
@@ -100,11 +101,16 @@ export default function ClientReviewPage() {
           .select('id', { count: 'exact', head: true })
           .in('request_id', requestIds)
           .eq('status', 'completed'),
+        supabase
+          .from('briefing_images')
+          .select('id', { count: 'exact', head: true })
+          .in('request_id', requestIds),
       ]);
 
       if (reviewResult.error) throw reviewResult.error;
       setPendingCount(pendingResult.count || 0);
       setTotalApproved(completedResult.count || 0);
+      setTotalImages(totalResult.count || 0);
 
       const imagesWithDelivery: ReviewableImage[] = [];
       for (const img of (reviewResult.data || [])) {
@@ -260,7 +266,24 @@ export default function ClientReviewPage() {
 
   // Stats bar for authenticated views
   const StatsBar = () => (
-    <div className="flex flex-col sm:flex-row items-center justify-center gap-3 px-4 mb-6">
+    <div className="flex flex-col sm:flex-row items-center justify-center gap-3 px-4 mb-6 flex-wrap">
+      {/* Total images requested */}
+      {totalImages > 0 && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex items-center gap-3 bg-muted border border-border rounded-2xl px-5 py-3"
+        >
+          <div className="w-10 h-10 rounded-full bg-foreground/10 flex items-center justify-center">
+            <ImageIcon className="h-5 w-5 text-foreground" />
+          </div>
+          <div>
+            <p className="text-2xl font-extrabold text-foreground leading-none">{totalImages}</p>
+            <p className="text-xs text-muted-foreground">total solicitada(s)</p>
+          </div>
+        </motion.div>
+      )}
+
       {/* Pending arts indicator */}
       {pendingCount > 0 && (
         <motion.div
