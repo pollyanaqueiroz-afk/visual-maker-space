@@ -365,6 +365,7 @@ export type Database = {
         | "trail_banner"
         | "challenge_banner"
         | "community_banner"
+        | "app_mockup"
       request_status:
         | "pending"
         | "in_progress"
@@ -506,6 +507,7 @@ export const Constants = {
         "trail_banner",
         "challenge_banner",
         "community_banner",
+        "app_mockup",
       ],
       request_status: [
         "pending",

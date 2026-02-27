@@ -1,0 +1,1 @@
+ALTER TYPE public.image_type ADD VALUE 'app_mockup';

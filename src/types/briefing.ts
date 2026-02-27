@@ -1,5 +1,5 @@
 export type RequestStatus = 'pending' | 'in_progress' | 'review' | 'completed' | 'cancelled';
-export type ImageType = 'login' | 'banner_vitrine' | 'product_cover' | 'trail_banner' | 'challenge_banner' | 'community_banner';
+export type ImageType = 'login' | 'banner_vitrine' | 'product_cover' | 'trail_banner' | 'challenge_banner' | 'community_banner' | 'app_mockup';
 
 export interface BriefingRequest {
   id: string;
@@ -122,4 +122,5 @@ export const IMAGE_TYPE_LABELS: Record<ImageType, string> = {
   trail_banner: 'Banner de Trilha',
   challenge_banner: 'Banner de Desafio',
   community_banner: 'Banner de Comunidade',
+  app_mockup: 'Mockup do Aplicativo',
 };

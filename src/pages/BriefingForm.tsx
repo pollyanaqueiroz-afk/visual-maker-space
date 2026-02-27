@@ -13,7 +13,7 @@ import ImageBriefingSection from '@/components/briefing/ImageBriefingSection';
 import MultiBannerSection from '@/components/briefing/MultiBannerSection';
 import BrandIdentity from '@/components/briefing/BrandIdentity';
 import AIBriefingAssistant from '@/components/briefing/AIBriefingAssistant';
-import { CheckCircle, Loader2, ArrowRight, ArrowLeft, Palette, MonitorSmartphone, Image, LayoutGrid, Route, Trophy, Users } from 'lucide-react';
+import { CheckCircle, Loader2, ArrowRight, ArrowLeft, Palette, MonitorSmartphone, Image, LayoutGrid, Route, Trophy, Users, Smartphone } from 'lucide-react';
 
 type ArtSelection = {
   login_image: boolean;
@@ -22,6 +22,7 @@ type ArtSelection = {
   trail_banner: boolean;
   challenge_banner: boolean;
   community_banner: boolean;
+  has_app: boolean;
 };
 
 const ART_OPTIONS = [
@@ -61,6 +62,7 @@ export default function BriefingForm() {
     trail_banner: false,
     challenge_banner: false,
     community_banner: false,
+    has_app: false,
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -258,6 +260,17 @@ export default function BriefingForm() {
         await insertImage(requestId, 'community_banner', form.community_banner, sortOrder++);
       }
 
+      // Auto-create app mockup if has_app
+      if (selections.has_app) {
+        const { error: mockupErr } = await supabase.from('briefing_images').insert({
+          request_id: requestId,
+          image_type: 'app_mockup',
+          sort_order: sortOrder++,
+          observations: 'Mockup do aplicativo — criado automaticamente',
+        } as any);
+        if (mockupErr) console.error('Erro ao criar mockup:', mockupErr);
+      }
+
       setSubmitted(true);
       toast.success('Solicitação enviada com sucesso!');
     } catch (err: any) {
@@ -301,7 +314,7 @@ export default function BriefingForm() {
             <p className="text-muted-foreground">
               Sua solicitação foi recebida. Nossa equipe de design entrará em contato em breve através do email informado.
             </p>
-            <Button onClick={() => { setForm(initialForm); setAdditionalInfo(''); setSubmitted(false); setStep(0); setSelections({ login_image: false, banner_vitrine: false, product_covers: false, trail_banner: false, challenge_banner: false, community_banner: false }); }} variant="outline">
+            <Button onClick={() => { setForm(initialForm); setAdditionalInfo(''); setSubmitted(false); setStep(0); setSelections({ login_image: false, banner_vitrine: false, product_covers: false, trail_banner: false, challenge_banner: false, community_banner: false, has_app: false }); }} variant="outline">
               Enviar novo briefing
             </Button>
           </CardContent>
@@ -416,6 +429,26 @@ export default function BriefingForm() {
                   );
                 })}
               </div>
+
+              {/* Has App toggle */}
+              <Separator />
+              <Card
+                className={`cursor-pointer transition-all duration-200 hover:shadow-md ${selections.has_app ? 'ring-2 ring-primary bg-primary/5 border-primary/30' : 'border-border/50 hover:border-border'}`}
+                onClick={() => setSelections(s => ({ ...s, has_app: !s.has_app }))}
+              >
+                <CardContent className="flex items-start gap-4 p-4">
+                  <div className={`p-2.5 rounded-lg transition-colors ${selections.has_app ? 'bg-primary/10' : 'bg-muted'}`}>
+                    <Smartphone className={`h-5 w-5 ${selections.has_app ? 'text-primary' : 'text-muted-foreground'}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="font-medium text-foreground">A plataforma possui aplicativo?</span>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Se sim, será criada automaticamente uma solicitação de mockup do aplicativo
+                    </p>
+                  </div>
+                  <Checkbox checked={selections.has_app} className="mt-1" />
+                </CardContent>
+              </Card>
 
             </div>
           )}
