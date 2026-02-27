@@ -186,38 +186,57 @@ export default function CarteiraGeralPage() {
           {filtered.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">Nenhum cliente encontrado</p>
           ) : (
-            <div className="w-full overflow-x-auto border rounded-md">
-              <div className="min-w-[4000px]">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-[11px] uppercase tracking-wider">#</TableHead>
-                      {FIXED_COLUMNS.map(col => (
-                        <TableHead key={col.key} className="text-[11px] uppercase tracking-wider whitespace-nowrap">
-                          {col.label}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filtered.map((row, i) => (
-                      <TableRow key={row.id || i}>
-                        <TableCell className="text-xs text-muted-foreground">{i + 1}</TableCell>
+            <div className="w-full border rounded-md flex flex-col">
+              {/* Top scrollbar */}
+              <div
+                className="w-full overflow-x-auto"
+                onScroll={(e) => {
+                  const bottom = (e.currentTarget as HTMLDivElement).nextElementSibling as HTMLDivElement;
+                  if (bottom) bottom.scrollLeft = (e.currentTarget as HTMLDivElement).scrollLeft;
+                }}
+              >
+                <div className="min-w-[4000px] h-[1px]" />
+              </div>
+              {/* Table with synced scroll */}
+              <div
+                className="w-full overflow-x-auto"
+                onScroll={(e) => {
+                  const top = (e.currentTarget as HTMLDivElement).previousElementSibling as HTMLDivElement;
+                  if (top) top.scrollLeft = (e.currentTarget as HTMLDivElement).scrollLeft;
+                }}
+              >
+                <div className="min-w-[4000px]">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-[11px] uppercase tracking-wider">#</TableHead>
                         {FIXED_COLUMNS.map(col => (
-                          <TableCell key={col.key} className="text-xs whitespace-nowrap max-w-[250px] truncate">
-                            {col.key === 'client_url' && row[col.key] ? (
-                              <a href={row[col.key]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                                {row[col.key]}
-                              </a>
-                            ) : (
-                              formatCellValue(row[col.key])
-                            )}
-                          </TableCell>
+                          <TableHead key={col.key} className="text-[11px] uppercase tracking-wider whitespace-nowrap">
+                            {col.label}
+                          </TableHead>
                         ))}
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {filtered.map((row, i) => (
+                        <TableRow key={row.id || i}>
+                          <TableCell className="text-xs text-muted-foreground">{i + 1}</TableCell>
+                          {FIXED_COLUMNS.map(col => (
+                            <TableCell key={col.key} className="text-xs whitespace-nowrap max-w-[250px] truncate">
+                              {col.key === 'client_url' && row[col.key] ? (
+                                <a href={row[col.key]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                                  {row[col.key]}
+                                </a>
+                              ) : (
+                                formatCellValue(row[col.key])
+                              )}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             </div>
           )}
