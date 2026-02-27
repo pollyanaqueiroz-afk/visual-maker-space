@@ -16,6 +16,7 @@ import {
 } from 'recharts';
 import ProductivityTab from '@/components/leadership/ProductivityTab';
 import LoyaltyTab from '@/components/leadership/LoyaltyTab';
+import CsatTab from '@/components/leadership/CsatTab';
 import { KpiCard } from '@/components/dashboard/KpiCard';
 
 const PIE_COLORS = ['hsl(var(--info))', 'hsl(var(--success))', 'hsl(var(--destructive))'];
@@ -226,6 +227,9 @@ export default function LeadershipDashboard() {
           <TabsTrigger value="fidelidade" className="flex items-center gap-1.5">
             <Star className="h-4 w-4" /> Fidelidade
           </TabsTrigger>
+          <TabsTrigger value="csat" className="flex items-center gap-1.5">
+            <Star className="h-4 w-4" /> CSAT
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="produtividade">
@@ -234,6 +238,10 @@ export default function LeadershipDashboard() {
 
         <TabsContent value="fidelidade">
           <LoyaltyTab filtered={filtered as any} profileMap={profileMap} />
+        </TabsContent>
+
+        <TabsContent value="csat">
+          <CsatTab profileMap={profileMap} />
         </TabsContent>
 
         <TabsContent value="visao-geral" className="space-y-6">

@@ -19,6 +19,7 @@ import SchedulingPage from "./pages/SchedulingPage";
 import MeetingsDashboard from "./pages/MeetingsDashboard";
 import LeadershipDashboard from "./pages/LeadershipDashboard";
 import CarteiraGeralPage from "./pages/CarteiraGeralPage";
+import CsatPage from "./pages/CsatPage";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ const App = () => (
             <Route path="/delivery/:token" element={<DeliveryPage />} />
             <Route path="/designer" element={<DesignerPanel />} />
             <Route path="/client-review" element={<ClientReviewPage />} />
+            <Route path="/csat/:token" element={<CsatPage />} />
             <Route path="/assets/:platformUrl" element={<ClientAssetsPage />} />
             <Route path="*" element={<NotFound />} />
             <Route path="*" element={<NotFound />} />
