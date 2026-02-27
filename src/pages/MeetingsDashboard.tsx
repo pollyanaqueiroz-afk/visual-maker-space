@@ -172,7 +172,9 @@ export default function MeetingsDashboard() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Dashboard de Reuniões</h1>
-          <p className="text-sm text-muted-foreground">Visão geral das métricas de reuniões</p>
+          <p className="text-sm text-muted-foreground flex items-center gap-2">
+            Logado como <span className="font-medium text-foreground">{user?.email}</span>
+          </p>
         </div>
         <Select value={periodFilter} onValueChange={setPeriodFilter}>
           <SelectTrigger className="w-[180px] h-9 text-sm">
