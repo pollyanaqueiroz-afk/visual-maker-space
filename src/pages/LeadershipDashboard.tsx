@@ -4,15 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { format, parseISO, startOfMonth, endOfMonth, subMonths, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
-  CalendarDays, CheckCircle, XCircle, Clock, Star, TrendingUp, Users, Globe, UserCheck, Loader2,
+  CalendarDays, CheckCircle, XCircle, Clock, Star, TrendingUp, Users, Globe, UserCheck, Loader2, BarChart3, Activity,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from 'recharts';
+import ProductivityTab from '@/components/leadership/ProductivityTab';
 
 const PIE_COLORS = ['hsl(var(--info))', 'hsl(var(--success))', 'hsl(var(--destructive))'];
 
@@ -190,6 +192,22 @@ export default function LeadershipDashboard() {
         <h1 className="text-2xl font-bold text-foreground">Dashboard Liderança</h1>
         <p className="text-sm text-muted-foreground">Visão consolidada de reuniões do time</p>
       </div>
+
+      <Tabs defaultValue="visao-geral" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="visao-geral" className="flex items-center gap-1.5">
+            <BarChart3 className="h-4 w-4" /> Visão Geral
+          </TabsTrigger>
+          <TabsTrigger value="produtividade" className="flex items-center gap-1.5">
+            <Activity className="h-4 w-4" /> Produtividade
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="produtividade">
+          <ProductivityTab />
+        </TabsContent>
+
+        <TabsContent value="visao-geral" className="space-y-6">
 
       {/* Filters */}
       <div className="flex items-center gap-3 flex-wrap">
@@ -389,6 +407,9 @@ export default function LeadershipDashboard() {
           )}
         </CardContent>
       </Card>
+
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
