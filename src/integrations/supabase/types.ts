@@ -498,6 +498,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_client_column: {
+        Args: { col_name: string; col_type?: string }
+        Returns: undefined
+      }
+      get_client_columns: {
+        Args: never
+        Returns: {
+          column_name: string
+          data_type: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
