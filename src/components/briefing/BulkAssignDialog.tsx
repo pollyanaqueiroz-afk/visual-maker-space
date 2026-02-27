@@ -40,6 +40,10 @@ export default function BulkAssignDialog({ open, onOpenChange, imageIds, onAssig
       toast.error('Informe o email do responsável');
       return;
     }
+    if (designerType === 'externo' && (!totalPrice || totalPrice <= 0)) {
+      toast.error('Informe o preço total para designer externo');
+      return;
+    }
 
     setSending(true);
     try {
