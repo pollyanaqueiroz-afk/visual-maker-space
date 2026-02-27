@@ -1,4 +1,4 @@
-import { FileImage, LayoutDashboard, LogOut, CalendarDays, Crown, Briefcase, BarChart3, Package, Headset } from 'lucide-react';
+import { FileImage, LayoutDashboard, LogOut, CalendarDays, Crown, Briefcase, BarChart3, Package, Headset, Home } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation } from 'react-router-dom';
@@ -74,6 +74,25 @@ export function HubSidebar() {
             </div>
           )}
         </div>
+
+        {/* Home */}
+        <SidebarGroup>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink
+                  to="/hub"
+                  end
+                  className="hover:bg-muted/50"
+                  activeClassName="bg-muted text-primary font-medium"
+                >
+                  <Home className="mr-2 h-4 w-4" />
+                  {!collapsed && <span>Home</span>}
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
 
         {/* Implantação Group */}
         <SidebarGroup>
