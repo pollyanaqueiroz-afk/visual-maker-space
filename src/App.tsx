@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import DeliveryPage from "./pages/DeliveryPage";
 import DesignerPanel from "./pages/DesignerPanel";
 import HubPage from "./pages/HubPage";
+import ClientReviewPage from "./pages/ClientReviewPage";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,8 @@ const App = () => (
             <Route path="/dashboard" element={<Navigate to="/hub/briefings" replace />} />
             <Route path="/delivery/:token" element={<DeliveryPage />} />
             <Route path="/designer" element={<DesignerPanel />} />
+            <Route path="/client-review" element={<ClientReviewPage />} />
+            <Route path="*" element={<NotFound />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
