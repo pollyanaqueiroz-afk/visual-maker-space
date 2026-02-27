@@ -18,7 +18,7 @@ const Index = () => {
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg">
-            <Link to="/login">
+            <Link to="/hub">
               <Lock className="h-5 w-5 mr-2" />
               Área da Equipe
             </Link>
