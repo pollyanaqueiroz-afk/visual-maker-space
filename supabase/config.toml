@@ -23,3 +23,9 @@ verify_jwt = false
 
 [functions.notify-meeting]
 verify_jwt = false
+
+[functions.delivery-data]
+verify_jwt = false
+
+[functions.designer-data]
+verify_jwt = false

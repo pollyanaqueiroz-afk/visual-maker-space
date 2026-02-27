@@ -35,36 +35,30 @@ export default function DesignerFeedback({ designerEmail }: Props) {
   const fetchFeedbacks = async () => {
     setLoading(true);
     try {
-      // Get all image IDs assigned to this designer
-      const { data: imgs } = await supabase
-        .from('briefing_images')
-        .select('id, image_type, product_name, briefing_requests!inner(requester_name)')
-        .eq('assigned_email', designerEmail);
+      const { data: result, error } = await supabase.functions.invoke('designer-data', {
+        body: { email: designerEmail },
+      });
 
-      if (!imgs || imgs.length === 0) {
+      if (error) throw error;
+
+      const imgs = result?.feedbackImages || [];
+      const reviews = result?.reviews || [];
+
+      if (imgs.length === 0) {
         setFeedbacks([]);
         setLoading(false);
         return;
       }
 
-      const imageIds = imgs.map(i => i.id);
-      const imageMap = new Map(imgs.map(i => [i.id, i]));
+      const imageMap = new Map(imgs.map((i: any) => [i.id, i]));
 
-      // Get all reviews for those images
-      const { data: reviews } = await supabase
-        .from('briefing_reviews')
-        .select('id, action, reviewer_comments, reviewed_by, created_at, briefing_image_id')
-        .in('briefing_image_id', imageIds)
-        .order('created_at', { ascending: false })
-        .limit(100);
-
-      const enriched: FeedbackRecord[] = (reviews || []).map(r => {
-        const img = imageMap.get(r.briefing_image_id);
+      const enriched: FeedbackRecord[] = reviews.map((r: any) => {
+        const img = imageMap.get(r.briefing_image_id) as any;
         return {
           ...r,
           image_type: img?.image_type || null,
           product_name: img?.product_name || null,
-          requester_name: (img?.briefing_requests as any)?.requester_name || null,
+          requester_name: img?.briefing_requests?.requester_name || null,
         };
       });
 

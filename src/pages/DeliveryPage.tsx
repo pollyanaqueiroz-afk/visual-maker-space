@@ -52,17 +52,15 @@ export default function DeliveryPage() {
     const fetchImage = async () => {
       if (!token) { setNotFound(true); setLoading(false); return; }
 
-      const { data, error } = await (supabase
-        .from('briefing_images')
-        .select('*, briefing_requests!inner(requester_name, platform_url)') as any)
-        .eq('delivery_token', token)
-        .single();
+      const { data: result, error } = await supabase.functions.invoke('delivery-data', {
+        body: { action: 'fetch', token },
+      });
 
-      if (error || !data) {
+      if (error || !result?.data) {
         setNotFound(true);
       } else {
-        setImage(data as any);
-        if (data.assigned_email) setEmail(data.assigned_email);
+        setImage(result.data as any);
+        if (result.data.assigned_email) setEmail(result.data.assigned_email);
       }
       setLoading(false);
     };
@@ -90,23 +88,19 @@ export default function DeliveryPage() {
         .from('briefing-uploads')
         .getPublicUrl(filePath);
 
-      // Save delivery
-      const { error: insertErr } = await supabase
-        .from('briefing_deliveries' as any)
-        .insert({
-          briefing_image_id: image.id,
+      // Save delivery and update status via edge function
+      const { data: submitResult, error: submitErr } = await supabase.functions.invoke('delivery-data', {
+        body: {
+          action: 'submit',
+          image_id: image.id,
           file_url: urlData.publicUrl,
           comments: comments || null,
           delivered_by_email: email,
-        });
+        },
+      });
 
-      if (insertErr) throw insertErr;
-
-      // Update image status to review
-      await supabase
-        .from('briefing_images')
-        .update({ status: 'review' } as any)
-        .eq('id', image.id);
+      if (submitErr) throw submitErr;
+      if (submitResult?.error) throw new Error(submitResult.error);
 
       // Notify requester via email (fire-and-forget)
       supabase.functions.invoke('notify-delivery', {

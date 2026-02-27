@@ -49,17 +49,15 @@ export default function DesignerPanel() {
     setSearched(true);
     localStorage.setItem('designer_email', email.trim().toLowerCase());
 
-    const { data, error } = await (supabase
-      .from('briefing_images')
-      .select('id, image_type, product_name, deadline, status, revision_count, delivery_token, briefing_requests!inner(requester_name, platform_url)')
-      .eq('assigned_email', email.trim().toLowerCase()) as any)
-      .order('created_at', { ascending: false });
+    const { data: result, error } = await supabase.functions.invoke('designer-data', {
+      body: { email: email.trim().toLowerCase() },
+    });
 
     if (error) {
       console.error(error);
       setImages([]);
     } else {
-      setImages((data || []) as DesignerImage[]);
+      setImages((result?.images || []) as DesignerImage[]);
     }
     setLoading(false);
   };

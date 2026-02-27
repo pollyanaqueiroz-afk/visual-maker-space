@@ -48,15 +48,15 @@ export default function ReviewHistory({ email, visible, onToggle }: Props) {
   const fetchHistory = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('briefing_reviews')
-        .select('id, action, reviewer_comments, created_at, briefing_image_id')
-        .eq('reviewed_by', email)
-        .order('created_at', { ascending: true })
-        .limit(200);
+      // Use edge function to securely fetch review data
+      const { data: result, error: fnErr } = await supabase.functions.invoke('client-review-data', {
+        body: { email },
+      });
 
-      if (error) throw error;
-      if (!data || data.length === 0) { setGroups([]); return; }
+      if (fnErr) throw fnErr;
+
+      const data = result?.reviewHistory || [];
+      if (data.length === 0) { setGroups([]); return; }
 
       // Group by image
       const map = new Map<string, ReviewRecord[]>();
@@ -66,16 +66,12 @@ export default function ReviewHistory({ email, visible, onToggle }: Props) {
         map.set(r.briefing_image_id, list);
       }
 
-      // Fetch image info
-      const imageIds = [...map.keys()];
-      const { data: imgData } = await supabase
-        .from('briefing_images')
-        .select('id, image_type, product_name')
-        .in('id', imageIds);
-
+      // Get image info from the all images data
+      const allImgs = result?.images?.all || [];
       const imgMap = new Map<string, ImageInfo>();
-      (imgData || []).forEach(i => imgMap.set(i.id, { image_type: i.image_type, product_name: i.product_name }));
+      allImgs.forEach((i: any) => imgMap.set(i.id, { image_type: i.image_type, product_name: i.product_name }));
 
+      const imageIds = [...map.keys()];
       const grouped: GroupedArt[] = imageIds.map(id => {
         const reviews = map.get(id) || [];
         const last = reviews[reviews.length - 1];
