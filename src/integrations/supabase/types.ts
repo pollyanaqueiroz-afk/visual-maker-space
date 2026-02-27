@@ -332,6 +332,9 @@ export type Database = {
           data_do_ultimo_login: string | null
           desconto_concedido: string | null
           dias_desde_o_ultimo_login: string | null
+          e_mail_do_closer: string | null
+          e_mail_do_cs_antigo: string | null
+          e_mail_do_cs_atual: string | null
           email_do_cliente: string | null
           email_do_closer: string | null
           email_do_cs_antigo: string | null
@@ -388,6 +391,9 @@ export type Database = {
           data_do_ultimo_login?: string | null
           desconto_concedido?: string | null
           dias_desde_o_ultimo_login?: string | null
+          e_mail_do_closer?: string | null
+          e_mail_do_cs_antigo?: string | null
+          e_mail_do_cs_atual?: string | null
           email_do_cliente?: string | null
           email_do_closer?: string | null
           email_do_cs_antigo?: string | null
@@ -444,6 +450,9 @@ export type Database = {
           data_do_ultimo_login?: string | null
           desconto_concedido?: string | null
           dias_desde_o_ultimo_login?: string | null
+          e_mail_do_closer?: string | null
+          e_mail_do_cs_antigo?: string | null
+          e_mail_do_cs_atual?: string | null
           email_do_cliente?: string | null
           email_do_closer?: string | null
           email_do_cs_antigo?: string | null
