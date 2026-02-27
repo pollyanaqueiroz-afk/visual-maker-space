@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { format, parseISO, startOfMonth, endOfMonth, subMonths, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
-  CalendarDays, CheckCircle, XCircle, Clock, Star, TrendingUp, Users, Globe, UserCheck, Loader2, BarChart3, Activity, Trophy,
+  CalendarDays, CheckCircle, XCircle, Clock, Star, TrendingUp, Users, Globe, UserCheck, Loader2, BarChart3, Activity, Trophy, DollarSign,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, CartesianGrid,
@@ -17,6 +17,7 @@ import {
 import ProductivityTab from '@/components/leadership/ProductivityTab';
 import LoyaltyTab from '@/components/leadership/LoyaltyTab';
 import CsatTab from '@/components/leadership/CsatTab';
+import ClientsTab from '@/components/leadership/ClientsTab';
 import { KpiCard } from '@/components/dashboard/KpiCard';
 
 const PIE_COLORS = ['hsl(var(--info))', 'hsl(var(--success))', 'hsl(var(--destructive))'];
@@ -230,6 +231,9 @@ export default function LeadershipDashboard() {
           <TabsTrigger value="csat" className="flex items-center gap-1.5">
             <Star className="h-4 w-4" /> CSAT
           </TabsTrigger>
+          <TabsTrigger value="clientes" className="flex items-center gap-1.5">
+            <DollarSign className="h-4 w-4" /> Clientes & Receita
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="produtividade">
@@ -242,6 +246,10 @@ export default function LeadershipDashboard() {
 
         <TabsContent value="csat">
           <CsatTab profileMap={profileMap} />
+        </TabsContent>
+
+        <TabsContent value="clientes">
+          <ClientsTab />
         </TabsContent>
 
         <TabsContent value="visao-geral" className="space-y-6">
