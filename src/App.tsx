@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import DeliveryPage from "./pages/DeliveryPage";
 import DesignerPanel from "./pages/DesignerPanel";
 import HubPage from "./pages/HubPage";
+import HubWelcome from "./pages/HubWelcome";
 import ClientReviewPage from "./pages/ClientReviewPage";
 import ClientAssetsPage from "./pages/ClientAssetsPage";
 import SchedulingPage from "./pages/SchedulingPage";
@@ -33,7 +34,7 @@ const App = () => (
             <Route path="/briefing" element={<BriefingForm />} />
             <Route path="/login" element={<Login />} />
             <Route path="/hub" element={<HubPage />}>
-              <Route index element={<Navigate to="briefings" replace />} />
+              <Route index element={<HubWelcome />} />
               <Route path="briefings" element={<Dashboard />} />
               <Route path="agendamento" element={<SchedulingPage />} />
               <Route path="dashboards" element={<MeetingsDashboard />} />
