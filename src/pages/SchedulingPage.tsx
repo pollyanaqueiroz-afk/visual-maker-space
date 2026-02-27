@@ -41,6 +41,23 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
 
 const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
 
+const MEETING_REASONS = [
+  'Passagem de bastão Closer <> Onboarding',
+  'Passagem de bastão Onboarding <> CS',
+  'Apresentação do CS para o cliente',
+  'Reunião interna de definição do escopo implantação',
+  'Negociação',
+  'Inadimplência',
+  'Upsell',
+  'Reversão de Churn',
+  'Renovação',
+  'Definição de implantação',
+  'Follow Up de implantação',
+  'Resolução de problemas proativos',
+  'Encantamento proativo',
+  'Resolução reativa',
+];
+
 const emptyForm = {
   title: '',
   description: '',
@@ -52,6 +69,7 @@ const emptyForm = {
   client_email: '',
   participants: '',
   notes: '',
+  meeting_reason: '',
 };
 
   const buildGoogleCalendarUrl = (meeting: { title: string; description?: string | null; meeting_date: string; meeting_time: string; duration_minutes: number; meeting_url?: string | null; client_name?: string | null; client_email?: string | null }) => {
@@ -132,13 +150,14 @@ export default function SchedulingPage() {
       client_email: m.client_email || '',
       participants: (m.participants || []).join(', '),
       notes: m.notes || '',
+      meeting_reason: (m as any).meeting_reason || '',
     });
     setDialogOpen(true);
   };
 
   const handleSubmit = async () => {
-    if (!form.title || !form.meeting_date || !form.meeting_time) {
-      toast.error('Preencha título, data e horário');
+    if (!form.title || !form.meeting_date || !form.meeting_time || !form.meeting_reason) {
+      toast.error('Preencha título, motivo, data e horário');
       return;
     }
     setSubmitting(true);
@@ -154,6 +173,7 @@ export default function SchedulingPage() {
         client_email: form.client_email || null,
         participants: form.participants ? form.participants.split(',').map(p => p.trim()).filter(Boolean) : [],
         notes: form.notes || null,
+        meeting_reason: form.meeting_reason,
       };
 
       if (editingId) {
@@ -279,6 +299,19 @@ export default function SchedulingPage() {
               <div className="space-y-2">
                 <Label>Título *</Label>
                 <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Ex: Alinhamento de briefing" />
+              </div>
+              <div className="space-y-2">
+                <Label>Motivo da Reunião *</Label>
+                <Select value={form.meeting_reason} onValueChange={v => setForm(f => ({ ...f, meeting_reason: v }))}>
+                  <SelectTrigger className={!form.meeting_reason ? 'text-muted-foreground' : ''}>
+                    <SelectValue placeholder="Selecione o motivo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MEETING_REASONS.map(reason => (
+                      <SelectItem key={reason} value={reason}>{reason}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
@@ -433,6 +466,7 @@ export default function SchedulingPage() {
                             <h3 className="font-semibold text-foreground truncate">{m.title}</h3>
                             <Badge className={cn('text-[10px] px-2 py-0', config.color)}>{config.label}</Badge>
                             {isPast && <Badge variant="outline" className="text-[10px] text-warning border-warning/30">Atrasada</Badge>}
+                            {(m as any).meeting_reason && <Badge variant="outline" className="text-[10px]">{(m as any).meeting_reason}</Badge>}
                           </div>
                           <div className="flex items-center gap-4 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">
