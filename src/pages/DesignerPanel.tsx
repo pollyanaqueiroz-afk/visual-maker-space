@@ -9,10 +9,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { IMAGE_TYPE_LABELS, STATUS_LABELS, STATUS_COLORS } from '@/types/briefing';
-import { Search, Loader2, Clock, ExternalLink, FileImage, Filter, MessageSquare } from 'lucide-react';
+import { Search, Loader2, Clock, ExternalLink, FileImage, Filter, MessageSquare, BarChart3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import CursEducaLayout from '@/components/CursEducaLayout';
 import DesignerFeedback from '@/components/designer/DesignerFeedback';
+import DesignerAnalytics from '@/components/designer/DesignerAnalytics';
 
 interface DesignerImage {
   id: string;
@@ -107,10 +108,14 @@ export default function DesignerPanel() {
         {/* Tabs: Artes + Feedbacks */}
         {searched && !loading && (
           <Tabs defaultValue="artes" className="w-full">
-            <TabsList className="w-full grid grid-cols-2">
+            <TabsList className="w-full grid grid-cols-3">
               <TabsTrigger value="artes" className="gap-2">
                 <FileImage className="h-4 w-4" />
                 Minhas Artes
+              </TabsTrigger>
+              <TabsTrigger value="analytics" className="gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Analytics
               </TabsTrigger>
               <TabsTrigger value="feedbacks" className="gap-2">
                 <MessageSquare className="h-4 w-4" />
@@ -240,6 +245,10 @@ export default function DesignerPanel() {
                   </Card>
                 );
               })()}
+            </TabsContent>
+
+            <TabsContent value="analytics" className="mt-4">
+              <DesignerAnalytics designerEmail={email.trim().toLowerCase()} />
             </TabsContent>
 
             <TabsContent value="feedbacks" className="mt-4">
