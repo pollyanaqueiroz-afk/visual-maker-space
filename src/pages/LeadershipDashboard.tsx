@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { format, parseISO, startOfMonth, endOfMonth, subMonths, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
-  CalendarDays, CheckCircle, XCircle, Clock, Star, TrendingUp, Users, Globe, UserCheck, Loader2, BarChart3, Activity,
+  CalendarDays, CheckCircle, XCircle, Clock, Star, TrendingUp, Users, Globe, UserCheck, Loader2, BarChart3, Activity, Trophy,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, CartesianGrid,
@@ -177,6 +177,26 @@ export default function LeadershipDashboard() {
     { name: 'Realizadas', value: stats.completed },
     { name: 'Canceladas', value: stats.cancelled },
   ], [stats]);
+
+  // Loyalty ranking: avg per client URL grouped by person
+  const loyaltyByPersonClient = useMemo(() => {
+    const map: Record<string, { uid: string; url: string; clientName: string; sum: number; count: number }> = {};
+    for (const m of filtered) {
+      if (!m.loyalty_index || !m.client_url || !m.created_by) continue;
+      const key = `${m.created_by}::${m.client_url}`;
+      if (!map[key]) map[key] = { uid: m.created_by, url: m.client_url, clientName: m.client_name || '', sum: 0, count: 0 };
+      map[key].sum += m.loyalty_index;
+      map[key].count++;
+      if (m.client_name && !map[key].clientName) map[key].clientName = m.client_name;
+    }
+    return Object.values(map)
+      .map(c => ({
+        ...c,
+        personName: getCreatorLabel(c.uid),
+        avg: parseFloat((c.sum / c.count).toFixed(1)),
+      }))
+      .sort((a, b) => b.avg - a.avg);
+  }, [filtered, profileMap]);
 
   if (loading) {
     return (
@@ -397,6 +417,55 @@ export default function LeadershipDashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Loyalty Ranking by Person x Client */}
+      {loyaltyByPersonClient.length > 0 && (
+        <Card className="border-none shadow-[var(--shadow-kpi)]">
+          <CardHeader className="pb-1">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+              <Trophy className="h-4 w-4 text-warning" />
+              Ranking de Fidelidade — Cliente por Responsável
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border/50">
+                  <TableHead className="w-10 text-center text-[11px] uppercase tracking-wider">#</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider">Responsável</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider">Cliente / URL</TableHead>
+                  <TableHead className="text-center text-[11px] uppercase tracking-wider">Fidelidade Média</TableHead>
+                  <TableHead className="text-center text-[11px] uppercase tracking-wider">Avaliações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loyaltyByPersonClient.slice(0, 20).map((row, i) => (
+                  <TableRow key={`${row.uid}-${row.url}`} className="border-border/30">
+                    <TableCell className="text-center">
+                      {i === 0 ? <Trophy className="h-4 w-4 text-warning mx-auto" /> :
+                       <span className={`text-xs font-bold ${i <= 2 ? 'text-foreground' : 'text-muted-foreground/60'}`}>{i + 1}º</span>}
+                    </TableCell>
+                    <TableCell className="font-medium text-sm">{row.personName}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-0.5">
+                        {row.clientName && <span className="text-sm font-medium text-foreground">{row.clientName}</span>}
+                        <a href={row.url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline truncate max-w-[200px]">{row.url}</a>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span className="flex items-center justify-center gap-1">
+                        <Star className={`h-4 w-4 ${row.avg >= 3 ? 'text-warning' : row.avg >= 2 ? 'text-muted-foreground' : 'text-destructive'}`} />
+                        <span className="text-lg font-bold">{row.avg}</span>
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-center text-sm font-medium text-muted-foreground">{row.count}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
 
         </TabsContent>
       </Tabs>
