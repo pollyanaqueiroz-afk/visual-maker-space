@@ -29,6 +29,13 @@ interface Profile {
   display_name: string | null;
 }
 
+interface ClientRecord {
+  client_url: string;
+  client_name: string | null;
+  loyalty_index: number | null;
+  cs_user_id: string | null;
+}
+
 interface ClientRow {
   url: string;
   clientName: string;
@@ -37,16 +44,19 @@ interface ClientRow {
   scheduled: number;
   cancelled: number;
   avgLoyalty: string;
+  currentLoyalty: number | null;
   totalHours: number;
   lastMeeting: string;
   daysSinceLast: number;
   responsibles: string[];
+  csName: string;
   topReason: string;
 }
 
 export default function CarteiraGeralPage() {
   const [meetings, setMeetings] = useState<MeetingRow[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [clientRecords, setClientRecords] = useState<ClientRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [periodFilter, setPeriodFilter] = useState('all');
@@ -54,11 +64,12 @@ export default function CarteiraGeralPage() {
 
   useEffect(() => {
     (async () => {
-      const [meetingsRes, profilesRes] = await Promise.all([
+      const [meetingsRes, profilesRes, clientsRes] = await Promise.all([
         supabase.from('meetings' as any)
           .select('id, meeting_date, status, client_url, client_name, meeting_reason, loyalty_index, duration_minutes, created_by')
           .order('meeting_date', { ascending: false }) as any,
         supabase.from('profiles').select('user_id, email, display_name'),
+        supabase.from('clients' as any).select('client_url, client_name, loyalty_index, cs_user_id') as any,
       ]);
 
       if (meetingsRes.error) {
@@ -70,6 +81,10 @@ export default function CarteiraGeralPage() {
 
       if (!profilesRes.error && profilesRes.data) {
         setProfiles(profilesRes.data as Profile[]);
+      }
+
+      if (!clientsRes.error && clientsRes.data) {
+        setClientRecords((clientsRes.data || []) as ClientRecord[]);
       }
 
       setLoading(false);
@@ -106,6 +121,12 @@ export default function CarteiraGeralPage() {
     });
   }, [meetings, periodFilter]);
 
+  const clientRecordMap = useMemo(() => {
+    const map: Record<string, ClientRecord> = {};
+    clientRecords.forEach(c => { map[c.client_url] = c; });
+    return map;
+  }, [clientRecords]);
+
   const clients = useMemo(() => {
     const map: Record<string, {
       url: string; clientName: string; total: number; completed: number; scheduled: number; cancelled: number;
@@ -139,6 +160,8 @@ export default function CarteiraGeralPage() {
     const now = new Date();
     return Object.values(map).map(c => {
       const topReason = Object.entries(c.reasons).sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
+      const cr = clientRecordMap[c.url];
+      const csUid = cr?.cs_user_id || null;
       return {
         url: c.url,
         clientName: c.clientName,
@@ -147,14 +170,16 @@ export default function CarteiraGeralPage() {
         scheduled: c.scheduled,
         cancelled: c.cancelled,
         avgLoyalty: c.loyaltyCount > 0 ? (c.loyaltySum / c.loyaltyCount).toFixed(1) : '—',
+        currentLoyalty: cr?.loyalty_index ?? null,
         totalHours: Math.round(c.totalMinutes / 60),
         lastMeeting: c.lastDate,
         daysSinceLast: c.lastDate ? differenceInDays(now, parseISO(c.lastDate)) : 999,
         responsibles: Array.from(c.responsibles).map(uid => getCreatorLabel(uid)),
+        csName: getCreatorLabel(csUid),
         topReason,
       } as ClientRow;
     });
-  }, [filtered, profileMap]);
+  }, [filtered, profileMap, clientRecordMap]);
 
   const sorted = useMemo(() => {
     let list = clients;
@@ -272,19 +297,20 @@ export default function CarteiraGeralPage() {
             <p className="text-sm text-muted-foreground text-center py-8">Nenhum cliente encontrado</p>
           ) : (
             <div className="overflow-x-auto">
-              <Table>
+               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Cliente / URL</TableHead>
+                    <TableHead>CS Responsável</TableHead>
                     <TableHead className="text-center">Status</TableHead>
                     <TableHead className="text-center">Total</TableHead>
                     <TableHead className="text-center">Realizadas</TableHead>
                     <TableHead className="text-center">Agendadas</TableHead>
                     <TableHead className="text-center">Canceladas</TableHead>
-                    <TableHead className="text-center">Fidelidade</TableHead>
+                    <TableHead className="text-center">Fidelidade Atual</TableHead>
+                    <TableHead className="text-center">Fid. Média</TableHead>
                     <TableHead className="text-center">Horas</TableHead>
                     <TableHead>Principal Motivo</TableHead>
-                    <TableHead>Responsáveis</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -300,6 +326,9 @@ export default function CarteiraGeralPage() {
                           )}
                         </div>
                       </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-[10px] font-normal">{row.csName}</Badge>
+                      </TableCell>
                       <TableCell className="text-center">{getHealthBadge(row.daysSinceLast)}</TableCell>
                       <TableCell className="text-center font-semibold">{row.total}</TableCell>
                       <TableCell className="text-center"><Badge className="bg-success/20 text-success">{row.completed}</Badge></TableCell>
@@ -308,18 +337,17 @@ export default function CarteiraGeralPage() {
                       <TableCell className="text-center">
                         <span className="flex items-center justify-center gap-1">
                           <Star className="h-3 w-3 text-warning" />
+                          {row.currentLoyalty ?? '—'}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className="flex items-center justify-center gap-1">
+                          <Star className="h-3 w-3 text-muted-foreground" />
                           {row.avgLoyalty}
                         </span>
                       </TableCell>
                       <TableCell className="text-center text-sm">{row.totalHours}h</TableCell>
                       <TableCell className="text-xs text-muted-foreground max-w-[140px] truncate">{row.topReason}</TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {row.responsibles.map(r => (
-                            <Badge key={r} variant="outline" className="text-[10px] font-normal">{r}</Badge>
-                          ))}
-                        </div>
-                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
