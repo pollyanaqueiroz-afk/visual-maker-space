@@ -8,10 +8,13 @@ import { useState } from 'react';
 interface Props {
   data: BriefingFormData;
   onChange: (updates: Partial<BriefingFormData>) => void;
+  showRequired?: boolean;
 }
 
-export default function BrandIdentity({ data, onChange }: Props) {
+export default function BrandIdentity({ data, onChange, showRequired }: Props) {
   const [driveWarning, setDriveWarning] = useState('');
+  const hasBrand = !!data.brand_file || !!data.brand_drive_link;
+  const showError = showRequired && !hasBrand;
 
   const handleDriveLinkChange = (link: string) => {
     onChange({ brand_drive_link: link });
@@ -27,9 +30,16 @@ export default function BrandIdentity({ data, onChange }: Props) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-foreground mb-1">Identidade Visual</h2>
-        <p className="text-sm text-muted-foreground">Envie o manual da marca ou compartilhe via Google Drive</p>
+        <h2 className="text-xl font-semibold text-foreground mb-1">Identidade Visual *</h2>
+        <p className="text-sm text-muted-foreground">Envie o manual da marca ou compartilhe via Google Drive (obrigatório)</p>
       </div>
+
+      {showError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>Envie o arquivo de identidade visual ou informe o link do Google Drive</AlertDescription>
+        </Alert>
+      )}
 
       <div className="space-y-2">
         <Label>Arquivo de identidade visual</Label>
@@ -37,6 +47,7 @@ export default function BrandIdentity({ data, onChange }: Props) {
           type="file"
           accept=".pdf,.ai,.psd,.png,.jpg,.svg,.zip"
           onChange={e => onChange({ brand_file: e.target.files?.[0] || null })}
+          className={showError ? 'border-destructive' : ''}
         />
         <p className="text-xs text-muted-foreground">Aceita PDF, AI, PSD, PNG, JPG, SVG ou ZIP</p>
       </div>
@@ -47,6 +58,7 @@ export default function BrandIdentity({ data, onChange }: Props) {
           value={data.brand_drive_link}
           onChange={e => handleDriveLinkChange(e.target.value)}
           placeholder="https://drive.google.com/drive/folders/..."
+          className={showError ? 'border-destructive' : ''}
         />
         {driveWarning && (
           <Alert variant="destructive" className="mt-2">
