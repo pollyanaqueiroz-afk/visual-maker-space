@@ -42,11 +42,26 @@ serve(async (req) => {
   }
 
   try {
-    const { image_id, assigned_email, deadline, app_url } = await req.json();
+    const body = await req.json();
+    const image_id = typeof body.image_id === "string" ? body.image_id.trim().slice(0, 100) : "";
+    const assigned_email = typeof body.assigned_email === "string" ? body.assigned_email.trim().slice(0, 255) : "";
+    const deadline = typeof body.deadline === "string" ? body.deadline.slice(0, 50) : null;
+    const app_url = typeof body.app_url === "string" ? body.app_url.slice(0, 500) : null;
 
-    if (!image_id || !assigned_email) {
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!image_id || !uuidRegex.test(image_id)) {
       return new Response(
-        JSON.stringify({ error: "image_id and assigned_email are required" }),
+        JSON.stringify({ error: "image_id must be a valid UUID" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!assigned_email || !emailRegex.test(assigned_email)) {
+      return new Response(
+        JSON.stringify({ error: "assigned_email must be a valid email" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

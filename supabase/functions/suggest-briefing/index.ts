@@ -12,9 +12,29 @@ serve(async (req) => {
   }
 
   try {
-    const { message, currentForm } = await req.json();
+    const body = await req.json();
+    const message = typeof body.message === "string" ? body.message.trim() : "";
+    const currentForm = body.currentForm && typeof body.currentForm === "object" ? body.currentForm : null;
+
     if (!message) {
       return new Response(JSON.stringify({ error: "message is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Enforce max length
+    if (message.length > 10000) {
+      return new Response(JSON.stringify({ error: "Mensagem muito grande. Máximo: 10.000 caracteres." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Limit currentForm serialized size
+    const currentFormStr = currentForm ? JSON.stringify(currentForm) : "";
+    if (currentFormStr.length > 50000) {
+      return new Response(JSON.stringify({ error: "Formulário muito grande." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

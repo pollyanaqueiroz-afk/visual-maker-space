@@ -12,7 +12,19 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, token, image_id, image_ids, status, file_url, comments, delivered_by_email, revision_count } = await req.json();
+    const body = await req.json();
+    const action = typeof body.action === "string" ? body.action.trim().slice(0, 50) : "";
+    const token = typeof body.token === "string" ? body.token.trim().slice(0, 100) : "";
+    const image_id = typeof body.image_id === "string" ? body.image_id.trim().slice(0, 100) : "";
+    const image_ids = Array.isArray(body.image_ids) ? body.image_ids.filter((id: unknown) => typeof id === "string").slice(0, 100) : [];
+    const status = typeof body.status === "string" ? body.status.trim().slice(0, 50) : "";
+    const file_url = typeof body.file_url === "string" ? body.file_url.slice(0, 2000) : "";
+    const comments = typeof body.comments === "string" ? body.comments.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "").slice(0, 2000) : "";
+    const delivered_by_email = typeof body.delivered_by_email === "string" ? body.delivered_by_email.replace(/<[^>]*>/g, "").trim().slice(0, 255) : "";
+    const revision_count = typeof body.revision_count === "number" && body.revision_count >= 0 && body.revision_count <= 100 ? body.revision_count : undefined;
+
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const validStatuses = ["pending", "in_progress", "review", "completed", "cancelled"];
 
     if (!action) {
       return new Response(
@@ -28,9 +40,9 @@ Deno.serve(async (req) => {
 
     // FETCH: Get briefing image by delivery token
     if (action === "fetch") {
-      if (!token || typeof token !== "string") {
+      if (!token || !uuidRegex.test(token)) {
         return new Response(
-          JSON.stringify({ error: "token is required" }),
+          JSON.stringify({ error: "token must be a valid UUID" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -56,9 +68,22 @@ Deno.serve(async (req) => {
 
     // SUBMIT: Record a delivery and update status
     if (action === "submit") {
-      if (!image_id || !file_url || !delivered_by_email) {
+      if (!image_id || !uuidRegex.test(image_id)) {
         return new Response(
-          JSON.stringify({ error: "image_id, file_url, delivered_by_email are required" }),
+          JSON.stringify({ error: "image_id must be a valid UUID" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (!file_url || !delivered_by_email) {
+        return new Response(
+          JSON.stringify({ error: "file_url and delivered_by_email are required" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(delivered_by_email)) {
+        return new Response(
+          JSON.stringify({ error: "delivered_by_email must be a valid email" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -119,9 +144,15 @@ Deno.serve(async (req) => {
 
     // UPDATE_STATUS: For client review approve/reject
     if (action === "update_status") {
-      if (!image_id || !status) {
+      if (!image_id || !uuidRegex.test(image_id)) {
         return new Response(
-          JSON.stringify({ error: "image_id, status are required" }),
+          JSON.stringify({ error: "image_id must be a valid UUID" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (!status || !validStatuses.includes(status)) {
+        return new Response(
+          JSON.stringify({ error: "status must be one of: " + validStatuses.join(", ") }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }

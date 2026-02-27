@@ -12,9 +12,19 @@ serve(async (req) => {
   }
 
   try {
-    const { documentText } = await req.json();
+    const body = await req.json();
+    const documentText = typeof body.documentText === "string" ? body.documentText.trim() : "";
+
     if (!documentText) {
       return new Response(JSON.stringify({ error: "documentText is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Enforce max length to prevent resource exhaustion
+    if (documentText.length > 100000) {
+      return new Response(JSON.stringify({ error: "Documento muito grande. Máximo: 100.000 caracteres." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

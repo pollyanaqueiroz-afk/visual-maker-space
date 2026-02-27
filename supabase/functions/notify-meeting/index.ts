@@ -27,11 +27,41 @@ Deno.serve(async (req) => {
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) throw new Error("RESEND_API_KEY not configured");
 
-    const { client_email, client_name, title, meeting_date, meeting_time, duration_minutes, meeting_url, description, google_calendar_url } = await req.json();
+    const body = await req.json();
 
-    if (!client_email || !title || !meeting_date || !meeting_time) {
+    // Validate and sanitize inputs
+    const sanitize = (v: unknown, max: number) => typeof v === "string" ? v.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "").replace(/<[^>]*>/g, "").trim().slice(0, max) : "";
+    const client_email = sanitize(body.client_email, 255);
+    const client_name = sanitize(body.client_name, 200);
+    const title = sanitize(body.title, 300);
+    const meeting_date = sanitize(body.meeting_date, 10);
+    const meeting_time = sanitize(body.meeting_time, 8);
+    const duration_minutes = typeof body.duration_minutes === "number" && body.duration_minutes > 0 && body.duration_minutes <= 480 ? body.duration_minutes : 30;
+    const meeting_url = typeof body.meeting_url === "string" ? body.meeting_url.slice(0, 1000) : null;
+    const description = sanitize(body.description, 2000);
+    const google_calendar_url = typeof body.google_calendar_url === "string" ? body.google_calendar_url.slice(0, 2000) : null;
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!client_email || !emailRegex.test(client_email)) {
       return new Response(
-        JSON.stringify({ error: "Campos obrigatórios: client_email, title, meeting_date, meeting_time" }),
+        JSON.stringify({ error: "client_email deve ser um email válido" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate required fields
+    if (!title || !meeting_date || !meeting_time) {
+      return new Response(
+        JSON.stringify({ error: "Campos obrigatórios: title, meeting_date, meeting_time" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate date format (YYYY-MM-DD)
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(meeting_date)) {
+      return new Response(
+        JSON.stringify({ error: "meeting_date must be YYYY-MM-DD" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
