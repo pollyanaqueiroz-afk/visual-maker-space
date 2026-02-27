@@ -53,6 +53,32 @@ const emptyForm = {
   notes: '',
 };
 
+  const buildGoogleCalendarUrl = (meeting: { title: string; description?: string | null; meeting_date: string; meeting_time: string; duration_minutes: number; meeting_url?: string | null; client_name?: string | null; client_email?: string | null }) => {
+    const startDate = meeting.meeting_date.replace(/-/g, '');
+    const [h, m] = meeting.meeting_time.split(':').map(Number);
+    const startTime = `${String(h).padStart(2, '0')}${String(m).padStart(2, '0')}00`;
+    const endMinutes = h * 60 + m + meeting.duration_minutes;
+    const endH = Math.floor(endMinutes / 60);
+    const endM = endMinutes % 60;
+    const endTime = `${String(endH).padStart(2, '0')}${String(endM).padStart(2, '0')}00`;
+
+    const dates = `${startDate}T${startTime}/${startDate}T${endTime}`;
+    const details = [meeting.description, meeting.meeting_url ? `Link: ${meeting.meeting_url}` : ''].filter(Boolean).join('\n');
+
+    const params = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: meeting.title,
+      dates,
+      details,
+    });
+
+    if (meeting.client_email) {
+      params.set('add', meeting.client_email);
+    }
+
+    return `https://calendar.google.com/calendar/render?${params.toString()}`;
+  };
+
 export default function SchedulingPage() {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
@@ -378,6 +404,13 @@ export default function SchedulingPage() {
                             <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
                               <a href={m.meeting_url} target="_blank" rel="noopener noreferrer">
                                 <Video className="h-4 w-4 text-primary" />
+                              </a>
+                            </Button>
+                          )}
+                          {m.status === 'scheduled' && (
+                            <Button variant="ghost" size="icon" className="h-8 w-8" asChild title="Adicionar ao Google Calendar">
+                              <a href={buildGoogleCalendarUrl(m)} target="_blank" rel="noopener noreferrer">
+                                <CalendarDays className="h-4 w-4 text-success" />
                               </a>
                             </Button>
                           )}
