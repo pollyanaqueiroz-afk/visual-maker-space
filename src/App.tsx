@@ -14,6 +14,7 @@ import DesignerPanel from "./pages/DesignerPanel";
 import HubPage from "./pages/HubPage";
 import ClientReviewPage from "./pages/ClientReviewPage";
 import ClientAssetsPage from "./pages/ClientAssetsPage";
+import SchedulingPage from "./pages/SchedulingPage";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/hub" element={<HubPage />}>
               <Route index element={<Navigate to="briefings" replace />} />
               <Route path="briefings" element={<Dashboard />} />
+              <Route path="agendamento" element={<SchedulingPage />} />
             </Route>
             {/* Legacy route redirect */}
             <Route path="/dashboard" element={<Navigate to="/hub/briefings" replace />} />
