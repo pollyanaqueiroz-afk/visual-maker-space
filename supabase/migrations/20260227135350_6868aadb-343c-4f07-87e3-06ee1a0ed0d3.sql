@@ -1,0 +1,1 @@
+CREATE POLICY "Anon can view reviews" ON public.briefing_reviews FOR SELECT TO anon USING (true);
