@@ -8,7 +8,7 @@ import {
   CalendarDays, Loader2, RefreshCw
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend, Area, AreaChart } from 'recharts';
 import { format, startOfMonth, startOfWeek, startOfDay, subMonths, isAfter } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -27,6 +27,12 @@ interface DeliveryRecord {
   created_at: string;
 }
 
+interface ReviewRecord {
+  briefing_image_id: string;
+  action: string;
+  created_at: string;
+}
+
 interface Props {
   designerEmail: string;
 }
@@ -34,6 +40,7 @@ interface Props {
 export default function DesignerAnalytics({ designerEmail }: Props) {
   const [images, setImages] = useState<AnalyticsImage[]>([]);
   const [deliveries, setDeliveries] = useState<DeliveryRecord[]>([]);
+  const [reviews, setReviews] = useState<ReviewRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,6 +50,7 @@ export default function DesignerAnalytics({ designerEmail }: Props) {
   const fetchData = async () => {
     setLoading(true);
     try {
+      // Get image IDs first to filter reviews
       const [imgResult, delResult] = await Promise.all([
         supabase
           .from('briefing_images')
@@ -56,8 +64,20 @@ export default function DesignerAnalytics({ designerEmail }: Props) {
           .order('created_at', { ascending: true }),
       ]);
 
-      setImages((imgResult.data || []) as AnalyticsImage[]);
+      const imgs = (imgResult.data || []) as AnalyticsImage[];
+      setImages(imgs);
       setDeliveries((delResult.data || []) as DeliveryRecord[]);
+
+      // Fetch reviews for designer's images
+      if (imgs.length > 0) {
+        const imageIds = imgs.map(i => i.id);
+        const { data: revData } = await supabase
+          .from('briefing_reviews')
+          .select('briefing_image_id, action, created_at')
+          .in('briefing_image_id', imageIds)
+          .order('created_at', { ascending: true });
+        setReviews((revData || []) as ReviewRecord[]);
+      }
     } catch (err) {
       console.error('Error fetching analytics:', err);
     } finally {
@@ -313,6 +333,144 @@ export default function DesignerAnalytics({ designerEmail }: Props) {
                 <p className="text-xs text-muted-foreground">Nenhum valor financeiro registrado nos últimos 6 meses</p>
               )}
             </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Approval Rate Evolution Chart */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Taxa de Aprovação Mensal
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {(() => {
+              // Build approval rate data per month (last 6 months)
+              const approvalData: { month: string; taxa: number; aprovadas: number; refacoes: number; total: number }[] = [];
+              for (let i = 5; i >= 0; i--) {
+                const monthDate = subMonths(now, i);
+                const mStart = startOfMonth(monthDate);
+                const mEnd = i > 0 ? startOfMonth(subMonths(now, i - 1)) : new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+                const monthReviews = reviews.filter(r => {
+                  const rd = new Date(r.created_at);
+                  return rd >= mStart && rd < mEnd;
+                });
+
+                const approved = monthReviews.filter(r => r.action === 'approved').length;
+                const revisions = monthReviews.filter(r => r.action === 'revision_requested').length;
+                const total = approved + revisions;
+                const rate = total > 0 ? Math.round((approved / total) * 100) : 0;
+
+                approvalData.push({
+                  month: format(monthDate, "MMM/yy", { locale: ptBR }),
+                  taxa: rate,
+                  aprovadas: approved,
+                  refacoes: revisions,
+                  total,
+                });
+              }
+
+              const hasData = approvalData.some(d => d.total > 0);
+
+              if (!hasData) {
+                return (
+                  <p className="text-sm text-muted-foreground text-center py-6">
+                    Nenhuma avaliação registrada nos últimos 6 meses
+                  </p>
+                );
+              }
+
+              // Overall approval rate
+              const totalApproved = approvalData.reduce((s, d) => s + d.aprovadas, 0);
+              const totalRevisions = approvalData.reduce((s, d) => s + d.refacoes, 0);
+              const totalAll = totalApproved + totalRevisions;
+              const overallRate = totalAll > 0 ? Math.round((totalApproved / totalAll) * 100) : 0;
+
+              return (
+                <>
+                  {/* Overall rate badge */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className={`text-3xl font-extrabold ${overallRate >= 80 ? 'text-primary' : overallRate >= 50 ? 'text-amber-500' : 'text-destructive'}`}>
+                      {overallRate}%
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Taxa geral de aprovação</p>
+                      <p className="text-xs text-muted-foreground">{totalApproved} aprovadas · {totalRevisions} refações</p>
+                    </div>
+                  </div>
+
+                  {/* Area chart */}
+                  <div className="h-[200px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={approvalData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="approvalGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                        <XAxis dataKey="month" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
+                        <YAxis
+                          domain={[0, 100]}
+                          tick={{ fontSize: 12 }}
+                          className="fill-muted-foreground"
+                          tickFormatter={(v) => `${v}%`}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--card))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                          }}
+                          formatter={(value: number, name: string) => {
+                            if (name === 'taxa') return [`${value}%`, 'Taxa de Aprovação'];
+                            return [value, name];
+                          }}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="taxa"
+                          stroke="hsl(var(--primary))"
+                          strokeWidth={2.5}
+                          fill="url(#approvalGradient)"
+                          dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
+                          activeDot={{ r: 6 }}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Monthly summary table */}
+                  <div className="mt-4 pt-3 border-t border-border space-y-2">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Resumo por mês</p>
+                    <div className="grid gap-2">
+                      {approvalData.filter(d => d.total > 0).map(d => (
+                        <div key={d.month} className="flex items-center justify-between px-3 py-2 rounded-lg bg-muted/40">
+                          <span className="text-sm font-medium text-foreground capitalize">{d.month}</span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs text-muted-foreground">
+                              ✅ {d.aprovadas} · 🔄 {d.refacoes}
+                            </span>
+                            <Badge
+                              variant="outline"
+                              className={`text-xs ${d.taxa >= 80 ? 'border-primary/40 text-primary' : d.taxa >= 50 ? 'border-amber-500/40 text-amber-500' : 'border-destructive/40 text-destructive'}`}
+                            >
+                              {d.taxa}%
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
           </CardContent>
         </Card>
       </motion.div>
