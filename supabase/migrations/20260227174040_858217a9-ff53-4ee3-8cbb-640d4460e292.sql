@@ -1,0 +1,1 @@
+ALTER TABLE public.meetings ADD COLUMN reschedule_reason text;

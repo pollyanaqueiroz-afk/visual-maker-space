@@ -324,6 +324,7 @@ export type Database = {
           notes: string | null
           participants: string[] | null
           recording_url: string | null
+          reschedule_reason: string | null
           status: string
           title: string
           updated_at: string
@@ -347,6 +348,7 @@ export type Database = {
           notes?: string | null
           participants?: string[] | null
           recording_url?: string | null
+          reschedule_reason?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -370,6 +372,7 @@ export type Database = {
           notes?: string | null
           participants?: string[] | null
           recording_url?: string | null
+          reschedule_reason?: string | null
           status?: string
           title?: string
           updated_at?: string

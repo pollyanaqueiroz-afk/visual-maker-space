@@ -71,6 +71,7 @@ const emptyForm = {
   participants: '',
   notes: '',
   meeting_reason: '',
+  reschedule_reason: '',
 };
 
   const buildGoogleCalendarUrl = (meeting: { title: string; description?: string | null; meeting_date: string; meeting_time: string; duration_minutes: number; meeting_url?: string | null; client_name?: string | null; client_email?: string | null }) => {
@@ -111,6 +112,7 @@ export default function SchedulingPage() {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterReason, setFilterReason] = useState<string>('all');
   const [sendInvite, setSendInvite] = useState(true);
+  const [isRescheduling, setIsRescheduling] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmingMeeting, setConfirmingMeeting] = useState<Meeting | null>(null);
   const [confirmForm, setConfirmForm] = useState({
@@ -156,6 +158,7 @@ export default function SchedulingPage() {
 
   const handleOpenNew = (date?: Date) => {
     setEditingId(null);
+    setIsRescheduling(false);
     setForm({
       ...emptyForm,
       meeting_date: date ? format(date, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
@@ -165,6 +168,7 @@ export default function SchedulingPage() {
 
   const handleEdit = (m: Meeting) => {
     setEditingId(m.id);
+    setIsRescheduling(false);
     setForm({
       title: m.title,
       description: m.description || '',
@@ -178,12 +182,14 @@ export default function SchedulingPage() {
       participants: (m.participants || []).join(', '),
       notes: m.notes || '',
       meeting_reason: (m as any).meeting_reason || '',
+      reschedule_reason: '',
     });
     setDialogOpen(true);
   };
 
   const handleReschedule = (m: Meeting) => {
     setEditingId(m.id);
+    setIsRescheduling(true);
     setForm({
       title: m.title,
       description: m.description || '',
@@ -197,17 +203,18 @@ export default function SchedulingPage() {
       participants: (m.participants || []).join(', '),
       notes: m.notes || '',
       meeting_reason: (m as any).meeting_reason || '',
+      reschedule_reason: '',
     });
-    // Reset status to scheduled when saving
-    (async () => {
-      await (supabase.from('meetings' as any).update({ status: 'scheduled' }).eq('id', m.id) as any);
-    })();
     setDialogOpen(true);
   };
 
   const handleSubmit = async () => {
     if (!form.title || !form.meeting_date || !form.meeting_time || !form.meeting_reason) {
       toast.error('Preencha título, motivo, data e horário');
+      return;
+    }
+    if (isRescheduling && !form.reschedule_reason.trim()) {
+      toast.error('Preencha o motivo do reagendamento');
       return;
     }
     setSubmitting(true);
@@ -225,6 +232,7 @@ export default function SchedulingPage() {
         participants: form.participants ? form.participants.split(',').map(p => p.trim()).filter(Boolean) : [],
         notes: form.notes || null,
         meeting_reason: form.meeting_reason,
+        ...(isRescheduling ? { reschedule_reason: form.reschedule_reason, status: 'scheduled' } : {}),
       };
 
       if (editingId) {
@@ -400,6 +408,7 @@ export default function SchedulingPage() {
 
   const handleSlotClick = (time: string) => {
     setEditingId(null);
+    setIsRescheduling(false);
     setForm({
       ...emptyForm,
       meeting_date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
@@ -503,6 +512,18 @@ export default function SchedulingPage() {
                 <Label>Observações</Label>
                 <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Notas internas..." rows={2} />
               </div>
+              {isRescheduling && (
+                <div className="space-y-2">
+                  <Label className="text-destructive">Motivo do reagendamento *</Label>
+                  <Textarea
+                    value={form.reschedule_reason}
+                    onChange={e => setForm(f => ({ ...f, reschedule_reason: e.target.value }))}
+                    placeholder="Informe o motivo do reagendamento..."
+                    rows={2}
+                    className="border-destructive/50 focus-visible:ring-destructive/30"
+                  />
+                </div>
+              )}
               {!editingId && form.client_email && (
                 <div className="flex items-center gap-2">
                   <Checkbox
