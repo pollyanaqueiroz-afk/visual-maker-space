@@ -13,7 +13,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { toast } from 'sonner';
 import { format, isSameDay, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, Video, Clock, User, Trash2, Edit2, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Loader2, CheckCircle, FileText, Star } from 'lucide-react';
+import { Plus, Video, Clock, User, Trash2, Edit2, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Loader2, CheckCircle, FileText, Star, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Meeting {
@@ -177,6 +177,28 @@ export default function SchedulingPage() {
       notes: m.notes || '',
       meeting_reason: (m as any).meeting_reason || '',
     });
+    setDialogOpen(true);
+  };
+
+  const handleReschedule = (m: Meeting) => {
+    setEditingId(m.id);
+    setForm({
+      title: m.title,
+      description: m.description || '',
+      meeting_date: format(new Date(), 'yyyy-MM-dd'),
+      meeting_time: m.meeting_time.slice(0, 5),
+      duration_minutes: m.duration_minutes,
+      meeting_url: m.meeting_url || '',
+      client_name: m.client_name || '',
+      client_email: m.client_email || '',
+      participants: (m.participants || []).join(', '),
+      notes: m.notes || '',
+      meeting_reason: (m as any).meeting_reason || '',
+    });
+    // Reset status to scheduled when saving
+    (async () => {
+      await (supabase.from('meetings' as any).update({ status: 'scheduled' }).eq('id', m.id) as any);
+    })();
     setDialogOpen(true);
   };
 
@@ -638,6 +660,17 @@ export default function SchedulingPage() {
                               onClick={() => handleStatusChange(m.id, 'cancelled')}
                             >
                               Cancelar
+                            </Button>
+                          )}
+                          {(m.status === 'cancelled' || m.status === 'completed') && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 gap-1 text-xs"
+                              onClick={() => handleReschedule(m)}
+                            >
+                              <RefreshCw className="h-3.5 w-3.5" />
+                              Reagendar
                             </Button>
                           )}
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(m)}>
