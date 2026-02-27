@@ -111,6 +111,25 @@ export default function ImageBriefingSection({
                 <Input value={data.custom_dimension || ''} onChange={e => update({ custom_dimension: e.target.value })} placeholder="Ex: 1200x300" className="mt-2" />
               )}
             </div>
+
+            {showOrientation && (
+              <div className="space-y-2">
+                <Label>Orientação da capa *</Label>
+                <Select value={data.orientation || ''} onValueChange={v => update({ orientation: v })} required>
+                  <SelectTrigger className={!data.orientation ? 'border-destructive' : ''}>
+                    <SelectValue placeholder="Selecione a orientação" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="horizontal">Horizontal</SelectItem>
+                    <SelectItem value="vertical">Vertical</SelectItem>
+                  </SelectContent>
+                </Select>
+                {!data.orientation && (
+                  <p className="text-xs text-destructive">Selecione a orientação da imagem</p>
+                )}
+              </div>
+            )}
+
             <div className="space-y-3">
               <Label>Elemento ou imagem sugerida</Label>
               <Textarea value={data.element_suggestion} onChange={e => update({ element_suggestion: e.target.value })} placeholder="Descreva o visual desejado, elementos gráficos, estilo..." rows={3} />
@@ -150,23 +169,6 @@ export default function ImageBriefingSection({
               <Input value={data.professional_photo_url} onChange={e => update({ professional_photo_url: e.target.value })} placeholder="https://drive.google.com/..." />
             </div>
 
-            {showOrientation && (
-              <div className="space-y-2">
-                <Label>Orientação da capa *</Label>
-                <Select value={data.orientation || ''} onValueChange={v => update({ orientation: v })} required>
-                  <SelectTrigger className={!data.orientation ? 'border-destructive' : ''}>
-                    <SelectValue placeholder="Selecione a orientação" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="horizontal">Horizontal</SelectItem>
-                    <SelectItem value="vertical">Vertical</SelectItem>
-                  </SelectContent>
-                </Select>
-                {!data.orientation && (
-                  <p className="text-xs text-destructive">Selecione a orientação da imagem</p>
-                )}
-              </div>
-            )}
 
             <div className="space-y-2">
               <Label>Observações</Label>
