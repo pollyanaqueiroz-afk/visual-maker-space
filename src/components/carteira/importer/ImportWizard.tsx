@@ -293,7 +293,7 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
     for (let i = 0; i < data.length; i += 50) chunks.push(data.slice(i, i + 50));
 
     for (const chunk of chunks) {
-      const { error } = await supabase.from('clients' as any).upsert(chunk, { onConflict: 'client_url' }) as any;
+      const { error } = await supabase.from('clients' as any).upsert(chunk, { onConflict: 'id_curseduca' }) as any;
       if (error) {
         console.error('Import chunk error:', error);
         errors += chunk.length;
