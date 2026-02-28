@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import {
   Globe, Users, Search, Loader2, Upload, DollarSign,
 } from 'lucide-react';
-import ImportClientsDialog from '@/components/carteira/ImportClientsDialog';
+import ImportWizard from '@/components/carteira/importer/ImportWizard';
 
 interface ClientRecord {
   [key: string]: any;
