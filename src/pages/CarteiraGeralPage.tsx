@@ -128,7 +128,7 @@ export default function CarteiraGeralPage() {
         </div>
         <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
           <Upload className="h-4 w-4 mr-1.5" />
-          Importar CSV
+          Importar Dados
         </Button>
       </div>
 
