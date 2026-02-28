@@ -507,7 +507,7 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
                           <TableCell className="text-right">
                             {vr && (
                               <div className="flex items-center justify-end gap-2 text-xs">
-                                <span className="text-green-600">{vr.valid} ✓</span>
+                                <span className="text-primary">{vr.valid} ✓</span>
                                 {vr.invalid > 0 && <span className="text-destructive">{vr.invalid} ✗</span>}
                               </div>
                             )}
