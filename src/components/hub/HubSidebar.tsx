@@ -110,6 +110,7 @@ export function HubSidebar() {
         </SidebarGroup>
 
         {/* Implantação Group */}
+        {hasVisibleItems(implantacaoModules) && (
         <SidebarGroup>
           <Collapsible defaultOpen={true}>
             <CollapsibleTrigger className="w-full">
@@ -128,6 +129,7 @@ export function HubSidebar() {
             </CollapsibleContent>
           </Collapsible>
         </SidebarGroup>
+        )}
 
         {/* CS Group */}
         <SidebarGroup>
