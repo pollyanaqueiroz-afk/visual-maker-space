@@ -213,17 +213,90 @@ export default function CarteiraGeralPage() {
         </Card>
       </div>
 
-      {/* Search */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar em qualquer coluna..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-9 h-9 text-sm"
-          />
+      {/* Search & Filters */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="relative flex-1 min-w-[200px] max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar em qualquer coluna..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-9 h-9 text-sm"
+            />
+          </div>
+          <Button
+            variant={showFilters ? 'secondary' : 'outline'}
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+            className="h-9"
+          >
+            <Filter className="h-4 w-4 mr-1.5" />
+            Filtros
+            {activeFilterCount > 0 && (
+              <Badge variant="default" className="ml-1.5 h-5 w-5 p-0 flex items-center justify-center text-[10px]">
+                {activeFilterCount}
+              </Badge>
+            )}
+          </Button>
+          {activeFilterCount > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => { setFilterPlano('__all__'); setFilterCs('__all__'); setFilterStatus('__all__'); }}
+              className="h-9 text-muted-foreground"
+            >
+              <X className="h-4 w-4 mr-1" /> Limpar filtros
+            </Button>
+          )}
         </div>
+
+        {showFilters && (
+          <div className="flex items-end gap-3 flex-wrap p-3 rounded-lg border bg-muted/30">
+            <div className="space-y-1.5 min-w-[180px]">
+              <label className="text-xs font-medium text-muted-foreground">Plano Contratado</label>
+              <Select value={filterPlano} onValueChange={setFilterPlano}>
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">Todos</SelectItem>
+                  {filterOptions.planos.map(p => (
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5 min-w-[180px]">
+              <label className="text-xs font-medium text-muted-foreground">CS Responsável</label>
+              <Select value={filterCs} onValueChange={setFilterCs}>
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">Todos</SelectItem>
+                  {filterOptions.css.map(c => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5 min-w-[180px]">
+              <label className="text-xs font-medium text-muted-foreground">Status Financeiro</label>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">Todos</SelectItem>
+                  {filterOptions.statuses.map(s => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Client Table */}
