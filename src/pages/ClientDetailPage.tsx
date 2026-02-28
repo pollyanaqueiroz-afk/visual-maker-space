@@ -148,6 +148,8 @@ const KNOWN_KEYS = new Set(
 export default function ClientDetailPage() {
   const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
+  const { hasPermission } = usePermissions();
+  const canEdit = hasPermission('carteira.edit');
 
   const [client, setClient] = useState<ClientRecord | null>(null);
   const [editData, setEditData] = useState<ClientRecord>({});
