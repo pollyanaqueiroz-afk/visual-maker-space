@@ -41,6 +41,7 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
   const [previewPage, setPreviewPage] = useState(0);
   const [showOnlyErrors, setShowOnlyErrors] = useState(false);
   const [editingCell, setEditingCell] = useState<{ row: number; col: string } | null>(null);
+  const [existingIds, setExistingIds] = useState<Set<string>>(new Set());
   const ROWS_PER_PAGE = 50;
 
   const reset = useCallback(() => {
