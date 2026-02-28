@@ -154,6 +154,7 @@ export function HubSidebar() {
         )}
 
         {/* Administração Group */}
+        {hasVisibleItems(adminModules) && (
         <SidebarGroup>
           <Collapsible defaultOpen={true}>
             <CollapsibleTrigger className="w-full">
@@ -172,6 +173,7 @@ export function HubSidebar() {
             </CollapsibleContent>
           </Collapsible>
         </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="p-3">
