@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import * as XLSX from 'xlsx';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import {
-  Globe, Users, Search, Loader2, Upload, DollarSign, Filter, X,
+  Globe, Users, Search, Loader2, Upload, DollarSign, Filter, X, Download,
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -163,6 +164,48 @@ export default function CarteiraGeralPage() {
     totalRevenue: clientRecords.reduce((s, c) => s + (Number(c.valor_mensal) || 0), 0),
   }), [clientRecords]);
 
+  const buildExportData = useCallback(() => {
+    return filtered.map(row => {
+      const out: Record<string, string> = {};
+      for (const col of FIXED_COLUMNS) {
+        out[col.label] = row[col.key] != null && row[col.key] !== '' ? String(row[col.key]) : '';
+      }
+      return out;
+    });
+  }, [filtered]);
+
+  const handleExportCSV = useCallback(() => {
+    const data = buildExportData();
+    if (data.length === 0) { toast.error('Nenhum dado para exportar'); return; }
+    const headers = FIXED_COLUMNS.map(c => c.label);
+    const csvRows = [headers.join(',')];
+    for (const row of data) {
+      csvRows.push(headers.map(h => {
+        const v = row[h] || '';
+        return v.includes(',') || v.includes('"') || v.includes('\n') ? `"${v.replace(/"/g, '""')}"` : v;
+      }).join(','));
+    }
+    const bom = '\uFEFF';
+    const blob = new Blob([bom + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `carteira_clientes_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${data.length} registros exportados em CSV`);
+  }, [buildExportData]);
+
+  const handleExportExcel = useCallback(() => {
+    const data = buildExportData();
+    if (data.length === 0) { toast.error('Nenhum dado para exportar'); return; }
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Clientes');
+    XLSX.writeFile(wb, `carteira_clientes_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    toast.success(`${data.length} registros exportados em Excel`);
+  }, [buildExportData]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -178,10 +221,20 @@ export default function CarteiraGeralPage() {
           <h1 className="text-2xl font-bold text-foreground">Carteira Geral</h1>
           <p className="text-sm text-muted-foreground">Visão geral de todos os clientes importados</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
-          <Upload className="h-4 w-4 mr-1.5" />
-          Importar Dados
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleExportCSV}>
+            <Download className="h-4 w-4 mr-1.5" />
+            CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleExportExcel}>
+            <Download className="h-4 w-4 mr-1.5" />
+            Excel
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+            <Upload className="h-4 w-4 mr-1.5" />
+            Importar
+          </Button>
+        </div>
       </div>
 
       <ImportWizard open={importOpen} onOpenChange={setImportOpen} onSuccess={loadData} />
