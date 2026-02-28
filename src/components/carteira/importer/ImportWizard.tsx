@@ -696,7 +696,7 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
             </Button>
             <Button
               size="sm"
-              disabled={step === 'mapping' && !hasClientUrl}
+              disabled={false}
               onClick={() => {
                 const next = WIZARD_STEPS[stepIdx + 1];
                 if (next) setStep(next.key);
