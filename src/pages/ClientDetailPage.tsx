@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import ClientInteractionHistory from '@/components/carteira/ClientInteractionHistory';
+import { usePermissions } from '@/hooks/usePermissions';
 import {
   ArrowLeft, Save, Loader2, Edit2, Check, X, Plus, User, Globe, DollarSign,
   Phone, Mail, Calendar, BarChart3, Building2, Shield, Settings, Trash2,
