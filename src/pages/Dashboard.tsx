@@ -27,6 +27,7 @@ import AssignBriefingDialog from '@/components/briefing/AssignBriefingDialog';
 import BrandAssetsDialog from '@/components/briefing/BrandAssetsDialog';
 import BulkPhotoUploadDialog from '@/components/briefing/BulkPhotoUploadDialog';
 import BulkAssignDialog from '@/components/briefing/BulkAssignDialog';
+import { usePermissions } from '@/hooks/usePermissions';
 interface ImageWithRequest {
   id: string;
   image_type: string;
