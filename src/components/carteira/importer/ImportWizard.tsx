@@ -270,7 +270,12 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
 
     for (const chunk of chunks) {
       const { error } = await supabase.from('clients' as any).upsert(chunk, { onConflict: 'client_url' }) as any;
-      if (error) { errors += chunk.length; } else { success += chunk.length; }
+      if (error) {
+        console.error('Import chunk error:', error);
+        errors += chunk.length;
+      } else {
+        success += chunk.length;
+      }
     }
     setImportResult({ success, errors });
     setImporting(false);
@@ -278,7 +283,8 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
       toast.success(`${success} clientes importados!`);
       onSuccess();
     } else {
-      toast.warning(`${success} importados, ${errors} com erro`);
+      toast.warning(`${success} importados, ${errors} com erro. Verifique o console para detalhes.`);
+      if (success > 0) onSuccess();
     }
   };
 
