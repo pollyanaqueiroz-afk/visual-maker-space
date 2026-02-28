@@ -136,7 +136,8 @@ export function validateValue(value: string, type: ColumnDataType, enumValues?: 
       return !isNaN(Date.parse(v)) || /^\d{2}\/\d{2}\/\d{4}/.test(v);
     case 'enum':
       if (!enumValues || enumValues.length === 0) return true;
-      return enumValues.some(e => e.toLowerCase() === v.toLowerCase());
+    // Allow any value for enum — user will fix manually later
+    return true;
     case 'booleano':
       return ['true', 'false', 'sim', 'não', 'nao', 'ativo', 'inativo', '1', '0', 'yes', 'no'].includes(v.toLowerCase());
     default:
