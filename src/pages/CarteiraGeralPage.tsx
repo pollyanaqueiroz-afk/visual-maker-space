@@ -124,14 +124,39 @@ export default function CarteiraGeralPage() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // Filter by search only
+  // Extract unique filter options
+  const filterOptions = useMemo(() => {
+    const planos = new Set<string>();
+    const css = new Set<string>();
+    const statuses = new Set<string>();
+    for (const c of clientRecords) {
+      if (c.plano_contratado) planos.add(c.plano_contratado);
+      if (c.nome_do_cs_atual) css.add(c.nome_do_cs_atual);
+      if (c.status_financeiro) statuses.add(c.status_financeiro);
+    }
+    return {
+      planos: [...planos].sort(),
+      css: [...css].sort(),
+      statuses: [...statuses].sort(),
+    };
+  }, [clientRecords]);
+
+  const activeFilterCount = [filterPlano, filterCs, filterStatus].filter(f => f !== '__all__').length;
+
+  // Filter
   const filtered = useMemo(() => {
-    if (!search) return clientRecords;
-    const q = search.toLowerCase();
-    return clientRecords.filter(cr =>
-      Object.values(cr).some(v => v != null && String(v).toLowerCase().includes(q))
-    );
-  }, [clientRecords, search]);
+    let result = clientRecords;
+    if (filterPlano !== '__all__') result = result.filter(c => c.plano_contratado === filterPlano);
+    if (filterCs !== '__all__') result = result.filter(c => c.nome_do_cs_atual === filterCs);
+    if (filterStatus !== '__all__') result = result.filter(c => c.status_financeiro === filterStatus);
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter(cr =>
+        Object.values(cr).some(v => v != null && String(v).toLowerCase().includes(q))
+      );
+    }
+    return result;
+  }, [clientRecords, search, filterPlano, filterCs, filterStatus]);
 
   const stats = useMemo(() => ({
     total: clientRecords.length,
