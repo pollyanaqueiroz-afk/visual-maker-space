@@ -16,6 +16,7 @@ import { ptBR } from 'date-fns/locale';
 import { Plus, Video, Clock, User, Trash2, Edit2, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Loader2, CheckCircle, FileText, Star, RefreshCw, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface Meeting {
   id: string;
@@ -102,6 +103,10 @@ const emptyForm = {
   };
 
 export default function SchedulingPage() {
+  const { hasPermission } = usePermissions();
+  const canCreate = hasPermission('agendamento.create');
+  const canEdit = hasPermission('agendamento.edit');
+  const canDelete = hasPermission('agendamento.delete');
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -499,11 +504,13 @@ export default function SchedulingPage() {
           <p className="text-sm text-muted-foreground">Gerencie reuniões e calls com clientes</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => handleOpenNew()}>
-              <Plus className="h-4 w-4 mr-2" /> Nova Reunião
-            </Button>
-          </DialogTrigger>
+          {canCreate && (
+            <DialogTrigger asChild>
+              <Button onClick={() => handleOpenNew()}>
+                <Plus className="h-4 w-4 mr-2" /> Nova Reunião
+              </Button>
+            </DialogTrigger>
+          )}
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingId ? 'Editar Reunião' : 'Nova Reunião'}</DialogTitle>
@@ -867,12 +874,16 @@ export default function SchedulingPage() {
                               Reagendar
                             </Button>
                           )}
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(m)}>
-                            <Edit2 className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(m.id)}>
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
+                          {canEdit && (
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(m)}>
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          {canDelete && (
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(m.id)}>
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </CardContent>

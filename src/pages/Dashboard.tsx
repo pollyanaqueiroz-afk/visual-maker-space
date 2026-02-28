@@ -27,6 +27,7 @@ import AssignBriefingDialog from '@/components/briefing/AssignBriefingDialog';
 import BrandAssetsDialog from '@/components/briefing/BrandAssetsDialog';
 import BulkPhotoUploadDialog from '@/components/briefing/BulkPhotoUploadDialog';
 import BulkAssignDialog from '@/components/briefing/BulkAssignDialog';
+import { usePermissions } from '@/hooks/usePermissions';
 interface ImageWithRequest {
   id: string;
   image_type: string;
@@ -61,6 +62,10 @@ interface ReviewRecord {
 }
 
 export default function Dashboard() {
+  const { hasPermission } = usePermissions();
+  const canCreate = hasPermission('briefings.create');
+  const canEdit = hasPermission('briefings.edit');
+  const canAssign = hasPermission('briefings.assign');
   const [images, setImages] = useState<ImageWithRequest[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
   const [reviews, setReviews] = useState<ReviewRecord[]>([]);
@@ -400,8 +405,8 @@ export default function Dashboard() {
           <TabsContent value="artes" className="space-y-6">
             {/* Filters */}
             <div className="flex flex-wrap items-center gap-4">
-              <ImportBriefingDialog onImported={fetchData} />
-              <BulkPhotoUploadDialog onUploaded={fetchData} />
+              {canCreate && <ImportBriefingDialog onImported={fetchData} />}
+              {canCreate && <BulkPhotoUploadDialog onUploaded={fetchData} />}
               <div className="relative w-56">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -463,20 +468,24 @@ export default function Dashboard() {
               {selectedIds.size > 0 && (
                 <div className="flex items-center gap-3 ml-auto bg-primary/10 rounded-lg px-4 py-2">
                   <span className="text-sm font-medium">{selectedIds.size} selecionada(s)</span>
-                  <Select onValueChange={(status) => handleBulkStatusChange(status as RequestStatus)}>
-                    <SelectTrigger className="w-44 h-8 text-sm">
-                      <SelectValue placeholder="Alterar status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(STATUS_LABELS).map(([key, label]) => (
-                        <SelectItem key={key} value={key}>{label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button size="sm" onClick={() => setBulkAssignOpen(true)}>
-                    <Send className="h-4 w-4 mr-1" />
-                    Enviar para Designer
-                  </Button>
+                  {canEdit && (
+                    <Select onValueChange={(status) => handleBulkStatusChange(status as RequestStatus)}>
+                      <SelectTrigger className="w-44 h-8 text-sm">
+                        <SelectValue placeholder="Alterar status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                          <SelectItem key={key} value={key}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {canAssign && (
+                    <Button size="sm" onClick={() => setBulkAssignOpen(true)}>
+                      <Send className="h-4 w-4 mr-1" />
+                      Enviar para Designer
+                    </Button>
+                  )}
                   <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
                     Limpar seleção
                   </Button>

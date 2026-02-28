@@ -16,6 +16,7 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface KanbanColumn {
   id: string;
@@ -44,6 +45,9 @@ const PRESET_COLORS = [
 
 export default function KanbanPage() {
   const navigate = useNavigate();
+  const { hasPermission } = usePermissions();
+  const canEdit = hasPermission('kanban.edit');
+  const canManageColumns = hasPermission('kanban.manage_columns');
   const [columns, setColumns] = useState<KanbanColumn[]>([]);
   const [clients, setClients] = useState<ClientCard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -116,7 +120,7 @@ export default function KanbanPage() {
   }, [columns, filteredClients]);
 
   // Drag and drop
-  const handleDragStart = (clientId: string) => setDraggedClient(clientId);
+  const handleDragStart = (clientId: string) => { if (canEdit) setDraggedClient(clientId); };
   const handleDragEnd = () => { setDraggedClient(null); setDragOverColumn(null); };
 
   const handleDrop = async (columnId: string) => {
@@ -213,7 +217,7 @@ export default function KanbanPage() {
             <h3 className="text-sm font-semibold text-foreground">{title}</h3>
             <Badge variant="secondary" className="text-[10px] h-5">{cards.length}</Badge>
           </div>
-          {isCustom && (
+          {isCustom && canManageColumns && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-7 w-7">
@@ -239,12 +243,12 @@ export default function KanbanPage() {
           {cards.map(client => (
             <Card
               key={client.id}
-              draggable
+              draggable={canEdit}
               onDragStart={() => handleDragStart(client.id)}
               onDragEnd={handleDragEnd}
-              className={`cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow ${
-                draggedClient === client.id ? 'opacity-50' : ''
-              }`}
+              className={`hover:shadow-md transition-shadow ${
+                canEdit ? 'cursor-grab active:cursor-grabbing' : ''
+              } ${draggedClient === client.id ? 'opacity-50' : ''}`}
             >
               <CardContent className="p-3 space-y-2">
                 <div className="flex items-start justify-between gap-2">
@@ -320,9 +324,11 @@ export default function KanbanPage() {
               className="pl-9 h-9 text-sm w-[220px]"
             />
           </div>
-          <Button variant="outline" size="sm" onClick={openNewColumn}>
-            <Plus className="h-4 w-4 mr-1" /> Coluna
-          </Button>
+          {canManageColumns && (
+            <Button variant="outline" size="sm" onClick={openNewColumn}>
+              <Plus className="h-4 w-4 mr-1" /> Coluna
+            </Button>
+          )}
         </div>
       </div>
 
@@ -349,15 +355,17 @@ export default function KanbanPage() {
           {renderColumn('__unassigned', 'Sem Coluna', '#94a3b8', false)}
 
           {/* Add column placeholder */}
-          <div className="flex-shrink-0 w-[300px] flex items-center justify-center">
-            <Button
-              variant="ghost"
-              className="h-full w-full border-2 border-dashed border-border/50 rounded-lg text-muted-foreground hover:border-primary/30 hover:text-primary min-h-[120px]"
-              onClick={openNewColumn}
-            >
-              <Plus className="h-5 w-5 mr-2" /> Nova Coluna
-            </Button>
-          </div>
+          {canManageColumns && (
+            <div className="flex-shrink-0 w-[300px] flex items-center justify-center">
+              <Button
+                variant="ghost"
+                className="h-full w-full border-2 border-dashed border-border/50 rounded-lg text-muted-foreground hover:border-primary/30 hover:text-primary min-h-[120px]"
+                onClick={openNewColumn}
+              >
+                <Plus className="h-5 w-5 mr-2" /> Nova Coluna
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
