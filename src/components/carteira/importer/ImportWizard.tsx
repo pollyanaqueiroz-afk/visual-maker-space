@@ -718,7 +718,8 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
                 </div>
               )}
             </div>
-          )}
+            );
+          })()}
         </div>
 
         {/* Footer Navigation */}
