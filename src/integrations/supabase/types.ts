@@ -385,6 +385,7 @@ export type Database = {
           forma_de_pagamento: string | null
           id: string
           id_curseduca: string | null
+          kanban_column_id: string | null
           membros_do_mes_atual: string | null
           metrica_de_sucesso_acordada_na_venda: string | null
           nome_antigo: string | null
@@ -445,6 +446,7 @@ export type Database = {
           forma_de_pagamento?: string | null
           id?: string
           id_curseduca?: string | null
+          kanban_column_id?: string | null
           membros_do_mes_atual?: string | null
           metrica_de_sucesso_acordada_na_venda?: string | null
           nome_antigo?: string | null
@@ -505,6 +507,7 @@ export type Database = {
           forma_de_pagamento?: string | null
           id?: string
           id_curseduca?: string | null
+          kanban_column_id?: string | null
           membros_do_mes_atual?: string | null
           metrica_de_sucesso_acordada_na_venda?: string | null
           nome_antigo?: string | null
@@ -525,6 +528,38 @@ export type Database = {
           valor_mensal?: string | null
           valor_total_devido?: string | null
           variacao_de_quantidade_de_membros_por_mes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_kanban_column_id_fkey"
+            columns: ["kanban_column_id"]
+            isOneToOne: false
+            referencedRelation: "kanban_columns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kanban_columns: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          sort_order: number
+          title: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+          title: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+          title?: string
         }
         Relationships: []
       }
