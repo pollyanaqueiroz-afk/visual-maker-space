@@ -217,7 +217,7 @@ export default function KanbanPage() {
             <h3 className="text-sm font-semibold text-foreground">{title}</h3>
             <Badge variant="secondary" className="text-[10px] h-5">{cards.length}</Badge>
           </div>
-          {isCustom && (
+          {isCustom && canManageColumns && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-7 w-7">
