@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS clients_id_curseduca_unique ON public.clients (id_curseduca) WHERE id_curseduca IS NOT NULL;
