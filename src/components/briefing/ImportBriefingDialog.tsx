@@ -6,6 +6,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import { format } from 'date-fns';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs`;
+
 import { ptBR } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -13,11 +14,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { Upload, FileText, Loader2, Check, AlertCircle, CalendarIcon } from 'lucide-react';
+import { Upload, FileText, Loader2, Check, AlertCircle, CalendarIcon, Pencil, Plus, Trash2 } from 'lucide-react';
 
 interface ParsedImage {
   image_type: string;
@@ -40,7 +45,17 @@ interface ParsedBriefing {
   images: ParsedImage[];
 }
 
-type Step = 'upload' | 'parsing' | 'duplicate' | 'preview' | 'saving' | 'done' | 'error';
+type Step = 'upload' | 'parsing' | 'confirm' | 'duplicate' | 'preview' | 'saving' | 'done' | 'error';
+
+const IMAGE_TYPE_OPTIONS = [
+  { value: 'login', label: 'Área de Login' },
+  { value: 'banner_vitrine', label: 'Banner Vitrine Principal' },
+  { value: 'product_cover', label: 'Capa de Produto' },
+  { value: 'trail_banner', label: 'Banner de Trilha' },
+  { value: 'challenge_banner', label: 'Banner de Desafio' },
+  { value: 'community_banner', label: 'Banner de Comunidade' },
+  { value: 'app_mockup', label: 'Mockup do Aplicativo' },
+];
 
 interface Props {
   onImported: () => void;
@@ -91,7 +106,6 @@ export default function ImportBriefingDialog({ onImported }: Props) {
       }
       return pages.join('\n');
     }
-    // For other files, read as text
     return await file.text();
   };
 
@@ -106,7 +120,7 @@ export default function ImportBriefingDialog({ onImported }: Props) {
       const text = await extractText(file);
 
       if (!text || text.trim().length < 50) {
-        throw new Error('Não foi possível extrair texto suficiente do documento. Para PDFs, use o formato DOCX.');
+        throw new Error('Não foi possível extrair texto suficiente do documento.');
       }
 
       const response = await supabase.functions.invoke('parse-briefing', {
@@ -116,43 +130,94 @@ export default function ImportBriefingDialog({ onImported }: Props) {
       if (response.error) throw new Error(response.error.message || 'Erro ao processar');
 
       const data = response.data?.data;
-      if (!data || !data.platform_url) {
+      if (!data) {
         throw new Error('Não foi possível extrair os dados do briefing');
       }
 
-      // Check for duplicate by platform_url
-      const { data: existing } = await (supabase
-        .from('briefing_requests')
-        .select('id, created_at, has_trail, has_challenge, has_community, brand_drive_link, briefing_images:briefing_images(id, image_type, product_name, image_text)')
-        .eq('platform_url', data.platform_url) as any)
-        .order('created_at', { ascending: false })
-        .limit(1);
+      // Ensure images array exists
+      if (!data.images) data.images = [];
 
       setParsed(data);
-
-      if (existing && existing.length > 0) {
-        const ex = existing[0];
-        setDuplicateInfo({
-          date: new Date(ex.created_at).toLocaleDateString('pt-BR'),
-          imageCount: ex.briefing_images?.length || 0,
-          has_trail: ex.has_trail,
-          has_challenge: ex.has_challenge,
-          has_community: ex.has_community,
-          brand_drive_link: ex.brand_drive_link,
-          images: ex.briefing_images || [],
-        });
-        setStep('duplicate');
-      } else {
-        setStep('preview');
-      }
+      setStep('confirm');
     } catch (err: any) {
       console.error('Import error:', err);
       setErrorMsg(err.message || 'Erro ao importar documento');
       setStep('error');
     }
 
-    // Reset file input
     if (fileRef.current) fileRef.current.value = '';
+  };
+
+  const updateParsedField = (field: keyof ParsedBriefing, value: any) => {
+    if (!parsed) return;
+    setParsed({ ...parsed, [field]: value });
+  };
+
+  const updateImage = (index: number, field: keyof ParsedImage, value: string) => {
+    if (!parsed) return;
+    const images = [...parsed.images];
+    images[index] = { ...images[index], [field]: value };
+    setParsed({ ...parsed, images });
+  };
+
+  const removeImage = (index: number) => {
+    if (!parsed) return;
+    const images = parsed.images.filter((_, i) => i !== index);
+    setParsed({ ...parsed, images });
+  };
+
+  const addImage = () => {
+    if (!parsed) return;
+    setParsed({
+      ...parsed,
+      images: [
+        ...parsed.images,
+        {
+          image_type: 'banner_vitrine',
+          product_name: '',
+          image_text: '',
+          font_suggestion: '',
+          element_suggestion: '',
+          professional_photo_url: '',
+          orientation: '',
+          observations: '',
+          extra_info: '',
+        },
+      ],
+    });
+  };
+
+  const handleConfirmAndProceed = async () => {
+    if (!parsed) return;
+
+    if (!parsed.platform_url?.trim()) {
+      toast.error('A URL da plataforma é obrigatória.');
+      return;
+    }
+
+    // Check for duplicate
+    const { data: existing } = await (supabase
+      .from('briefing_requests')
+      .select('id, created_at, has_trail, has_challenge, has_community, brand_drive_link, briefing_images:briefing_images(id, image_type, product_name, image_text)')
+      .eq('platform_url', parsed.platform_url) as any)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      const ex = existing[0];
+      setDuplicateInfo({
+        date: new Date(ex.created_at).toLocaleDateString('pt-BR'),
+        imageCount: ex.briefing_images?.length || 0,
+        has_trail: ex.has_trail,
+        has_challenge: ex.has_challenge,
+        has_community: ex.has_community,
+        brand_drive_link: ex.brand_drive_link,
+        images: ex.briefing_images || [],
+      });
+      setStep('duplicate');
+    } else {
+      setStep('preview');
+    }
   };
 
   const handleSave = async () => {
@@ -243,6 +308,211 @@ export default function ImportBriefingDialog({ onImported }: Props) {
               <p className="font-medium">Analisando documento...</p>
               <p className="text-sm text-muted-foreground mt-1">{fileName}</p>
               <p className="text-xs text-muted-foreground mt-2">Extraindo dados com IA</p>
+            </div>
+          </div>
+        )}
+
+        {step === 'confirm' && parsed && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-warning/10 border border-warning/20">
+              <Pencil className="h-4 w-4 text-warning shrink-0" />
+              <p className="text-sm text-warning">
+                Revise os dados extraídos abaixo. Corrija o que estiver errado antes de prosseguir.
+              </p>
+            </div>
+
+            {/* Platform info */}
+            <Card>
+              <CardContent className="pt-4 space-y-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Dados da Plataforma</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">URL da Plataforma *</Label>
+                    <Input
+                      value={parsed.platform_url || ''}
+                      onChange={(e) => updateParsedField('platform_url', e.target.value)}
+                      placeholder="https://plataforma.curseduca.pro"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Link do Drive (Identidade Visual)</Label>
+                    <Input
+                      value={parsed.brand_drive_link || ''}
+                      onChange={(e) => updateParsedField('brand_drive_link', e.target.value)}
+                      placeholder="https://drive.google.com/..."
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-4 pt-1">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={parsed.has_trail}
+                      onCheckedChange={(v) => updateParsedField('has_trail', v)}
+                    />
+                    <Label className="text-sm">Trilha</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={parsed.has_challenge}
+                      onCheckedChange={(v) => updateParsedField('has_challenge', v)}
+                    />
+                    <Label className="text-sm">Desafio</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={parsed.has_community}
+                      onCheckedChange={(v) => updateParsedField('has_community', v)}
+                    />
+                    <Label className="text-sm">Comunidade</Label>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Images */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  {parsed.images.length} Arte(s) Detectada(s)
+                </p>
+                <Button size="sm" variant="outline" onClick={addImage} className="gap-1 h-7 text-xs">
+                  <Plus className="h-3 w-3" /> Adicionar arte
+                </Button>
+              </div>
+
+              {parsed.images.length === 0 && (
+                <Card>
+                  <CardContent className="py-6 text-center text-sm text-muted-foreground">
+                    Nenhuma arte detectada. Adicione manualmente se necessário.
+                  </CardContent>
+                </Card>
+              )}
+
+              {parsed.images.map((img, idx) => (
+                <Card key={idx} className="border">
+                  <CardContent className="pt-3 pb-3 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs">#{idx + 1}</Badge>
+                        <Select
+                          value={img.image_type}
+                          onValueChange={(v) => updateImage(idx, 'image_type', v)}
+                        >
+                          <SelectTrigger className="h-7 text-xs w-48">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {IMAGE_TYPE_OPTIONS.map((opt) => (
+                              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-destructive hover:text-destructive"
+                        onClick={() => removeImage(idx)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Nome do Produto</Label>
+                        <Input
+                          className="h-8 text-xs"
+                          value={img.product_name || ''}
+                          onChange={(e) => updateImage(idx, 'product_name', e.target.value)}
+                          placeholder="Nome do produto/módulo"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Orientação</Label>
+                        <Select
+                          value={img.orientation || 'none'}
+                          onValueChange={(v) => updateImage(idx, 'orientation', v === 'none' ? '' : v)}
+                        >
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue placeholder="Não definida" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Não definida</SelectItem>
+                            <SelectItem value="horizontal">Horizontal</SelectItem>
+                            <SelectItem value="vertical">Vertical</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Texto da Imagem</Label>
+                      <Textarea
+                        className="text-xs min-h-[40px]"
+                        value={img.image_text || ''}
+                        onChange={(e) => updateImage(idx, 'image_text', e.target.value)}
+                        placeholder="Texto que deve aparecer na arte"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Fonte Sugerida</Label>
+                        <Input
+                          className="h-8 text-xs"
+                          value={img.font_suggestion || ''}
+                          onChange={(e) => updateImage(idx, 'font_suggestion', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Foto do Profissional (URL)</Label>
+                        <Input
+                          className="h-8 text-xs"
+                          value={img.professional_photo_url || ''}
+                          onChange={(e) => updateImage(idx, 'professional_photo_url', e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Elemento / Imagem Sugerida</Label>
+                      <Input
+                        className="h-8 text-xs"
+                        value={img.element_suggestion || ''}
+                        onChange={(e) => updateImage(idx, 'element_suggestion', e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Observações</Label>
+                      <Textarea
+                        className="text-xs min-h-[40px]"
+                        value={img.observations || ''}
+                        onChange={(e) => updateImage(idx, 'observations', e.target.value)}
+                      />
+                    </div>
+
+                    {img.extra_info && (
+                      <div className="space-y-1">
+                        <Label className="text-xs text-primary">Outras Informações (detectada pela IA)</Label>
+                        <Textarea
+                          className="text-xs min-h-[40px] border-primary/30"
+                          value={img.extra_info || ''}
+                          onChange={(e) => updateImage(idx, 'extra_info', e.target.value)}
+                        />
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <div className="flex gap-3 justify-end pt-2">
+              <Button variant="outline" onClick={reset}>Cancelar</Button>
+              <Button onClick={handleConfirmAndProceed} className="gap-2">
+                <Check className="h-4 w-4" /> Confirmar dados
+              </Button>
             </div>
           </div>
         )}
@@ -412,7 +682,9 @@ export default function ImportBriefingDialog({ onImported }: Props) {
             </div>
 
             <div className="flex gap-3 justify-end pt-2">
-              <Button variant="outline" onClick={reset}>Cancelar</Button>
+              <Button variant="outline" onClick={() => setStep('confirm')}>
+                <Pencil className="h-4 w-4 mr-1" /> Voltar e editar
+              </Button>
               <Button onClick={handleSave} className="gap-2">
                 <Check className="h-4 w-4" /> Confirmar e Importar
               </Button>
