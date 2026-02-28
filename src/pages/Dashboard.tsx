@@ -179,6 +179,21 @@ export default function Dashboard() {
     }
   };
 
+  const handleBulkStatusChange = async (status: RequestStatus) => {
+    const ids = Array.from(selectedIds);
+    const { error } = await supabase
+      .from('briefing_images')
+      .update({ status } as any)
+      .in('id', ids);
+    if (error) {
+      toast.error('Erro ao atualizar status em lote');
+    } else {
+      toast.success(`${ids.length} arte(s) atualizada(s) para "${STATUS_LABELS[status]}"`);
+      setSelectedIds(new Set());
+      fetchData();
+    }
+  };
+
   const isOverdue = (img: ImageWithRequest) => {
     if (img.status === 'completed' || img.status === 'cancelled') return false;
     const deadline = img.deadline;
@@ -448,6 +463,16 @@ export default function Dashboard() {
               {selectedIds.size > 0 && (
                 <div className="flex items-center gap-3 ml-auto bg-primary/10 rounded-lg px-4 py-2">
                   <span className="text-sm font-medium">{selectedIds.size} selecionada(s)</span>
+                  <Select onValueChange={(status) => handleBulkStatusChange(status as RequestStatus)}>
+                    <SelectTrigger className="w-44 h-8 text-sm">
+                      <SelectValue placeholder="Alterar status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                        <SelectItem key={key} value={key}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <Button size="sm" onClick={() => setBulkAssignOpen(true)}>
                     <Send className="h-4 w-4 mr-1" />
                     Enviar para Designer
