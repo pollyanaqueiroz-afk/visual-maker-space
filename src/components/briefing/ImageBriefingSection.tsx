@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
 import { ImageBriefingFormData, IMAGE_DIMENSIONS } from '@/types/briefing';
-import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, Copy } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Props {
@@ -69,8 +69,15 @@ export default function ImageBriefingSection({
         {(data.enabled || required) && (
           <div className="space-y-4 pt-2">
             {showCopyPrevious && onCopyPrevious && (
-              <Button type="button" variant="outline" size="sm" onClick={onCopyPrevious}>
-                Copiar estilo/fonte da imagem anterior
+              <Button
+                type="button"
+                variant="secondary"
+                size="default"
+                onClick={onCopyPrevious}
+                className="gap-2 border-2 border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary font-medium shadow-sm"
+              >
+                <Copy className="h-4 w-4" />
+                Copiar estilo / fonte da capa anterior
               </Button>
             )}
 
