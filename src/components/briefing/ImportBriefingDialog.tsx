@@ -117,31 +117,56 @@ export default function ImportBriefingDialog({ onImported }: Props) {
     setStep('parsing');
 
     try {
-      const text = await extractText(file);
+      let text: string;
+      try {
+        text = await extractText(file);
+      } catch (extractErr: any) {
+        const ext = file.name.split('.').pop()?.toLowerCase();
+        throw new Error(
+          `Falha ao ler o arquivo ${ext?.toUpperCase() || ''}: ${extractErr.message || 'formato não suportado ou arquivo corrompido.'}`
+        );
+      }
 
       if (!text || text.trim().length < 50) {
-        throw new Error('Não foi possível extrair texto suficiente do documento.');
+        throw new Error(
+          `O documento "${file.name}" não contém texto suficiente para análise (apenas ${text?.trim().length || 0} caracteres encontrados). Verifique se o arquivo não está vazio, protegido ou é uma imagem escaneada sem OCR.`
+        );
       }
 
       const response = await supabase.functions.invoke('parse-briefing', {
         body: { documentText: text },
       });
 
-      if (response.error) throw new Error(response.error.message || 'Erro ao processar');
+      if (response.error) {
+        const msg = response.error.message || '';
+        if (msg.includes('429') || msg.includes('rate') || msg.includes('limite')) {
+          throw new Error('Limite de requisições excedido. Aguarde alguns minutos e tente novamente.');
+        }
+        if (msg.includes('402') || msg.includes('crédito')) {
+          throw new Error('Créditos de IA insuficientes. Contate o administrador.');
+        }
+        throw new Error(`Erro ao processar com IA: ${msg}`);
+      }
+
+      // Check for error in response body (edge function may return 200 with error)
+      if (response.data?.error) {
+        throw new Error(`Erro da IA: ${response.data.error}`);
+      }
 
       const data = response.data?.data;
       if (!data) {
-        throw new Error('Não foi possível extrair os dados do briefing');
+        throw new Error(
+          'A IA não conseguiu extrair dados estruturados deste documento. O formato pode ser muito diferente do esperado. Tente um arquivo DOCX ou PDF com o briefing em texto.'
+        );
       }
 
-      // Ensure images array exists
       if (!data.images) data.images = [];
 
       setParsed(data);
       setStep('confirm');
     } catch (err: any) {
       console.error('Import error:', err);
-      setErrorMsg(err.message || 'Erro ao importar documento');
+      setErrorMsg(err.message || 'Erro desconhecido ao importar documento.');
       setStep('error');
     }
 
@@ -714,9 +739,10 @@ export default function ImportBriefingDialog({ onImported }: Props) {
             <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
               <AlertCircle className="h-8 w-8 text-destructive" />
             </div>
-            <div className="text-center">
+            <div className="text-center max-w-md">
               <p className="font-medium">Erro na importação</p>
-              <p className="text-sm text-muted-foreground mt-1">{errorMsg}</p>
+              <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap break-words">{errorMsg}</p>
+              {fileName && <p className="text-xs text-muted-foreground mt-3">Arquivo: {fileName}</p>}
             </div>
             <Button variant="outline" onClick={reset}>Tentar novamente</Button>
           </div>
