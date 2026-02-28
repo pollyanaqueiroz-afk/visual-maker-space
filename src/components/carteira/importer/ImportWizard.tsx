@@ -653,7 +653,7 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
                 </>
               ) : (
                 <div className="text-center space-y-4 py-8">
-                  <CheckCircle className="h-12 w-12 mx-auto text-green-500" />
+                  <CheckCircle className="h-12 w-12 mx-auto text-primary" />
                   <div>
                     <p className="text-lg font-bold">{importResult.success} registros importados</p>
                     {importResult.errors > 0 && (
