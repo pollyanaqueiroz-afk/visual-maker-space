@@ -41,6 +41,7 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
   const [previewPage, setPreviewPage] = useState(0);
   const [showOnlyErrors, setShowOnlyErrors] = useState(false);
   const [editingCell, setEditingCell] = useState<{ row: number; col: string } | null>(null);
+  const [existingIds, setExistingIds] = useState<Set<string>>(new Set());
   const ROWS_PER_PAGE = 50;
 
   const reset = useCallback(() => {
@@ -56,6 +57,23 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
     setPreviewPage(0);
     setShowOnlyErrors(false);
     setEditingCell(null);
+    setExistingIds(new Set());
+  }, []);
+
+  // Fetch existing id_curseduca values for new vs update detection
+  const fetchExistingIds = useCallback(async () => {
+    const ids = new Set<string>();
+    let from = 0;
+    const PAGE = 1000;
+    let hasMore = true;
+    while (hasMore) {
+      const { data } = await (supabase.from('clients' as any).select('id_curseduca').not('id_curseduca', 'is', null).range(from, from + PAGE - 1) as any);
+      if (!data || data.length === 0) { hasMore = false; break; }
+      for (const r of data) if (r.id_curseduca) ids.add(String(r.id_curseduca));
+      hasMore = data.length === PAGE;
+      from += PAGE;
+    }
+    setExistingIds(ids);
   }, []);
 
   const stepIdx = WIZARD_STEPS.findIndex(s => s.key === step);
@@ -275,7 +293,7 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
     for (let i = 0; i < data.length; i += 50) chunks.push(data.slice(i, i + 50));
 
     for (const chunk of chunks) {
-      const { error } = await supabase.from('clients' as any).upsert(chunk, { onConflict: 'client_url' }) as any;
+      const { error } = await supabase.from('clients' as any).upsert(chunk, { onConflict: 'id_curseduca' }) as any;
       if (error) {
         console.error('Import chunk error:', error);
         errors += chunk.length;
@@ -631,19 +649,31 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
           )}
 
           {/* ═══ STEP 5: CONFIRM ═══ */}
-          {step === 'confirm' && (
+          {step === 'confirm' && (() => {
+            const importData = buildImportData();
+            const newCount = importData.filter(r => !r.id_curseduca || !existingIds.has(String(r.id_curseduca))).length;
+            const updateCount = importData.length - newCount;
+            return (
             <div className="space-y-6 py-4">
               {!importResult ? (
                 <>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div className="border rounded-lg p-4 text-center">
-                      <p className="text-3xl font-bold text-primary">{buildImportData().length}</p>
-                      <p className="text-xs text-muted-foreground">Registros para importar</p>
+                      <p className="text-3xl font-bold text-primary">{importData.length}</p>
+                      <p className="text-xs text-muted-foreground">Total de registros</p>
                     </div>
-                    <div className="border rounded-lg p-4 text-center">
-                      <p className="text-3xl font-bold">{activeCols.length}</p>
-                      <p className="text-xs text-muted-foreground">Colunas mapeadas</p>
+                    <div className="border rounded-lg p-4 text-center bg-green-500/10">
+                      <p className="text-3xl font-bold text-green-600">{newCount}</p>
+                      <p className="text-xs text-muted-foreground">Novos clientes</p>
                     </div>
+                    <div className="border rounded-lg p-4 text-center bg-blue-500/10">
+                      <p className="text-3xl font-bold text-blue-600">{updateCount}</p>
+                      <p className="text-xs text-muted-foreground">Serão atualizados</p>
+                    </div>
+                  </div>
+                  <div className="border rounded-lg p-3 text-center">
+                    <p className="text-sm font-medium">{activeCols.length} colunas mapeadas</p>
+                    <p className="text-[11px] text-muted-foreground">Chave de conciliação: <span className="font-mono font-semibold">id_curseduca</span></p>
                   </div>
 
                   {totalErrors > 0 && (
@@ -688,7 +718,8 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
                 </div>
               )}
             </div>
-          )}
+            );
+          })()}
         </div>
 
         {/* Footer Navigation */}
@@ -705,7 +736,10 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
               disabled={false}
               onClick={() => {
                 const next = WIZARD_STEPS[stepIdx + 1];
-                if (next) setStep(next.key);
+                if (next) {
+                  if (next.key === 'confirm') fetchExistingIds();
+                  setStep(next.key);
+                }
               }}
               className="gap-1.5"
             >
