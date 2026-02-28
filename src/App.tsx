@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { PermissionsProvider } from "@/hooks/usePermissions";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
@@ -23,12 +24,14 @@ import CsatPage from "./pages/CsatPage";
 import ClientDetailPage from "./pages/ClientDetailPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
 import KanbanPage from "./pages/KanbanPage";
+import PermissionsPage from "./pages/PermissionsPage";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
+      <PermissionsProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -47,6 +50,7 @@ const App = () => (
               <Route path="kanban" element={<KanbanPage />} />
               <Route path="lideranca" element={<LeadershipDashboard />} />
               <Route path="admin/usuarios" element={<AdminUsersPage />} />
+              <Route path="admin/permissoes" element={<PermissionsPage />} />
             </Route>
             {/* Legacy route redirect */}
             <Route path="/dashboard" element={<Navigate to="/hub/briefings" replace />} />
@@ -60,6 +64,7 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
+      </PermissionsProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

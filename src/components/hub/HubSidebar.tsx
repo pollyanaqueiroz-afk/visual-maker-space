@@ -1,6 +1,7 @@
-import { FileImage, LayoutDashboard, LogOut, CalendarDays, Crown, Briefcase, BarChart3, Package, Headset, Home, Settings, Users, Kanban } from 'lucide-react';
+import { FileImage, LayoutDashboard, LogOut, CalendarDays, Crown, Briefcase, BarChart3, Package, Headset, Home, Settings, Users, Kanban, ShieldCheck } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/hooks/useAuth';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useLocation } from 'react-router-dom';
 import {
   Sidebar,
@@ -20,49 +21,58 @@ import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const implantacaoModules = [
-  { title: 'Gestão de Briefings', url: '/hub/briefings', icon: FileImage },
+  { title: 'Gestão de Briefings', url: '/hub/briefings', icon: FileImage, permission: 'briefings.view' },
 ];
 
 const csModules = [
-  { title: 'Agendamento', url: '/hub/agendamento', icon: CalendarDays },
-  { title: 'Dashboards', url: '/hub/dashboards', icon: BarChart3 },
-  { title: 'Carteira Geral', url: '/hub/carteira', icon: Briefcase },
-  { title: 'Kanban', url: '/hub/kanban', icon: Kanban },
-  { title: 'Dashboard Liderança', url: '/hub/lideranca', icon: Crown },
+  { title: 'Agendamento', url: '/hub/agendamento', icon: CalendarDays, permission: 'agendamento.view' },
+  { title: 'Dashboards', url: '/hub/dashboards', icon: BarChart3, permission: 'dashboards.view' },
+  { title: 'Carteira Geral', url: '/hub/carteira', icon: Briefcase, permission: 'carteira.view' },
+  { title: 'Kanban', url: '/hub/kanban', icon: Kanban, permission: 'kanban.view' },
+  { title: 'Dashboard Liderança', url: '/hub/lideranca', icon: Crown, permission: 'lideranca.view' },
 ];
 
 const adminModules = [
-  { title: 'Usuários e Permissões', url: '/hub/admin/usuarios', icon: Users },
+  { title: 'Usuários e Permissões', url: '/hub/admin/usuarios', icon: Users, permission: 'admin.view' },
+  { title: 'Permissões por Perfil', url: '/hub/admin/permissoes', icon: ShieldCheck, permission: 'admin.manage_permissions' },
 ];
 
 export function HubSidebar() {
   const { state } = useSidebar();
   const { signOut } = useAuth();
+  const { hasPermission, loading: permsLoading } = usePermissions();
   const location = useLocation();
   const collapsed = state === 'collapsed';
 
   const isInGroup = (items: typeof implantacaoModules) =>
     items.some(i => location.pathname.startsWith(i.url));
 
-  const renderItems = (items: typeof implantacaoModules) => (
-    <SidebarMenu>
-      {items.map((item) => (
-        <SidebarMenuItem key={item.title}>
-          <SidebarMenuButton asChild>
-            <NavLink
-              to={item.url}
-              end
-              className="hover:bg-muted/50"
-              activeClassName="bg-muted text-primary font-medium"
-            >
-              <item.icon className="mr-2 h-4 w-4" />
-              {!collapsed && <span>{item.title}</span>}
-            </NavLink>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      ))}
-    </SidebarMenu>
-  );
+  const hasVisibleItems = (items: typeof implantacaoModules) =>
+    items.some(i => hasPermission(i.permission));
+
+  const renderItems = (items: typeof implantacaoModules) => {
+    const visible = items.filter(i => hasPermission(i.permission));
+    if (visible.length === 0) return null;
+    return (
+      <SidebarMenu>
+        {visible.map((item) => (
+          <SidebarMenuItem key={item.title}>
+            <SidebarMenuButton asChild>
+              <NavLink
+                to={item.url}
+                end
+                className="hover:bg-muted/50"
+                activeClassName="bg-muted text-primary font-medium"
+              >
+                <item.icon className="mr-2 h-4 w-4" />
+                {!collapsed && <span>{item.title}</span>}
+              </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        ))}
+      </SidebarMenu>
+    );
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border/50">
@@ -100,6 +110,7 @@ export function HubSidebar() {
         </SidebarGroup>
 
         {/* Implantação Group */}
+        {hasVisibleItems(implantacaoModules) && (
         <SidebarGroup>
           <Collapsible defaultOpen={true}>
             <CollapsibleTrigger className="w-full">
@@ -118,8 +129,10 @@ export function HubSidebar() {
             </CollapsibleContent>
           </Collapsible>
         </SidebarGroup>
+        )}
 
         {/* CS Group */}
+        {hasVisibleItems(csModules) && (
         <SidebarGroup>
           <Collapsible defaultOpen={true}>
             <CollapsibleTrigger className="w-full">
@@ -138,8 +151,10 @@ export function HubSidebar() {
             </CollapsibleContent>
           </Collapsible>
         </SidebarGroup>
+        )}
 
         {/* Administração Group */}
+        {hasVisibleItems(adminModules) && (
         <SidebarGroup>
           <Collapsible defaultOpen={true}>
             <CollapsibleTrigger className="w-full">
@@ -158,6 +173,7 @@ export function HubSidebar() {
             </CollapsibleContent>
           </Collapsible>
         </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="p-3">
