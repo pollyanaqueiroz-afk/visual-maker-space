@@ -235,11 +235,23 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
   // ─── Build import data ───
   const buildImportData = () => {
     const activeCols = mappedColumns.filter(m => !m.ignored && m.dbKey);
-    return rawData.map(row => {
+    return rawData.map((row, idx) => {
       const mapped: Record<string, any> = {};
       for (const col of activeCols) {
         const val = (row[col.csvHeader] || '').trim();
         mapped[col.dbKey] = val || null;
+      }
+      // client_url is required by DB — generate from client_name or index if missing
+      if (!mapped.client_url || String(mapped.client_url).trim().length === 0) {
+        if (mapped.client_name && String(mapped.client_name).trim().length > 0) {
+          mapped.client_url = String(mapped.client_name).trim()
+            .toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, '');
+        } else {
+          mapped.client_url = `import-${Date.now()}-${idx}`;
+        }
       }
       return mapped;
     }).filter(row => row.client_url && String(row.client_url).length > 0);

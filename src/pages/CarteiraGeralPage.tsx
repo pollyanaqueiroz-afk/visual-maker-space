@@ -84,7 +84,25 @@ export default function CarteiraGeralPage() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await (supabase.from('clients' as any).select('*').order('client_name', { ascending: true }) as any);
+    // Fetch all clients (bypass 1000 row default limit)
+    let allData: ClientRecord[] = [];
+    let from = 0;
+    const PAGE_SIZE = 1000;
+    let hasMore = true;
+    while (hasMore) {
+      const { data: page, error: pageError } = await (supabase.from('clients' as any).select('*').order('client_name', { ascending: true }).range(from, from + PAGE_SIZE - 1) as any);
+      if (pageError) {
+        console.error(pageError);
+        toast.error('Erro ao carregar dados');
+        setLoading(false);
+        return;
+      }
+      allData = allData.concat((page || []) as ClientRecord[]);
+      hasMore = (page || []).length === PAGE_SIZE;
+      from += PAGE_SIZE;
+    }
+    const data = allData;
+    const error = null;
 
     if (error) {
       console.error(error);
