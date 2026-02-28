@@ -13,7 +13,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle, CalendarIcon, AlertCircle, Link2, FolderOpen, FileText, Palette, UserCheck, FileSpreadsheet } from 'lucide-react';
+import { Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle, CalendarIcon, AlertCircle, Link2, FolderOpen, FileText, Palette, UserCheck, FileSpreadsheet, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -68,6 +69,7 @@ export default function Dashboard() {
   const [filterType, setFilterType] = useState<string>('all');
   const [filterClient, setFilterClient] = useState<string>('all');
   const [filterOverdue, setFilterOverdue] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
   const topScrollRef = useRef<HTMLDivElement>(null);
@@ -203,6 +205,13 @@ export default function Dashboard() {
     if (filterType !== 'all' && i.image_type !== filterType) return false;
     if (filterClient !== 'all' && i.platform_url !== filterClient) return false;
     if (filterOverdue && !isOverdue(i)) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const clientName = extractClientName(i.platform_url).toLowerCase();
+      const url = i.platform_url.toLowerCase();
+      const requester = i.requester_name.toLowerCase();
+      if (!clientName.includes(q) && !url.includes(q) && !requester.includes(q)) return false;
+    }
     return true;
   });
 
@@ -378,6 +387,15 @@ export default function Dashboard() {
             <div className="flex flex-wrap items-center gap-4">
               <ImportBriefingDialog onImported={fetchData} />
               <BulkPhotoUploadDialog onUploaded={fetchData} />
+              <div className="relative w-56">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por URL ou cliente..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
               <Select value={filterStatus} onValueChange={setFilterStatus}>
                 <SelectTrigger className="w-44">
                   <SelectValue placeholder="Status" />
