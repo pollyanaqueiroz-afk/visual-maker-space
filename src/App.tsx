@@ -22,6 +22,7 @@ import CarteiraGeralPage from "./pages/CarteiraGeralPage";
 import CsatPage from "./pages/CsatPage";
 import ClientDetailPage from "./pages/ClientDetailPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
+import KanbanPage from "./pages/KanbanPage";
 
 const queryClient = new QueryClient();
 
