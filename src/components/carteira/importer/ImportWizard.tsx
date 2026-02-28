@@ -623,7 +623,7 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
                   </div>
 
                   {totalErrors > 0 && (
-                    <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-950/30 p-3 rounded-lg">
+                    <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-lg">
                       <AlertTriangle className="h-4 w-4" />
                       {totalErrors} erros de validação encontrados. Dados serão importados mesmo assim.
                     </div>
