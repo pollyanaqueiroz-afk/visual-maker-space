@@ -736,7 +736,10 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
               disabled={false}
               onClick={() => {
                 const next = WIZARD_STEPS[stepIdx + 1];
-                if (next) setStep(next.key);
+                if (next) {
+                  if (next.key === 'confirm') fetchExistingIds();
+                  setStep(next.key);
+                }
               }}
               className="gap-1.5"
             >
