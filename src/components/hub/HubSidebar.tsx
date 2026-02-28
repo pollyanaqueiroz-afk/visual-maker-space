@@ -47,25 +47,29 @@ export function HubSidebar() {
   const isInGroup = (items: typeof implantacaoModules) =>
     items.some(i => location.pathname.startsWith(i.url));
 
-  const renderItems = (items: typeof implantacaoModules) => (
-    <SidebarMenu>
-      {items.map((item) => (
-        <SidebarMenuItem key={item.title}>
-          <SidebarMenuButton asChild>
-            <NavLink
-              to={item.url}
-              end
-              className="hover:bg-muted/50"
-              activeClassName="bg-muted text-primary font-medium"
-            >
-              <item.icon className="mr-2 h-4 w-4" />
-              {!collapsed && <span>{item.title}</span>}
-            </NavLink>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      ))}
-    </SidebarMenu>
-  );
+  const renderItems = (items: typeof implantacaoModules) => {
+    const visible = items.filter(i => hasPermission(i.permission));
+    if (visible.length === 0) return null;
+    return (
+      <SidebarMenu>
+        {visible.map((item) => (
+          <SidebarMenuItem key={item.title}>
+            <SidebarMenuButton asChild>
+              <NavLink
+                to={item.url}
+                end
+                className="hover:bg-muted/50"
+                activeClassName="bg-muted text-primary font-medium"
+              >
+                <item.icon className="mr-2 h-4 w-4" />
+                {!collapsed && <span>{item.title}</span>}
+              </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        ))}
+      </SidebarMenu>
+    );
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border/50">
