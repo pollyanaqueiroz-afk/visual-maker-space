@@ -304,6 +304,47 @@ export type Database = {
           },
         ]
       }
+      client_interactions: {
+        Row: {
+          client_id: string
+          content: string | null
+          created_at: string
+          created_by: string | null
+          created_by_name: string | null
+          id: string
+          interaction_type: string
+          title: string
+        }
+        Insert: {
+          client_id: string
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          id?: string
+          interaction_type?: string
+          title: string
+        }
+        Update: {
+          client_id?: string
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          id?: string
+          interaction_type?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_interactions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           armazenamento_contratado: string | null

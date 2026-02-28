@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import ClientInteractionHistory from '@/components/carteira/ClientInteractionHistory';
 import {
   ArrowLeft, Save, Loader2, Edit2, Check, X, Plus, User, Globe, DollarSign,
   Phone, Mail, Calendar, BarChart3, Building2, Shield, Settings, Trash2,
@@ -407,6 +408,9 @@ export default function ClientDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Interaction History */}
+      {clientId && <ClientInteractionHistory clientId={clientId} />}
 
       {/* Metadata */}
       <div className="flex items-center justify-between text-xs text-muted-foreground px-1 pb-4">
