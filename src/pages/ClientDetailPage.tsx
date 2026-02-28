@@ -325,7 +325,7 @@ export default function ClientDetailPage() {
                 Salvar
               </Button>
             </>
-          ) : (
+          ) : canEdit ? (
             <>
               <Button variant="outline" size="sm" onClick={() => setAddFieldOpen(true)}>
                 <Plus className="h-4 w-4 mr-1" /> Campo
@@ -334,7 +334,7 @@ export default function ClientDetailPage() {
                 <Edit2 className="h-4 w-4 mr-1" /> Editar
               </Button>
             </>
-          )}
+          ) : null}
         </div>
       </div>
 
