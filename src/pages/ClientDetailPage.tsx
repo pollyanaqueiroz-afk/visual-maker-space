@@ -409,6 +409,9 @@ export default function ClientDetailPage() {
         </Card>
       )}
 
+      {/* Interaction History */}
+      {clientId && <ClientInteractionHistory clientId={clientId} />}
+
       {/* Metadata */}
       <div className="flex items-center justify-between text-xs text-muted-foreground px-1 pb-4">
         <span>Criado em: {client.created_at ? new Date(client.created_at).toLocaleDateString('pt-BR') : '—'}</span>
