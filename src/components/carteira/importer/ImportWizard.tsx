@@ -235,11 +235,23 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
   // ─── Build import data ───
   const buildImportData = () => {
     const activeCols = mappedColumns.filter(m => !m.ignored && m.dbKey);
-    return rawData.map(row => {
+    return rawData.map((row, idx) => {
       const mapped: Record<string, any> = {};
       for (const col of activeCols) {
         const val = (row[col.csvHeader] || '').trim();
         mapped[col.dbKey] = val || null;
+      }
+      // client_url is required by DB — generate from client_name or index if missing
+      if (!mapped.client_url || String(mapped.client_url).trim().length === 0) {
+        if (mapped.client_name && String(mapped.client_name).trim().length > 0) {
+          mapped.client_url = String(mapped.client_name).trim()
+            .toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, '');
+        } else {
+          mapped.client_url = `import-${Date.now()}-${idx}`;
+        }
       }
       return mapped;
     }).filter(row => row.client_url && String(row.client_url).length > 0);
@@ -258,7 +270,12 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
 
     for (const chunk of chunks) {
       const { error } = await supabase.from('clients' as any).upsert(chunk, { onConflict: 'client_url' }) as any;
-      if (error) { errors += chunk.length; } else { success += chunk.length; }
+      if (error) {
+        console.error('Import chunk error:', error);
+        errors += chunk.length;
+      } else {
+        success += chunk.length;
+      }
     }
     setImportResult({ success, errors });
     setImporting(false);
@@ -266,7 +283,8 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
       toast.success(`${success} clientes importados!`);
       onSuccess();
     } else {
-      toast.warning(`${success} importados, ${errors} com erro`);
+      toast.warning(`${success} importados, ${errors} com erro. Verifique o console para detalhes.`);
+      if (success > 0) onSuccess();
     }
   };
 
@@ -433,9 +451,9 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
               </ScrollArea>
 
               {!hasClientUrl && (
-                <div className="flex items-center gap-2 text-sm text-destructive">
+                <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-950/30 p-3 rounded-lg">
                   <AlertTriangle className="h-4 w-4" />
-                  A coluna "URL do Cliente" precisa ser mapeada (obrigatória)
+                  A coluna "URL do Cliente" não foi mapeada. Será gerada automaticamente a partir do nome do cliente.
                 </div>
               )}
             </div>
@@ -678,7 +696,7 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
             </Button>
             <Button
               size="sm"
-              disabled={step === 'mapping' && !hasClientUrl}
+              disabled={false}
               onClick={() => {
                 const next = WIZARD_STEPS[stepIdx + 1];
                 if (next) setStep(next.key);
