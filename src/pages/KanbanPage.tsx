@@ -243,12 +243,12 @@ export default function KanbanPage() {
           {cards.map(client => (
             <Card
               key={client.id}
-              draggable
+              draggable={canEdit}
               onDragStart={() => handleDragStart(client.id)}
               onDragEnd={handleDragEnd}
-              className={`cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow ${
-                draggedClient === client.id ? 'opacity-50' : ''
-              }`}
+              className={`hover:shadow-md transition-shadow ${
+                canEdit ? 'cursor-grab active:cursor-grabbing' : ''
+              } ${draggedClient === client.id ? 'opacity-50' : ''}`}
             >
               <CardContent className="p-3 space-y-2">
                 <div className="flex items-start justify-between gap-2">
