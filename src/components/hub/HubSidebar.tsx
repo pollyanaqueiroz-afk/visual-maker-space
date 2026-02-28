@@ -137,6 +137,26 @@ export function HubSidebar() {
             </CollapsibleContent>
           </Collapsible>
         </SidebarGroup>
+
+        {/* Administração Group */}
+        <SidebarGroup>
+          <Collapsible defaultOpen={true}>
+            <CollapsibleTrigger className="w-full">
+              <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground transition-colors">
+                <span className="flex items-center gap-2">
+                  <Settings className="h-3.5 w-3.5" />
+                  {!collapsed && 'Administração'}
+                </span>
+                {!collapsed && <ChevronDown className="h-3.5 w-3.5 transition-transform [[data-state=open]_&]:rotate-180" />}
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                {renderItems(adminModules)}
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="p-3">
