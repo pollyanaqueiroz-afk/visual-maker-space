@@ -89,7 +89,8 @@ Deno.serve(async (req) => {
     if (req.method === "POST" && action === "add-role") {
       const { user_id, role } = await req.json();
       if (!user_id || !role) throw new Error("user_id and role are required");
-      if (!["admin", "member"].includes(role))
+      const validRoles = ["admin", "member", "designer", "cs", "implantacao", "gerente_cs", "gerente_implantacao"];
+      if (!validRoles.includes(role))
         throw new Error("Invalid role");
 
       const { error } = await supabaseAdmin

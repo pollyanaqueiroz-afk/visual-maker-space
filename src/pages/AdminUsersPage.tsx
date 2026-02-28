@@ -8,8 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { UserPlus, Shield, ShieldOff, Trash2, Search, Users, ShieldCheck } from 'lucide-react';
+import { UserPlus, Trash2, Search, Users, ShieldCheck, Plus } from 'lucide-react';
 
 interface UserRow {
   id: string;
@@ -20,6 +21,20 @@ interface UserRow {
   roles: string[];
 }
 
+const ALL_ROLES = [
+  { value: 'admin', label: 'Admin', color: 'bg-destructive/10 text-destructive border-destructive/20' },
+  { value: 'gerente_implantacao', label: 'Gerente Implantação', color: 'bg-orange-500/10 text-orange-600 border-orange-200' },
+  { value: 'gerente_cs', label: 'Gerente CS', color: 'bg-violet-500/10 text-violet-600 border-violet-200' },
+  { value: 'implantacao', label: 'Implantação', color: 'bg-amber-500/10 text-amber-600 border-amber-200' },
+  { value: 'cs', label: 'CS', color: 'bg-emerald-500/10 text-emerald-600 border-emerald-200' },
+  { value: 'designer', label: 'Designer', color: 'bg-blue-500/10 text-blue-600 border-blue-200' },
+  { value: 'member', label: 'Membro', color: 'bg-secondary text-secondary-foreground border-border' },
+];
+
+function getRoleConfig(role: string) {
+  return ALL_ROLES.find(r => r.value === role) || { value: role, label: role, color: 'bg-muted text-muted-foreground border-border' };
+}
+
 export default function AdminUsersPage() {
   const { user } = useAuth();
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -28,6 +43,8 @@ export default function AdminUsersPage() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviting, setInviting] = useState(false);
+  const [addRoleUser, setAddRoleUser] = useState<UserRow | null>(null);
+  const [selectedRole, setSelectedRole] = useState('');
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -44,9 +61,7 @@ export default function AdminUsersPage() {
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  useEffect(() => { fetchUsers(); }, []);
 
   const toggleRole = async (userId: string, role: string, hasRole: boolean) => {
     try {
@@ -55,11 +70,18 @@ export default function AdminUsersPage() {
         body: { user_id: userId, role },
       });
       if (error) throw error;
-      toast.success(hasRole ? `Papel "${role}" removido` : `Papel "${role}" adicionado`);
+      toast.success(hasRole ? `Papel "${getRoleConfig(role).label}" removido` : `Papel "${getRoleConfig(role).label}" adicionado`);
       fetchUsers();
     } catch (err: any) {
       toast.error('Erro: ' + (err.message || 'Erro desconhecido'));
     }
+  };
+
+  const handleAddRole = async () => {
+    if (!addRoleUser || !selectedRole) return;
+    await toggleRole(addRoleUser.id, selectedRole, false);
+    setAddRoleUser(null);
+    setSelectedRole('');
   };
 
   const handleInvite = async () => {
@@ -100,15 +122,12 @@ export default function AdminUsersPage() {
       u.display_name?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const adminCount = users.filter((u) => u.roles.includes('admin')).length;
-  const memberCount = users.filter((u) => u.roles.includes('member')).length;
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Gestão de Usuários</h1>
-          <p className="text-muted-foreground text-sm">Administre usuários e suas permissões no sistema</p>
+          <p className="text-muted-foreground text-sm">Administre usuários e seus perfis de acesso</p>
         </div>
         <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
           <DialogTrigger asChild>
@@ -123,7 +142,7 @@ export default function AdminUsersPage() {
             </DialogHeader>
             <div className="space-y-4 pt-2">
               <Input
-                placeholder="email@exemplo.com"
+                placeholder="email@curseduca.com"
                 type="email"
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
@@ -137,40 +156,45 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Card>
-          <CardContent className="flex items-center gap-3 pt-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-              <Users className="h-5 w-5 text-primary" />
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+              <Users className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{users.length}</p>
-              <p className="text-xs text-muted-foreground">Total de usuários</p>
+              <p className="text-xl font-bold">{users.length}</p>
+              <p className="text-[11px] text-muted-foreground">Total</p>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3 pt-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10">
-              <ShieldCheck className="h-5 w-5 text-destructive" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{adminCount}</p>
-              <p className="text-xs text-muted-foreground">Administradores</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3 pt-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
-              <Users className="h-5 w-5 text-secondary-foreground" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{memberCount}</p>
-              <p className="text-xs text-muted-foreground">Membros</p>
-            </div>
-          </CardContent>
-        </Card>
+        {['admin', 'cs', 'designer', 'implantacao'].map(role => {
+          const cfg = getRoleConfig(role);
+          const count = users.filter(u => u.roles.includes(role)).length;
+          return (
+            <Card key={role}>
+              <CardContent className="flex items-center gap-3 p-4">
+                <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${cfg.color.split(' ')[0]}`}>
+                  <ShieldCheck className={`h-4 w-4 ${cfg.color.split(' ')[1]}`} />
+                </div>
+                <div>
+                  <p className="text-xl font-bold">{count}</p>
+                  <p className="text-[11px] text-muted-foreground">{cfg.label}</p>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Legend */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-xs text-muted-foreground mr-1">Perfis:</span>
+        {ALL_ROLES.map(r => (
+          <Badge key={r.value} variant="outline" className={`text-[10px] ${r.color}`}>
+            {r.label}
+          </Badge>
+        ))}
       </div>
 
       {/* Search */}
@@ -196,16 +220,15 @@ export default function AdminUsersPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Usuário</TableHead>
-                  <TableHead>Papéis</TableHead>
+                  <TableHead>Perfis</TableHead>
                   <TableHead>Último acesso</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.map((u) => {
-                  const isAdmin = u.roles.includes('admin');
-                  const isMember = u.roles.includes('member');
                   const isSelf = u.id === user?.id;
+                  const availableRoles = ALL_ROLES.filter(r => !u.roles.includes(r.value));
 
                   return (
                     <TableRow key={u.id}>
@@ -216,46 +239,49 @@ export default function AdminUsersPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex gap-1.5 flex-wrap">
-                          {isAdmin && <Badge variant="destructive">admin</Badge>}
-                          {isMember && <Badge variant="secondary">member</Badge>}
-                          {!isAdmin && !isMember && (
-                            <span className="text-xs text-muted-foreground italic">sem papel</span>
+                        <div className="flex gap-1.5 flex-wrap items-center">
+                          {u.roles.length === 0 && (
+                            <span className="text-xs text-muted-foreground italic">sem perfil</span>
                           )}
+                          {u.roles.map(role => {
+                            const cfg = getRoleConfig(role);
+                            const isAdminSelf = role === 'admin' && isSelf;
+                            return (
+                              <Badge
+                                key={role}
+                                variant="outline"
+                                className={`text-[10px] cursor-pointer hover:opacity-70 transition-opacity ${cfg.color} ${isAdminSelf ? 'cursor-not-allowed opacity-50' : ''}`}
+                                onClick={() => !isAdminSelf && toggleRole(u.id, role, true)}
+                                title={isAdminSelf ? 'Não é possível remover seu próprio admin' : `Clique para remover "${cfg.label}"`}
+                              >
+                                {cfg.label} ×
+                              </Badge>
+                            );
+                          })}
                         </div>
                       </TableCell>
                       <TableCell>
                         <span className="text-xs text-muted-foreground">
                           {u.last_sign_in_at
                             ? new Date(u.last_sign_in_at).toLocaleDateString('pt-BR', {
-                                day: '2-digit',
-                                month: '2-digit',
-                                year: '2-digit',
-                                hour: '2-digit',
-                                minute: '2-digit',
+                                day: '2-digit', month: '2-digit', year: '2-digit',
+                                hour: '2-digit', minute: '2-digit',
                               })
                             : 'Nunca'}
                         </span>
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1 justify-end">
-                          <Button
-                            variant={isAdmin ? 'destructive' : 'outline'}
-                            size="sm"
-                            onClick={() => toggleRole(u.id, 'admin', isAdmin)}
-                            disabled={isSelf && isAdmin}
-                            title={isAdmin ? 'Remover admin' : 'Tornar admin'}
-                          >
-                            {isAdmin ? <ShieldOff className="h-3.5 w-3.5" /> : <Shield className="h-3.5 w-3.5" />}
-                          </Button>
-                          <Button
-                            variant={isMember ? 'secondary' : 'outline'}
-                            size="sm"
-                            onClick={() => toggleRole(u.id, 'member', isMember)}
-                            title={isMember ? 'Remover member' : 'Tornar member'}
-                          >
-                            {isMember ? 'M' : 'm'}
-                          </Button>
+                          {availableRoles.length > 0 && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => { setAddRoleUser(u); setSelectedRole(''); }}
+                              title="Adicionar perfil"
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
                           {!isSelf && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
@@ -296,6 +322,35 @@ export default function AdminUsersPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Add Role Dialog */}
+      <Dialog open={!!addRoleUser} onOpenChange={(v) => { if (!v) setAddRoleUser(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Adicionar Perfil</DialogTitle>
+          </DialogHeader>
+          {addRoleUser && (
+            <div className="space-y-4 pt-2">
+              <p className="text-sm text-muted-foreground">
+                Usuário: <strong>{addRoleUser.display_name || addRoleUser.email}</strong>
+              </p>
+              <Select value={selectedRole} onValueChange={setSelectedRole}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Selecione um perfil..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {ALL_ROLES.filter(r => !addRoleUser.roles.includes(r.value)).map(r => (
+                    <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button onClick={handleAddRole} disabled={!selectedRole} className="w-full">
+                Adicionar Perfil
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
