@@ -179,10 +179,20 @@ export default function CarteiraGeralPage() {
           <h1 className="text-2xl font-bold text-foreground">Carteira Geral</h1>
           <p className="text-sm text-muted-foreground">Visão geral de todos os clientes importados</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
-          <Upload className="h-4 w-4 mr-1.5" />
-          Importar Dados
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleExportCSV}>
+            <Download className="h-4 w-4 mr-1.5" />
+            CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleExportExcel}>
+            <Download className="h-4 w-4 mr-1.5" />
+            Excel
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+            <Upload className="h-4 w-4 mr-1.5" />
+            Importar
+          </Button>
+        </div>
       </div>
 
       <ImportWizard open={importOpen} onOpenChange={setImportOpen} onSuccess={loadData} />
