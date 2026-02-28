@@ -2,7 +2,10 @@ import { useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { IMAGE_TYPE_LABELS } from '@/types/briefing';
 import mammoth from 'mammoth';
+import * as pdfjsLib from 'pdfjs-dist';
 import { format } from 'date-fns';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs`;
 import { ptBR } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -76,6 +79,17 @@ export default function ImportBriefingDialog({ onImported }: Props) {
       const arrayBuffer = await file.arrayBuffer();
       const result = await mammoth.extractRawText({ arrayBuffer });
       return result.value;
+    }
+    if (ext === 'pdf') {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const pages: string[] = [];
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        pages.push(content.items.map((item: any) => item.str).join(' '));
+      }
+      return pages.join('\n');
     }
     // For other files, read as text
     return await file.text();
@@ -207,12 +221,12 @@ export default function ImportBriefingDialog({ onImported }: Props) {
             </div>
             <div className="text-center">
               <p className="font-medium">Selecione o documento de briefing</p>
-              <p className="text-sm text-muted-foreground mt-1">Formatos aceitos: .docx</p>
+              <p className="text-sm text-muted-foreground mt-1">Formatos aceitos: .docx, .pdf</p>
             </div>
             <input
               ref={fileRef}
               type="file"
-              accept=".docx"
+              accept=".docx,.pdf"
               className="hidden"
               onChange={handleFileSelect}
             />
