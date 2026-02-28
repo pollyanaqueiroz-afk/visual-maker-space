@@ -120,7 +120,7 @@ export default function KanbanPage() {
   }, [columns, filteredClients]);
 
   // Drag and drop
-  const handleDragStart = (clientId: string) => setDraggedClient(clientId);
+  const handleDragStart = (clientId: string) => { if (canEdit) setDraggedClient(clientId); };
   const handleDragEnd = () => { setDraggedClient(null); setDragOverColumn(null); };
 
   const handleDrop = async (columnId: string) => {
