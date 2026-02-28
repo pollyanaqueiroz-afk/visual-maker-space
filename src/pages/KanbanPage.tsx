@@ -45,6 +45,9 @@ const PRESET_COLORS = [
 
 export default function KanbanPage() {
   const navigate = useNavigate();
+  const { hasPermission } = usePermissions();
+  const canEdit = hasPermission('kanban.edit');
+  const canManageColumns = hasPermission('kanban.manage_columns');
   const [columns, setColumns] = useState<KanbanColumn[]>([]);
   const [clients, setClients] = useState<ClientCard[]>([]);
   const [loading, setLoading] = useState(true);
