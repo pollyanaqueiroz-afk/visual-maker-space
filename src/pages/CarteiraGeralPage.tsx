@@ -13,6 +13,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import ImportWizard from '@/components/carteira/importer/ImportWizard';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface ClientRecord {
   [key: string]: any;
