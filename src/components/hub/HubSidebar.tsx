@@ -27,6 +27,7 @@ const csModules = [
   { title: 'Agendamento', url: '/hub/agendamento', icon: CalendarDays },
   { title: 'Dashboards', url: '/hub/dashboards', icon: BarChart3 },
   { title: 'Carteira Geral', url: '/hub/carteira', icon: Briefcase },
+  { title: 'Kanban', url: '/hub/kanban', icon: Kanban },
   { title: 'Dashboard Liderança', url: '/hub/lideranca', icon: Crown },
 ];
 
