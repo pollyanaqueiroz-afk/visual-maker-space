@@ -50,6 +50,7 @@ const App = () => (
               <Route path="kanban" element={<KanbanPage />} />
               <Route path="lideranca" element={<LeadershipDashboard />} />
               <Route path="admin/usuarios" element={<AdminUsersPage />} />
+              <Route path="admin/permissoes" element={<PermissionsPage />} />
             </Route>
             {/* Legacy route redirect */}
             <Route path="/dashboard" element={<Navigate to="/hub/briefings" replace />} />
