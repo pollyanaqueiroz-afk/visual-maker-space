@@ -57,6 +57,23 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
     setPreviewPage(0);
     setShowOnlyErrors(false);
     setEditingCell(null);
+    setExistingIds(new Set());
+  }, []);
+
+  // Fetch existing id_curseduca values for new vs update detection
+  const fetchExistingIds = useCallback(async () => {
+    const ids = new Set<string>();
+    let from = 0;
+    const PAGE = 1000;
+    let hasMore = true;
+    while (hasMore) {
+      const { data } = await (supabase.from('clients' as any).select('id_curseduca').not('id_curseduca', 'is', null).range(from, from + PAGE - 1) as any);
+      if (!data || data.length === 0) { hasMore = false; break; }
+      for (const r of data) if (r.id_curseduca) ids.add(String(r.id_curseduca));
+      hasMore = data.length === PAGE;
+      from += PAGE;
+    }
+    setExistingIds(ids);
   }, []);
 
   const stepIdx = WIZARD_STEPS.findIndex(s => s.key === step);
