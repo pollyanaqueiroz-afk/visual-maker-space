@@ -241,6 +241,12 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
         const val = (row[col.csvHeader] || '').trim();
         mapped[col.dbKey] = val || null;
       }
+      // Split comma-separated emails into email_do_cliente + email_do_cliente_2
+      if (mapped.email_do_cliente && String(mapped.email_do_cliente).includes(',')) {
+        const parts = String(mapped.email_do_cliente).split(',').map(e => e.trim()).filter(Boolean);
+        mapped.email_do_cliente = parts[0] || null;
+        if (parts[1]) mapped.email_do_cliente_2 = parts[1];
+      }
       // client_url is required by DB — generate from client_name or index if missing
       if (!mapped.client_url || String(mapped.client_url).trim().length === 0) {
         if (mapped.client_name && String(mapped.client_name).trim().length > 0) {

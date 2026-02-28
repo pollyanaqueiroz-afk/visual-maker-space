@@ -336,6 +336,7 @@ export type Database = {
           e_mail_do_cs_antigo: string | null
           e_mail_do_cs_atual: string | null
           email_do_cliente: string | null
+          email_do_cliente_2: string | null
           email_do_closer: string | null
           email_do_cs_antigo: string | null
           email_do_cs_atual: string | null
@@ -395,6 +396,7 @@ export type Database = {
           e_mail_do_cs_antigo?: string | null
           e_mail_do_cs_atual?: string | null
           email_do_cliente?: string | null
+          email_do_cliente_2?: string | null
           email_do_closer?: string | null
           email_do_cs_antigo?: string | null
           email_do_cs_atual?: string | null
@@ -454,6 +456,7 @@ export type Database = {
           e_mail_do_cs_antigo?: string | null
           e_mail_do_cs_atual?: string | null
           email_do_cliente?: string | null
+          email_do_cliente_2?: string | null
           email_do_closer?: string | null
           email_do_cs_antigo?: string | null
           email_do_cs_atual?: string | null

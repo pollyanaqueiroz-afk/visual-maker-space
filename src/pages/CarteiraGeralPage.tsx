@@ -69,6 +69,7 @@ const FIXED_COLUMNS: { key: string; label: string }[] = [
   { key: 'membros_do_mes_atual', label: 'Membros do Mês Atual' },
   { key: 'variacao_de_quantidade_de_membros_por_mes', label: 'Variação de Membros por Mês' },
   { key: 'dias_desde_o_ultimo_login', label: 'Dias Desde o Último Login' },
+  { key: 'email_do_cliente_2', label: 'E-mail do Cliente 2' },
 ];
 
 function formatCellValue(value: any): string {
