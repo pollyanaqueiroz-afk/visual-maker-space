@@ -25,6 +25,7 @@ import ClientDetailPage from "./pages/ClientDetailPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
 import KanbanPage from "./pages/KanbanPage";
 import PermissionsPage from "./pages/PermissionsPage";
+import PermissionGuard from "./components/PermissionGuard";
 
 const queryClient = new QueryClient();
 
@@ -42,15 +43,15 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/hub" element={<HubPage />}>
               <Route index element={<HubWelcome />} />
-              <Route path="briefings" element={<Dashboard />} />
-              <Route path="agendamento" element={<SchedulingPage />} />
-              <Route path="dashboards" element={<MeetingsDashboard />} />
-              <Route path="carteira" element={<CarteiraGeralPage />} />
-              <Route path="carteira/:clientId" element={<ClientDetailPage />} />
-              <Route path="kanban" element={<KanbanPage />} />
-              <Route path="lideranca" element={<LeadershipDashboard />} />
-              <Route path="admin/usuarios" element={<AdminUsersPage />} />
-              <Route path="admin/permissoes" element={<PermissionsPage />} />
+              <Route path="briefings" element={<PermissionGuard permission="briefings.view"><Dashboard /></PermissionGuard>} />
+              <Route path="agendamento" element={<PermissionGuard permission="agendamento.view"><SchedulingPage /></PermissionGuard>} />
+              <Route path="dashboards" element={<PermissionGuard permission="dashboards.view"><MeetingsDashboard /></PermissionGuard>} />
+              <Route path="carteira" element={<PermissionGuard permission="carteira.view"><CarteiraGeralPage /></PermissionGuard>} />
+              <Route path="carteira/:clientId" element={<PermissionGuard permission="carteira.view"><ClientDetailPage /></PermissionGuard>} />
+              <Route path="kanban" element={<PermissionGuard permission="kanban.view"><KanbanPage /></PermissionGuard>} />
+              <Route path="lideranca" element={<PermissionGuard permission="lideranca.view"><LeadershipDashboard /></PermissionGuard>} />
+              <Route path="admin/usuarios" element={<PermissionGuard permission="admin.view"><AdminUsersPage /></PermissionGuard>} />
+              <Route path="admin/permissoes" element={<PermissionGuard permission="admin.manage_permissions"><PermissionsPage /></PermissionGuard>} />
             </Route>
             {/* Legacy route redirect */}
             <Route path="/dashboard" element={<Navigate to="/hub/briefings" replace />} />
