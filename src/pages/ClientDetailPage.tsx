@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import ClientInteractionHistory from '@/components/carteira/ClientInteractionHistory';
+import { usePermissions } from '@/hooks/usePermissions';
 import {
   ArrowLeft, Save, Loader2, Edit2, Check, X, Plus, User, Globe, DollarSign,
   Phone, Mail, Calendar, BarChart3, Building2, Shield, Settings, Trash2,
@@ -147,6 +148,8 @@ const KNOWN_KEYS = new Set(
 export default function ClientDetailPage() {
   const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
+  const { hasPermission } = usePermissions();
+  const canEdit = hasPermission('carteira.edit');
 
   const [client, setClient] = useState<ClientRecord | null>(null);
   const [editData, setEditData] = useState<ClientRecord>({});
@@ -322,7 +325,7 @@ export default function ClientDetailPage() {
                 Salvar
               </Button>
             </>
-          ) : (
+          ) : canEdit ? (
             <>
               <Button variant="outline" size="sm" onClick={() => setAddFieldOpen(true)}>
                 <Plus className="h-4 w-4 mr-1" /> Campo
@@ -331,7 +334,7 @@ export default function ClientDetailPage() {
                 <Edit2 className="h-4 w-4 mr-1" /> Editar
               </Button>
             </>
-          )}
+          ) : null}
         </div>
       </div>
 

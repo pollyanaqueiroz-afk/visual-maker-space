@@ -13,6 +13,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import ImportWizard from '@/components/carteira/importer/ImportWizard';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface ClientRecord {
   [key: string]: any;
@@ -83,6 +84,8 @@ function formatCellValue(value: any): string {
 
 export default function CarteiraGeralPage() {
   const navigate = useNavigate();
+  const { hasPermission } = usePermissions();
+  const canImport = hasPermission('carteira.import');
   const [clientRecords, setClientRecords] = useState<ClientRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -230,10 +233,12 @@ export default function CarteiraGeralPage() {
             <Download className="h-4 w-4 mr-1.5" />
             Excel
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
-            <Upload className="h-4 w-4 mr-1.5" />
-            Importar
-          </Button>
+          {canImport && (
+            <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+              <Upload className="h-4 w-4 mr-1.5" />
+              Importar
+            </Button>
+          )}
         </div>
       </div>
 
