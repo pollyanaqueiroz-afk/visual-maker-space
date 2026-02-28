@@ -265,14 +265,16 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
         mapped.email_do_cliente = parts[0] || null;
         if (parts[1]) mapped.email_do_cliente_2 = parts[1];
       }
-      // client_url is required by DB — generate from client_name or index if missing
+      // client_url — use id_curseduca as base, fallback to client_name slug
       if (!mapped.client_url || String(mapped.client_url).trim().length === 0) {
-        if (mapped.client_name && String(mapped.client_name).trim().length > 0) {
+        if (mapped.id_curseduca) {
+          mapped.client_url = String(mapped.id_curseduca).trim();
+        } else if (mapped.client_name && String(mapped.client_name).trim().length > 0) {
           mapped.client_url = String(mapped.client_name).trim()
             .toLowerCase()
             .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
             .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-|-$/g, '');
+            .replace(/^-|-$/g, '') + `-${idx}`;
         } else {
           mapped.client_url = `import-${Date.now()}-${idx}`;
         }
