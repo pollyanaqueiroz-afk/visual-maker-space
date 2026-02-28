@@ -1,4 +1,4 @@
-import { FileImage, LayoutDashboard, LogOut, CalendarDays, Crown, Briefcase, BarChart3, Package, Headset, Home, Settings, Users } from 'lucide-react';
+import { FileImage, LayoutDashboard, LogOut, CalendarDays, Crown, Briefcase, BarChart3, Package, Headset, Home, Settings, Users, Kanban } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation } from 'react-router-dom';
@@ -27,6 +27,7 @@ const csModules = [
   { title: 'Agendamento', url: '/hub/agendamento', icon: CalendarDays },
   { title: 'Dashboards', url: '/hub/dashboards', icon: BarChart3 },
   { title: 'Carteira Geral', url: '/hub/carteira', icon: Briefcase },
+  { title: 'Kanban', url: '/hub/kanban', icon: Kanban },
   { title: 'Dashboard Liderança', url: '/hub/lideranca', icon: Crown },
 ];
 
