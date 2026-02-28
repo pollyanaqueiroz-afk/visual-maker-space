@@ -103,6 +103,10 @@ const emptyForm = {
   };
 
 export default function SchedulingPage() {
+  const { hasPermission } = usePermissions();
+  const canCreate = hasPermission('agendamento.create');
+  const canEdit = hasPermission('agendamento.edit');
+  const canDelete = hasPermission('agendamento.delete');
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
