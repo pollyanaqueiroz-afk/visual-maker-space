@@ -21,19 +21,20 @@ import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const implantacaoModules = [
-  { title: 'Gestão de Briefings', url: '/hub/briefings', icon: FileImage },
+  { title: 'Gestão de Briefings', url: '/hub/briefings', icon: FileImage, permission: 'briefings.view' },
 ];
 
 const csModules = [
-  { title: 'Agendamento', url: '/hub/agendamento', icon: CalendarDays },
-  { title: 'Dashboards', url: '/hub/dashboards', icon: BarChart3 },
-  { title: 'Carteira Geral', url: '/hub/carteira', icon: Briefcase },
-  { title: 'Kanban', url: '/hub/kanban', icon: Kanban },
-  { title: 'Dashboard Liderança', url: '/hub/lideranca', icon: Crown },
+  { title: 'Agendamento', url: '/hub/agendamento', icon: CalendarDays, permission: 'agendamento.view' },
+  { title: 'Dashboards', url: '/hub/dashboards', icon: BarChart3, permission: 'dashboards.view' },
+  { title: 'Carteira Geral', url: '/hub/carteira', icon: Briefcase, permission: 'carteira.view' },
+  { title: 'Kanban', url: '/hub/kanban', icon: Kanban, permission: 'kanban.view' },
+  { title: 'Dashboard Liderança', url: '/hub/lideranca', icon: Crown, permission: 'lideranca.view' },
 ];
 
 const adminModules = [
-  { title: 'Usuários e Permissões', url: '/hub/admin/usuarios', icon: Users },
+  { title: 'Usuários e Permissões', url: '/hub/admin/usuarios', icon: Users, permission: 'admin.view' },
+  { title: 'Permissões por Perfil', url: '/hub/admin/permissoes', icon: ShieldCheck, permission: 'admin.manage_permissions' },
 ];
 
 export function HubSidebar() {
