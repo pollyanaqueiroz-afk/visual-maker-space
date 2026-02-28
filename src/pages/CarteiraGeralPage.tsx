@@ -164,7 +164,48 @@ export default function CarteiraGeralPage() {
     totalRevenue: clientRecords.reduce((s, c) => s + (Number(c.valor_mensal) || 0), 0),
   }), [clientRecords]);
 
-  if (loading) {
+  const buildExportData = useCallback(() => {
+    return filtered.map(row => {
+      const out: Record<string, string> = {};
+      for (const col of FIXED_COLUMNS) {
+        out[col.label] = row[col.key] != null && row[col.key] !== '' ? String(row[col.key]) : '';
+      }
+      return out;
+    });
+  }, [filtered]);
+
+  const handleExportCSV = useCallback(() => {
+    const data = buildExportData();
+    if (data.length === 0) { toast.error('Nenhum dado para exportar'); return; }
+    const headers = FIXED_COLUMNS.map(c => c.label);
+    const csvRows = [headers.join(',')];
+    for (const row of data) {
+      csvRows.push(headers.map(h => {
+        const v = row[h] || '';
+        return v.includes(',') || v.includes('"') || v.includes('\n') ? `"${v.replace(/"/g, '""')}"` : v;
+      }).join(','));
+    }
+    const bom = '\uFEFF';
+    const blob = new Blob([bom + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `carteira_clientes_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${data.length} registros exportados em CSV`);
+  }, [buildExportData]);
+
+  const handleExportExcel = useCallback(() => {
+    const data = buildExportData();
+    if (data.length === 0) { toast.error('Nenhum dado para exportar'); return; }
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Clientes');
+    XLSX.writeFile(wb, `carteira_clientes_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    toast.success(`${data.length} registros exportados em Excel`);
+  }, [buildExportData]);
+
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
