@@ -1,4 +1,4 @@
-import { FileImage, LayoutDashboard, LogOut, CalendarDays, Crown, Briefcase, BarChart3, Package, Headset, Home } from 'lucide-react';
+import { FileImage, LayoutDashboard, LogOut, CalendarDays, Crown, Briefcase, BarChart3, Package, Headset, Home, Settings, Users } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation } from 'react-router-dom';
@@ -28,6 +28,10 @@ const csModules = [
   { title: 'Dashboards', url: '/hub/dashboards', icon: BarChart3 },
   { title: 'Carteira Geral', url: '/hub/carteira', icon: Briefcase },
   { title: 'Dashboard Liderança', url: '/hub/lideranca', icon: Crown },
+];
+
+const adminModules = [
+  { title: 'Usuários e Permissões', url: '/hub/admin/usuarios', icon: Users },
 ];
 
 export function HubSidebar() {
@@ -129,6 +133,26 @@ export function HubSidebar() {
             <CollapsibleContent>
               <SidebarGroupContent>
                 {renderItems(csModules)}
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
+
+        {/* Administração Group */}
+        <SidebarGroup>
+          <Collapsible defaultOpen={true}>
+            <CollapsibleTrigger className="w-full">
+              <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground transition-colors">
+                <span className="flex items-center gap-2">
+                  <Settings className="h-3.5 w-3.5" />
+                  {!collapsed && 'Administração'}
+                </span>
+                {!collapsed && <ChevronDown className="h-3.5 w-3.5 transition-transform [[data-state=open]_&]:rotate-180" />}
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                {renderItems(adminModules)}
               </SidebarGroupContent>
             </CollapsibleContent>
           </Collapsible>
