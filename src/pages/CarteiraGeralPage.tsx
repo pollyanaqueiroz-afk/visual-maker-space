@@ -132,7 +132,7 @@ export default function CarteiraGeralPage() {
         </Button>
       </div>
 
-      <ImportClientsDialog open={importOpen} onOpenChange={setImportOpen} onSuccess={loadData} />
+      <ImportWizard open={importOpen} onOpenChange={setImportOpen} onSuccess={loadData} />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
