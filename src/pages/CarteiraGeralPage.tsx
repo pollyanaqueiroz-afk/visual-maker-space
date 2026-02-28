@@ -240,12 +240,16 @@ export default function CarteiraGeralPage() {
                     </TableHeader>
                     <TableBody>
                       {filtered.map((row, i) => (
-                        <TableRow key={row.id || i}>
+                        <TableRow
+                          key={row.id || i}
+                          className="cursor-pointer"
+                          onClick={() => row.id && navigate(`/hub/carteira/${row.id}`)}
+                        >
                           <TableCell className="text-xs text-muted-foreground">{i + 1}</TableCell>
                           {FIXED_COLUMNS.map(col => (
                             <TableCell key={col.key} className="text-xs whitespace-nowrap max-w-[250px] truncate">
                               {col.key === 'client_url' && row[col.key] ? (
-                                <a href={row[col.key]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                                <a href={row[col.key]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" onClick={e => e.stopPropagation()}>
                                   {row[col.key]}
                                 </a>
                               ) : (
