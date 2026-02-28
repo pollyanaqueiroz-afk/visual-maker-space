@@ -86,6 +86,10 @@ export default function CarteiraGeralPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [importOpen, setImportOpen] = useState(false);
+  const [filterPlano, setFilterPlano] = useState('__all__');
+  const [filterCs, setFilterCs] = useState('__all__');
+  const [filterStatus, setFilterStatus] = useState('__all__');
+  const [showFilters, setShowFilters] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
