@@ -355,15 +355,17 @@ export default function KanbanPage() {
           {renderColumn('__unassigned', 'Sem Coluna', '#94a3b8', false)}
 
           {/* Add column placeholder */}
-          <div className="flex-shrink-0 w-[300px] flex items-center justify-center">
-            <Button
-              variant="ghost"
-              className="h-full w-full border-2 border-dashed border-border/50 rounded-lg text-muted-foreground hover:border-primary/30 hover:text-primary min-h-[120px]"
-              onClick={openNewColumn}
-            >
-              <Plus className="h-5 w-5 mr-2" /> Nova Coluna
-            </Button>
-          </div>
+          {canManageColumns && (
+            <div className="flex-shrink-0 w-[300px] flex items-center justify-center">
+              <Button
+                variant="ghost"
+                className="h-full w-full border-2 border-dashed border-border/50 rounded-lg text-muted-foreground hover:border-primary/30 hover:text-primary min-h-[120px]"
+                onClick={openNewColumn}
+              >
+                <Plus className="h-5 w-5 mr-2" /> Nova Coluna
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
