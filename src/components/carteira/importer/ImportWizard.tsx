@@ -649,19 +649,31 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
           )}
 
           {/* ═══ STEP 5: CONFIRM ═══ */}
-          {step === 'confirm' && (
+          {step === 'confirm' && (() => {
+            const importData = buildImportData();
+            const newCount = importData.filter(r => !r.id_curseduca || !existingIds.has(String(r.id_curseduca))).length;
+            const updateCount = importData.length - newCount;
+            return (
             <div className="space-y-6 py-4">
               {!importResult ? (
                 <>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div className="border rounded-lg p-4 text-center">
-                      <p className="text-3xl font-bold text-primary">{buildImportData().length}</p>
-                      <p className="text-xs text-muted-foreground">Registros para importar</p>
+                      <p className="text-3xl font-bold text-primary">{importData.length}</p>
+                      <p className="text-xs text-muted-foreground">Total de registros</p>
                     </div>
-                    <div className="border rounded-lg p-4 text-center">
-                      <p className="text-3xl font-bold">{activeCols.length}</p>
-                      <p className="text-xs text-muted-foreground">Colunas mapeadas</p>
+                    <div className="border rounded-lg p-4 text-center bg-green-500/10">
+                      <p className="text-3xl font-bold text-green-600">{newCount}</p>
+                      <p className="text-xs text-muted-foreground">Novos clientes</p>
                     </div>
+                    <div className="border rounded-lg p-4 text-center bg-blue-500/10">
+                      <p className="text-3xl font-bold text-blue-600">{updateCount}</p>
+                      <p className="text-xs text-muted-foreground">Serão atualizados</p>
+                    </div>
+                  </div>
+                  <div className="border rounded-lg p-3 text-center">
+                    <p className="text-sm font-medium">{activeCols.length} colunas mapeadas</p>
+                    <p className="text-[11px] text-muted-foreground">Chave de conciliação: <span className="font-mono font-semibold">id_curseduca</span></p>
                   </div>
 
                   {totalErrors > 0 && (
