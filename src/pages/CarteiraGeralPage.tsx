@@ -7,8 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import {
-  Globe, Users, Search, Loader2, Upload, DollarSign,
+  Globe, Users, Search, Loader2, Upload, DollarSign, Filter, X,
 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import ImportWizard from '@/components/carteira/importer/ImportWizard';
 
 interface ClientRecord {
