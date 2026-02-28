@@ -79,6 +79,7 @@ function formatCellValue(value: any): string {
 }
 
 export default function CarteiraGeralPage() {
+  const navigate = useNavigate();
   const [clientRecords, setClientRecords] = useState<ClientRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
