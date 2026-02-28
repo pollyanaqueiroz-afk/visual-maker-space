@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import {
   Globe, Users, Search, Loader2, Upload, DollarSign,
 } from 'lucide-react';
-import ImportClientsDialog from '@/components/carteira/ImportClientsDialog';
+import ImportWizard from '@/components/carteira/importer/ImportWizard';
 
 interface ClientRecord {
   [key: string]: any;
@@ -128,11 +128,11 @@ export default function CarteiraGeralPage() {
         </div>
         <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
           <Upload className="h-4 w-4 mr-1.5" />
-          Importar CSV
+          Importar Dados
         </Button>
       </div>
 
-      <ImportClientsDialog open={importOpen} onOpenChange={setImportOpen} onSuccess={loadData} />
+      <ImportWizard open={importOpen} onOpenChange={setImportOpen} onSuccess={loadData} />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
