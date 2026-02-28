@@ -38,7 +38,7 @@ export default function ProductCoversSection({ covers, onChange }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between sticky top-0 z-10 bg-background py-3 border-b mb-2">
         <div>
           <h2 className="text-xl font-semibold text-foreground mb-1">Capas de Produto / Módulo</h2>
           <p className="text-sm text-muted-foreground">
@@ -82,6 +82,19 @@ export default function ProductCoversSection({ covers, onChange }: Props) {
           <p>Nenhuma capa adicionada</p>
           <Button type="button" onClick={addCover} variant="outline" size="sm" className="mt-2">
             <Plus className="h-4 w-4 mr-1" /> Adicionar primeira capa
+          </Button>
+        </div>
+      )}
+
+      {covers.length >= 3 && (
+        <div className="sticky bottom-4 z-10 flex justify-center">
+          <Button
+            type="button"
+            onClick={addCover}
+            size="default"
+            className="shadow-lg gap-2"
+          >
+            <Plus className="h-4 w-4" /> Adicionar mais capas ({covers.length})
           </Button>
         </div>
       )}
