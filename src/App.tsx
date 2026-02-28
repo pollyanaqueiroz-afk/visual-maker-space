@@ -41,6 +41,7 @@ const App = () => (
               <Route path="agendamento" element={<SchedulingPage />} />
               <Route path="dashboards" element={<MeetingsDashboard />} />
               <Route path="carteira" element={<CarteiraGeralPage />} />
+              <Route path="carteira/:clientId" element={<ClientDetailPage />} />
               <Route path="lideranca" element={<LeadershipDashboard />} />
               <Route path="admin/usuarios" element={<AdminUsersPage />} />
             </Route>
