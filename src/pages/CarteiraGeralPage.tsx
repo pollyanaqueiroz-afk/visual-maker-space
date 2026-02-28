@@ -84,6 +84,8 @@ function formatCellValue(value: any): string {
 
 export default function CarteiraGeralPage() {
   const navigate = useNavigate();
+  const { hasPermission } = usePermissions();
+  const canImport = hasPermission('carteira.import');
   const [clientRecords, setClientRecords] = useState<ClientRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
