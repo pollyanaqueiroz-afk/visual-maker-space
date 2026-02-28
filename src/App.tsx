@@ -20,6 +20,7 @@ import MeetingsDashboard from "./pages/MeetingsDashboard";
 import LeadershipDashboard from "./pages/LeadershipDashboard";
 import CarteiraGeralPage from "./pages/CarteiraGeralPage";
 import CsatPage from "./pages/CsatPage";
+import ClientDetailPage from "./pages/ClientDetailPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
 
 const queryClient = new QueryClient();
