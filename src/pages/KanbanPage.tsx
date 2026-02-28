@@ -324,9 +324,11 @@ export default function KanbanPage() {
               className="pl-9 h-9 text-sm w-[220px]"
             />
           </div>
-          <Button variant="outline" size="sm" onClick={openNewColumn}>
-            <Plus className="h-4 w-4 mr-1" /> Coluna
-          </Button>
+          {canManageColumns && (
+            <Button variant="outline" size="sm" onClick={openNewColumn}>
+              <Plus className="h-4 w-4 mr-1" /> Coluna
+            </Button>
+          )}
         </div>
       </div>
 
