@@ -504,11 +504,13 @@ export default function SchedulingPage() {
           <p className="text-sm text-muted-foreground">Gerencie reuniões e calls com clientes</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => handleOpenNew()}>
-              <Plus className="h-4 w-4 mr-2" /> Nova Reunião
-            </Button>
-          </DialogTrigger>
+          {canCreate && (
+            <DialogTrigger asChild>
+              <Button onClick={() => handleOpenNew()}>
+                <Plus className="h-4 w-4 mr-2" /> Nova Reunião
+              </Button>
+            </DialogTrigger>
+          )}
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingId ? 'Editar Reunião' : 'Nova Reunião'}</DialogTitle>
