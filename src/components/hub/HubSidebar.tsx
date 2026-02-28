@@ -30,6 +30,10 @@ const csModules = [
   { title: 'Dashboard Liderança', url: '/hub/lideranca', icon: Crown },
 ];
 
+const adminModules = [
+  { title: 'Usuários e Permissões', url: '/hub/admin/usuarios', icon: Users },
+];
+
 export function HubSidebar() {
   const { state } = useSidebar();
   const { signOut } = useAuth();
