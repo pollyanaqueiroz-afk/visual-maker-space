@@ -468,20 +468,24 @@ export default function Dashboard() {
               {selectedIds.size > 0 && (
                 <div className="flex items-center gap-3 ml-auto bg-primary/10 rounded-lg px-4 py-2">
                   <span className="text-sm font-medium">{selectedIds.size} selecionada(s)</span>
-                  <Select onValueChange={(status) => handleBulkStatusChange(status as RequestStatus)}>
-                    <SelectTrigger className="w-44 h-8 text-sm">
-                      <SelectValue placeholder="Alterar status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(STATUS_LABELS).map(([key, label]) => (
-                        <SelectItem key={key} value={key}>{label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button size="sm" onClick={() => setBulkAssignOpen(true)}>
-                    <Send className="h-4 w-4 mr-1" />
-                    Enviar para Designer
-                  </Button>
+                  {canEdit && (
+                    <Select onValueChange={(status) => handleBulkStatusChange(status as RequestStatus)}>
+                      <SelectTrigger className="w-44 h-8 text-sm">
+                        <SelectValue placeholder="Alterar status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                          <SelectItem key={key} value={key}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {canAssign && (
+                    <Button size="sm" onClick={() => setBulkAssignOpen(true)}>
+                      <Send className="h-4 w-4 mr-1" />
+                      Enviar para Designer
+                    </Button>
+                  )}
                   <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
                     Limpar seleção
                   </Button>
