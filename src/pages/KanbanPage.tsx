@@ -16,6 +16,7 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface KanbanColumn {
   id: string;
