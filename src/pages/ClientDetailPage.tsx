@@ -11,11 +11,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import ClientInteractionHistory from '@/components/carteira/ClientInteractionHistory';
+import ClientCsatSection from '@/components/carteira/ClientCsatSection';
 import { usePermissions } from '@/hooks/usePermissions';
 import {
   ArrowLeft, Save, Loader2, Edit2, Check, X, Plus, User, Globe, DollarSign,
-  Phone, Mail, Calendar, BarChart3, Building2, Shield, Settings, Trash2,
+  Phone, Mail, Calendar, BarChart3, Building2, Shield, Settings, Trash2, MessageSquare,
 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface ClientRecord {
   [key: string]: any;
@@ -372,54 +374,76 @@ export default function ClientDetailPage() {
         </Card>
       </div>
 
-      {/* Field Groups */}
-      {FIELD_GROUPS.map(group => {
-        const hasData = group.fields.some(f => client[f.key] != null && client[f.key] !== '');
-        return (
-          <Card key={group.title}>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <group.icon className="h-4 w-4 text-primary" />
-                {group.title}
-                {!hasData && !editing && (
-                  <Badge variant="outline" className="text-[10px] ml-auto">Sem dados</Badge>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {group.fields.map(f => renderField(f.key, f.label))}
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })}
+      {/* Tabs: Dados / CSAT */}
+      <Tabs defaultValue="dados" className="w-full">
+        <TabsList>
+          <TabsTrigger value="dados" className="gap-1.5">
+            <Settings className="h-3.5 w-3.5" /> Dados
+          </TabsTrigger>
+          <TabsTrigger value="csat" className="gap-1.5">
+            <MessageSquare className="h-3.5 w-3.5" /> CSAT
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Custom Fields */}
-      {customFields.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Plus className="h-4 w-4 text-primary" />
-              Campos Personalizados
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {customFields.map(f => renderField(f.key, f.label))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        <TabsContent value="dados" className="space-y-6 mt-4">
+          {/* Field Groups */}
+          {FIELD_GROUPS.map(group => {
+            const hasData = group.fields.some(f => client[f.key] != null && client[f.key] !== '');
+            return (
+              <Card key={group.title}>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <group.icon className="h-4 w-4 text-primary" />
+                    {group.title}
+                    {!hasData && !editing && (
+                      <Badge variant="outline" className="text-[10px] ml-auto">Sem dados</Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {group.fields.map(f => renderField(f.key, f.label))}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
 
-      {/* Interaction History */}
-      {clientId && <ClientInteractionHistory clientId={clientId} />}
+          {/* Custom Fields */}
+          {customFields.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Plus className="h-4 w-4 text-primary" />
+                  Campos Personalizados
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {customFields.map(f => renderField(f.key, f.label))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-      {/* Metadata */}
-      <div className="flex items-center justify-between text-xs text-muted-foreground px-1 pb-4">
-        <span>Criado em: {client.created_at ? new Date(client.created_at).toLocaleDateString('pt-BR') : '—'}</span>
-        <span>Atualizado em: {client.updated_at ? new Date(client.updated_at).toLocaleDateString('pt-BR') : '—'}</span>
-      </div>
+          {/* Interaction History */}
+          {clientId && <ClientInteractionHistory clientId={clientId} />}
+
+          {/* Metadata */}
+          <div className="flex items-center justify-between text-xs text-muted-foreground px-1 pb-4">
+            <span>Criado em: {client.created_at ? new Date(client.created_at).toLocaleDateString('pt-BR') : '—'}</span>
+            <span>Atualizado em: {client.updated_at ? new Date(client.updated_at).toLocaleDateString('pt-BR') : '—'}</span>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="csat" className="mt-4">
+          <ClientCsatSection
+            clientUrl={client.client_url}
+            clientEmail={client.email_do_cliente}
+            clientEmail2={client.email_do_cliente_2}
+          />
+        </TabsContent>
+      </Tabs>
 
       {/* Add Field Dialog */}
       <Dialog open={addFieldOpen} onOpenChange={setAddFieldOpen}>
