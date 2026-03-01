@@ -969,18 +969,24 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                     const fase2 = fases.find((f: any) => f.numero === 2);
                     const isCurrent = cliente.fase_atual === 2;
                     const isDone = fase2?.status === 'concluida';
-                    const startDate = fase2?.data_inicio ? new Date(fase2.data_inicio) : fase1?.data_conclusao ? new Date(fase1.data_conclusao) : null;
+                    const baseDate = fase1?.data_conclusao ? new Date(fase1.data_conclusao) : null;
+                    const startDate = fase2?.data_inicio ? new Date(fase2.data_inicio) : baseDate;
                     const showGoogle = cliente.plataforma !== 'apple';
                     const showApple = cliente.plataforma !== 'google';
 
                     return (
                       <div className="space-y-2 pt-2 border-t border-white/10">
+                        {baseDate && !isDone && (
+                          <div className="rounded-lg p-3 bg-white/5 border border-white/10">
+                            <p className="text-[10px] text-white/50">📅 Data base (conclusão de Primeiros Passos): <span className="font-semibold text-white/80">{format(baseDate, 'dd/MM/yyyy')}</span></p>
+                          </div>
+                        )}
                         {showGoogle && (
                           <div className={`rounded-lg p-3 ${isDone ? 'bg-green-500/10 border border-green-500/20' : 'bg-blue-500/10 border border-blue-500/20'}`}>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <span className="text-sm">🤖</span>
-                                <span className="text-xs font-medium">{isDone ? 'Google Play — Aprovado' : 'Google Play — Em análise'}</span>
+                                <span className="text-xs font-medium">{isDone ? 'Google Play — Aprovado' : 'Google Play — Aguardando análise'}</span>
                               </div>
                               <Badge variant="outline" className={`text-[10px] ${isDone ? 'border-green-500/30 text-green-400' : 'border-blue-500/30 text-blue-400'}`}>
                                 {isDone ? '✅ Aprovado' : '1–3 dias úteis'}
@@ -993,6 +999,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                                   <span>Previsão: {format(addBusinessDays(startDate, 1), 'dd/MM')} – {format(addBusinessDays(startDate, 3), 'dd/MM/yyyy')}</span>
                                 </div>
                                 <Progress value={isCurrent ? 50 : 0} className="h-1" />
+                                <p className="text-[10px] text-blue-400/70 mt-1">📆 Data prevista de conclusão: <span className="font-semibold">{format(addBusinessDays(startDate, 3), 'dd/MM/yyyy')}</span></p>
                               </div>
                             )}
                           </div>
@@ -1002,7 +1009,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <span className="text-sm">🍎</span>
-                                <span className="text-xs font-medium">{isDone ? 'App Store — Aprovado' : 'App Store — Em análise'}</span>
+                                <span className="text-xs font-medium">{isDone ? 'App Store — Aprovado' : 'App Store — Aguardando análise'}</span>
                               </div>
                               <Badge variant="outline" className={`text-[10px] ${isDone ? 'border-green-500/30 text-green-400' : 'border-purple-500/30 text-purple-400'}`}>
                                 {isDone ? '✅ Aprovado' : '5–7 dias úteis'}
@@ -1015,6 +1022,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                                   <span>Previsão: {format(addBusinessDays(startDate, 5), 'dd/MM')} – {format(addBusinessDays(startDate, 7), 'dd/MM/yyyy')}</span>
                                 </div>
                                 <Progress value={isCurrent ? 30 : 0} className="h-1" />
+                                <p className="text-[10px] text-purple-400/70 mt-1">📆 Data prevista de conclusão: <span className="font-semibold">{format(addBusinessDays(startDate, 7), 'dd/MM/yyyy')}</span></p>
                               </div>
                             )}
                           </div>
@@ -1090,14 +1098,20 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             );
           })() : cliente.fase_atual === 2 ? (() => {
             const fase1 = fases.find((f: any) => f.numero === 1);
-            const fase2 = fases.find((f: any) => f.numero === 2);
-            const startDate = fase2?.data_inicio ? new Date(fase2.data_inicio) : fase1?.data_conclusao ? new Date(fase1.data_conclusao) : null;
-            const showGoogle = cliente.plataforma !== 'apple';
-            const showApple = cliente.plataforma !== 'google';
+                    const fase2 = fases.find((f: any) => f.numero === 2);
+                    const baseDate = fase1?.data_conclusao ? new Date(fase1.data_conclusao) : null;
+                    const startDate = fase2?.data_inicio ? new Date(fase2.data_inicio) : baseDate;
+                    const showGoogle = cliente.plataforma !== 'apple';
+                    const showApple = cliente.plataforma !== 'google';
 
-            return (
-              <div className="space-y-3">
+                    return (
+                      <div className="space-y-3">
                 <p className="text-sm text-white/60">Suas contas estão sendo analisadas pelas lojas. Este processo é automático e não requer ação sua.</p>
+                {baseDate && (
+                  <div className="rounded-lg p-3 bg-white/5 border border-white/10">
+                    <p className="text-xs text-white/50">📅 Etapa "Primeiros Passos" concluída em: <span className="font-semibold text-white/80">{format(baseDate, 'dd/MM/yyyy')}</span></p>
+                  </div>
+                )}
                 {showGoogle && (
                   <div className="rounded-lg p-4 bg-blue-500/10 border border-blue-500/20 space-y-2">
                     <div className="flex items-center justify-between">
@@ -1114,6 +1128,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                           <span>{format(startDate, 'dd/MM/yyyy')}</span>
                           <span>até {format(addBusinessDays(startDate, 3), 'dd/MM/yyyy')}</span>
                         </div>
+                        <p className="text-xs text-blue-400/80 mt-1">📆 Previsão de conclusão: <span className="font-semibold">{format(addBusinessDays(startDate, 3), 'dd/MM/yyyy')}</span></p>
                       </div>
                     )}
                   </div>
@@ -1134,6 +1149,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                           <span>{format(startDate, 'dd/MM/yyyy')}</span>
                           <span>até {format(addBusinessDays(startDate, 7), 'dd/MM/yyyy')}</span>
                         </div>
+                        <p className="text-xs text-purple-400/80 mt-1">📆 Previsão de conclusão: <span className="font-semibold">{format(addBusinessDays(startDate, 7), 'dd/MM/yyyy')}</span></p>
                       </div>
                     )}
                   </div>
