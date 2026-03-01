@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   CheckCircle2, Circle, MessageSquare, Star, Lock, AlertTriangle,
   ExternalLink, Upload, Image as ImageIcon, Loader2, ChevronDown, ChevronUp,
+  Palette, Clock, Eye,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -101,6 +102,7 @@ const STEP_BY_STEP: Record<string, string[]> = {
 };
 
 const FASE_NAMES = ['Pré-Requisitos','Primeiros Passos','Validação pela Loja','Assets e Mockup','Formulário do App','Criação e Submissão','Aprovação das Lojas','Teste do App','Publicado 🎉'];
+const HIDDEN_FASES = [3]; // Hide Assets e Mockup from main timeline — now parallel
 
 interface Props {
   clienteId: string;
@@ -119,6 +121,8 @@ export default function AppClientPortalContent({ clienteId }: Props) {
   const [emailCorpPromptId, setEmailCorpPromptId] = useState<string | null>(null);
   const [siteInput, setSiteInput] = useState('');
   const [sitePromptId, setSitePromptId] = useState<string | null>(null);
+  const [showMockupForm, setShowMockupForm] = useState(false);
+  const [mockupObservations, setMockupObservations] = useState('');
 
   const CNPJ_TEXT = 'Confirmei que meu CNPJ é ME ou LTDA';
   const EMAIL_CORP_TEXT = 'Tenho um e-mail corporativo';
@@ -180,6 +184,23 @@ export default function AppClientPortalContent({ clienteId }: Props) {
       const { data, error } = await supabase.from('app_assets').select('*').eq('cliente_id', clienteId);
       if (error) throw error;
       return data || [];
+    },
+  });
+
+  // Query mockup briefing requests linked to this client's platform URL
+  const { data: mockupRequest } = useQuery({
+    queryKey: ['portal-mockup-request', clienteId],
+    enabled: !!cliente,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('briefing_requests')
+        .select('*, briefing_images(*)')
+        .eq('platform_url', cliente!.empresa)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
     },
   });
 
@@ -287,6 +308,36 @@ export default function AppClientPortalContent({ clienteId }: Props) {
       setAssetComment({});
       toast.success('Ajuste solicitado!');
     },
+  });
+
+  const submitMockupRequest = useMutation({
+    mutationFn: async () => {
+      // Create briefing_request
+      const { data: req, error: reqErr } = await supabase.from('briefing_requests').insert({
+        requester_name: cliente!.nome,
+        requester_email: cliente!.email,
+        platform_url: cliente!.empresa,
+        has_trail: false, has_challenge: false, has_community: false,
+        additional_info: mockupObservations || null,
+        notes: 'Solicitação automática de mockup via portal do app',
+      }).select().single();
+      if (reqErr) throw reqErr;
+      // Create app_mockup image
+      const { error: imgErr } = await supabase.from('briefing_images').insert({
+        request_id: req.id,
+        image_type: 'app_mockup' as any,
+        observations: mockupObservations || null,
+        sort_order: 0,
+      });
+      if (imgErr) throw imgErr;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['portal-mockup-request'] });
+      setShowMockupForm(false);
+      setMockupObservations('');
+      toast.success('🎨 Mockup solicitado com sucesso!');
+    },
+    onError: (e: any) => toast.error(e.message),
   });
 
   const saveForm = useMutation({
@@ -779,6 +830,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
 
           <div className="relative flex justify-between">
             {FASE_NAMES.map((name, idx) => {
+              if (HIDDEN_FASES.includes(idx)) return null;
               const fase = fases.find((f: any) => f.numero === idx);
               const isCurrent = idx === cliente.fase_atual;
               const isDone = fase?.status === 'concluida';
@@ -789,7 +841,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
               const progress = totalCount > 0 ? (doneCount / totalCount) * 100 : 0;
 
               return (
-                <div key={idx} className="flex flex-col items-center" style={{ width: `${100 / FASE_NAMES.length}%` }}>
+                <div key={idx} className="flex flex-col items-center" style={{ width: `${100 / (FASE_NAMES.length - HIDDEN_FASES.length)}%` }}>
                   {/* Circle with progress ring — clickable */}
                   <button
                     className="relative cursor-pointer"
@@ -977,6 +1029,170 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           })() : (
             <div className="text-center py-4 text-white/50">
               <p>Você será notificado assim que precisarmos de você!</p>
+            </div>
+          )}
+          {/* Mockup request subtask — shown in phase 0 */}
+          {cliente.fase_atual === 0 && !mockupRequest && (
+            <div className="border-t border-white/10 pt-4 mt-2">
+              {!showMockupForm ? (
+                <Button
+                  variant="outline"
+                  className="w-full border-primary/30 text-primary hover:bg-primary/10"
+                  onClick={() => setShowMockupForm(true)}
+                >
+                  <Palette className="h-4 w-4 mr-2" /> Solicitar Mockup do Aplicativo
+                </Button>
+              ) : (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  className="space-y-3 overflow-hidden"
+                >
+                  <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <Palette className="h-4 w-4 text-primary" /> Solicitar Mockup
+                  </h3>
+                  <p className="text-xs text-white/50">Seu mockup será criado pela equipe de design. Descreva observações ou referências caso tenha:</p>
+                  <Textarea
+                    placeholder="Ex: gostaria de cores vibrantes, referência do app X..."
+                    className="bg-white/5 border-white/10 text-white text-sm min-h-[60px]"
+                    value={mockupObservations}
+                    onChange={e => setMockupObservations(e.target.value)}
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      className="flex-1"
+                      onClick={() => submitMockupRequest.mutate()}
+                      disabled={submitMockupRequest.isPending}
+                    >
+                      {submitMockupRequest.isPending ? 'Enviando...' : '🎨 Enviar solicitação'}
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => { setShowMockupForm(false); setMockupObservations(''); }}>
+                      Cancelar
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          )}
+          {cliente.fase_atual === 0 && mockupRequest && (
+            <div className="border-t border-white/10 pt-3 mt-2">
+              <div className="flex items-center gap-2 text-xs text-green-400">
+                <CheckCircle2 className="h-4 w-4" />
+                <span>Mockup solicitado em {format(new Date(mockupRequest.created_at), 'dd/MM/yyyy')}</span>
+              </div>
+            </div>
+          )}
+        </Card>
+      )}
+
+      {/* Parallel Assets & Mockup Section */}
+      {mockupRequest && (
+        <Card className="bg-[#1E293B] border-white/10 p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Palette className="h-5 w-5 text-primary" /> Assets e Mockup
+            </h2>
+            <Badge variant="outline" className={`text-xs ${
+              mockupRequest.status === 'completed' ? 'border-green-500/30 text-green-400' :
+              mockupRequest.status === 'review' ? 'border-amber-500/30 text-amber-400' :
+              'border-primary/30 text-primary'
+            }`}>
+              {mockupRequest.status === 'completed' ? '✅ Concluído' :
+               mockupRequest.status === 'review' ? '👁️ Em revisão' :
+               mockupRequest.status === 'in_progress' ? '🎨 Em produção' :
+               '⏳ Aguardando início'}
+            </Badge>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs text-white/50">
+              <Clock className="h-3.5 w-3.5" />
+              <span>Solicitado em {format(new Date(mockupRequest.created_at), 'dd/MM/yyyy HH:mm')}</span>
+            </div>
+            {mockupRequest.briefing_images && mockupRequest.briefing_images.length > 0 && (
+              <div className="space-y-2">
+                {(mockupRequest.briefing_images as any[]).map((img: any) => (
+                  <div key={img.id} className="rounded-lg bg-white/5 border border-white/10 p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <ImageIcon className="h-4 w-4 text-white/40" />
+                        <span className="text-sm">{img.image_type === 'app_mockup' ? 'Mockup do App' : img.image_type}</span>
+                      </div>
+                      <Badge variant="outline" className={`text-[10px] ${
+                        img.status === 'completed' ? 'border-green-500/30 text-green-400' :
+                        img.status === 'review' ? 'border-amber-500/30 text-amber-400' :
+                        img.status === 'in_progress' ? 'border-blue-500/30 text-blue-400' :
+                        'border-white/10 text-white/40'
+                      }`}>
+                        {img.status === 'completed' ? 'Concluído' :
+                         img.status === 'review' ? 'Aguardando aprovação' :
+                         img.status === 'in_progress' ? 'Em produção' :
+                         'Pendente'}
+                      </Badge>
+                    </div>
+                    {img.status === 'review' && (
+                      <div className="mt-2 rounded bg-amber-500/10 border border-amber-500/20 p-2">
+                        <p className="text-xs text-amber-300 flex items-center gap-1">
+                          <Eye className="h-3.5 w-3.5" /> Você tem uma pendência de aprovação neste item
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Show pending asset approvals */}
+          {pendingAssets.length > 0 && (
+            <div className="space-y-2 border-t border-white/10 pt-3">
+              <p className="text-sm font-medium text-amber-400">📋 Pendências de aprovação</p>
+              {pendingAssets.map((asset: any) => (
+                <div key={asset.id} className="rounded-lg border border-white/10 bg-white/5 p-3">
+                  <div className="flex items-center gap-3">
+                    {asset.url ? (
+                      <img src={asset.url} alt={asset.nome_arquivo} className="w-16 h-16 object-cover rounded-lg border border-white/10" />
+                    ) : (
+                      <div className="w-16 h-16 rounded-lg bg-white/10 flex items-center justify-center">
+                        <ImageIcon className="h-6 w-6 text-white/30" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{asset.nome_arquivo || asset.tipo}</p>
+                      <p className="text-xs text-white/40">{asset.tipo}</p>
+                    </div>
+                  </div>
+                  {assetCommenting === asset.id ? (
+                    <div className="mt-3 space-y-2">
+                      <Textarea
+                        placeholder="Descreva o ajuste necessário..."
+                        className="bg-white/5 border-white/10 text-white text-sm min-h-[60px]"
+                        value={assetComment[asset.id] || ''}
+                        onChange={e => setAssetComment(p => ({ ...p, [asset.id]: e.target.value }))}
+                      />
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="destructive" className="flex-1"
+                          disabled={!assetComment[asset.id]?.trim()}
+                          onClick={() => requestAssetAdjust.mutate({ assetId: asset.id, comment: assetComment[asset.id] })}>
+                          Enviar ajuste
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => setAssetCommenting(null)}>
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2 mt-3">
+                      <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700" onClick={() => approveAsset.mutate(asset.id)}>
+                        ✅ Aprovar
+                      </Button>
+                      <Button size="sm" variant="outline" className="flex-1 border-white/20" onClick={() => setAssetCommenting(asset.id)}>
+                        💬 Solicitar ajuste
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </Card>
