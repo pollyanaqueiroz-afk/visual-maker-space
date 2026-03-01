@@ -106,6 +106,22 @@ export default function AdminUsersPage() {
     setSelectedRole('');
   };
 
+  const handleRemoveAllRoles = async () => {
+    if (!addRoleUser) return;
+    try {
+      for (const role of addRoleUser.roles) {
+        await supabase.functions.invoke(`manage-users?action=remove-role`, {
+          body: { user_id: addRoleUser.id, role },
+        });
+      }
+      toast.success('Perfil removido com sucesso');
+      fetchUsers();
+    } catch (err: any) {
+      toast.error('Erro: ' + (err.message || 'Erro desconhecido'));
+    }
+    setAddRoleUser(null);
+  };
+
   const handleBulkAssign = async () => {
     if (!bulkRole || selectedIds.size === 0) return;
     setBulkSaving(true);
@@ -501,6 +517,11 @@ export default function AdminUsersPage() {
               <Button onClick={handleAddRole} disabled={!selectedRole} className="w-full">
                 {addRoleUser.roles.length > 0 ? 'Alterar Perfil' : 'Definir Perfil'}
               </Button>
+              {addRoleUser.roles.length > 0 && (
+                <Button variant="outline" onClick={handleRemoveAllRoles} className="w-full text-destructive hover:text-destructive">
+                  Remover Perfil
+                </Button>
+              )}
             </div>
           )}
         </DialogContent>
