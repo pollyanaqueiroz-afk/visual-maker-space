@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Lock, UserCircle, Sparkles, Palette } from 'lucide-react';
+import { Lock, UserCircle, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Index = () => {
@@ -23,15 +23,6 @@ const Index = () => {
         className="relative z-10 text-center space-y-8 max-w-lg px-6"
       >
         {/* Badge */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2 }}
-          className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-5 py-2"
-        >
-          <Palette className="h-4 w-4 text-emerald-400" />
-          <span className="text-white/90 text-sm font-medium tracking-wide">Plataforma Curseduca</span>
-        </motion.div>
 
         {/* Title */}
         <motion.h1
@@ -75,9 +66,8 @@ const Index = () => {
           </Button>
           <Button
             asChild
-            variant="outline"
             size="lg"
-            className="border-white/20 text-white hover:bg-white/10 backdrop-blur-sm px-8 h-12 text-base"
+            className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg shadow-emerald-500/25 border-0 px-8 h-12 text-base"
           >
             <Link to="/hub">
               <Lock className="h-5 w-5 mr-2" />
