@@ -16,6 +16,7 @@ import {
   AlertTriangle, Star, CheckCircle, ChevronRight,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import PendingItemDialog from '@/components/hub/PendingItemDialog';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -33,7 +34,7 @@ interface PendingItem {
   title: string;
   subtitle: string;
   date: string;
-  url: string;
+  meetingId: string;
 }
 
 export default function HubWelcome() {
@@ -46,6 +47,9 @@ export default function HubWelcome() {
   const [saving, setSaving] = useState(false);
   const [pendingItems, setPendingItems] = useState<PendingItem[]>([]);
   const [loadingPending, setLoadingPending] = useState(true);
+  const [selectedPending, setSelectedPending] = useState<PendingItem | null>(null);
+  const [pendingDialogOpen, setPendingDialogOpen] = useState(false);
+  const [pendingRefresh, setPendingRefresh] = useState(0);
 
   useEffect(() => {
     if (!user) return;
@@ -63,7 +67,7 @@ export default function HubWelcome() {
       }
       setLoading(false);
     })();
-  }, [user]);
+  }, [user, pendingRefresh]);
 
   // Fetch pending items
   useEffect(() => {
@@ -83,13 +87,13 @@ export default function HubWelcome() {
       if (meetings) {
         for (const m of meetings) {
           if (!m.loyalty_index) {
-            items.push({ id: m.id + '-loyalty', type: 'loyalty', title: m.title, subtitle: m.client_name || 'Sem cliente', date: m.meeting_date, url: '/hub/agendamento' });
+            items.push({ id: m.id + '-loyalty', type: 'loyalty', title: m.title, subtitle: m.client_name || 'Sem cliente', date: m.meeting_date, meetingId: m.id });
           }
           if (!m.minutes_url) {
-            items.push({ id: m.id + '-minutes', type: 'minutes', title: m.title, subtitle: m.client_name || 'Sem cliente', date: m.meeting_date, url: '/hub/agendamento' });
+            items.push({ id: m.id + '-minutes', type: 'minutes', title: m.title, subtitle: m.client_name || 'Sem cliente', date: m.meeting_date, meetingId: m.id });
           }
           if (!m.recording_url) {
-            items.push({ id: m.id + '-recording', type: 'recording', title: m.title, subtitle: m.client_name || 'Sem cliente', date: m.meeting_date, url: '/hub/agendamento' });
+            items.push({ id: m.id + '-recording', type: 'recording', title: m.title, subtitle: m.client_name || 'Sem cliente', date: m.meeting_date, meetingId: m.id });
           }
         }
       }
@@ -276,7 +280,7 @@ export default function HubWelcome() {
                   >
                     <Card
                       className="cursor-pointer transition-all hover:shadow-sm border-destructive/40 hover:border-destructive/60 bg-destructive/5"
-                      onClick={() => navigate(item.url)}
+                      onClick={() => { setSelectedPending(item); setPendingDialogOpen(true); }}
                     >
                       <CardContent className="flex items-center gap-4 p-4">
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
@@ -306,6 +310,13 @@ export default function HubWelcome() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <PendingItemDialog
+        item={selectedPending}
+        open={pendingDialogOpen}
+        onOpenChange={setPendingDialogOpen}
+        onSaved={() => setPendingRefresh(p => p + 1)}
+      />
     </>
   );
 }
