@@ -110,6 +110,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
   const queryClient = useQueryClient();
   const [expandedFase, setExpandedFase] = useState<number | null>(null);
   const [selectedTimelineFase, setSelectedTimelineFase] = useState<number | null>(null);
+  const [expandedTimelineItem, setExpandedTimelineItem] = useState<string | null>(null);
   const [assetComment, setAssetComment] = useState<Record<string, string>>({});
   const [assetCommenting, setAssetCommenting] = useState<string | null>(null);
   const [cnpjInput, setCnpjInput] = useState('');
@@ -824,13 +825,49 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                     <h3 className="text-sm font-semibold">{FASE_NAMES[selectedTimelineFase]}</h3>
                     <button onClick={() => setSelectedTimelineFase(null)} className="text-white/40 hover:text-white text-xs">✕</button>
                   </div>
-                  {items.length > 0 ? items.map((item: any) => (
-                    <div key={item.id} className="flex items-center gap-2 text-xs py-1">
-                      {item.feito ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" /> : <Circle className="h-3.5 w-3.5 text-white/30 shrink-0" />}
-                      <span className={item.feito ? 'text-white/40 line-through' : 'text-white/70'}>{item.texto}</span>
-                      <Badge variant="outline" className="text-[9px] px-1 py-0 border-white/10 text-white/30 ml-auto shrink-0">{item.ator}</Badge>
-                    </div>
-                  )) : (
+                  {items.length > 0 ? items.map((item: any) => {
+                    const getFilledValue = (texto: string) => {
+                      if (texto === CNPJ_TEXT && prereqs?.cnpj_tipo) return `Tipo: ${prereqs.cnpj_tipo.toUpperCase()}`;
+                      if (texto === EMAIL_CORP_TEXT && prereqs?.email_corporativo) return prereqs.email_corporativo;
+                      if (texto === SITE_TEXT && prereqs?.site_url) return prereqs.site_url;
+                      if (texto === 'Solicitei o número DUNS da minha empresa' && prereqs?.duns_numero) return `DUNS: ${prereqs.duns_numero}`;
+                      return null;
+                    };
+                    const filledValue = item.feito ? getFilledValue(item.texto) : null;
+                    const isExpanded = expandedTimelineItem === item.id;
+
+                    return (
+                      <div key={item.id}>
+                        <button
+                          className="w-full flex items-center gap-2 text-xs py-1.5 hover:bg-white/5 rounded px-1 -mx-1 transition-colors"
+                          onClick={() => item.feito && filledValue ? setExpandedTimelineItem(isExpanded ? null : item.id) : null}
+                          disabled={!item.feito || !filledValue}
+                        >
+                          {item.feito ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" /> : <Circle className="h-3.5 w-3.5 text-white/30 shrink-0" />}
+                          <span className={`text-left ${item.feito ? 'text-white/40 line-through' : 'text-white/70'}`}>{item.texto}</span>
+                          {item.feito && item.feito_em && (
+                            <span className="text-[9px] text-green-400/60 shrink-0 ml-auto">{format(new Date(item.feito_em), 'dd/MM/yy')}</span>
+                          )}
+                          {!item.feito && <Badge variant="outline" className="text-[9px] px-1 py-0 border-white/10 text-white/30 ml-auto shrink-0">{item.ator}</Badge>}
+                        </button>
+                        <AnimatePresence>
+                          {isExpanded && filledValue && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="overflow-hidden ml-5"
+                            >
+                              <div className="rounded bg-white/5 border border-white/10 px-3 py-2 my-1 text-xs text-white/60">
+                                <span className="text-white/40 text-[10px]">Preenchido:</span>
+                                <p className="text-white/80 font-medium mt-0.5">{filledValue}</p>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    );
+                  }) : (
                     <div className="text-xs text-white/40 py-2 flex items-center gap-2">
                       {isFuture ? (
                         <>
