@@ -196,8 +196,8 @@ export default function AplicativosPage() {
               <div className="space-y-4 pt-2">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label>Nome *</Label>
-                    <Input value={form.nome} onChange={e => setForm(p => ({ ...p, nome: e.target.value }))} />
+                    <Label>URL do Cliente *</Label>
+                    <Input value={form.nome} onChange={e => setForm(p => ({ ...p, nome: e.target.value }))} placeholder="exemplo.curseduca.com" />
                   </div>
                   <div className="space-y-1.5">
                     <Label>Empresa *</Label>
