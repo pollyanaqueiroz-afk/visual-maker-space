@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
   CheckCircle2, Circle, MessageSquare, Star, Lock, AlertTriangle,
-  ExternalLink, Upload, Image as ImageIcon, Loader2,
+  ExternalLink, Upload, Image as ImageIcon, Loader2, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +16,89 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 import { format } from 'date-fns';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const STEP_BY_STEP: Record<string, string[]> = {
+  'Solicitei o número DUNS da minha empresa': [
+    '1. Acesse o site https://www.dnb.com/de-de/upik-en.html',
+    '2. Clique em "Request a D-U-N-S Number"',
+    '3. Preencha os dados da sua empresa (razão social, CNPJ, endereço)',
+    '4. Informe um e-mail corporativo para receber o número',
+    '5. Aguarde o retorno por e-mail (pode levar até 14 dias úteis)',
+    '6. Após receber, guarde o número — ele será necessário nas próximas etapas',
+  ],
+  'Confirmei que meu CNPJ é ME ou LTDA': [
+    '1. Acesse o site da Receita Federal: https://servicos.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp',
+    '2. Digite o número do seu CNPJ e consulte',
+    '3. Verifique o campo "Natureza Jurídica"',
+    '4. Deve constar ME (Microempresa) ou LTDA — CNPJs MEI não são aceitos pela Apple',
+    '5. Se for MEI, será necessário alterar o tipo antes de prosseguir',
+  ],
+  'Tenho um e-mail corporativo': [
+    '1. O e-mail precisa ser no formato seunome@suaempresa.com.br',
+    '2. E-mails gratuitos (Gmail, Hotmail) não são aceitos',
+    '3. Configure pelo painel do seu provedor de domínio (ex: Google Workspace, Zoho Mail)',
+    '4. Teste enviando e recebendo e-mails para garantir que funciona',
+  ],
+  'Meu site está publicado com domínio próprio': [
+    '1. Seu site precisa estar acessível publicamente (ex: www.suaempresa.com.br)',
+    '2. Não pode ser um subdomínio gratuito (ex: .wixsite.com, .blogspot.com)',
+    '3. Verifique se possui certificado SSL (cadeado no navegador)',
+    '4. O site deve conter informações básicas sobre sua empresa',
+  ],
+  'Criei a conta no Google Play Console': [
+    '1. Acesse https://play.google.com/console/signup',
+    '2. Faça login com a conta Google da empresa',
+    '3. Aceite os termos de desenvolvedor',
+    '4. Pague a taxa única de US$ 25',
+    '5. Preencha os dados da organização (nome, endereço, site)',
+    '6. Aguarde a verificação da conta (pode levar 48h)',
+  ],
+  'Adicionei apps@membros.app.br como admin (Google)': [
+    '1. Acesse o Google Play Console → https://play.google.com/console',
+    '2. Vá em "Usuários e permissões" no menu lateral',
+    '3. Clique em "Convidar novos usuários"',
+    '4. Digite o e-mail: apps@membros.app.br',
+    '5. Marque a permissão "Admin" (acesso total)',
+    '6. Clique em "Enviar convite"',
+  ],
+  'Criei a conta no Apple Developer Program': [
+    '1. Acesse https://developer.apple.com/account',
+    '2. Faça login com o Apple ID corporativo',
+    '3. Clique em "Join the Apple Developer Program"',
+    '4. Escolha "Organization" como tipo de conta',
+    '5. Informe o número DUNS da empresa',
+    '6. Pague a taxa anual de US$ 99',
+    '7. Aguarde a aprovação (pode levar de 24h a 2 semanas)',
+  ],
+  'Adicionei apps@membros.app.br como admin (Apple)': [
+    '1. Acesse o App Store Connect → https://appstoreconnect.apple.com',
+    '2. Vá em "Usuários e Acessos"',
+    '3. Clique no botão "+" para adicionar novo usuário',
+    '4. Digite o e-mail: apps@membros.app.br',
+    '5. Selecione a função "Admin"',
+    '6. Clique em "Convidar"',
+  ],
+  'Fiz login no app de teste': [
+    '1. Baixe o app de teste no link enviado pela equipe',
+    '2. Abra o app no seu celular',
+    '3. Faça login com sua conta de administrador da plataforma',
+    '4. Verifique se o app abre corretamente',
+  ],
+  'Naveguei pelo conteúdo principal': [
+    '1. Acesse os cursos/conteúdos disponíveis no app',
+    '2. Teste a reprodução de vídeos e materiais',
+    '3. Verifique se as imagens e textos estão corretos',
+    '4. Teste a navegação entre as seções',
+    '5. Anote qualquer problema encontrado para reportar à equipe',
+  ],
+  'Aprovei o app para publicação': [
+    '1. Confirme que todos os conteúdos estão corretos',
+    '2. Verifique se o login funciona normalmente',
+    '3. Teste em diferentes tamanhos de tela se possível',
+    '4. Marque esta opção somente quando estiver satisfeito com o app',
+  ],
+};
 
 const FASE_NAMES = ['Pré-Requisitos','Primeiros Passos','Validação pela Loja','Assets e Mockup','Formulário do App','Criação e Submissão','Aprovação das Lojas','Teste do App','Publicado 🎉'];
 
@@ -102,6 +184,10 @@ export default function AppClientPortalContent({ clienteId }: Props) {
       });
     }
   }, [formulario]);
+
+  const [expandedSteps, setExpandedSteps] = useState<Record<string, boolean>>({});
+
+  const toggleSteps = (id: string) => setExpandedSteps(p => ({ ...p, [id]: !p[id] }));
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ['portal-checklist'] });
@@ -216,25 +302,62 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     return match ? match[0] : null;
   };
 
+  const renderSteps = (itemText: string, itemId: string) => {
+    const steps = STEP_BY_STEP[itemText];
+    if (!steps) return null;
+    const isOpen = expandedSteps[itemId];
+    return (
+      <div className="mt-2">
+        <button
+          onClick={(e) => { e.stopPropagation(); toggleSteps(itemId); }}
+          className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+        >
+          {isOpen ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+          {isOpen ? 'Ocultar passo a passo' : 'Ver passo a passo'}
+        </button>
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="mt-2 space-y-1 rounded-lg bg-white/5 p-3">
+                {steps.map((step, i) => (
+                  <p key={i} className="text-xs text-white/60">{step}</p>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  };
+
   const renderChecklistItem = (item: any) => {
     if (item.tipo === 'link') {
       const link = extractLink(item.descricao);
       return (
-        <div key={item.id} className="flex items-start gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
-          <Checkbox
-            checked={item.feito}
-            onCheckedChange={(checked) => toggleCheck.mutate({ id: item.id, feito: !!checked })}
-            className="mt-0.5 border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
-          />
-          <div className="flex-1">
-            <p className="text-sm font-medium">{item.texto}</p>
-            {item.descricao && <p className="text-xs text-white/50 mt-1">{item.descricao}</p>}
-            {link && (
-              <a href={link} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1">
-                <ExternalLink className="h-3 w-3" /> Acessar link
-              </a>
-            )}
+        <div key={item.id} className="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
+          <div className="flex items-start gap-3">
+            <Checkbox
+              checked={item.feito}
+              onCheckedChange={(checked) => toggleCheck.mutate({ id: item.id, feito: !!checked })}
+              className="mt-0.5 border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+            />
+            <div className="flex-1">
+              <p className="text-sm font-medium">{item.texto}</p>
+              {item.descricao && <p className="text-xs text-white/50 mt-1">{item.descricao}</p>}
+              {link && (
+                <a href={link} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1">
+                  <ExternalLink className="h-3 w-3" /> Acessar link
+                </a>
+              )}
+              {renderSteps(item.texto, item.id)}
+            </div>
           </div>
         </div>
       );
@@ -313,15 +436,18 @@ export default function AppClientPortalContent({ clienteId }: Props) {
 
     // Default: check type
     return (
-      <div key={item.id} className="flex items-start gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
-        <Checkbox
-          checked={item.feito}
-          onCheckedChange={(checked) => toggleCheck.mutate({ id: item.id, feito: !!checked })}
-          className="mt-0.5 border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
-        />
-        <div className="flex-1">
-          <p className="text-sm font-medium">{item.texto}</p>
-          {item.descricao && <p className="text-xs text-white/50 mt-1">{item.descricao}</p>}
+      <div key={item.id} className="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
+        <div className="flex items-start gap-3">
+          <Checkbox
+            checked={item.feito}
+            onCheckedChange={(checked) => toggleCheck.mutate({ id: item.id, feito: !!checked })}
+            className="mt-0.5 border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+          />
+          <div className="flex-1">
+            <p className="text-sm font-medium">{item.texto}</p>
+            {item.descricao && <p className="text-xs text-white/50 mt-1">{item.descricao}</p>}
+            {renderSteps(item.texto, item.id)}
+          </div>
         </div>
       </div>
     );
