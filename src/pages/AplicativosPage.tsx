@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { Smartphone, Plus, Bell, AlertTriangle, Apple, Bot, Clock, CheckCircle, Users, TrendingUp } from 'lucide-react';
+import { Smartphone, Plus, Bell, AlertTriangle, Apple, Bot, Clock, CheckCircle, Users, TrendingUp, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { format, differenceInHours, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -61,6 +62,7 @@ export default function AplicativosPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('kanban');
   const [form, setForm] = useState({
     nome: '', url_cliente: '', email: '', whatsapp: '', plataforma: 'ambos', responsavel_nome: '',
   });
@@ -92,6 +94,22 @@ export default function AplicativosPage() {
     },
   });
 
+  // Full checklist for internal pendencies tab
+  const { data: allChecklist = [] } = useQuery({
+    queryKey: ['app-checklist-full'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('app_checklist_items')
+        .select('id, cliente_id, fase_numero, texto, descricao, ator, feito, feito_em, created_at')
+        .eq('feito', false)
+        .neq('ator', 'cliente')
+        .order('fase_numero')
+        .order('created_at');
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const createMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from('app_clientes').insert({
@@ -108,6 +126,7 @@ export default function AplicativosPage() {
       queryClient.invalidateQueries({ queryKey: ['app-clientes'] });
       queryClient.invalidateQueries({ queryKey: ['app-fases-all'] });
       queryClient.invalidateQueries({ queryKey: ['app-checklist-counts'] });
+      queryClient.invalidateQueries({ queryKey: ['app-checklist-full'] });
       setDialogOpen(false);
       setForm({ nome: '', url_cliente: '', email: '', whatsapp: '', plataforma: 'ambos', responsavel_nome: '' });
       toast.success('Cliente criado com sucesso! Fases e checklist gerados automaticamente.');
@@ -124,7 +143,6 @@ export default function AplicativosPage() {
     ? Math.round(clientes.filter(c => c.fase_atual < 8).reduce((sum, c) => sum + c.porcentagem_geral, 0) / totalAbertos)
     : 0;
 
-  // Group clients by fase_atual
   const columns = useMemo(() => {
     const cols: Record<number, AppCliente[]> = {};
     for (let i = 0; i <= 8; i++) cols[i] = [];
@@ -135,7 +153,24 @@ export default function AplicativosPage() {
     return cols;
   }, [clientes]);
 
-  // Checklist stats per client/fase
+  // Internal pendencies grouped by client
+  const internalPendencies = useMemo(() => {
+    const clientMap = new Map<string, typeof allChecklist>();
+    allChecklist.forEach(item => {
+      const existing = clientMap.get(item.cliente_id) || [];
+      existing.push(item);
+      clientMap.set(item.cliente_id, existing);
+    });
+
+    return Array.from(clientMap.entries()).map(([clienteId, items]) => {
+      const cliente = clientes.find(c => c.id === clienteId);
+      return { clienteId, cliente, items };
+    }).filter(g => g.cliente && g.cliente.fase_atual < 8)
+      .sort((a, b) => (b.items.length - a.items.length));
+  }, [allChecklist, clientes]);
+
+  const totalInternalPending = allChecklist.length;
+
   const getChecklistStats = (clienteId: string, faseNum: number) => {
     const items = checklistCounts.filter(i => i.cliente_id === clienteId && i.fase_numero === faseNum && i.obrigatorio);
     const total = items.length;
@@ -169,6 +204,12 @@ export default function AplicativosPage() {
     if (status === 'atrasado') return 'border-l-destructive';
     if (status === 'concluido') return 'border-l-green-500';
     return 'border-l-primary';
+  };
+
+  const atorLabel = (ator: string) => {
+    if (ator === 'analista') return { text: 'Analista', color: 'bg-amber-500/10 text-amber-500 border-amber-500/20' };
+    if (ator === 'designer') return { text: 'Designer', color: 'bg-purple-500/10 text-purple-500 border-purple-500/20' };
+    return { text: ator, color: 'bg-muted text-muted-foreground border-border' };
   };
 
   return (
@@ -258,141 +299,271 @@ export default function AplicativosPage() {
         </div>
       )}
 
-      {/* Dashboard Gerencial */}
-      {!isLoading && (
-        <div className="space-y-4">
-          {/* KPI Cards */}
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="kanban" className="gap-1.5">
+            <Smartphone className="h-3.5 w-3.5" />
+            Kanban
+          </TabsTrigger>
+          <TabsTrigger value="pendencias" className="gap-1.5">
+            <ClipboardList className="h-3.5 w-3.5" />
+            Pendências Internas
+            {totalInternalPending > 0 && (
+              <Badge variant="destructive" className="ml-1 text-[10px] px-1.5 py-0">{totalInternalPending}</Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="kanban" className="space-y-4 mt-4">
+          {/* Dashboard Gerencial */}
+          {!isLoading && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <Card>
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                      <Users className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{totalAbertos}</p>
+                      <p className="text-xs text-muted-foreground">Em aberto</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
+                      <AlertTriangle className="h-5 w-5 text-destructive" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{atrasados}</p>
+                      <p className="text-xs text-muted-foreground">Atrasados</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-500/10">
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{totalConcluidos}</p>
+                      <p className="text-xs text-muted-foreground">Publicados</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
+                      <TrendingUp className="h-5 w-5 text-blue-500" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{avgProgress}%</p>
+                      <p className="text-xs text-muted-foreground">Progresso médio</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card>
+                <CardContent className="p-4 space-y-3">
+                  <p className="text-sm font-semibold text-muted-foreground">Distribuição por etapa</p>
+                  <div className="space-y-2">
+                    {FASE_NAMES.map((name, idx) => {
+                      const count = columns[idx]?.length || 0;
+                      const pct = clientes.length > 0 ? Math.round((count / clientes.length) * 100) : 0;
+                      const atrasadosNaFase = columns[idx]?.filter(c => c.status === 'atrasado').length || 0;
+                      return (
+                        <div key={idx} className="flex items-center gap-3">
+                          <span className="text-xs text-muted-foreground w-28 shrink-0 truncate">{name}</span>
+                          <div className="flex-1">
+                            <Progress value={pct} className="h-2" />
+                          </div>
+                          <div className="flex items-center gap-1.5 w-16 shrink-0 justify-end">
+                            <span className="text-xs font-medium">{count}</span>
+                            {atrasadosNaFase > 0 && (
+                              <Badge variant="destructive" className="text-[9px] px-1 py-0">{atrasadosNaFase}</Badge>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {isLoading ? (
+            <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+          ) : (
+            <ScrollArea className="w-full">
+              <div className="flex gap-3 pb-4" style={{ minWidth: 9 * 280 }}>
+                {FASE_NAMES.map((name, idx) => (
+                  <div key={idx} className="w-[280px] shrink-0">
+                    <div className="flex items-center justify-between mb-2 px-1">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{name}</span>
+                      <Badge variant="secondary" className="text-[10px]">{columns[idx].length}</Badge>
+                    </div>
+                    <div className="space-y-2 min-h-[200px] rounded-lg bg-muted/30 p-2">
+                      {columns[idx].map(c => {
+                        const stats = getChecklistStats(c.id, c.fase_atual);
+                        const sla = getSlaInfo(c.id, c.fase_atual);
+                        const inactiveDays = getInactivityDays(c);
+                        return (
+                          <Card
+                            key={c.id}
+                            className={`p-3 cursor-pointer hover:shadow-md transition-shadow border-l-4 ${statusBorderColor(c.status)}`}
+                            onClick={() => navigate(`/hub/aplicativos/${c.id}`)}
+                          >
+                            <div className="flex items-start justify-between mb-1.5">
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium truncate">{c.nome}</p>
+                                <p className="text-xs text-muted-foreground truncate">{c.empresa}</p>
+                              </div>
+                              <PlatformIcon plataforma={c.plataforma} />
+                            </div>
+                            <div className="flex flex-wrap gap-1 mb-2">
+                              {sla && <Badge variant={sla.color} className="text-[10px] px-1.5">{sla.label}</Badge>}
+                              {inactiveDays && inactiveDays > 2 && (
+                                <Badge variant="outline" className="text-[10px] px-1.5">👤 {inactiveDays}d sem ação</Badge>
+                              )}
+                            </div>
+                            <Progress value={c.porcentagem_geral} className="h-1.5 mb-1" />
+                            <div className="flex justify-between text-[10px] text-muted-foreground">
+                              <span>{stats.done}/{stats.total} tarefas</span>
+                              {c.responsavel_nome && <span>{c.responsavel_nome}</span>}
+                            </div>
+                          </Card>
+                        );
+                      })}
+                      {columns[idx].length === 0 && (
+                        <div className="text-xs text-muted-foreground text-center py-8">Nenhum cliente</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+          )}
+        </TabsContent>
+
+        <TabsContent value="pendencias" className="space-y-4 mt-4">
+          {/* Summary cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Card>
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
+                  <ClipboardList className="h-5 w-5 text-amber-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{totalInternalPending}</p>
+                  <p className="text-xs text-muted-foreground">Pendências totais</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
+                  <Users className="h-5 w-5 text-amber-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{allChecklist.filter(i => i.ator === 'analista').length}</p>
+                  <p className="text-xs text-muted-foreground">Do analista</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-500/10">
+                  <Users className="h-5 w-5 text-purple-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{allChecklist.filter(i => i.ator === 'designer').length}</p>
+                  <p className="text-xs text-muted-foreground">Do designer</p>
+                </div>
+              </CardContent>
+            </Card>
             <Card>
               <CardContent className="p-4 flex items-center gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                   <Users className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{totalAbertos}</p>
-                  <p className="text-xs text-muted-foreground">Em aberto</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
-                  <AlertTriangle className="h-5 w-5 text-destructive" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{atrasados}</p>
-                  <p className="text-xs text-muted-foreground">Atrasados</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-500/10">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{totalConcluidos}</p>
-                  <p className="text-xs text-muted-foreground">Publicados</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
-                  <TrendingUp className="h-5 w-5 text-blue-500" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{avgProgress}%</p>
-                  <p className="text-xs text-muted-foreground">Progresso médio</p>
+                  <p className="text-2xl font-bold">{internalPendencies.length}</p>
+                  <p className="text-xs text-muted-foreground">Clientes com pendência</p>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Distribution by phase */}
-          <Card>
-            <CardContent className="p-4 space-y-3">
-              <p className="text-sm font-semibold text-muted-foreground">Distribuição por etapa</p>
-              <div className="space-y-2">
-                {FASE_NAMES.map((name, idx) => {
-                  const count = columns[idx]?.length || 0;
-                  const pct = clientes.length > 0 ? Math.round((count / clientes.length) * 100) : 0;
-                  const atrasadosNaFase = columns[idx]?.filter(c => c.status === 'atrasado').length || 0;
-                  return (
-                    <div key={idx} className="flex items-center gap-3">
-                      <span className="text-xs text-muted-foreground w-28 shrink-0 truncate">{name}</span>
-                      <div className="flex-1">
-                        <Progress value={pct} className="h-2" />
+          {/* Pending items grouped by client */}
+          {internalPendencies.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
+                <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
+                <p className="font-medium">Nenhuma pendência interna</p>
+                <p className="text-sm mt-1">Todas as tarefas internas estão concluídas.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {internalPendencies.map(({ clienteId, cliente, items }) => {
+                if (!cliente) return null;
+                return (
+                  <Card key={clienteId} className="overflow-hidden">
+                    <div
+                      className="flex items-center justify-between p-4 bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => navigate(`/hub/aplicativos/${clienteId}`)}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <PlatformIcon plataforma={cliente.plataforma} />
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold truncate">{cliente.nome}</p>
+                          <p className="text-xs text-muted-foreground truncate">{cliente.empresa}</p>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5 w-16 shrink-0 justify-end">
-                        <span className="text-xs font-medium">{count}</span>
-                        {atrasadosNaFase > 0 && (
-                          <Badge variant="destructive" className="text-[9px] px-1 py-0">{atrasadosNaFase}</Badge>
-                        )}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Badge variant="outline" className="text-xs">
+                          Fase {cliente.fase_atual} — {FASE_NAMES[cliente.fase_atual] || '?'}
+                        </Badge>
+                        <Badge variant="destructive" className="text-xs">
+                          {items.length} pendência{items.length > 1 ? 's' : ''}
+                        </Badge>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Kanban */}
-      {isLoading ? (
-        <div className="text-center py-12 text-muted-foreground">Carregando...</div>
-      ) : (
-        <ScrollArea className="w-full">
-          <div className="flex gap-3 pb-4" style={{ minWidth: 9 * 280 }}>
-            {FASE_NAMES.map((name, idx) => (
-              <div key={idx} className="w-[280px] shrink-0">
-                <div className="flex items-center justify-between mb-2 px-1">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{name}</span>
-                  <Badge variant="secondary" className="text-[10px]">{columns[idx].length}</Badge>
-                </div>
-                <div className="space-y-2 min-h-[200px] rounded-lg bg-muted/30 p-2">
-                  {columns[idx].map(c => {
-                    const stats = getChecklistStats(c.id, c.fase_atual);
-                    const sla = getSlaInfo(c.id, c.fase_atual);
-                    const inactiveDays = getInactivityDays(c);
-                    return (
-                      <Card
-                        key={c.id}
-                        className={`p-3 cursor-pointer hover:shadow-md transition-shadow border-l-4 ${statusBorderColor(c.status)}`}
-                        onClick={() => navigate(`/hub/aplicativos/${c.id}`)}
-                      >
-                        <div className="flex items-start justify-between mb-1.5">
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium truncate">{c.nome}</p>
-                            <p className="text-xs text-muted-foreground truncate">{c.empresa}</p>
-                          </div>
-                          <PlatformIcon plataforma={c.plataforma} />
-                        </div>
-                        <div className="flex flex-wrap gap-1 mb-2">
-                          {sla && <Badge variant={sla.color} className="text-[10px] px-1.5">{sla.label}</Badge>}
-                          {inactiveDays && inactiveDays > 2 && (
-                            <Badge variant="outline" className="text-[10px] px-1.5">👤 {inactiveDays}d sem ação</Badge>
-                          )}
-                        </div>
-                        <Progress value={c.porcentagem_geral} className="h-1.5 mb-1" />
-                        <div className="flex justify-between text-[10px] text-muted-foreground">
-                          <span>{stats.done}/{stats.total} tarefas</span>
-                          {c.responsavel_nome && <span>{c.responsavel_nome}</span>}
-                        </div>
-                      </Card>
-                    );
-                  })}
-                  {columns[idx].length === 0 && (
-                    <div className="text-xs text-muted-foreground text-center py-8">Nenhum cliente</div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
-      )}
+                    <CardContent className="p-0">
+                      <div className="divide-y divide-border">
+                        {items.map(item => {
+                          const ator = atorLabel(item.ator);
+                          return (
+                            <div key={item.id} className="flex items-center gap-3 px-4 py-3">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm truncate">{item.texto}</p>
+                                {item.descricao && (
+                                  <p className="text-xs text-muted-foreground truncate mt-0.5">{item.descricao}</p>
+                                )}
+                              </div>
+                              <Badge variant="outline" className={`text-[10px] shrink-0 ${ator.color}`}>
+                                {ator.text}
+                              </Badge>
+                              <Badge variant="outline" className="text-[10px] shrink-0">
+                                Fase {item.fase_numero}
+                              </Badge>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
