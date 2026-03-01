@@ -219,12 +219,41 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     }, 500);
   };
 
+  const ADMIN_GOOGLE_TEXT = 'Adicionei apps@membros.app.br como admin (Google)';
+  const ADMIN_APPLE_TEXT = 'Adicionei apps@membros.app.br como admin (Apple)';
+
   const toggleCheck = useMutation({
-    mutationFn: async ({ id, feito }: { id: string; feito: boolean }) => {
+    mutationFn: async ({ id, feito, texto }: { id: string; feito: boolean; texto?: string }) => {
       const { error } = await supabase.from('app_checklist_items').update({
         feito, feito_em: feito ? new Date().toISOString() : null, feito_por: 'cliente',
       }).eq('id', id);
       if (error) throw error;
+
+      // When client adds admin, create notification for implantação team
+      if (feito && texto && (texto === ADMIN_GOOGLE_TEXT || texto === ADMIN_APPLE_TEXT)) {
+        const platform = texto === ADMIN_GOOGLE_TEXT ? 'Google' : 'Apple';
+        // Check if all admin items for this client are now done
+        const adminTexts = [ADMIN_GOOGLE_TEXT, ADMIN_APPLE_TEXT];
+        const relevantTexts = cliente?.plataforma === 'google' ? [ADMIN_GOOGLE_TEXT]
+          : cliente?.plataforma === 'apple' ? [ADMIN_APPLE_TEXT]
+          : adminTexts;
+        
+        const otherAdminItems = checklist.filter(i => i.fase_numero === 1 && relevantTexts.includes(i.texto) && i.id !== id);
+        const allAdminDone = otherAdminItems.every(i => i.feito);
+
+        if (allAdminDone) {
+          // All admin items done — notify implantação team
+          await supabase.from('app_notificacoes').insert({
+            cliente_id: clienteId,
+            tipo: 'validacao_admin_pendente',
+            canal: 'portal',
+            destinatario: 'analista',
+            titulo: '🔔 Validação de convite pendente',
+            mensagem: `${cliente?.nome} (${cliente?.empresa}) adicionou apps@membros.app.br como admin. Valide o recebimento do convite.`,
+            agendado_para: new Date().toISOString(),
+          });
+        }
+      }
     },
     onSuccess: () => {
       invalidateAll();
@@ -710,7 +739,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
         <div className="flex items-start gap-3">
           <Checkbox
             checked={item.feito}
-            onCheckedChange={(checked) => toggleCheck.mutate({ id: item.id, feito: !!checked })}
+            onCheckedChange={(checked) => toggleCheck.mutate({ id: item.id, feito: !!checked, texto: item.texto })}
             className="mt-0.5 border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
           />
           <div className="flex-1">

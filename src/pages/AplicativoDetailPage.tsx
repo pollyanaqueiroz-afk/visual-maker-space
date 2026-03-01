@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Copy, ExternalLink, Clock, CheckCircle2, Circle, Lock, AlertTriangle, Upload, MessageSquare, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Copy, ExternalLink, Clock, CheckCircle2, Circle, Lock, AlertTriangle, Upload, MessageSquare, Image as ImageIcon, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -10,6 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -25,6 +26,8 @@ export default function AplicativoDetailPage() {
   const [selectedFase, setSelectedFase] = useState<number | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [newMessage, setNewMessage] = useState('');
+  const [validationDialogOpen, setValidationDialogOpen] = useState(false);
+  const [validationItemId, setValidationItemId] = useState<string | null>(null);
 
   const { data: cliente } = useQuery({
     queryKey: ['app-cliente', clienteId],
@@ -290,24 +293,100 @@ export default function AplicativoDetailPage() {
                         <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">
                           {ator === 'analista' ? '👨‍💻 Analista' : ator === 'designer' ? '🎨 Designer' : ator === 'cliente' ? '👤 Cliente' : '🏪 Loja'}
                         </p>
-                        {items.map(item => (
-                          <div key={item.id} className="flex items-start gap-3 py-2 border-b border-border/50 last:border-0">
-                            {item.tipo === 'upload' ? (
-                              <Upload className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                            ) : (
-                              <Checkbox
-                                checked={item.feito}
-                                disabled={item.ator === 'cliente'}
-                                onCheckedChange={(checked) => toggleItem.mutate({ id: item.id, feito: !!checked })}
-                              />
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className={`text-sm ${item.feito ? 'line-through text-muted-foreground' : ''}`}>{item.texto}</p>
-                              {item.descricao && <p className="text-xs text-muted-foreground mt-0.5">{item.descricao}</p>}
-                              {item.feito_em && <p className="text-[10px] text-muted-foreground mt-0.5">✓ {format(new Date(item.feito_em), 'dd/MM/yyyy HH:mm')}</p>}
+                        {items.map(item => {
+                          const isValidationItem = item.texto === 'Documentação verificada pelo analista' && selectedFase === 1;
+
+                          // Get admin dates for the validation item
+                          const googleAdminItem = isValidationItem ? checklist.find(i => i.fase_numero === 1 && i.texto === 'Adicionei apps@membros.app.br como admin (Google)') : null;
+                          const appleAdminItem = isValidationItem ? checklist.find(i => i.fase_numero === 1 && i.texto === 'Adicionei apps@membros.app.br como admin (Apple)') : null;
+                          const googleAccountItem = isValidationItem ? checklist.find(i => i.fase_numero === 1 && i.texto === 'Criei a conta no Google Play Console') : null;
+                          const appleAccountItem = isValidationItem ? checklist.find(i => i.fase_numero === 1 && i.texto === 'Criei a conta no Apple Developer Program') : null;
+
+                          const showGoogle = cliente.plataforma === 'google' || cliente.plataforma === 'ambos';
+                          const showApple = cliente.plataforma === 'apple' || cliente.plataforma === 'ambos';
+                          const adminsPending = isValidationItem && (
+                            (showGoogle && !googleAdminItem?.feito) || (showApple && !appleAdminItem?.feito)
+                          );
+
+                          return (
+                            <div key={item.id} className="flex items-start gap-3 py-2 border-b border-border/50 last:border-0">
+                              {item.tipo === 'upload' ? (
+                                <Upload className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                              ) : isValidationItem ? (
+                                <Checkbox
+                                  checked={item.feito}
+                                  disabled={adminsPending}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      setValidationItemId(item.id);
+                                      setValidationDialogOpen(true);
+                                    } else {
+                                      toggleItem.mutate({ id: item.id, feito: false });
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                <Checkbox
+                                  checked={item.feito}
+                                  disabled={item.ator === 'cliente'}
+                                  onCheckedChange={(checked) => toggleItem.mutate({ id: item.id, feito: !!checked })}
+                                />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className={`text-sm ${item.feito ? 'line-through text-muted-foreground' : ''}`}>{item.texto}</p>
+                                {item.descricao && <p className="text-xs text-muted-foreground mt-0.5">{item.descricao}</p>}
+                                {item.feito_em && <p className="text-[10px] text-muted-foreground mt-0.5">✓ {format(new Date(item.feito_em), 'dd/MM/yyyy HH:mm')}</p>}
+
+                                {/* Show admin dates and status for validation item */}
+                                {isValidationItem && !item.feito && (
+                                  <div className="mt-2 space-y-1.5">
+                                    {showGoogle && (
+                                      <div className="flex items-center gap-2 text-xs">
+                                        <span className="text-muted-foreground">🤖 Google:</span>
+                                        {googleAccountItem?.feito ? (
+                                          <span className="text-green-600">Conta criada em {googleAccountItem.feito_em ? format(new Date(googleAccountItem.feito_em), 'dd/MM/yy HH:mm') : '—'}</span>
+                                        ) : <span className="text-amber-500">Conta pendente</span>}
+                                        {googleAdminItem?.feito ? (
+                                          <span className="text-green-600 ml-1">· Admin adicionado {googleAdminItem.feito_em ? format(new Date(googleAdminItem.feito_em), 'dd/MM/yy HH:mm') : ''}</span>
+                                        ) : <span className="text-amber-500 ml-1">· Admin pendente</span>}
+                                      </div>
+                                    )}
+                                    {showApple && (
+                                      <div className="flex items-center gap-2 text-xs">
+                                        <span className="text-muted-foreground">🍎 Apple:</span>
+                                        {appleAccountItem?.feito ? (
+                                          <span className="text-green-600">Conta criada em {appleAccountItem.feito_em ? format(new Date(appleAccountItem.feito_em), 'dd/MM/yy HH:mm') : '—'}</span>
+                                        ) : <span className="text-amber-500">Conta pendente</span>}
+                                        {appleAdminItem?.feito ? (
+                                          <span className="text-green-600 ml-1">· Admin adicionado {appleAdminItem.feito_em ? format(new Date(appleAdminItem.feito_em), 'dd/MM/yy HH:mm') : ''}</span>
+                                        ) : <span className="text-amber-500 ml-1">· Admin pendente</span>}
+                                      </div>
+                                    )}
+                                    {adminsPending && (
+                                      <p className="text-[10px] text-amber-500 flex items-center gap-1">
+                                        <AlertTriangle className="h-3 w-3" /> Aguardando cliente adicionar admin para validar
+                                      </p>
+                                    )}
+                                    {!adminsPending && !item.feito && (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="mt-1 text-xs h-7"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setValidationItemId(item.id);
+                                          setValidationDialogOpen(true);
+                                        }}
+                                      >
+                                        <ShieldCheck className="h-3.5 w-3.5 mr-1" /> Validar convites
+                                      </Button>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     );
                   })}
@@ -425,6 +504,78 @@ export default function AplicativoDetailPage() {
           </Tabs>
         </SheetContent>
       </Sheet>
+
+      {/* Validation Confirmation Dialog */}
+      <Dialog open={validationDialogOpen} onOpenChange={setValidationDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-primary" /> Validação de Convite Admin
+            </DialogTitle>
+            <DialogDescription>
+              Confirme se recebeu os convites de administrador enviados pelo cliente <strong>{cliente.nome}</strong> ({cliente.empresa}).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {(() => {
+              const showGoogle = cliente.plataforma === 'google' || cliente.plataforma === 'ambos';
+              const showApple = cliente.plataforma === 'apple' || cliente.plataforma === 'ambos';
+              const googleAccountItem = checklist.find(i => i.fase_numero === 1 && i.texto === 'Criei a conta no Google Play Console');
+              const appleAccountItem = checklist.find(i => i.fase_numero === 1 && i.texto === 'Criei a conta no Apple Developer Program');
+              const googleAdminItem = checklist.find(i => i.fase_numero === 1 && i.texto === 'Adicionei apps@membros.app.br como admin (Google)');
+              const appleAdminItem = checklist.find(i => i.fase_numero === 1 && i.texto === 'Adicionei apps@membros.app.br como admin (Apple)');
+
+              return (
+                <>
+                  {showGoogle && (
+                    <div className="rounded-lg border p-4 space-y-2">
+                      <p className="text-sm font-semibold flex items-center gap-2">🤖 Google Play Console</p>
+                      <div className="text-xs text-muted-foreground space-y-1">
+                        {googleAccountItem?.feito_em && (
+                          <p>📅 Conta criada em: <strong className="text-foreground">{format(new Date(googleAccountItem.feito_em), 'dd/MM/yyyy HH:mm')}</strong></p>
+                        )}
+                        {googleAdminItem?.feito_em && (
+                          <p>📅 Admin adicionado em: <strong className="text-foreground">{format(new Date(googleAdminItem.feito_em), 'dd/MM/yyyy HH:mm')}</strong></p>
+                        )}
+                      </div>
+                      <p className="text-sm font-medium text-foreground mt-2">Você confirma que recebeu o convite para ser admin do aplicativo Google?</p>
+                    </div>
+                  )}
+                  {showApple && (
+                    <div className="rounded-lg border p-4 space-y-2">
+                      <p className="text-sm font-semibold flex items-center gap-2">🍎 Apple Developer</p>
+                      <div className="text-xs text-muted-foreground space-y-1">
+                        {appleAccountItem?.feito_em && (
+                          <p>📅 Conta criada em: <strong className="text-foreground">{format(new Date(appleAccountItem.feito_em), 'dd/MM/yyyy HH:mm')}</strong></p>
+                        )}
+                        {appleAdminItem?.feito_em && (
+                          <p>📅 Admin adicionado em: <strong className="text-foreground">{format(new Date(appleAdminItem.feito_em), 'dd/MM/yyyy HH:mm')}</strong></p>
+                        )}
+                      </div>
+                      <p className="text-sm font-medium text-foreground mt-2">Você confirma que recebeu o convite para ser admin do aplicativo Apple?</p>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancelar</Button>
+            </DialogClose>
+            <Button onClick={() => {
+              if (validationItemId) {
+                toggleItem.mutate({ id: validationItemId, feito: true });
+                setValidationDialogOpen(false);
+                setValidationItemId(null);
+                toast.success('Documentação validada com sucesso!');
+              }
+            }}>
+              <ShieldCheck className="h-4 w-4 mr-1" /> Confirmar recebimento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
