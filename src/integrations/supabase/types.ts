@@ -14,6 +14,485 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_assets: {
+        Row: {
+          altura: number | null
+          aprovado_em: string | null
+          cliente_id: string | null
+          comentario_cliente: string | null
+          created_at: string | null
+          dimensoes_ok: boolean | null
+          enviado_por: string | null
+          id: string
+          largura: number | null
+          nome_arquivo: string | null
+          status: string | null
+          tamanho_bytes: number | null
+          tipo: string
+          url: string | null
+        }
+        Insert: {
+          altura?: number | null
+          aprovado_em?: string | null
+          cliente_id?: string | null
+          comentario_cliente?: string | null
+          created_at?: string | null
+          dimensoes_ok?: boolean | null
+          enviado_por?: string | null
+          id?: string
+          largura?: number | null
+          nome_arquivo?: string | null
+          status?: string | null
+          tamanho_bytes?: number | null
+          tipo: string
+          url?: string | null
+        }
+        Update: {
+          altura?: number | null
+          aprovado_em?: string | null
+          cliente_id?: string | null
+          comentario_cliente?: string | null
+          created_at?: string | null
+          dimensoes_ok?: boolean | null
+          enviado_por?: string | null
+          id?: string
+          largura?: number | null
+          nome_arquivo?: string | null
+          status?: string | null
+          tamanho_bytes?: number | null
+          tipo?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_assets_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "app_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      app_checklist_items: {
+        Row: {
+          aprovado_em: string | null
+          aprovado_pelo_cliente: boolean | null
+          ator: string
+          cliente_id: string | null
+          comentario_cliente: string | null
+          created_at: string | null
+          descricao: string | null
+          fase_numero: number
+          feito: boolean | null
+          feito_em: string | null
+          feito_por: string | null
+          id: string
+          obrigatorio: boolean | null
+          ordem: number | null
+          texto: string
+          tipo: string | null
+          upload_dimensoes_ok: boolean | null
+          upload_motivo_rejeicao: string | null
+          upload_url: string | null
+          upload_validado: boolean | null
+        }
+        Insert: {
+          aprovado_em?: string | null
+          aprovado_pelo_cliente?: boolean | null
+          ator: string
+          cliente_id?: string | null
+          comentario_cliente?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          fase_numero: number
+          feito?: boolean | null
+          feito_em?: string | null
+          feito_por?: string | null
+          id?: string
+          obrigatorio?: boolean | null
+          ordem?: number | null
+          texto: string
+          tipo?: string | null
+          upload_dimensoes_ok?: boolean | null
+          upload_motivo_rejeicao?: string | null
+          upload_url?: string | null
+          upload_validado?: boolean | null
+        }
+        Update: {
+          aprovado_em?: string | null
+          aprovado_pelo_cliente?: boolean | null
+          ator?: string
+          cliente_id?: string | null
+          comentario_cliente?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          fase_numero?: number
+          feito?: boolean | null
+          feito_em?: string | null
+          feito_por?: string | null
+          id?: string
+          obrigatorio?: boolean | null
+          ordem?: number | null
+          texto?: string
+          tipo?: string | null
+          upload_dimensoes_ok?: boolean | null
+          upload_motivo_rejeicao?: string | null
+          upload_url?: string | null
+          upload_validado?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_checklist_items_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "app_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      app_clientes: {
+        Row: {
+          data_criacao: string | null
+          email: string
+          empresa: string
+          fase_atual: number | null
+          hubspot_deal_id: string | null
+          id: string
+          nome: string
+          plataforma: string
+          porcentagem_geral: number | null
+          portal_primeiro_acesso: string | null
+          portal_token: string | null
+          prazo_estimado: string | null
+          responsavel_id: string | null
+          responsavel_nome: string | null
+          status: string | null
+          telefone: string | null
+          ultima_acao_cliente: string | null
+          updated_at: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          data_criacao?: string | null
+          email: string
+          empresa: string
+          fase_atual?: number | null
+          hubspot_deal_id?: string | null
+          id?: string
+          nome: string
+          plataforma?: string
+          porcentagem_geral?: number | null
+          portal_primeiro_acesso?: string | null
+          portal_token?: string | null
+          prazo_estimado?: string | null
+          responsavel_id?: string | null
+          responsavel_nome?: string | null
+          status?: string | null
+          telefone?: string | null
+          ultima_acao_cliente?: string | null
+          updated_at?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          data_criacao?: string | null
+          email?: string
+          empresa?: string
+          fase_atual?: number | null
+          hubspot_deal_id?: string | null
+          id?: string
+          nome?: string
+          plataforma?: string
+          porcentagem_geral?: number | null
+          portal_primeiro_acesso?: string | null
+          portal_token?: string | null
+          prazo_estimado?: string | null
+          responsavel_id?: string | null
+          responsavel_nome?: string | null
+          status?: string | null
+          telefone?: string | null
+          ultima_acao_cliente?: string | null
+          updated_at?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
+      app_conversas: {
+        Row: {
+          autor: string
+          cliente_id: string | null
+          created_at: string | null
+          fase_numero: number | null
+          id: string
+          mensagem: string
+          tipo: string | null
+        }
+        Insert: {
+          autor: string
+          cliente_id?: string | null
+          created_at?: string | null
+          fase_numero?: number | null
+          id?: string
+          mensagem: string
+          tipo?: string | null
+        }
+        Update: {
+          autor?: string
+          cliente_id?: string | null
+          created_at?: string | null
+          fase_numero?: number | null
+          id?: string
+          mensagem?: string
+          tipo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_conversas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "app_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      app_fases: {
+        Row: {
+          cliente_id: string | null
+          created_at: string | null
+          data_conclusao: string | null
+          data_inicio: string | null
+          data_previsao: string | null
+          duracao_dias_estimada: number | null
+          id: string
+          nome: string
+          numero: number
+          plataforma: string | null
+          porcentagem: number | null
+          sla_horas: number | null
+          sla_vencimento: string | null
+          sla_violado: boolean | null
+          status: string | null
+        }
+        Insert: {
+          cliente_id?: string | null
+          created_at?: string | null
+          data_conclusao?: string | null
+          data_inicio?: string | null
+          data_previsao?: string | null
+          duracao_dias_estimada?: number | null
+          id?: string
+          nome: string
+          numero: number
+          plataforma?: string | null
+          porcentagem?: number | null
+          sla_horas?: number | null
+          sla_vencimento?: string | null
+          sla_violado?: boolean | null
+          status?: string | null
+        }
+        Update: {
+          cliente_id?: string | null
+          created_at?: string | null
+          data_conclusao?: string | null
+          data_inicio?: string | null
+          data_previsao?: string | null
+          duracao_dias_estimada?: number | null
+          id?: string
+          nome?: string
+          numero?: number
+          plataforma?: string | null
+          porcentagem?: number | null
+          sla_horas?: number | null
+          sla_vencimento?: string | null
+          sla_violado?: boolean | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_fases_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "app_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      app_formulario: {
+        Row: {
+          categoria: string | null
+          cliente_id: string | null
+          created_at: string | null
+          descricao_curta: string | null
+          descricao_longa: string | null
+          enviado_em: string | null
+          id: string
+          nome_app: string | null
+          palavras_chave: string | null
+          preenchido_completo: boolean | null
+          url_privacidade: string | null
+          url_termos: string | null
+        }
+        Insert: {
+          categoria?: string | null
+          cliente_id?: string | null
+          created_at?: string | null
+          descricao_curta?: string | null
+          descricao_longa?: string | null
+          enviado_em?: string | null
+          id?: string
+          nome_app?: string | null
+          palavras_chave?: string | null
+          preenchido_completo?: boolean | null
+          url_privacidade?: string | null
+          url_termos?: string | null
+        }
+        Update: {
+          categoria?: string | null
+          cliente_id?: string | null
+          created_at?: string | null
+          descricao_curta?: string | null
+          descricao_longa?: string | null
+          enviado_em?: string | null
+          id?: string
+          nome_app?: string | null
+          palavras_chave?: string | null
+          preenchido_completo?: boolean | null
+          url_privacidade?: string | null
+          url_termos?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_formulario_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: true
+            referencedRelation: "app_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      app_notificacoes: {
+        Row: {
+          agendado_para: string | null
+          canal: string
+          cliente_id: string | null
+          created_at: string | null
+          destinatario: string | null
+          enviado: boolean | null
+          enviado_em: string | null
+          erro: string | null
+          id: string
+          mensagem: string
+          tipo: string
+          titulo: string
+        }
+        Insert: {
+          agendado_para?: string | null
+          canal: string
+          cliente_id?: string | null
+          created_at?: string | null
+          destinatario?: string | null
+          enviado?: boolean | null
+          enviado_em?: string | null
+          erro?: string | null
+          id?: string
+          mensagem: string
+          tipo: string
+          titulo: string
+        }
+        Update: {
+          agendado_para?: string | null
+          canal?: string
+          cliente_id?: string | null
+          created_at?: string | null
+          destinatario?: string | null
+          enviado?: boolean | null
+          enviado_em?: string | null
+          erro?: string | null
+          id?: string
+          mensagem?: string
+          tipo?: string
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_notificacoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "app_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      app_prerequisitos: {
+        Row: {
+          apple_id_corporativo: string | null
+          cliente_id: string | null
+          cnpj_bloqueado: boolean | null
+          cnpj_tipo: string | null
+          doc_cnpj_enviado: boolean | null
+          doc_identidade_enviado: boolean | null
+          duns_numero: string | null
+          duns_solicitado: boolean | null
+          email_corporativo: string | null
+          id: string
+          inscricao_como_empresa: boolean | null
+          site_publicado: boolean | null
+          site_url: string | null
+          site_verificado_search_console: boolean | null
+          taxa_apple_paga: boolean | null
+          telefone_verificado: boolean | null
+          tudo_ok: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          apple_id_corporativo?: string | null
+          cliente_id?: string | null
+          cnpj_bloqueado?: boolean | null
+          cnpj_tipo?: string | null
+          doc_cnpj_enviado?: boolean | null
+          doc_identidade_enviado?: boolean | null
+          duns_numero?: string | null
+          duns_solicitado?: boolean | null
+          email_corporativo?: string | null
+          id?: string
+          inscricao_como_empresa?: boolean | null
+          site_publicado?: boolean | null
+          site_url?: string | null
+          site_verificado_search_console?: boolean | null
+          taxa_apple_paga?: boolean | null
+          telefone_verificado?: boolean | null
+          tudo_ok?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          apple_id_corporativo?: string | null
+          cliente_id?: string | null
+          cnpj_bloqueado?: boolean | null
+          cnpj_tipo?: string | null
+          doc_cnpj_enviado?: boolean | null
+          doc_identidade_enviado?: boolean | null
+          duns_numero?: string | null
+          duns_solicitado?: boolean | null
+          email_corporativo?: string | null
+          id?: string
+          inscricao_como_empresa?: boolean | null
+          site_publicado?: boolean | null
+          site_url?: string | null
+          site_verificado_search_console?: boolean | null
+          taxa_apple_paga?: boolean | null
+          telefone_verificado?: boolean | null
+          tudo_ok?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_prerequisitos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: true
+            referencedRelation: "app_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brand_assets: {
         Row: {
           briefing_image_id: string | null
@@ -834,6 +1313,10 @@ export type Database = {
     Functions: {
       add_client_column: {
         Args: { col_name: string; col_type?: string }
+        Returns: undefined
+      }
+      criar_fases_cliente: {
+        Args: { p_cliente_id: string; p_plataforma: string }
         Returns: undefined
       }
       get_client_columns: {
