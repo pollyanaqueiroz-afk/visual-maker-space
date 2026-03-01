@@ -281,7 +281,12 @@ export default function AppClientPortalContent({ clienteId }: Props) {
   if (isLoading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-white/40" /></div>;
   if (!cliente) return <div className="text-center py-12 text-white/50">Dados não encontrados</div>;
 
-  const currentItems = checklist.filter(i => i.fase_numero === cliente.fase_atual && i.ator === 'cliente' && !i.feito);
+  const currentItems = checklist.filter(i => {
+    if (i.fase_numero !== cliente.fase_atual || i.ator !== 'cliente' || i.feito) return false;
+    // Hide Apple-only items when platform is google-only
+    if (cliente.plataforma === 'google' && i.texto === 'Confirmei que meu CNPJ é ME ou LTDA') return false;
+    return true;
+  });
   const hasClientAction = currentItems.length > 0;
   const pendingAssets = assets.filter((a: any) => a.status === 'aguardando');
   const inactiveDays = cliente.ultima_acao_cliente
