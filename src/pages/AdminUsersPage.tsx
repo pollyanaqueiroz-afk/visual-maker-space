@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { UserPlus, Trash2, Search, Users, ShieldCheck, Plus } from 'lucide-react';
+import { UserPlus, Trash2, Search, Users, ShieldCheck, Plus, Loader2 } from 'lucide-react';
 
 interface UserRow {
   id: string;
@@ -86,22 +87,48 @@ export default function AdminUsersPage() {
   };
 
   const handleInvite = async () => {
-    if (!inviteEmail.trim()) return;
-    setInviting(true);
-    try {
-      const { error } = await supabase.functions.invoke('manage-users?action=invite', {
-        body: { email: inviteEmail.trim() },
-      });
-      if (error) throw error;
-      toast.success(`Convite enviado para ${inviteEmail}`);
-      setInviteEmail('');
-      setInviteOpen(false);
-      fetchUsers();
-    } catch (err: any) {
-      toast.error('Erro ao convidar: ' + (err.message || 'Erro desconhecido'));
-    } finally {
-      setInviting(false);
+    const raw = inviteEmail.trim();
+    if (!raw) return;
+    // Split by commas, semicolons, spaces or newlines
+    const emails = raw
+      .split(/[\s,;\n]+/)
+      .map(e => e.trim().toLowerCase())
+      .filter(e => e.length > 0);
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const invalid = emails.filter(e => !emailRegex.test(e));
+    if (invalid.length > 0) {
+      toast.error(`E-mails inválidos: ${invalid.join(', ')}`);
+      return;
     }
+
+    const unique = [...new Set(emails)];
+    if (unique.length === 0) return;
+
+    setInviting(true);
+    let success = 0;
+    let errors: string[] = [];
+
+    for (const email of unique) {
+      try {
+        const { error } = await supabase.functions.invoke('manage-users?action=invite', {
+          body: { email },
+        });
+        if (error) throw error;
+        success++;
+      } catch (err: any) {
+        errors.push(`${email}: ${err.message || 'Erro'}`);
+      }
+    }
+
+    if (success > 0) toast.success(`${success} convite(s) enviado(s) com sucesso`);
+    if (errors.length > 0) toast.error(`Falha em ${errors.length}: ${errors.join('; ')}`);
+
+    setInviteEmail('');
+    setInviteOpen(false);
+    fetchUsers();
+    setInviting(false);
   };
 
   const handleDeleteUser = async (userId: string, email: string) => {
@@ -139,17 +166,21 @@ export default function AdminUsersPage() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Convidar novo usuário</DialogTitle>
+              <DialogTitle>Convidar usuários</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 pt-2">
-              <Input
-                placeholder="email@curseduca.com"
-                type="email"
+              <p className="text-sm text-muted-foreground">
+                Insira um ou mais e-mails separados por vírgula, espaço ou um por linha.
+              </p>
+              <Textarea
+                placeholder={"email1@curseduca.com\nemail2@curseduca.com\nemail3@curseduca.com"}
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
+                rows={4}
               />
-              <Button onClick={handleInvite} disabled={inviting || !inviteEmail.trim()} className="w-full">
-                {inviting ? 'Enviando...' : 'Enviar Convite'}
+              <Button onClick={handleInvite} disabled={inviting || !inviteEmail.trim()} className="w-full gap-2">
+                {inviting && <Loader2 className="h-4 w-4 animate-spin" />}
+                {inviting ? 'Enviando...' : 'Enviar Convites'}
               </Button>
             </div>
           </DialogContent>
