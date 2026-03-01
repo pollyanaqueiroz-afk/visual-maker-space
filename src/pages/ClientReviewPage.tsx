@@ -39,9 +39,13 @@ interface ReviewableImage {
   } | null;
 }
 
-export default function ClientReviewPage() {
+interface ClientReviewPageProps {
+  injectedEmail?: string;
+}
+
+export default function ClientReviewPage({ injectedEmail }: ClientReviewPageProps = {}) {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(injectedEmail || '');
   const [authenticated, setAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState<ReviewableImage[]>([]);
@@ -89,11 +93,13 @@ export default function ClientReviewPage() {
     const emailParam = params.get('email');
     if (tokenParam) {
       fetchImages(undefined, tokenParam.trim());
+    } else if (injectedEmail) {
+      fetchImages(injectedEmail.trim().toLowerCase());
     } else if (emailParam) {
       setEmail(emailParam);
       fetchImages(emailParam.trim().toLowerCase());
     }
-  }, []);
+  }, [injectedEmail]);
 
   const fetchImages = async (clientEmail?: string, reviewToken?: string) => {
     setLoading(true);
