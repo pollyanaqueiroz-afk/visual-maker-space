@@ -49,7 +49,8 @@ const App = () => (
               <Route path="dashboards" element={<PermissionGuard permission="dashboards.view"><MeetingsDashboard /></PermissionGuard>} />
               <Route path="carteira" element={<PermissionGuard permission="carteira.view"><CarteiraGeralPage /></PermissionGuard>} />
               <Route path="carteira/:clientId" element={<PermissionGuard permission="carteira.view"><ClientDetailPage /></PermissionGuard>} />
-              <Route path="kanban" element={<PermissionGuard permission="kanban.view"><KanbanPage /></PermissionGuard>} />
+              <Route path="kanban" element={<PermissionGuard permission="kanban.view"><KanbanBoardsPage /></PermissionGuard>} />
+              <Route path="kanban/:boardId" element={<PermissionGuard permission="kanban.view"><KanbanPage /></PermissionGuard>} />
               <Route path="lideranca" element={<PermissionGuard permission="lideranca.view"><LeadershipDashboard /></PermissionGuard>} />
               <Route path="admin/usuarios" element={<PermissionGuard permission="admin.view"><AdminUsersPage /></PermissionGuard>} />
               <Route path="admin/permissoes" element={<PermissionGuard permission="admin.manage_permissions"><PermissionsPage /></PermissionGuard>} />
