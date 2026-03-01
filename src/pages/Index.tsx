@@ -41,9 +41,9 @@ const Index = () => {
           className="text-4xl sm:text-5xl font-extrabold text-white drop-shadow-lg leading-tight"
           style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
         >
-          Curseduca{' '}
+          Hub{' '}
           <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
-            Design
+            Curseduca
           </span>
         </motion.h1>
 
@@ -70,7 +70,18 @@ const Index = () => {
           >
             <Link to="/cliente/login">
               <UserCircle className="h-5 w-5 mr-2" />
-              Hub Curseduca
+              Portal do Cliente
+            </Link>
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            size="lg"
+            className="border-white/20 text-white hover:bg-white/10 backdrop-blur-sm px-8 h-12 text-base"
+          >
+            <Link to="/hub">
+              <Lock className="h-5 w-5 mr-2" />
+              Área da Equipe
             </Link>
           </Button>
         </motion.div>
