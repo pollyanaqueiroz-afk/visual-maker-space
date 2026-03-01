@@ -24,6 +24,7 @@ import CsatPage from "./pages/CsatPage";
 import ClientDetailPage from "./pages/ClientDetailPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
 import KanbanPage from "./pages/KanbanPage";
+import KanbanBoardsPage from "./pages/KanbanBoardsPage";
 import PermissionsPage from "./pages/PermissionsPage";
 import PermissionGuard from "./components/PermissionGuard";
 
