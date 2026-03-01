@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -47,6 +48,10 @@ export default function AdminUsersPage() {
   const [inviting, setInviting] = useState(false);
   const [addRoleUser, setAddRoleUser] = useState<UserRow | null>(null);
   const [selectedRole, setSelectedRole] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkRoleOpen, setBulkRoleOpen] = useState(false);
+  const [bulkRole, setBulkRole] = useState('');
+  const [bulkSaving, setBulkSaving] = useState(false);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -99,6 +104,49 @@ export default function AdminUsersPage() {
     }
     setAddRoleUser(null);
     setSelectedRole('');
+  };
+
+  const handleBulkAssign = async () => {
+    if (!bulkRole || selectedIds.size === 0) return;
+    setBulkSaving(true);
+    let success = 0;
+    const targetUsers = users.filter(u => selectedIds.has(u.id));
+    for (const u of targetUsers) {
+      try {
+        for (const existingRole of u.roles) {
+          await supabase.functions.invoke(`manage-users?action=remove-role`, {
+            body: { user_id: u.id, role: existingRole },
+          });
+        }
+        const { error } = await supabase.functions.invoke(`manage-users?action=add-role`, {
+          body: { user_id: u.id, role: bulkRole },
+        });
+        if (error) throw error;
+        success++;
+      } catch { /* skip */ }
+    }
+    toast.success(`Perfil "${getRoleConfig(bulkRole).label}" atribuído a ${success} usuário(s)`);
+    setBulkSaving(false);
+    setBulkRoleOpen(false);
+    setBulkRole('');
+    setSelectedIds(new Set());
+    fetchUsers();
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map(u => u.id)));
+    }
   };
 
   const handleInvite = async () => {
@@ -255,6 +303,48 @@ export default function AdminUsersPage() {
         />
       </div>
 
+      {/* Bulk action bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+          <span className="text-sm font-medium">{selectedIds.size} selecionado(s)</span>
+          <Dialog open={bulkRoleOpen} onOpenChange={setBulkRoleOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="gap-2">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Atribuir Perfil
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-sm">
+              <DialogHeader>
+                <DialogTitle>Atribuir perfil a {selectedIds.size} usuário(s)</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-2">
+                <p className="text-sm text-muted-foreground">
+                  O perfil anterior de cada usuário será substituído.
+                </p>
+                <Select value={bulkRole} onValueChange={setBulkRole}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Selecione um perfil..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ALL_ROLES.map(r => (
+                      <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button onClick={handleBulkAssign} disabled={!bulkRole || bulkSaving} className="w-full gap-2">
+                  {bulkSaving && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {bulkSaving ? 'Atribuindo...' : 'Atribuir Perfil'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+          <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>
+            Limpar seleção
+          </Button>
+        </div>
+      )}
+
       {/* Users Table */}
       <Card>
         <CardContent className="p-0">
@@ -266,6 +356,12 @@ export default function AdminUsersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={filtered.length > 0 && selectedIds.size === filtered.length}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>Usuário</TableHead>
                   <TableHead>Perfis</TableHead>
                   <TableHead>Último acesso</TableHead>
@@ -278,7 +374,13 @@ export default function AdminUsersPage() {
                   const availableRoles = ALL_ROLES.filter(r => !u.roles.includes(r.value));
 
                   return (
-                    <TableRow key={u.id}>
+                    <TableRow key={u.id} className={selectedIds.has(u.id) ? 'bg-primary/5' : ''}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.has(u.id)}
+                          onCheckedChange={() => toggleSelect(u.id)}
+                        />
+                      </TableCell>
                       <TableCell>
                         <div>
                           <p className="font-medium text-sm">{u.display_name}</p>
@@ -359,7 +461,7 @@ export default function AdminUsersPage() {
                 })}
                 {filtered.length === 0 && !loading && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                       Nenhum usuário encontrado
                     </TableCell>
                   </TableRow>
