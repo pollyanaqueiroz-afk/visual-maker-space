@@ -14,11 +14,9 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 import { format } from 'date-fns';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
 
 const FASE_NAMES = ['Pré-Requisitos','Primeiros Passos','Validação pela Loja','Assets e Mockup','Formulário do App','Criação e Submissão','Aprovação das Lojas','Teste do App','Publicado 🎉'];
-
-const portalQueryClient = new QueryClient();
 
 function PortalContent() {
   const { token } = useParams();
@@ -362,9 +360,5 @@ function PortalContent() {
 }
 
 export default function AppClientPortal() {
-  return (
-    <QueryClientProvider client={portalQueryClient}>
-      <PortalContent />
-    </QueryClientProvider>
-  );
+  return <PortalContent />;
 }
