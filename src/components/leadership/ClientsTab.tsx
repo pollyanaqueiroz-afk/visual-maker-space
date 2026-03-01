@@ -12,20 +12,20 @@ import {
 } from 'recharts';
 
 const PLANS = ['Evolution', 'Evolution App', 'Pro', 'Enterprise', 'Black'] as const;
-const STATUSES = ['ativo', 'inadimplente', 'churned', 'em_trial'] as const;
+const STATUSES = ['Ativo', 'Inadimplente', 'Churned', 'Em Trial'] as const;
 
 const STATUS_LABELS: Record<string, string> = {
-  ativo: 'Ativo',
-  inadimplente: 'Inadimplente',
-  churned: 'Churned',
-  em_trial: 'Em Trial',
+  'Ativo': 'Ativo',
+  'Inadimplente': 'Inadimplente',
+  'Churned': 'Churned',
+  'Em Trial': 'Em Trial',
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  ativo: 'bg-success/15 text-success',
-  inadimplente: 'bg-warning/15 text-warning',
-  churned: 'bg-destructive/15 text-destructive',
-  em_trial: 'bg-info/15 text-info',
+  'Ativo': 'bg-success/15 text-success',
+  'Inadimplente': 'bg-warning/15 text-warning',
+  'Churned': 'bg-destructive/15 text-destructive',
+  'Em Trial': 'bg-info/15 text-info',
 };
 
 const PIE_COLORS = [
@@ -41,10 +41,9 @@ interface ClientRow {
   id: string;
   client_url: string;
   client_name: string | null;
-  plan: string | null;
-  monthly_value: number | null;
-  client_status: string | null;
-  loyalty_index: number | null;
+  plano_contratado: string | null;
+  valor_mensal: string | null;
+  status_financeiro: string | null;
 }
 
 export default function ClientsTab() {
@@ -57,7 +56,7 @@ export default function ClientsTab() {
     (async () => {
       const { data, error } = await supabase
         .from('clients' as any)
-        .select('id, client_url, client_name, plan, monthly_value, client_status, loyalty_index')
+        .select('id, client_url, client_name, plano_contratado, valor_mensal, status_financeiro')
         .order('client_name', { ascending: true }) as any;
 
       if (error) {
@@ -70,22 +69,26 @@ export default function ClientsTab() {
     })();
   }, []);
 
+  const parseValue = (v: string | null): number => {
+    if (!v) return 0;
+    const cleaned = v.replace(/[^\d.,\-]/g, '').replace('.', '').replace(',', '.');
+    return parseFloat(cleaned) || 0;
+  };
+
   const filtered = useMemo(() => {
     let list = clients;
-    if (statusFilter !== 'all') list = list.filter(c => (c.client_status || 'ativo') === statusFilter);
-    if (planFilter !== 'all') list = list.filter(c => c.plan === planFilter);
+    if (statusFilter !== 'all') list = list.filter(c => (c.status_financeiro || 'Ativo') === statusFilter);
+    if (planFilter !== 'all') list = list.filter(c => c.plano_contratado === planFilter);
     return list;
   }, [clients, statusFilter, planFilter]);
 
   const stats = useMemo(() => {
-    // Total always counts ALL clients, not filtered
     const total = clients.length;
-    const ativos = clients.filter(c => (c.client_status || 'ativo') === 'ativo').length;
-    const inadimplentes = clients.filter(c => c.client_status === 'inadimplente').length;
-    const churned = clients.filter(c => c.client_status === 'churned').length;
-    const emTrial = clients.filter(c => c.client_status === 'em_trial').length;
-    // Revenue and averages use filtered list
-    const totalRevenue = filtered.reduce((s, c) => s + (c.monthly_value || 0), 0);
+    const ativos = clients.filter(c => (c.status_financeiro || 'Ativo') === 'Ativo').length;
+    const inadimplentes = clients.filter(c => c.status_financeiro === 'Inadimplente').length;
+    const churned = clients.filter(c => c.status_financeiro === 'Churned').length;
+    const emTrial = clients.filter(c => c.status_financeiro === 'Em Trial').length;
+    const totalRevenue = filtered.reduce((s, c) => s + parseValue(c.valor_mensal), 0);
     const avgRevenue = filtered.length > 0 ? totalRevenue / filtered.length : 0;
     return { total, totalRevenue, avgRevenue, ativos, inadimplentes, churned, emTrial };
   }, [clients, filtered]);
@@ -93,10 +96,10 @@ export default function ClientsTab() {
   const byPlan = useMemo(() => {
     const map: Record<string, { name: string; count: number; revenue: number }> = {};
     for (const c of filtered) {
-      const plan = c.plan || 'Sem plano';
+      const plan = c.plano_contratado || 'Sem plano';
       if (!map[plan]) map[plan] = { name: plan, count: 0, revenue: 0 };
       map[plan].count++;
-      map[plan].revenue += c.monthly_value || 0;
+      map[plan].revenue += parseValue(c.valor_mensal);
     }
     return Object.values(map).sort((a, b) => b.count - a.count);
   }, [filtered]);
@@ -104,9 +107,10 @@ export default function ClientsTab() {
   const byStatus = useMemo(() => {
     const map: Record<string, { name: string; value: number }> = {};
     for (const c of filtered) {
-      const status = STATUS_LABELS[c.client_status || 'ativo'] || c.client_status || 'Ativo';
-      if (!map[status]) map[status] = { name: status, value: 0 };
-      map[status].value++;
+      const status = c.status_financeiro || 'Ativo';
+      const label = STATUS_LABELS[status] || status;
+      if (!map[label]) map[label] = { name: label, value: 0 };
+      map[label].value++;
     }
     return Object.values(map);
   }, [filtered]);
@@ -133,7 +137,7 @@ export default function ClientsTab() {
           <SelectContent>
             <SelectItem value="all">Todos os status</SelectItem>
             {STATUSES.map(s => (
-              <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>
+              <SelectItem key={s} value={s}>{s}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -143,8 +147,8 @@ export default function ClientsTab() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos os planos</SelectItem>
-            {PLANS.map(p => (
-              <SelectItem key={p} value={p}>{p}</SelectItem>
+            {Array.from(new Set(clients.map(c => c.plano_contratado).filter(Boolean))).sort().map(p => (
+              <SelectItem key={p!} value={p!}>{p}</SelectItem>
             ))}
           </SelectContent>
         </Select>
