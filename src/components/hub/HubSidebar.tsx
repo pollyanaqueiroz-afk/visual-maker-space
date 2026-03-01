@@ -1,4 +1,4 @@
-import { FileImage, LayoutDashboard, LogOut, CalendarDays, Crown, Briefcase, BarChart3, Package, Headset, Home, Settings, Users, Kanban, ShieldCheck } from 'lucide-react';
+import { FileImage, LayoutDashboard, LogOut, CalendarDays, Crown, Briefcase, BarChart3, Package, Headset, Home, Settings, Users, Kanban, ShieldCheck, Smartphone } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 
 const implantacaoModules = [
   { title: 'Gestão de Briefings', url: '/hub/briefings', icon: FileImage, permission: 'briefings.view' },
+  { title: 'Gestão de Aplicativos', url: '/hub/aplicativos', icon: Smartphone, permission: 'aplicativos.view' },
 ];
 
 const csModules = [

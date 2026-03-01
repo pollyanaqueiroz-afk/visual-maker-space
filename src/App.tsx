@@ -27,6 +27,9 @@ import KanbanPage from "./pages/KanbanPage";
 import KanbanBoardsPage from "./pages/KanbanBoardsPage";
 import PermissionsPage from "./pages/PermissionsPage";
 import PermissionGuard from "./components/PermissionGuard";
+import AplicativosPage from "./pages/AplicativosPage";
+import AplicativoDetailPage from "./pages/AplicativoDetailPage";
+import AppClientPortal from "./pages/AppClientPortal";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +57,8 @@ const App = () => (
               <Route path="lideranca" element={<PermissionGuard permission="lideranca.view"><LeadershipDashboard /></PermissionGuard>} />
               <Route path="admin/usuarios" element={<PermissionGuard permission="admin.view"><AdminUsersPage /></PermissionGuard>} />
               <Route path="admin/permissoes" element={<PermissionGuard permission="admin.manage_permissions"><PermissionsPage /></PermissionGuard>} />
+              <Route path="aplicativos" element={<PermissionGuard permission="aplicativos.view"><AplicativosPage /></PermissionGuard>} />
+              <Route path="aplicativos/:clienteId" element={<PermissionGuard permission="aplicativos.view"><AplicativoDetailPage /></PermissionGuard>} />
             </Route>
             {/* Legacy route redirect */}
             <Route path="/dashboard" element={<Navigate to="/hub/briefings" replace />} />
@@ -62,6 +67,7 @@ const App = () => (
             <Route path="/client-review" element={<ClientReviewPage />} />
             <Route path="/csat/:token" element={<CsatPage />} />
             <Route path="/assets/:platformUrl" element={<ClientAssetsPage />} />
+            <Route path="/app/:token" element={<AppClientPortal />} />
             <Route path="*" element={<NotFound />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
