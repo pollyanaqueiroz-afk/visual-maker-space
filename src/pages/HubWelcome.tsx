@@ -37,6 +37,14 @@ interface PendingItem {
   meetingId: string;
 }
 
+interface GroupedPending {
+  meetingId: string;
+  title: string;
+  subtitle: string;
+  date: string;
+  items: PendingItem[];
+}
+
 export default function HubWelcome() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -271,40 +279,59 @@ export default function HubWelcome() {
               </Card>
             ) : (
               <div className="space-y-2">
-                {pendingItems.map((item, i) => (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.05, duration: 0.3 }}
-                  >
-                    <Card
-                      className="cursor-pointer transition-all hover:shadow-sm border-destructive/40 hover:border-destructive/60 bg-destructive/5"
-                      onClick={() => { setSelectedPending(item); setPendingDialogOpen(true); }}
+                {(() => {
+                  // Group by meetingId
+                  const grouped: GroupedPending[] = [];
+                  const map = new Map<string, GroupedPending>();
+                  for (const item of pendingItems) {
+                    let g = map.get(item.meetingId);
+                    if (!g) {
+                      g = { meetingId: item.meetingId, title: item.title, subtitle: item.subtitle, date: item.date, items: [] };
+                      map.set(item.meetingId, g);
+                      grouped.push(g);
+                    }
+                    g.items.push(item);
+                  }
+                  return grouped.map((group, i) => (
+                    <motion.div
+                      key={group.meetingId}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.05, duration: 0.3 }}
                     >
-                      <CardContent className="flex items-center gap-4 p-4">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
-                          {getPendingIcon(item.type)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-destructive/30 text-destructive">
-                              {getPendingLabel(item.type)}
-                            </Badge>
+                      <Card
+                        className="cursor-pointer transition-all hover:shadow-sm border-destructive/40 hover:border-destructive/60 bg-destructive/5"
+                        onClick={() => { setSelectedPending(group.items[0]); setPendingDialogOpen(true); }}
+                      >
+                        <CardContent className="flex items-center gap-4 p-4">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
+                            <AlertTriangle className="h-4 w-4 text-destructive" />
                           </div>
-                          <p className="font-medium text-sm text-foreground mt-0.5 truncate">{item.title}</p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {item.subtitle} • {(() => {
-                              try { return format(parseISO(item.date), "dd/MM/yyyy", { locale: ptBR }); }
-                              catch { return item.date; }
-                            })()}
-                          </p>
-                        </div>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm text-foreground truncate">{group.title}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {group.subtitle} • {(() => {
+                                try { return format(parseISO(group.date), "dd/MM/yyyy", { locale: ptBR }); }
+                                catch { return group.date; }
+                              })()}
+                            </p>
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                              {group.items.map(item => (
+                                <Badge key={item.id} variant="outline" className="text-[10px] px-1.5 py-0 border-destructive/30 text-destructive">
+                                  {getPendingLabel(item.type)}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                          <Badge variant="destructive" className="h-6 min-w-6 px-1.5 text-xs font-bold shrink-0">
+                            {group.items.length}
+                          </Badge>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ));
+                })()}
               </div>
             )}
           </TabsContent>
