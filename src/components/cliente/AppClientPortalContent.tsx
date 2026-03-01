@@ -109,6 +109,7 @@ interface Props {
 export default function AppClientPortalContent({ clienteId }: Props) {
   const queryClient = useQueryClient();
   const [expandedFase, setExpandedFase] = useState<number | null>(null);
+  const [selectedTimelineFase, setSelectedTimelineFase] = useState<number | null>(null);
   const [assetComment, setAssetComment] = useState<Record<string, string>>({});
   const [assetCommenting, setAssetCommenting] = useState<string | null>(null);
   const [cnpjInput, setCnpjInput] = useState('');
@@ -754,8 +755,11 @@ export default function AppClientPortalContent({ clienteId }: Props) {
 
               return (
                 <div key={idx} className="flex flex-col items-center" style={{ width: `${100 / FASE_NAMES.length}%` }}>
-                  {/* Circle with progress ring */}
-                  <div className="relative">
+                  {/* Circle with progress ring — clickable */}
+                  <button
+                    className="relative cursor-pointer"
+                    onClick={() => setSelectedTimelineFase(selectedTimelineFase === idx ? null : idx)}
+                  >
                     {isCurrent && (
                       <svg className="absolute -inset-1 w-12 h-12" viewBox="0 0 44 44">
                         <circle cx="22" cy="22" r="19" fill="none" stroke="hsl(var(--primary) / 0.2)" strokeWidth="3" />
@@ -780,7 +784,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                        isCurrent ? <Star className="h-4 w-4 animate-pulse" /> :
                        <span>{idx + 1}</span>}
                     </div>
-                  </div>
+                  </button>
                   {/* Label */}
                   <p className={`text-[9px] mt-1.5 text-center leading-tight max-w-[60px] ${
                     isCurrent ? 'text-primary font-semibold' :
@@ -794,6 +798,37 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             })}
           </div>
         </div>
+
+        {/* Expanded phase checklist */}
+        <AnimatePresence>
+          {selectedTimelineFase !== null && (() => {
+            const items = checklist.filter((i: any) => i.fase_numero === selectedTimelineFase);
+            if (!items.length) return null;
+            return (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <Card className="bg-white/5 border-white/10 p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold">{FASE_NAMES[selectedTimelineFase]}</h3>
+                    <button onClick={() => setSelectedTimelineFase(null)} className="text-white/40 hover:text-white text-xs">✕</button>
+                  </div>
+                  {items.map((item: any) => (
+                    <div key={item.id} className="flex items-center gap-2 text-xs py-1">
+                      {item.feito ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" /> : <Circle className="h-3.5 w-3.5 text-white/30 shrink-0" />}
+                      <span className={item.feito ? 'text-white/40 line-through' : 'text-white/70'}>{item.texto}</span>
+                      <Badge variant="outline" className="text-[9px] px-1 py-0 border-white/10 text-white/30 ml-auto shrink-0">{item.ator}</Badge>
+                    </div>
+                  ))}
+                </Card>
+              </motion.div>
+            );
+          })()}
+        </AnimatePresence>
 
         {cliente.fase_atual < 8 && (
           <div className="flex items-center justify-between text-xs text-white/50 pt-1">
