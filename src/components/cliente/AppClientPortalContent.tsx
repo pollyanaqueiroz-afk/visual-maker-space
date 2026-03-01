@@ -963,6 +963,68 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                       )}
                     </div>
                   )}
+                  {/* Phase 2 — store validation visibility */}
+                  {selectedTimelineFase === 2 && (() => {
+                    const fase1 = fases.find((f: any) => f.numero === 1);
+                    const fase2 = fases.find((f: any) => f.numero === 2);
+                    const isCurrent = cliente.fase_atual === 2;
+                    const isDone = fase2?.status === 'concluida';
+                    const startDate = fase2?.data_inicio ? new Date(fase2.data_inicio) : fase1?.data_conclusao ? new Date(fase1.data_conclusao) : null;
+                    const showGoogle = cliente.plataforma !== 'apple';
+                    const showApple = cliente.plataforma !== 'google';
+
+                    return (
+                      <div className="space-y-2 pt-2 border-t border-white/10">
+                        {showGoogle && (
+                          <div className={`rounded-lg p-3 ${isDone ? 'bg-green-500/10 border border-green-500/20' : 'bg-blue-500/10 border border-blue-500/20'}`}>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm">🤖</span>
+                                <span className="text-xs font-medium">{isDone ? 'Google Play — Aprovado' : 'Google Play — Em análise'}</span>
+                              </div>
+                              <Badge variant="outline" className={`text-[10px] ${isDone ? 'border-green-500/30 text-green-400' : 'border-blue-500/30 text-blue-400'}`}>
+                                {isDone ? '✅ Aprovado' : '1–3 dias úteis'}
+                              </Badge>
+                            </div>
+                            {!isDone && startDate && (
+                              <div className="mt-2 space-y-1">
+                                <div className="flex justify-between text-[10px] text-white/40">
+                                  <span>Início: {format(startDate, 'dd/MM/yyyy')}</span>
+                                  <span>Previsão: {format(addBusinessDays(startDate, 1), 'dd/MM')} – {format(addBusinessDays(startDate, 3), 'dd/MM/yyyy')}</span>
+                                </div>
+                                <Progress value={isCurrent ? 50 : 0} className="h-1" />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {showApple && (
+                          <div className={`rounded-lg p-3 ${isDone ? 'bg-green-500/10 border border-green-500/20' : 'bg-purple-500/10 border border-purple-500/20'}`}>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm">🍎</span>
+                                <span className="text-xs font-medium">{isDone ? 'App Store — Aprovado' : 'App Store — Em análise'}</span>
+                              </div>
+                              <Badge variant="outline" className={`text-[10px] ${isDone ? 'border-green-500/30 text-green-400' : 'border-purple-500/30 text-purple-400'}`}>
+                                {isDone ? '✅ Aprovado' : '5–7 dias úteis'}
+                              </Badge>
+                            </div>
+                            {!isDone && startDate && (
+                              <div className="mt-2 space-y-1">
+                                <div className="flex justify-between text-[10px] text-white/40">
+                                  <span>Início: {format(startDate, 'dd/MM/yyyy')}</span>
+                                  <span>Previsão: {format(addBusinessDays(startDate, 5), 'dd/MM')} – {format(addBusinessDays(startDate, 7), 'dd/MM/yyyy')}</span>
+                                </div>
+                                <Progress value={isCurrent ? 30 : 0} className="h-1" />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {isCurrent && (
+                          <p className="text-[10px] text-white/30 text-center">⏳ Esta etapa depende exclusivamente da análise das lojas. Você será notificado assim que houver retorno.</p>
+                        )}
+                      </div>
+                    );
+                  })()}
                   {fase?.data_previsao && (
                     <p className="text-[10px] text-white/30 pt-1">📅 Previsão: {format(new Date(fase.data_previsao), 'dd/MM/yyyy')}</p>
                   )}
@@ -1024,6 +1086,59 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                     {appleItems.map(item => renderChecklistItem(item))}
                   </>
                 )}
+              </div>
+            );
+          })() : cliente.fase_atual === 2 ? (() => {
+            const fase1 = fases.find((f: any) => f.numero === 1);
+            const fase2 = fases.find((f: any) => f.numero === 2);
+            const startDate = fase2?.data_inicio ? new Date(fase2.data_inicio) : fase1?.data_conclusao ? new Date(fase1.data_conclusao) : null;
+            const showGoogle = cliente.plataforma !== 'apple';
+            const showApple = cliente.plataforma !== 'google';
+
+            return (
+              <div className="space-y-3">
+                <p className="text-sm text-white/60">Suas contas estão sendo analisadas pelas lojas. Este processo é automático e não requer ação sua.</p>
+                {showGoogle && (
+                  <div className="rounded-lg p-4 bg-blue-500/10 border border-blue-500/20 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium flex items-center gap-2">🤖 Google Play</span>
+                      <Badge variant="outline" className="text-xs border-blue-500/30 text-blue-400">1–3 dias úteis</Badge>
+                    </div>
+                    {startDate && (
+                      <div className="space-y-1">
+                        <Progress value={(() => {
+                          const elapsed = Math.floor((Date.now() - startDate.getTime()) / 86400000);
+                          return Math.min(Math.round((elapsed / 3) * 100), 95);
+                        })()} className="h-1.5" />
+                        <div className="flex justify-between text-[10px] text-white/40">
+                          <span>{format(startDate, 'dd/MM/yyyy')}</span>
+                          <span>até {format(addBusinessDays(startDate, 3), 'dd/MM/yyyy')}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {showApple && (
+                  <div className="rounded-lg p-4 bg-purple-500/10 border border-purple-500/20 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium flex items-center gap-2">🍎 App Store</span>
+                      <Badge variant="outline" className="text-xs border-purple-500/30 text-purple-400">5–7 dias úteis</Badge>
+                    </div>
+                    {startDate && (
+                      <div className="space-y-1">
+                        <Progress value={(() => {
+                          const elapsed = Math.floor((Date.now() - startDate.getTime()) / 86400000);
+                          return Math.min(Math.round((elapsed / 7) * 100), 95);
+                        })()} className="h-1.5" />
+                        <div className="flex justify-between text-[10px] text-white/40">
+                          <span>{format(startDate, 'dd/MM/yyyy')}</span>
+                          <span>até {format(addBusinessDays(startDate, 7), 'dd/MM/yyyy')}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                <p className="text-[10px] text-white/30 text-center">⏳ Você será notificado assim que as lojas aprovarem suas contas.</p>
               </div>
             );
           })() : (
