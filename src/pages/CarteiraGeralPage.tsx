@@ -93,6 +93,7 @@ export default function CarteiraGeralPage() {
   const [filterPlano, setFilterPlano] = useState('__all__');
   const [filterCs, setFilterCs] = useState('__all__');
   const [filterStatus, setFilterStatus] = useState('__all__');
+  const [filterPortal, setFilterPortal] = useState('__all__');
   const [showFilters, setShowFilters] = useState(false);
 
   const loadData = useCallback(async () => {
@@ -133,19 +134,22 @@ export default function CarteiraGeralPage() {
     const planos = new Set<string>();
     const css = new Set<string>();
     const statuses = new Set<string>();
+    const portals = new Set<string>();
     for (const c of clientRecords) {
       if (c.plano_contratado) planos.add(c.plano_contratado);
       if (c.nome_do_cs_atual) css.add(c.nome_do_cs_atual);
       if (c.status_financeiro) statuses.add(c.status_financeiro);
+      if (c.portal_do_cliente) portals.add(c.portal_do_cliente);
     }
     return {
       planos: [...planos].sort(),
       css: [...css].sort(),
       statuses: [...statuses].sort(),
+      portals: [...portals].sort(),
     };
   }, [clientRecords]);
 
-  const activeFilterCount = [filterPlano, filterCs, filterStatus].filter(f => f !== '__all__').length;
+  const activeFilterCount = [filterPlano, filterCs, filterStatus, filterPortal].filter(f => f !== '__all__').length;
 
   // Filter
   const filtered = useMemo(() => {
@@ -160,7 +164,7 @@ export default function CarteiraGeralPage() {
       );
     }
     return result;
-  }, [clientRecords, search, filterPlano, filterCs, filterStatus]);
+  }, [clientRecords, search, filterPlano, filterCs, filterStatus, filterPortal]);
 
   const stats = useMemo(() => ({
     total: clientRecords.length,
@@ -301,7 +305,7 @@ export default function CarteiraGeralPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => { setFilterPlano('__all__'); setFilterCs('__all__'); setFilterStatus('__all__'); }}
+              onClick={() => { setFilterPlano('__all__'); setFilterCs('__all__'); setFilterStatus('__all__'); setFilterPortal('__all__'); }}
               className="h-9 text-muted-foreground"
             >
               <X className="h-4 w-4 mr-1" /> Limpar filtros
@@ -349,6 +353,20 @@ export default function CarteiraGeralPage() {
                   <SelectItem value="__all__">Todos</SelectItem>
                   {filterOptions.statuses.map(s => (
                     <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5 min-w-[180px]">
+              <label className="text-xs font-medium text-muted-foreground">Portal do Cliente</label>
+              <Select value={filterPortal} onValueChange={setFilterPortal}>
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">Todos</SelectItem>
+                  {filterOptions.portals.map(p => (
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
