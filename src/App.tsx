@@ -30,6 +30,11 @@ import PermissionGuard from "./components/PermissionGuard";
 import AplicativosPage from "./pages/AplicativosPage";
 import AplicativoDetailPage from "./pages/AplicativoDetailPage";
 import AppClientPortal from "./pages/AppClientPortal";
+import ClienteLogin from "./pages/cliente/ClienteLogin";
+import ClienteHubLayout from "./pages/cliente/ClienteHubLayout";
+import ClienteHome from "./pages/cliente/ClienteHome";
+import ClienteArtes from "./pages/cliente/ClienteArtes";
+import ClienteApp from "./pages/cliente/ClienteApp";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +73,13 @@ const App = () => (
             <Route path="/csat/:token" element={<CsatPage />} />
             <Route path="/assets/:platformUrl" element={<ClientAssetsPage />} />
             <Route path="/app/:token" element={<AppClientPortal />} />
+            {/* Client Hub */}
+            <Route path="/cliente/login" element={<ClienteLogin />} />
+            <Route path="/cliente" element={<ClienteHubLayout />}>
+              <Route index element={<ClienteHome />} />
+              <Route path="artes" element={<ClienteArtes />} />
+              <Route path="aplicativo" element={<ClienteApp />} />
+            </Route>
             <Route path="*" element={<NotFound />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
