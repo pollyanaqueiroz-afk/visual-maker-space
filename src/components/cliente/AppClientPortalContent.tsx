@@ -734,7 +734,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           </div>
         )}
 
-        <div className="relative px-2">
+        <div className="relative px-2 overflow-x-auto">
           {/* Line connecting all steps */}
           <div className="absolute top-5 left-6 right-6 h-0.5 bg-white/10" />
           <div
@@ -803,9 +803,11 @@ export default function AppClientPortalContent({ clienteId }: Props) {
         <AnimatePresence>
           {selectedTimelineFase !== null && (() => {
             const items = checklist.filter((i: any) => i.fase_numero === selectedTimelineFase);
-            if (!items.length) return null;
+            const isFuture = selectedTimelineFase > cliente.fase_atual;
+            const fase = fases.find((f: any) => f.numero === selectedTimelineFase);
             return (
               <motion.div
+                key={selectedTimelineFase}
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
@@ -817,13 +819,27 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                     <h3 className="text-sm font-semibold">{FASE_NAMES[selectedTimelineFase]}</h3>
                     <button onClick={() => setSelectedTimelineFase(null)} className="text-white/40 hover:text-white text-xs">✕</button>
                   </div>
-                  {items.map((item: any) => (
+                  {items.length > 0 ? items.map((item: any) => (
                     <div key={item.id} className="flex items-center gap-2 text-xs py-1">
                       {item.feito ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" /> : <Circle className="h-3.5 w-3.5 text-white/30 shrink-0" />}
                       <span className={item.feito ? 'text-white/40 line-through' : 'text-white/70'}>{item.texto}</span>
                       <Badge variant="outline" className="text-[9px] px-1 py-0 border-white/10 text-white/30 ml-auto shrink-0">{item.ator}</Badge>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="text-xs text-white/40 py-2 flex items-center gap-2">
+                      {isFuture ? (
+                        <>
+                          <Lock className="h-3.5 w-3.5 shrink-0" />
+                          <span>Etapa futura — você será notificado quando chegar aqui</span>
+                        </>
+                      ) : (
+                        <span>Nenhum item cadastrado para esta etapa</span>
+                      )}
+                    </div>
+                  )}
+                  {fase?.data_previsao && (
+                    <p className="text-[10px] text-white/30 pt-1">📅 Previsão: {format(new Date(fase.data_previsao), 'dd/MM/yyyy')}</p>
+                  )}
                 </Card>
               </motion.div>
             );
