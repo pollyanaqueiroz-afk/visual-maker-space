@@ -17,7 +17,7 @@ export default function ClienteSolicitarApp() {
   const clientEmail = user?.email || '';
 
   const [form, setForm] = useState({
-    nome: '', url_cliente: '', email: clientEmail, whatsapp: '', plataforma: 'ambos', responsavel_nome: '',
+    nome: '', url_cliente: '', email: clientEmail, whatsapp: '', plataforma: 'ambos',
   });
 
   // Check if client already has an app project
@@ -42,7 +42,6 @@ export default function ClienteSolicitarApp() {
         email: form.email,
         whatsapp: form.whatsapp || null,
         plataforma: form.plataforma,
-        responsavel_nome: form.responsavel_nome || null,
       });
       if (error) throw error;
     },
@@ -105,22 +104,16 @@ export default function ClienteSolicitarApp() {
             <Input value={form.whatsapp} onChange={e => setForm(p => ({ ...p, whatsapp: e.target.value }))} placeholder="5511999999999" className="bg-white/5 border-white/10" />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <Label className="text-white/70">Plataforma *</Label>
-            <Select value={form.plataforma} onValueChange={v => setForm(p => ({ ...p, plataforma: v }))}>
-              <SelectTrigger className="bg-white/5 border-white/10"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="apple">🍎 Apple</SelectItem>
-                <SelectItem value="google">🤖 Google</SelectItem>
-                <SelectItem value="ambos">🍎+🤖 Ambos</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-white/70">Responsável</Label>
-            <Input value={form.responsavel_nome} onChange={e => setForm(p => ({ ...p, responsavel_nome: e.target.value }))} className="bg-white/5 border-white/10" />
-          </div>
+        <div className="space-y-1.5">
+          <Label className="text-white/70">Plataforma *</Label>
+          <Select value={form.plataforma} onValueChange={v => setForm(p => ({ ...p, plataforma: v }))}>
+            <SelectTrigger className="bg-white/5 border-white/10"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="apple">🍎 Apple</SelectItem>
+              <SelectItem value="google">🤖 Google</SelectItem>
+              <SelectItem value="ambos">🍎+🤖 Ambos</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <Button
           className="w-full"
