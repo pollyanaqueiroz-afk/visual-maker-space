@@ -13,7 +13,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { toast } from 'sonner';
 import { format, isSameDay, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, Video, Clock, User, Trash2, Edit2, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Loader2, CheckCircle, FileText, Star, RefreshCw, AlertCircle } from 'lucide-react';
+import { Plus, Video, Clock, User, Trash2, Edit2, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Loader2, CheckCircle, FileText, Star, RefreshCw, AlertCircle, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -128,6 +128,7 @@ export default function SchedulingPage() {
     loyalty_reason: '',
   });
   const [confirmSubmitting, setConfirmSubmitting] = useState(false);
+  const [csatMap, setCsatMap] = useState<Record<string, { score: number | null; responded: boolean }>>({});
 
   const fetchMeetings = async () => {
     const { data, error } = await (supabase
@@ -145,7 +146,18 @@ export default function SchedulingPage() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchMeetings(); }, []);
+  const fetchCsatData = async () => {
+    const { data } = await (supabase.from('meeting_csat' as any).select('meeting_id, score, responded_at') as any);
+    if (data) {
+      const map: Record<string, { score: number | null; responded: boolean }> = {};
+      (data as any[]).forEach((c: any) => {
+        map[c.meeting_id] = { score: c.score, responded: !!c.responded_at };
+      });
+      setCsatMap(map);
+    }
+  };
+
+  useEffect(() => { fetchMeetings(); fetchCsatData(); }, []);
 
   // Compute per-email meeting stats
   const emailStats = useMemo(() => {
@@ -820,6 +832,22 @@ export default function SchedulingPage() {
                                   <Star className="h-3.5 w-3.5" />
                                   Preencher índice de fidelidade
                                 </Button>
+                              )}
+                              {/* CSAT indicator */}
+                              {csatMap[m.id] && (
+                                <div className="flex items-center gap-2">
+                                  {csatMap[m.id].responded ? (
+                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-success/10">
+                                      <MessageSquare className="h-3.5 w-3.5 text-success" />
+                                      <span className="text-xs font-bold text-success">CSAT: {csatMap[m.id].score}/10</span>
+                                    </div>
+                                  ) : (
+                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted">
+                                      <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
+                                      <span className="text-xs text-muted-foreground">CSAT enviado · Aguardando resposta</span>
+                                    </div>
+                                  )}
+                                </div>
                               )}
                             </div>
                           )}
