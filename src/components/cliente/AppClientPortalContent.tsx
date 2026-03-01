@@ -111,6 +111,10 @@ export default function AppClientPortalContent({ clienteId }: Props) {
   const [expandedFase, setExpandedFase] = useState<number | null>(null);
   const [assetComment, setAssetComment] = useState<Record<string, string>>({});
   const [assetCommenting, setAssetCommenting] = useState<string | null>(null);
+  const [cnpjInput, setCnpjInput] = useState('');
+  const [cnpjPromptId, setCnpjPromptId] = useState<string | null>(null);
+
+  const CNPJ_TEXT = 'Confirmei que meu CNPJ é ME ou LTDA';
 
   const { data: cliente, isLoading } = useQuery({
     queryKey: ['portal-cliente', clienteId],
@@ -480,6 +484,77 @@ export default function AppClientPortalContent({ clienteId }: Props) {
 
     if (item.tipo === 'form') {
       return null; // Rendered separately in form section
+    }
+
+    // CNPJ item — show input prompt
+    if (item.texto === CNPJ_TEXT) {
+      const formatCnpj = (value: string) => {
+        const digits = value.replace(/\D/g, '').slice(0, 14);
+        return digits
+          .replace(/^(\d{2})(\d)/, '$1.$2')
+          .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+          .replace(/\.(\d{3})(\d)/, '.$1/$2')
+          .replace(/(\d{4})(\d)/, '$1-$2');
+      };
+      const isValidCnpj = cnpjInput.replace(/\D/g, '').length === 14;
+
+      return (
+        <div key={item.id} className="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
+          <div className="flex items-start gap-3">
+            <Checkbox
+              checked={item.feito}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  setCnpjPromptId(item.id);
+                } else {
+                  toggleCheck.mutate({ id: item.id, feito: false });
+                }
+              }}
+              className="mt-0.5 border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+            />
+            <div className="flex-1">
+              <p className="text-sm font-medium">{item.texto}</p>
+              {item.descricao && <p className="text-xs text-white/50 mt-1">{item.descricao}</p>}
+              {renderSteps(item.texto, item.id)}
+
+              {cnpjPromptId === item.id && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  className="mt-3 space-y-2 overflow-hidden"
+                >
+                  <Label className="text-xs text-white/70">Informe seu CNPJ para confirmar</Label>
+                  <Input
+                    placeholder="00.000.000/0000-00"
+                    value={cnpjInput}
+                    onChange={e => setCnpjInput(formatCnpj(e.target.value))}
+                    className="bg-white/5 border-white/10 text-white text-sm"
+                    maxLength={18}
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      className="flex-1"
+                      disabled={!isValidCnpj}
+                      onClick={() => {
+                        toggleCheck.mutate({ id: item.id, feito: true });
+                        setCnpjPromptId(null);
+                        setCnpjInput('');
+                        toast.success('CNPJ confirmado!');
+                      }}
+                    >
+                      Confirmar
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => { setCnpjPromptId(null); setCnpjInput(''); }}>
+                      Cancelar
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
     }
 
     // Default: check type
