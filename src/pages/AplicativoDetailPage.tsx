@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Copy, ExternalLink, Apple, Bot, Clock, CheckCircle2, Circle, Lock, AlertTriangle, Upload, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Copy, ExternalLink, Clock, CheckCircle2, Circle, Lock, AlertTriangle, Upload, MessageSquare, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -62,6 +62,40 @@ export default function AplicativoDetailPage() {
     },
   });
 
+  const { data: formulario } = useQuery({
+    queryKey: ['app-formulario', clienteId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('app_formulario').select('*').eq('cliente_id', clienteId!).single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: appAssets = [] } = useQuery({
+    queryKey: ['app-assets', clienteId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('app_assets').select('*').eq('cliente_id', clienteId!);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const [formData, setFormData] = useState({ nome_app: '', descricao_curta: '', descricao_longa: '', url_privacidade: '', url_termos: '' });
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (formulario) {
+      setFormData({
+        nome_app: formulario.nome_app || '',
+        descricao_curta: formulario.descricao_curta || '',
+        descricao_longa: formulario.descricao_longa || '',
+        url_privacidade: formulario.url_privacidade || '',
+        url_termos: formulario.url_termos || '',
+      });
+    }
+  }, [formulario]);
+
   const toggleItem = useMutation({
     mutationFn: async ({ id, feito }: { id: string; feito: boolean }) => {
       const { error } = await supabase.from('app_checklist_items').update({
@@ -94,6 +128,49 @@ export default function AplicativoDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['app-conversas', clienteId] });
     },
   });
+
+  const saveFormAdmin = useMutation({
+    mutationFn: async () => {
+      const complete = !!(formData.nome_app && formData.descricao_curta && formData.url_privacidade);
+      const { error } = await supabase.from('app_formulario').update({
+        ...formData,
+        preenchido_completo: complete,
+        enviado_em: complete ? new Date().toISOString() : null,
+      }).eq('cliente_id', clienteId!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['app-formulario', clienteId] });
+      toast.success('Formulário salvo!');
+    },
+  });
+
+  const handleAssetUpload = async (file: File, tipo: string) => {
+    setUploading(true);
+    try {
+      const path = `${clienteId}/${tipo}/${Date.now()}_${file.name}`;
+      const { error: uploadError } = await supabase.storage.from('briefing-uploads').upload(path, file);
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from('briefing-uploads').getPublicUrl(path);
+
+      const { error: insertError } = await supabase.from('app_assets').insert({
+        cliente_id: clienteId!,
+        tipo,
+        nome_arquivo: file.name,
+        url: urlData.publicUrl,
+        status: 'aguardando',
+        enviado_por: 'admin',
+      });
+      if (insertError) throw insertError;
+
+      queryClient.invalidateQueries({ queryKey: ['app-assets', clienteId] });
+      toast.success('Asset enviado!');
+    } catch (err: any) {
+      toast.error('Erro ao enviar: ' + (err.message || ''));
+    } finally {
+      setUploading(false);
+    }
+  };
 
   if (!cliente) return <div className="flex items-center justify-center min-h-[400px] text-muted-foreground">Carregando...</div>;
 
@@ -199,6 +276,8 @@ export default function AplicativoDetailPage() {
             <TabsList className="w-full">
               <TabsTrigger value="checklist" className="flex-1">Checklist</TabsTrigger>
               <TabsTrigger value="conversas" className="flex-1">Conversas</TabsTrigger>
+              {selectedFase === 4 && <TabsTrigger value="formulario" className="flex-1">Formulário</TabsTrigger>}
+              {selectedFase === 3 && <TabsTrigger value="assets" className="flex-1">Assets</TabsTrigger>}
             </TabsList>
             <TabsContent value="checklist">
               <ScrollArea className="h-[calc(100vh-220px)]">
@@ -262,6 +341,87 @@ export default function AplicativoDetailPage() {
                 </Button>
               </div>
             </TabsContent>
+
+            {/* Formulário tab (phase 4) */}
+            {selectedFase === 4 && (
+              <TabsContent value="formulario">
+                <ScrollArea className="h-[calc(100vh-220px)]">
+                  <div className="space-y-4 pr-2 py-2">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">Nome do aplicativo *</label>
+                      <Input value={formData.nome_app} onChange={e => setFormData(p => ({ ...p, nome_app: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">Descrição curta * ({formData.descricao_curta.length}/80)</label>
+                      <Input value={formData.descricao_curta} maxLength={80} onChange={e => setFormData(p => ({ ...p, descricao_curta: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">Descrição completa ({formData.descricao_longa.length}/4000)</label>
+                      <Textarea className="min-h-[120px]" value={formData.descricao_longa} maxLength={4000} onChange={e => setFormData(p => ({ ...p, descricao_longa: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">URL Política de Privacidade *</label>
+                      <Input value={formData.url_privacidade} onChange={e => setFormData(p => ({ ...p, url_privacidade: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">URL Termos de Uso</label>
+                      <Input value={formData.url_termos} onChange={e => setFormData(p => ({ ...p, url_termos: e.target.value }))} />
+                    </div>
+                    <Button className="w-full" onClick={() => saveFormAdmin.mutate()} disabled={saveFormAdmin.isPending || !formData.nome_app || !formData.descricao_curta || !formData.url_privacidade}>
+                      {saveFormAdmin.isPending ? 'Salvando...' : 'Salvar formulário'}
+                    </Button>
+                    {formulario?.preenchido_completo && (
+                      <p className="text-xs text-green-500 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Formulário completo — enviado em {formulario.enviado_em ? format(new Date(formulario.enviado_em), 'dd/MM/yyyy HH:mm') : ''}</p>
+                    )}
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+            )}
+
+            {/* Assets tab (phase 3) */}
+            {selectedFase === 3 && (
+              <TabsContent value="assets">
+                <ScrollArea className="h-[calc(100vh-220px)]">
+                  <div className="space-y-4 pr-2 py-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium">Assets do projeto</p>
+                      <div>
+                        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file) handleAssetUpload(file, 'asset');
+                          e.target.value = '';
+                        }} />
+                        <Button size="sm" variant="outline" disabled={uploading} onClick={() => fileInputRef.current?.click()}>
+                          <Upload className="h-4 w-4 mr-1" /> {uploading ? 'Enviando...' : 'Upload'}
+                        </Button>
+                      </div>
+                    </div>
+                    {appAssets.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-8">Nenhum asset enviado ainda</p>
+                    ) : (
+                      appAssets.map((asset: any) => (
+                        <div key={asset.id} className="flex items-center gap-3 p-3 rounded-lg border border-border/50">
+                          {asset.url ? (
+                            <img src={asset.url} alt={asset.nome_arquivo} className="w-14 h-14 object-cover rounded-lg border border-border" />
+                          ) : (
+                            <div className="w-14 h-14 rounded-lg bg-muted flex items-center justify-center">
+                              <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{asset.nome_arquivo || asset.tipo}</p>
+                            <p className="text-xs text-muted-foreground">{asset.tipo}</p>
+                          </div>
+                          <Badge variant={asset.status === 'aprovado' ? 'default' : asset.status === 'ajuste_solicitado' ? 'destructive' : 'secondary'} className="text-[10px]">
+                            {asset.status === 'aprovado' ? '✅ Aprovado' : asset.status === 'ajuste_solicitado' ? 'Ajuste' : '⏳ Aguardando'}
+                          </Badge>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+            )}
           </Tabs>
         </SheetContent>
       </Sheet>
