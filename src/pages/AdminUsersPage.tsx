@@ -29,6 +29,7 @@ const ALL_ROLES = [
   { value: 'cs', label: 'CS', color: 'bg-emerald-500/10 text-emerald-600 border-emerald-200' },
   { value: 'designer', label: 'Designer', color: 'bg-blue-500/10 text-blue-600 border-blue-200' },
   { value: 'member', label: 'Membro', color: 'bg-secondary text-secondary-foreground border-border' },
+  { value: 'cliente', label: 'Cliente', color: 'bg-cyan-500/10 text-cyan-600 border-cyan-200' },
 ];
 
 function getRoleConfig(role: string) {

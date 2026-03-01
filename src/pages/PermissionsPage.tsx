@@ -16,6 +16,7 @@ const ROLES = [
   { value: 'implantacao', label: 'Implantação' },
   { value: 'designer', label: 'Designer' },
   { value: 'member', label: 'Membro' },
+  { value: 'cliente', label: 'Cliente' },
 ];
 
 type PermMap = Record<string, Set<string>>; // role -> set of permissions
