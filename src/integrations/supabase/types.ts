@@ -539,8 +539,82 @@ export type Database = {
           },
         ]
       }
+      kanban_boards: {
+        Row: {
+          color: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          title: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          title: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      kanban_card_positions: {
+        Row: {
+          board_id: string
+          client_id: string
+          column_id: string | null
+          created_at: string
+          id: string
+        }
+        Insert: {
+          board_id: string
+          client_id: string
+          column_id?: string | null
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          board_id?: string
+          client_id?: string
+          column_id?: string | null
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kanban_card_positions_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "kanban_boards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kanban_card_positions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kanban_card_positions_column_id_fkey"
+            columns: ["column_id"]
+            isOneToOne: false
+            referencedRelation: "kanban_columns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kanban_columns: {
         Row: {
+          board_id: string | null
           color: string
           created_at: string
           id: string
@@ -548,6 +622,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          board_id?: string | null
           color?: string
           created_at?: string
           id?: string
@@ -555,13 +630,22 @@ export type Database = {
           title: string
         }
         Update: {
+          board_id?: string | null
           color?: string
           created_at?: string
           id?: string
           sort_order?: number
           title?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "kanban_columns_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "kanban_boards"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       meeting_csat: {
         Row: {
