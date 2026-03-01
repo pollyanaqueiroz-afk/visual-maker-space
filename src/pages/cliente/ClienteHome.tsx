@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -171,20 +172,38 @@ export default function ClienteHome() {
         </p>
       </motion.div>
 
-      {/* CTA Solicitar Design */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+      {/* CTA Buttons */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="grid grid-cols-2 gap-3">
         <button
           onClick={() => navigate('/cliente/solicitar')}
-          className="w-full flex items-center gap-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 p-4 text-white shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all hover:scale-[1.01] active:scale-[0.99]"
+          className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 p-4 text-white shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all hover:scale-[1.01] active:scale-[0.99]"
         >
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/20">
-            <PlusCircle className="h-6 w-6" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/20">
+            <Palette className="h-5 w-5" />
           </div>
-          <div className="flex-1 text-left">
-            <p className="font-semibold text-base">Solicitar Design</p>
-            <p className="text-white/80 text-xs">Peça novas artes para sua plataforma</p>
+          <div className="flex-1 text-left min-w-0">
+            <p className="font-semibold text-sm">Solicitar Design</p>
+            <p className="text-white/70 text-[10px]">Peça novas artes</p>
           </div>
-          <ChevronRight className="h-5 w-5 text-white/60 shrink-0" />
+        </button>
+
+        <button
+          onClick={() => !appCliente && navigate('/cliente/solicitar-app')}
+          disabled={!!appCliente}
+          className={cn(
+            "flex items-center gap-3 rounded-xl p-4 text-white shadow-lg transition-all",
+            appCliente
+              ? "bg-white/10 opacity-50 cursor-not-allowed shadow-none"
+              : "bg-gradient-to-r from-blue-500 to-indigo-500 shadow-blue-500/20 hover:shadow-blue-500/30 hover:scale-[1.01] active:scale-[0.99]"
+          )}
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/20">
+            <Smartphone className="h-5 w-5" />
+          </div>
+          <div className="flex-1 text-left min-w-0">
+            <p className="font-semibold text-sm">{appCliente ? 'App solicitado' : 'Solicitar App'}</p>
+            <p className="text-white/70 text-[10px]">{appCliente ? 'Já em andamento' : 'Crie seu aplicativo'}</p>
+          </div>
         </button>
       </motion.div>
 
