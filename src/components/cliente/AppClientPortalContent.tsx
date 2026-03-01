@@ -719,30 +719,89 @@ export default function AppClientPortalContent({ clienteId }: Props) {
   return (
     <div className="space-y-8">
       {/* Hero */}
-      {cliente.fase_atual === 8 ? (
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center space-y-4 py-8">
-          <h1 className="text-3xl font-extrabold">🎉 SEU APP ESTÁ PUBLICADO!</h1>
-          <p className="text-white/70 text-lg">Parabéns! Seu app da {cliente.empresa} está disponível nas lojas.</p>
-        </motion.div>
-      ) : (
-        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+      {/* Horizontal Timeline */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
+        {cliente.fase_atual === 8 ? (
+          <div className="text-center space-y-2 py-4">
+            <h1 className="text-2xl font-extrabold">🎉 SEU APP ESTÁ PUBLICADO!</h1>
+            <p className="text-white/70 text-sm">Parabéns! Seu app da {cliente.empresa} está disponível nas lojas.</p>
+          </div>
+        ) : (
           <div>
-            <h1 className="text-xl font-bold">Olá! 👋</h1>
-            <p className="text-white/60 text-sm mt-1">Seu app está <span className="text-white font-bold">{cliente.porcentagem_geral}%</span> pronto</p>
+            <h1 className="text-lg font-bold">Olá! 👋</h1>
+            <p className="text-white/60 text-sm mt-0.5">Seu app está <span className="text-white font-bold">{cliente.porcentagem_geral}%</span> pronto</p>
           </div>
-          <Progress value={cliente.porcentagem_geral} className="h-3 bg-white/10" />
-          <div className="flex flex-wrap gap-4 text-sm text-white/60">
-            <span>📍 Etapa atual: <span className="text-white/80">{FASE_NAMES[cliente.fase_atual]}</span></span>
-            {cliente.prazo_estimado && <span>🗓️ Estimativa: {format(new Date(cliente.prazo_estimado), 'dd/MM/yyyy')}</span>}
+        )}
+
+        <div className="relative px-2">
+          {/* Line connecting all steps */}
+          <div className="absolute top-5 left-6 right-6 h-0.5 bg-white/10" />
+          <div
+            className="absolute top-5 left-6 h-0.5 bg-green-500 transition-all duration-500"
+            style={{ width: `calc(${((cliente.fase_atual) / (FASE_NAMES.length - 1)) * 100}% - 48px)` }}
+          />
+
+          <div className="relative flex justify-between">
+            {FASE_NAMES.map((name, idx) => {
+              const fase = fases.find((f: any) => f.numero === idx);
+              const isCurrent = idx === cliente.fase_atual;
+              const isDone = fase?.status === 'concluida';
+              const isLate = fase?.status === 'atrasada';
+              const faseItems = checklist.filter((i: any) => i.fase_numero === idx);
+              const doneCount = faseItems.filter((i: any) => i.feito && i.obrigatorio).length;
+              const totalCount = faseItems.filter((i: any) => i.obrigatorio).length;
+              const progress = totalCount > 0 ? (doneCount / totalCount) * 100 : 0;
+
+              return (
+                <div key={idx} className="flex flex-col items-center" style={{ width: `${100 / FASE_NAMES.length}%` }}>
+                  {/* Circle with progress ring */}
+                  <div className="relative">
+                    {isCurrent && (
+                      <svg className="absolute -inset-1 w-12 h-12" viewBox="0 0 44 44">
+                        <circle cx="22" cy="22" r="19" fill="none" stroke="hsl(var(--primary) / 0.2)" strokeWidth="3" />
+                        <circle
+                          cx="22" cy="22" r="19" fill="none"
+                          stroke="hsl(var(--primary))" strokeWidth="3"
+                          strokeDasharray={`${progress * 1.194} 120`}
+                          strokeLinecap="round"
+                          transform="rotate(-90 22 22)"
+                          className="transition-all duration-500"
+                        />
+                      </svg>
+                    )}
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                      isDone ? 'bg-green-500/20 text-green-400' :
+                      isCurrent ? 'bg-primary/20 text-primary ring-2 ring-primary/40 scale-110' :
+                      isLate ? 'bg-red-500/20 text-red-400' :
+                      'bg-white/5 text-white/20'
+                    }`}>
+                      {isDone ? <CheckCircle2 className="h-4 w-4" /> :
+                       isLate ? <AlertTriangle className="h-4 w-4" /> :
+                       isCurrent ? <Star className="h-4 w-4 animate-pulse" /> :
+                       <span>{idx + 1}</span>}
+                    </div>
+                  </div>
+                  {/* Label */}
+                  <p className={`text-[9px] mt-1.5 text-center leading-tight max-w-[60px] ${
+                    isCurrent ? 'text-primary font-semibold' :
+                    isDone ? 'text-green-400/70' :
+                    'text-white/30'
+                  }`}>
+                    {name}
+                  </p>
+                </div>
+              );
+            })}
           </div>
-          <div className="flex items-center gap-2">
-            <Badge className={cliente.status === 'atrasado' ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'}>
-              {cliente.status === 'atrasado' ? '⚠️ Atrasado' : '✅ No prazo'}
-            </Badge>
+        </div>
+
+        {cliente.fase_atual < 8 && (
+          <div className="flex items-center justify-between text-xs text-white/50 pt-1">
+            <span>📍 {FASE_NAMES[cliente.fase_atual]}</span>
+            {cliente.prazo_estimado && <span>🗓️ {format(new Date(cliente.prazo_estimado), 'dd/MM/yyyy')}</span>}
           </div>
-          <p className="text-sm text-white/70">⚡ {dynamicMessage}</p>
-        </motion.div>
-      )}
+        )}
+      </motion.div>
 
       {/* CNPJ Alert */}
       {prereqs?.cnpj_bloqueado && (
@@ -761,28 +820,6 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             {hasClientAction ? '📋 O que fazer agora' : '⏳ Nossa equipe está trabalhando'}
           </h2>
 
-          {hasClientAction && cliente.fase_atual === 1 && (() => {
-            const criacao = cliente.data_criacao ? new Date(cliente.data_criacao) : null;
-            const prazo = criacao ? new Date(criacao.getTime() + 2 * 24 * 3600000) : null;
-            const isOverdue = prazo ? new Date() > prazo : false;
-            return (
-              <div className={`rounded-lg p-3 text-sm ${isOverdue ? 'bg-red-500/10 border border-red-500/30' : 'bg-blue-500/10 border border-blue-500/20'}`}>
-                <p className={`${isOverdue ? 'text-red-300' : 'text-blue-300'}`}>
-                  Os 4 pontos abaixo são essenciais para que seu aplicativo fique pronto o quanto antes.
-                  {prazo && (
-                    <span className="font-semibold ml-1">
-                      Prazo: {format(prazo, 'dd/MM/yyyy')}
-                    </span>
-                  )}
-                </p>
-                {isOverdue && (
-                  <Badge className="mt-2 bg-red-500/20 text-red-300 border-red-500/40 hover:bg-red-500/30">
-                    <AlertTriangle className="h-3 w-3 mr-1" /> Pendência — prazo expirado
-                  </Badge>
-                )}
-              </div>
-            );
-          })()}
 
           {hasClientAction ? (
             <div className="space-y-3">
@@ -828,73 +865,6 @@ export default function AppClientPortalContent({ clienteId }: Props) {
         </Card>
       )}
 
-      {/* Timeline */}
-      <div className="space-y-1">
-        <h2 className="text-lg font-semibold mb-4">🗺️ Sua jornada</h2>
-        {fases.map((fase: any, idx: number) => {
-          const isCurrent = fase.numero === cliente.fase_atual;
-          const isDone = fase.status === 'concluida';
-          const isBlocked = fase.status === 'bloqueada';
-          const isLate = fase.status === 'atrasada';
-          const faseItems = checklist.filter((i: any) => i.fase_numero === fase.numero);
-          const doneCount = faseItems.filter((i: any) => i.feito && i.obrigatorio).length;
-          const totalCount = faseItems.filter((i: any) => i.obrigatorio).length;
-
-          const getIcon = () => {
-            if (isDone) return <CheckCircle2 className="h-5 w-5 text-green-500" />;
-            if (isLate) return <AlertTriangle className="h-5 w-5 text-red-500" />;
-            if (isCurrent) return <Star className="h-5 w-5 text-primary animate-pulse" />;
-            return <Lock className="h-5 w-5 text-white/20" />;
-          };
-
-          return (
-            <motion.div key={fase.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.03 }}>
-              <div className="flex items-center gap-3">
-                <div className="flex flex-col items-center w-8">
-                  {idx > 0 && <div className={`w-0.5 h-4 ${isDone || isCurrent ? 'bg-green-500' : 'bg-white/10'}`} />}
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                    isDone ? 'bg-green-500/20' : isCurrent ? 'bg-primary/20 ring-2 ring-primary/50' : isLate ? 'bg-red-500/20' : 'bg-white/5'
-                  }`}>
-                    {getIcon()}
-                  </div>
-                  {idx < fases.length - 1 && <div className={`w-0.5 h-4 ${isDone ? 'bg-green-500' : 'bg-white/10'}`} />}
-                </div>
-                <button
-                  className={`flex-1 text-left p-3 rounded-lg transition-colors ${
-                    isCurrent ? 'bg-primary/10 border border-primary/30' : isDone ? 'bg-green-500/5' : 'opacity-50'
-                  } ${!isBlocked ? 'cursor-pointer hover:bg-white/5' : 'cursor-default'}`}
-                  onClick={() => !isBlocked && setExpandedFase(expandedFase === fase.numero ? null : fase.numero)}
-                  disabled={isBlocked}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{fase.nome}</span>
-                    {isDone && <Badge className="bg-green-500/20 text-green-400 text-[10px]">Concluída</Badge>}
-                    {isCurrent && <Badge className="bg-primary/20 text-primary text-[10px]">Em andamento</Badge>}
-                    {isLate && <Badge className="bg-red-500/20 text-red-400 text-[10px]">Atrasada</Badge>}
-                  </div>
-                  {(isCurrent || isDone) && totalCount > 0 && (
-                    <div className="flex items-center gap-2 mt-1">
-                      <Progress value={totalCount > 0 ? (doneCount / totalCount) * 100 : 0} className="flex-1 h-1 bg-white/10" />
-                      <span className="text-[10px] text-white/40">{doneCount}/{totalCount}</span>
-                    </div>
-                  )}
-                </button>
-              </div>
-              {expandedFase === fase.numero && !isBlocked && (
-                <div className="ml-11 mt-1 mb-2 space-y-1">
-                  {faseItems.map((item: any) => (
-                    <div key={item.id} className="flex items-center gap-2 text-xs py-1">
-                      {item.feito ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> : <Circle className="h-3.5 w-3.5 text-white/30" />}
-                      <span className={item.feito ? 'text-white/40 line-through' : 'text-white/70'}>{item.texto}</span>
-                      <Badge variant="outline" className="text-[9px] px-1 py-0 border-white/10 text-white/30">{item.ator}</Badge>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </motion.div>
-          );
-        })}
-      </div>
 
       {/* Support */}
       <Card className="bg-[#1E293B] border-white/10 p-6">
