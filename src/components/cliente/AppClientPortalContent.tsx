@@ -879,6 +879,9 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                           )}
                           {!item.feito && <Badge variant="outline" className="text-[9px] px-1 py-0 border-white/10 text-white/30 ml-auto shrink-0">{item.ator}</Badge>}
                         </button>
+                        {item.ator === 'analista' && !item.feito && (
+                          <p className="text-[10px] text-amber-400/60 ml-5 mt-0.5">⏳ O analista tem até 1 dia útil após o envio para verificar</p>
+                        )}
                         <AnimatePresence>
                           {isExpanded && filledValue && (
                             <motion.div
