@@ -115,9 +115,12 @@ export default function AppClientPortalContent({ clienteId }: Props) {
   const [cnpjPromptId, setCnpjPromptId] = useState<string | null>(null);
   const [emailCorpInput, setEmailCorpInput] = useState('');
   const [emailCorpPromptId, setEmailCorpPromptId] = useState<string | null>(null);
+  const [siteInput, setSiteInput] = useState('');
+  const [sitePromptId, setSitePromptId] = useState<string | null>(null);
 
   const CNPJ_TEXT = 'Confirmei que meu CNPJ é ME ou LTDA';
   const EMAIL_CORP_TEXT = 'Tenho um e-mail corporativo';
+  const SITE_TEXT = 'Meu site está publicado com domínio próprio';
 
   const { data: cliente, isLoading } = useQuery({
     queryKey: ['portal-cliente', clienteId],
@@ -616,6 +619,73 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                       Confirmar
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => { setEmailCorpPromptId(null); setEmailCorpInput(''); }}>
+                      Cancelar
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Site item — show input prompt
+    if (item.texto === SITE_TEXT) {
+      const isValidSite = /^(https?:\/\/)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}/.test(siteInput) && !/\.(wixsite|blogspot|wordpress)\./i.test(siteInput);
+
+      return (
+        <div key={item.id} className="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
+          <div className="flex items-start gap-3">
+            <Checkbox
+              checked={item.feito}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  setSitePromptId(item.id);
+                } else {
+                  toggleCheck.mutate({ id: item.id, feito: false });
+                }
+              }}
+              className="mt-0.5 border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+            />
+            <div className="flex-1">
+              <p className="text-sm font-medium">{item.texto}</p>
+              {item.descricao && <p className="text-xs text-white/50 mt-1">{item.descricao}</p>}
+              {renderSteps(item.texto, item.id)}
+
+              {sitePromptId === item.id && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  className="mt-3 space-y-2 overflow-hidden"
+                >
+                  <Label className="text-xs text-white/70">Informe a URL do seu site</Label>
+                  <Input
+                    type="url"
+                    placeholder="https://www.suaempresa.com.br"
+                    value={siteInput}
+                    onChange={e => setSiteInput(e.target.value.trim())}
+                    className="bg-white/5 border-white/10 text-white text-sm"
+                    maxLength={255}
+                  />
+                  {siteInput && !isValidSite && (
+                    <p className="text-[10px] text-amber-400">Use um domínio próprio (subdomínios gratuitos não são aceitos)</p>
+                  )}
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      className="flex-1"
+                      disabled={!isValidSite}
+                      onClick={() => {
+                        toggleCheck.mutate({ id: item.id, feito: true });
+                        setSitePromptId(null);
+                        setSiteInput('');
+                        toast.success('Site confirmado!');
+                      }}
+                    >
+                      Confirmar
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => { setSitePromptId(null); setSiteInput(''); }}>
                       Cancelar
                     </Button>
                   </div>
