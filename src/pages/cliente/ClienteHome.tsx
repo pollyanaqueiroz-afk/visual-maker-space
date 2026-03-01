@@ -7,7 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { useNavigate } from 'react-router-dom';
 import {
   CheckCircle, AlertTriangle, Palette, Smartphone, Eye, Upload, FileText,
-  ChevronRight, Loader2, Sparkles,
+  ChevronRight, Loader2, Sparkles, PlusCircle,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -169,6 +169,23 @@ export default function ClienteHome() {
             ? `Você tem ${pendingActions.length} pendência(s) para resolver`
             : 'Você está em dia! Nenhuma pendência no momento 🎉'}
         </p>
+      </motion.div>
+
+      {/* CTA Solicitar Design */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+        <button
+          onClick={() => navigate('/cliente/solicitar')}
+          className="w-full flex items-center gap-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 p-4 text-white shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all hover:scale-[1.01] active:scale-[0.99]"
+        >
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/20">
+            <PlusCircle className="h-6 w-6" />
+          </div>
+          <div className="flex-1 text-left">
+            <p className="font-semibold text-base">Solicitar Design</p>
+            <p className="text-white/80 text-xs">Peça novas artes para sua plataforma</p>
+          </div>
+          <ChevronRight className="h-5 w-5 text-white/60 shrink-0" />
+        </button>
       </motion.div>
 
       {/* App progress summary */}
