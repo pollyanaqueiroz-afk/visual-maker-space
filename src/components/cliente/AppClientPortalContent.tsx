@@ -281,13 +281,28 @@ export default function AppClientPortalContent({ clienteId }: Props) {
   if (isLoading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-white/40" /></div>;
   if (!cliente) return <div className="text-center py-12 text-white/50">Dados não encontrados</div>;
 
+  const DUNS_TEXT = 'Solicitei o número DUNS da minha empresa';
+
   const currentItems = checklist.filter(i => {
-    if (i.fase_numero !== cliente.fase_atual || i.ator !== 'cliente' || i.feito) return false;
-    // Hide Apple-only items when platform is google-only
+    if (i.fase_numero !== cliente.fase_atual || i.ator !== 'cliente') return false;
+    // Keep DUNS item visible even when done (to show estimated date)
+    if (i.texto === DUNS_TEXT && i.feito) return true;
+    if (i.feito) return false;
     if (cliente.plataforma === 'google' && i.texto === 'Confirmei que meu CNPJ é ME ou LTDA') return false;
     return true;
   });
   const hasClientAction = currentItems.length > 0;
+
+  const addBusinessDays = (date: Date, days: number) => {
+    let count = 0;
+    const result = new Date(date);
+    while (count < days) {
+      result.setDate(result.getDate() + 1);
+      const dow = result.getDay();
+      if (dow !== 0 && dow !== 6) count++;
+    }
+    return result;
+  };
   const pendingAssets = assets.filter((a: any) => a.status === 'aguardando');
   const inactiveDays = cliente.ultima_acao_cliente
     ? Math.floor((Date.now() - new Date(cliente.ultima_acao_cliente).getTime()) / 86400000)
@@ -342,6 +357,34 @@ export default function AppClientPortalContent({ clienteId }: Props) {
   };
 
   const renderChecklistItem = (item: any) => {
+    // DUNS item - special rendering when done
+    if (item.texto === DUNS_TEXT && item.feito) {
+      const doneDate = item.feito_em ? new Date(item.feito_em) : new Date();
+      const estimatedDate = addBusinessDays(doneDate, 14);
+      return (
+        <div key={item.id} className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+          <div className="flex items-start gap-3">
+            <Checkbox
+              checked={true}
+              onCheckedChange={(checked) => toggleCheck.mutate({ id: item.id, feito: !!checked })}
+              className="mt-0.5 border-green-500 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+            />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-green-400 line-through">{item.texto}</p>
+              <p className="text-xs text-green-400/70 mt-1">
+                ✅ Solicitado em {format(doneDate, 'dd/MM/yyyy')}
+              </p>
+              <div className="mt-2 rounded-lg bg-blue-500/10 border border-blue-500/20 p-3">
+                <p className="text-xs text-blue-300 font-medium">📧 O número DUNS chegará no seu e-mail até:</p>
+                <p className="text-sm font-bold text-blue-400 mt-1">{format(estimatedDate, 'dd/MM/yyyy')}</p>
+                <p className="text-[10px] text-blue-300/60 mt-1">Prazo estimado de 14 dias úteis. Fique de olho na caixa de entrada e spam.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     if (item.tipo === 'link') {
       const link = extractLink(item.descricao);
       return (
