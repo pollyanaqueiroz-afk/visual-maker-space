@@ -29,7 +29,7 @@ const quickLinks = [
 
 interface PendingItem {
   id: string;
-  type: 'loyalty';
+  type: 'loyalty' | 'minutes' | 'recording';
   title: string;
   subtitle: string;
   date: string;
@@ -72,25 +72,25 @@ export default function HubWelcome() {
       setLoadingPending(true);
       const items: PendingItem[] = [];
 
-      // Meetings completed but missing loyalty index
+      // Meetings completed but missing loyalty index, minutes or recording
       const { data: meetings } = await supabase
         .from('meetings')
-        .select('id, title, meeting_date, client_name, loyalty_index')
+        .select('id, title, meeting_date, client_name, loyalty_index, minutes_url, recording_url')
         .eq('status', 'completed')
-        .is('loyalty_index', null)
         .eq('created_by', user.id)
         .order('meeting_date', { ascending: false });
 
       if (meetings) {
         for (const m of meetings) {
-          items.push({
-            id: m.id,
-            type: 'loyalty',
-            title: m.title,
-            subtitle: m.client_name || 'Sem cliente',
-            date: m.meeting_date,
-            url: '/hub/agendamento',
-          });
+          if (!m.loyalty_index) {
+            items.push({ id: m.id + '-loyalty', type: 'loyalty', title: m.title, subtitle: m.client_name || 'Sem cliente', date: m.meeting_date, url: '/hub/agendamento' });
+          }
+          if (!m.minutes_url) {
+            items.push({ id: m.id + '-minutes', type: 'minutes', title: m.title, subtitle: m.client_name || 'Sem cliente', date: m.meeting_date, url: '/hub/agendamento' });
+          }
+          if (!m.recording_url) {
+            items.push({ id: m.id + '-recording', type: 'recording', title: m.title, subtitle: m.client_name || 'Sem cliente', date: m.meeting_date, url: '/hub/agendamento' });
+          }
         }
       }
 
@@ -128,6 +128,8 @@ export default function HubWelcome() {
   const getPendingIcon = (type: string) => {
     switch (type) {
       case 'loyalty': return <Star className="h-4 w-4 text-destructive" />;
+      case 'minutes': return <FileImage className="h-4 w-4 text-warning" />;
+      case 'recording': return <FileImage className="h-4 w-4 text-info" />;
       default: return <AlertTriangle className="h-4 w-4 text-destructive" />;
     }
   };
@@ -135,6 +137,8 @@ export default function HubWelcome() {
   const getPendingLabel = (type: string) => {
     switch (type) {
       case 'loyalty': return 'Índice de Fidelidade';
+      case 'minutes': return 'Ata da Reunião';
+      case 'recording': return 'Gravação';
       default: return 'Pendência';
     }
   };
