@@ -188,46 +188,70 @@ export default function ClienteHome() {
         </button>
       </motion.div>
 
-      {/* App progress summary */}
-      {appCliente && appCliente.fase_atual < 8 && (
+      {/* Status cards */}
+      <div className="space-y-2">
+        <h2 className="text-lg font-semibold">📊 Status dos seus projetos</h2>
+
+        {/* App status */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <Card className="bg-[#1E293B] border-white/10 cursor-pointer hover:border-white/20 transition-colors"
             onClick={() => navigate('/cliente/aplicativo')}>
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                <Smartphone className="h-5 w-5 text-primary" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
+                <Smartphone className="h-5 w-5 text-blue-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium">Seu aplicativo está {appCliente.porcentagem_geral}% pronto</p>
-                <Progress value={appCliente.porcentagem_geral} className="h-1.5 bg-white/10 mt-1.5" />
+                <p className="text-xs text-white/50 mb-0.5">Aplicativo</p>
+                {appCliente ? (
+                  <>
+                    <p className="text-sm font-medium">
+                      {appCliente.fase_atual >= 8
+                        ? '🎉 Publicado!'
+                        : `${appCliente.porcentagem_geral}% concluído`}
+                    </p>
+                    <Progress value={appCliente.porcentagem_geral} className="h-1.5 bg-white/10 mt-1.5" />
+                  </>
+                ) : (
+                  <p className="text-sm text-white/40">Nenhum projeto de app vinculado</p>
+                )}
               </div>
               <ChevronRight className="h-4 w-4 text-white/30 shrink-0" />
             </CardContent>
           </Card>
         </motion.div>
-      )}
 
-      {/* Artes summary */}
-      {artesData?.counts?.total > 0 && (
+        {/* Artes status */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
           <Card className="bg-[#1E293B] border-white/10 cursor-pointer hover:border-white/20 transition-colors"
             onClick={() => navigate('/cliente/artes')}>
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                <Palette className="h-5 w-5 text-primary" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-500/10">
+                <Palette className="h-5 w-5 text-purple-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium">{artesData.counts.completed || 0} artes aprovadas de {artesData.counts.total}</p>
-                <Progress
-                  value={artesData.counts.total > 0 ? ((artesData.counts.completed || 0) / artesData.counts.total) * 100 : 0}
-                  className="h-1.5 bg-white/10 mt-1.5"
-                />
+                <p className="text-xs text-white/50 mb-0.5">Validação de Artes</p>
+                {artesData?.counts?.total > 0 ? (
+                  <>
+                    <p className="text-sm font-medium">
+                      {artesData.counts.completed || 0} de {artesData.counts.total} aprovadas
+                      {(artesData.counts.review || 0) > 0 && (
+                        <span className="text-amber-400 ml-1">• {artesData.counts.review} para validar</span>
+                      )}
+                    </p>
+                    <Progress
+                      value={((artesData.counts.completed || 0) / artesData.counts.total) * 100}
+                      className="h-1.5 bg-white/10 mt-1.5"
+                    />
+                  </>
+                ) : (
+                  <p className="text-sm text-white/40">Nenhuma arte no momento</p>
+                )}
               </div>
               <ChevronRight className="h-4 w-4 text-white/30 shrink-0" />
             </CardContent>
           </Card>
         </motion.div>
-      )}
+      </div>
 
       {/* Pending actions */}
       {pendingActions.length > 0 && (
