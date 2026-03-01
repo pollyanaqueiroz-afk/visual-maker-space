@@ -760,6 +760,30 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           <h2 className="text-lg font-semibold">
             {hasClientAction ? '📋 O que fazer agora' : '⏳ Nossa equipe está trabalhando'}
           </h2>
+
+          {hasClientAction && cliente.fase_atual === 1 && (() => {
+            const criacao = cliente.data_criacao ? new Date(cliente.data_criacao) : null;
+            const prazo = criacao ? new Date(criacao.getTime() + 2 * 24 * 3600000) : null;
+            const isOverdue = prazo ? new Date() > prazo : false;
+            return (
+              <div className={`rounded-lg p-3 text-sm ${isOverdue ? 'bg-red-500/10 border border-red-500/30' : 'bg-blue-500/10 border border-blue-500/20'}`}>
+                <p className={`${isOverdue ? 'text-red-300' : 'text-blue-300'}`}>
+                  Os 4 pontos abaixo são essenciais para que seu aplicativo fique pronto o quanto antes.
+                  {prazo && (
+                    <span className="font-semibold ml-1">
+                      Prazo: {format(prazo, 'dd/MM/yyyy')}
+                    </span>
+                  )}
+                </p>
+                {isOverdue && (
+                  <Badge className="mt-2 bg-red-500/20 text-red-300 border-red-500/40 hover:bg-red-500/30">
+                    <AlertTriangle className="h-3 w-3 mr-1" /> Pendência — prazo expirado
+                  </Badge>
+                )}
+              </div>
+            );
+          })()}
+
           {hasClientAction ? (
             <div className="space-y-3">
               {currentItems.map(item => renderChecklistItem(item))}
