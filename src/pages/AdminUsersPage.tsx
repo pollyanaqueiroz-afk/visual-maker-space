@@ -81,7 +81,22 @@ export default function AdminUsersPage() {
 
   const handleAddRole = async () => {
     if (!addRoleUser || !selectedRole) return;
-    await toggleRole(addRoleUser.id, selectedRole, false);
+    // Remove all existing roles first, then add the new one
+    try {
+      for (const existingRole of addRoleUser.roles) {
+        await supabase.functions.invoke(`manage-users?action=remove-role`, {
+          body: { user_id: addRoleUser.id, role: existingRole },
+        });
+      }
+      const { error } = await supabase.functions.invoke(`manage-users?action=add-role`, {
+        body: { user_id: addRoleUser.id, role: selectedRole },
+      });
+      if (error) throw error;
+      toast.success(`Perfil alterado para "${getRoleConfig(selectedRole).label}"`);
+      fetchUsers();
+    } catch (err: any) {
+      toast.error('Erro: ' + (err.message || 'Erro desconhecido'));
+    }
     setAddRoleUser(null);
     setSelectedRole('');
   };
@@ -283,10 +298,10 @@ export default function AdminUsersPage() {
                                 key={role}
                                 variant="outline"
                                 className={`text-[10px] cursor-pointer hover:opacity-70 transition-opacity ${cfg.color} ${isAdminSelf ? 'cursor-not-allowed opacity-50' : ''}`}
-                                onClick={() => !isAdminSelf && toggleRole(u.id, role, true)}
-                                title={isAdminSelf ? 'Não é possível remover seu próprio admin' : `Clique para remover "${cfg.label}"`}
+                                onClick={() => !isAdminSelf && (() => { setAddRoleUser(u); setSelectedRole(''); })()}
+                                title={isAdminSelf ? 'Não é possível alterar seu próprio admin' : `Clique para alterar perfil`}
                               >
-                                {cfg.label} ×
+                                {cfg.label} ✎
                               </Badge>
                             );
                           })}
@@ -304,12 +319,12 @@ export default function AdminUsersPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1 justify-end">
-                          {availableRoles.length > 0 && (
+                          {u.roles.length === 0 && (
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => { setAddRoleUser(u); setSelectedRole(''); }}
-                              title="Adicionar perfil"
+                              title="Definir perfil"
                             >
                               <Plus className="h-3.5 w-3.5" />
                             </Button>
@@ -359,13 +374,18 @@ export default function AdminUsersPage() {
       <Dialog open={!!addRoleUser} onOpenChange={(v) => { if (!v) setAddRoleUser(null); }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Adicionar Perfil</DialogTitle>
+            <DialogTitle>{addRoleUser?.roles.length ? 'Alterar Perfil' : 'Definir Perfil'}</DialogTitle>
           </DialogHeader>
           {addRoleUser && (
             <div className="space-y-4 pt-2">
               <p className="text-sm text-muted-foreground">
                 Usuário: <strong>{addRoleUser.display_name || addRoleUser.email}</strong>
               </p>
+              {addRoleUser.roles.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Perfil atual: <Badge variant="outline" className={`text-[10px] ${getRoleConfig(addRoleUser.roles[0]).color}`}>{getRoleConfig(addRoleUser.roles[0]).label}</Badge>
+                </p>
+              )}
               <Select value={selectedRole} onValueChange={setSelectedRole}>
                 <SelectTrigger className="h-9">
                   <SelectValue placeholder="Selecione um perfil..." />
@@ -377,7 +397,7 @@ export default function AdminUsersPage() {
                 </SelectContent>
               </Select>
               <Button onClick={handleAddRole} disabled={!selectedRole} className="w-full">
-                Adicionar Perfil
+                {addRoleUser.roles.length > 0 ? 'Alterar Perfil' : 'Definir Perfil'}
               </Button>
             </div>
           )}
