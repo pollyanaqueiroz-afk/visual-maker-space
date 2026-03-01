@@ -29,7 +29,7 @@ export default function ClienteHubLayout() {
     path === '/cliente' ? location.pathname === '/cliente' : location.pathname.startsWith(path);
 
   return (
-    <div className="min-h-screen bg-[#0F172A] text-white" style={{ fontFamily: "'Sora', sans-serif" }}>
+    <div className="min-h-screen bg-[#0F172A] text-white dark" style={{ fontFamily: "'Sora', sans-serif" }}>
       {/* Top nav bar */}
       <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0F172A]/95 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto px-4 flex items-center justify-between h-14">
