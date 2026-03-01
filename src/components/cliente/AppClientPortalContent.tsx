@@ -294,12 +294,17 @@ export default function AppClientPortalContent({ clienteId }: Props) {
 
   const DUNS_TEXT = 'Solicitei o número DUNS da minha empresa';
 
+  const GOOGLE_TEXTS = ['Criei a conta no Google Play Console', 'Adicionei apps@membros.app.br como admin (Google)'];
+  const APPLE_TEXTS = ['Criei a conta no Apple Developer Program', 'Adicionei apps@membros.app.br como admin (Apple)'];
+
   const currentItems = checklist.filter(i => {
     if (i.fase_numero !== cliente.fase_atual || i.ator !== 'cliente') return false;
-    // Keep DUNS item visible even when done (to show estimated date)
     if (i.texto === DUNS_TEXT && i.feito) return true;
     if (i.feito) return false;
     if (cliente.plataforma === 'google' && i.texto === 'Confirmei que meu CNPJ é ME ou LTDA') return false;
+    // Filter platform-specific items
+    if (cliente.plataforma === 'google' && APPLE_TEXTS.includes(i.texto)) return false;
+    if (cliente.plataforma === 'apple' && GOOGLE_TEXTS.includes(i.texto)) return false;
     return true;
   });
   const hasClientAction = currentItems.length > 0;
@@ -872,11 +877,35 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           </h2>
 
 
-          {hasClientAction ? (
-            <div className="space-y-3">
-              {currentItems.map(item => renderChecklistItem(item))}
-            </div>
-          ) : (
+          {hasClientAction ? (() => {
+            const genericItems = currentItems.filter(i => !GOOGLE_TEXTS.includes(i.texto) && !APPLE_TEXTS.includes(i.texto));
+            const googleItems = currentItems.filter(i => GOOGLE_TEXTS.includes(i.texto));
+            const appleItems = currentItems.filter(i => APPLE_TEXTS.includes(i.texto));
+            const hasBothPlatforms = googleItems.length > 0 && appleItems.length > 0;
+
+            return (
+              <div className="space-y-3">
+                {genericItems.map(item => renderChecklistItem(item))}
+                {hasBothPlatforms ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-white/50">🤖 Google</p>
+                      {googleItems.map(item => renderChecklistItem(item))}
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-white/50">🍎 Apple</p>
+                      {appleItems.map(item => renderChecklistItem(item))}
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {googleItems.map(item => renderChecklistItem(item))}
+                    {appleItems.map(item => renderChecklistItem(item))}
+                  </>
+                )}
+              </div>
+            );
+          })() : (
             <div className="text-center py-4 text-white/50">
               <p>Você será notificado assim que precisarmos de você!</p>
             </div>
