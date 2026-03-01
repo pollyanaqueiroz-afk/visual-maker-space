@@ -36,6 +36,7 @@ import ClienteHome from "./pages/cliente/ClienteHome";
 import ClienteArtes from "./pages/cliente/ClienteArtes";
 import ClienteApp from "./pages/cliente/ClienteApp";
 import ClienteSolicitar from "./pages/cliente/ClienteSolicitar";
+import ClienteSolicitarApp from "./pages/cliente/ClienteSolicitarApp";
 
 const queryClient = new QueryClient();
 
@@ -81,6 +82,7 @@ const App = () => (
               <Route path="artes" element={<ClienteArtes />} />
               <Route path="aplicativo" element={<ClienteApp />} />
               <Route path="solicitar" element={<ClienteSolicitar />} />
+              <Route path="solicitar-app" element={<ClienteSolicitarApp />} />
             </Route>
             <Route path="*" element={<NotFound />} />
             <Route path="*" element={<NotFound />} />
