@@ -70,18 +70,7 @@ const Index = () => {
           >
             <Link to="/cliente/login">
               <UserCircle className="h-5 w-5 mr-2" />
-              Área do Cliente
-            </Link>
-          </Button>
-          <Button
-            asChild
-            variant="outline"
-            size="lg"
-            className="border-white/20 text-white hover:bg-white/10 backdrop-blur-sm px-8 h-12 text-base"
-          >
-            <Link to="/hub">
-              <Lock className="h-5 w-5 mr-2" />
-              Área da Equipe
+              Hub Curseduca
             </Link>
           </Button>
         </motion.div>
