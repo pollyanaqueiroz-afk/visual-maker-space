@@ -62,7 +62,7 @@ export default function AplicativosPage() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({
-    nome: '', empresa: '', email: '', whatsapp: '', plataforma: 'ambos', responsavel_nome: '',
+    nome: '', url_cliente: '', email: '', whatsapp: '', plataforma: 'ambos', responsavel_nome: '',
   });
 
   const { data: clientes = [], isLoading } = useQuery({
@@ -96,7 +96,7 @@ export default function AplicativosPage() {
     mutationFn: async () => {
       const { error } = await supabase.from('app_clientes').insert({
         nome: form.nome,
-        empresa: form.empresa,
+        empresa: form.url_cliente,
         email: form.email,
         whatsapp: form.whatsapp || null,
         plataforma: form.plataforma,
@@ -109,7 +109,7 @@ export default function AplicativosPage() {
       queryClient.invalidateQueries({ queryKey: ['app-fases-all'] });
       queryClient.invalidateQueries({ queryKey: ['app-checklist-counts'] });
       setDialogOpen(false);
-      setForm({ nome: '', empresa: '', email: '', whatsapp: '', plataforma: 'ambos', responsavel_nome: '' });
+      setForm({ nome: '', url_cliente: '', email: '', whatsapp: '', plataforma: 'ambos', responsavel_nome: '' });
       toast.success('Cliente criado com sucesso! Fases e checklist gerados automaticamente.');
     },
     onError: (e: any) => toast.error(e.message),
@@ -196,12 +196,12 @@ export default function AplicativosPage() {
               <div className="space-y-4 pt-2">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label>URL do Cliente *</Label>
-                    <Input value={form.nome} onChange={e => setForm(p => ({ ...p, nome: e.target.value }))} placeholder="exemplo.curseduca.com" />
+                    <Label>Nome *</Label>
+                    <Input value={form.nome} onChange={e => setForm(p => ({ ...p, nome: e.target.value }))} />
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Empresa *</Label>
-                    <Input value={form.empresa} onChange={e => setForm(p => ({ ...p, empresa: e.target.value }))} />
+                    <Label>URL do Cliente *</Label>
+                    <Input value={form.url_cliente} onChange={e => setForm(p => ({ ...p, url_cliente: e.target.value }))} placeholder="exemplo.curseduca.com" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -233,7 +233,7 @@ export default function AplicativosPage() {
                 </div>
                 <Button
                   className="w-full"
-                  disabled={!form.nome || !form.empresa || !form.email || createMutation.isPending}
+                  disabled={!form.nome || !form.url_cliente || !form.email || createMutation.isPending}
                   onClick={() => createMutation.mutate()}
                 >
                   {createMutation.isPending ? 'Criando...' : 'Criar cliente'}
