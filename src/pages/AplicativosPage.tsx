@@ -2,10 +2,10 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { Smartphone, Plus, Bell, AlertTriangle, Apple, Bot } from 'lucide-react';
+import { Smartphone, Plus, Bell, AlertTriangle, Apple, Bot, Clock, CheckCircle, Users, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -115,8 +115,14 @@ export default function AplicativosPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const totalAbertos = clientes.filter(c => c.fase_atual < 8).length;
+  const totalConcluidos = clientes.filter(c => c.fase_atual >= 8).length;
   const atrasados = clientes.filter(c => c.status === 'atrasado').length;
   const slaViolados = fases.filter(f => f.sla_violado).length;
+
+  const avgProgress = totalAbertos > 0
+    ? Math.round(clientes.filter(c => c.fase_atual < 8).reduce((sum, c) => sum + c.porcentagem_geral, 0) / totalAbertos)
+    : 0;
 
   // Group clients by fase_atual
   const columns = useMemo(() => {
@@ -249,6 +255,87 @@ export default function AplicativosPage() {
         <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
           <AlertTriangle className="h-4 w-4 shrink-0" />
           <span>{slaViolados + atrasados} clientes precisam de atenção — SLA vencido ou cliente inativo</span>
+        </div>
+      )}
+
+      {/* Dashboard Gerencial */}
+      {!isLoading && (
+        <div className="space-y-4">
+          {/* KPI Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Card>
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                  <Users className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{totalAbertos}</p>
+                  <p className="text-xs text-muted-foreground">Em aberto</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{atrasados}</p>
+                  <p className="text-xs text-muted-foreground">Atrasados</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-500/10">
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{totalConcluidos}</p>
+                  <p className="text-xs text-muted-foreground">Publicados</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
+                  <TrendingUp className="h-5 w-5 text-blue-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{avgProgress}%</p>
+                  <p className="text-xs text-muted-foreground">Progresso médio</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Distribution by phase */}
+          <Card>
+            <CardContent className="p-4 space-y-3">
+              <p className="text-sm font-semibold text-muted-foreground">Distribuição por etapa</p>
+              <div className="space-y-2">
+                {FASE_NAMES.map((name, idx) => {
+                  const count = columns[idx]?.length || 0;
+                  const pct = clientes.length > 0 ? Math.round((count / clientes.length) * 100) : 0;
+                  const atrasadosNaFase = columns[idx]?.filter(c => c.status === 'atrasado').length || 0;
+                  return (
+                    <div key={idx} className="flex items-center gap-3">
+                      <span className="text-xs text-muted-foreground w-28 shrink-0 truncate">{name}</span>
+                      <div className="flex-1">
+                        <Progress value={pct} className="h-2" />
+                      </div>
+                      <div className="flex items-center gap-1.5 w-16 shrink-0 justify-end">
+                        <span className="text-xs font-medium">{count}</span>
+                        {atrasadosNaFase > 0 && (
+                          <Badge variant="destructive" className="text-[9px] px-1 py-0">{atrasadosNaFase}</Badge>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 
