@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { toast } from 'sonner';
@@ -879,14 +880,21 @@ export default function SchedulingPage() {
                             </Button>
                           )}
                           {m.status === 'scheduled' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 text-xs text-destructive hover:text-destructive"
-                              onClick={() => handleStatusChange(m.id, 'cancelled')}
-                            >
-                              Cancelar
-                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-8 text-xs text-destructive hover:text-destructive">Cancelar</Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Cancelar reunião?</AlertDialogTitle>
+                                  <AlertDialogDescription>Tem certeza que deseja cancelar <strong>{m.title}</strong>? Esta ação não pode ser desfeita.</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Voltar</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleStatusChange(m.id, 'cancelled')}>Confirmar cancelamento</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           )}
                           {(m.status === 'cancelled' || m.status === 'completed') && (
                             <Button
