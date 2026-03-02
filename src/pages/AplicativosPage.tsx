@@ -430,7 +430,7 @@ export default function AplicativosPage() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="kanban" className="space-y-4 mt-4">
+        <TabsContent value="kanban" className="space-y-4 mt-4 overflow-hidden">
           {/* Dashboard Gerencial */}
           {!isLoading && (
             <div className="space-y-4">
