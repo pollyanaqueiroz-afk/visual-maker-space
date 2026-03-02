@@ -985,6 +985,18 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                   {/* Phase 2 — store validation visibility */}
                   {selectedTimelineFase === 2 && (() => {
                     const fase1 = fases.find((f: any) => f.numero === 1);
+                    const fase1Done = fase1?.status === 'concluida';
+                    
+                    // Only show store analysis info after phase 1 is completed
+                    if (!fase1Done) {
+                      return (
+                        <div className="text-xs text-white/40 py-2 flex items-center gap-2">
+                          <Lock className="h-3.5 w-3.5 shrink-0" />
+                          <span>Conclua a etapa "Primeiros Passos" para liberar a validação pelas lojas</span>
+                        </div>
+                      );
+                    }
+                    
                     const fase2 = fases.find((f: any) => f.numero === 2);
                     const isCurrent = cliente.fase_atual === 2;
                     const isDone = fase2?.status === 'concluida';
