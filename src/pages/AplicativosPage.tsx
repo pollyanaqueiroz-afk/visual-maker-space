@@ -352,13 +352,18 @@ export default function AplicativosPage() {
                     <Input value={form.responsavel_nome} onChange={e => setForm(p => ({ ...p, responsavel_nome: e.target.value }))} />
                   </div>
                 </div>
-                <Button
-                  className="w-full"
-                  disabled={!form.nome || !form.url_cliente || !form.email || createMutation.isPending}
-                  onClick={() => createMutation.mutate()}
-                >
-                  {createMutation.isPending ? 'Criando...' : 'Criar cliente'}
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="ghost" onClick={() => setDialogOpen(false)} disabled={createMutation.isPending}>
+                    Fechar
+                  </Button>
+                  <Button
+                    className="flex-1"
+                    disabled={!form.nome || !form.url_cliente || !form.email || createMutation.isPending}
+                    onClick={() => createMutation.mutate()}
+                  >
+                    {createMutation.isPending ? 'Criando...' : 'Criar cliente'}
+                  </Button>
+                </div>
               </div>
             </DialogContent>
           </Dialog>
