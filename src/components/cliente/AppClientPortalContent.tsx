@@ -124,6 +124,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
   const [sitePromptId, setSitePromptId] = useState<string | null>(null);
   const [showMockupForm, setShowMockupForm] = useState(false);
   const [mockupObservations, setMockupObservations] = useState('');
+  const [confirmingItemId, setConfirmingItemId] = useState<string | null>(null);
 
   const CNPJ_TEXT = 'Confirmei que meu CNPJ é ME ou LTDA';
   const EMAIL_CORP_TEXT = 'Tenho um e-mail corporativo';
@@ -786,19 +787,57 @@ export default function AppClientPortalContent({ clienteId }: Props) {
       );
     }
 
-    // Default: check type
+    // Default: check type with confirmation
     return (
       <div key={item.id} className="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
         <div className="flex items-start gap-3">
           <Checkbox
             checked={item.feito}
-            onCheckedChange={(checked) => toggleCheck.mutate({ id: item.id, feito: !!checked, texto: item.texto })}
+            onCheckedChange={(checked) => {
+              if (checked) {
+                setConfirmingItemId(item.id);
+              } else {
+                toggleCheck.mutate({ id: item.id, feito: false, texto: item.texto });
+              }
+            }}
             className="mt-0.5 border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
           />
           <div className="flex-1">
             <p className="text-sm font-medium">{item.texto}</p>
             {item.descricao && <p className="text-xs text-white/50 mt-1">{item.descricao}</p>}
             {renderSteps(item.texto, item.id)}
+
+            {confirmingItemId === item.id && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                className="mt-3 overflow-hidden"
+              >
+                <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3 space-y-2">
+                  <p className="text-xs text-amber-300 font-medium">Tem certeza que concluiu esta etapa?</p>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => {
+                        toggleCheck.mutate({ id: item.id, feito: true, texto: item.texto });
+                        setConfirmingItemId(null);
+                      }}
+                    >
+                      Sim, concluí
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-white/60"
+                      onClick={() => setConfirmingItemId(null)}
+                    >
+                      Não
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
           </div>
         </div>
       </div>
