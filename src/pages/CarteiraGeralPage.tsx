@@ -86,6 +86,7 @@ export default function CarteiraGeralPage() {
   const navigate = useNavigate();
   const topScrollRef = useRef<HTMLDivElement>(null);
   const tableScrollRef = useRef<HTMLDivElement>(null);
+  const topScrollInnerRef = useRef<HTMLDivElement>(null);
   const { hasPermission } = usePermissions();
   const canImport = hasPermission('carteira.import');
   const [clientRecords, setClientRecords] = useState<ClientRecord[]>([]);
@@ -130,6 +131,16 @@ export default function CarteiraGeralPage() {
   }, []);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  useEffect(() => {
+    if (!tableScrollRef.current || !topScrollInnerRef.current) return;
+    const observer = new ResizeObserver(() => {
+      if (tableScrollRef.current && topScrollInnerRef.current)
+        topScrollInnerRef.current.style.width = tableScrollRef.current.scrollWidth + 'px';
+    });
+    observer.observe(tableScrollRef.current);
+    return () => observer.disconnect();
+  }, [loading, clientRecords]);
 
   // Extract unique filter options
   const filterOptions = useMemo(() => {
@@ -396,7 +407,7 @@ export default function CarteiraGeralPage() {
                 className="w-full overflow-x-auto"
                 onScroll={() => { if (tableScrollRef.current) tableScrollRef.current.scrollLeft = topScrollRef.current!.scrollLeft; }}
               >
-                <div className="min-w-[4000px] h-[1px]" />
+                <div ref={topScrollInnerRef} className="h-[1px]" />
               </div>
               <div
                 ref={tableScrollRef}
