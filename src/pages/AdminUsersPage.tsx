@@ -131,23 +131,18 @@ export default function AdminUsersPage() {
   const handleBulkAssign = async () => {
     if (!bulkRole || selectedIds.size === 0) return;
     setBulkSaving(true);
-    let success = 0;
     const targetUsers = filtered.filter(u => selectedIds.has(u.id));
-    for (const u of targetUsers) {
-      try {
-        for (const existingRole of u.roles) {
-          await supabase.functions.invoke(`manage-users?action=remove-role`, {
-            body: { user_id: u.id, role: existingRole },
-          });
-        }
-        const { error } = await supabase.functions.invoke(`manage-users?action=add-role`, {
-          body: { user_id: u.id, role: bulkRole },
-        });
+    const results = await Promise.allSettled(
+      targetUsers.map(async (u) => {
+        for (const r of u.roles)
+          await supabase.functions.invoke('manage-users?action=remove-role', { body: { user_id: u.id, role: r } });
+        const { error } = await supabase.functions.invoke('manage-users?action=add-role', { body: { user_id: u.id, role: bulkRole } });
         if (error) throw error;
-        success++;
-      } catch { /* skip */ }
-    }
-    toast.success(`Perfil "${getRoleConfig(bulkRole).label}" atribuído a ${success} usuário(s)`);
+      })
+    );
+    const ok = results.filter(r => r.status === 'fulfilled').length;
+    const fail = results.filter(r => r.status === 'rejected').length;
+    toast.success(`Perfil atribuído a ${ok} usuário(s)${fail > 0 ? `. ${fail} falharam.` : ''}`);
     setBulkSaving(false);
     setBulkRoleOpen(false);
     setBulkRole('');
