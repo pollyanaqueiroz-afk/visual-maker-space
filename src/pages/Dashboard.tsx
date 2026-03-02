@@ -604,7 +604,7 @@ export default function Dashboard() {
                           <TableCell>
                             <div className="text-sm">{img.requester_name}</div>
                             <div className="text-xs text-muted-foreground">{img.requester_email}</div>
-                            {img.submitted_by && img.submitted_by !== img.requester_email && (
+                            {img.submitted_by && img.submitted_by.toLowerCase() !== img.requester_email.toLowerCase() && (
                               <div className="text-xs text-muted-foreground/70 mt-0.5">
                                 Enviado por: {img.submitted_by}
                               </div>
