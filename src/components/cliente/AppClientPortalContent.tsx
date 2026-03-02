@@ -941,7 +941,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           </div>
         )}
 
-        <div className="relative px-2 overflow-x-auto">
+        <div className="relative px-2 overflow-hidden">
           {/* Line connecting all steps */}
           <div className="absolute top-5 left-6 right-6 h-0.5 bg-white/10" />
           <div
