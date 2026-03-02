@@ -783,6 +783,12 @@ export default function SchedulingPage() {
                             </div>
                           )}
                           {m.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{m.description}</p>}
+                          {(m as any).reschedule_reason && (
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                              <RefreshCw className="h-3 w-3" />
+                              <span>Reagendado: {(m as any).reschedule_reason}</span>
+                            </div>
+                          )}
 
                           {/* Completed meeting details section */}
                           {m.status === 'completed' && (
