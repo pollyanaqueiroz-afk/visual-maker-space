@@ -254,36 +254,41 @@ export default function BriefingForm() {
 
       let sortOrder = 0;
 
-      if (selections.login_image) {
-        for (const loginImg of form.login_image) {
-          await insertImage(requestId, 'login', loginImg, sortOrder++);
+      try {
+        if (selections.login_image) {
+          for (const loginImg of form.login_image) {
+            await insertImage(requestId, 'login', loginImg, sortOrder++);
+          }
         }
-      }
-      for (const banner of form.banner_vitrine) {
-        await insertImage(requestId, 'banner_vitrine', banner, sortOrder++);
-      }
-      for (const cover of form.product_covers) {
-        await insertImage(requestId, 'product_cover', cover, sortOrder++);
-      }
-      if (selections.trail_banner && form.trail_banner.enabled) {
-        await insertImage(requestId, 'trail_banner', form.trail_banner, sortOrder++);
-      }
-      if (selections.challenge_banner && form.challenge_banner.enabled) {
-        await insertImage(requestId, 'challenge_banner', form.challenge_banner, sortOrder++);
-      }
-      if (selections.community_banner && form.community_banner.enabled) {
-        await insertImage(requestId, 'community_banner', form.community_banner, sortOrder++);
-      }
+        for (const banner of form.banner_vitrine) {
+          await insertImage(requestId, 'banner_vitrine', banner, sortOrder++);
+        }
+        for (const cover of form.product_covers) {
+          await insertImage(requestId, 'product_cover', cover, sortOrder++);
+        }
+        if (selections.trail_banner && form.trail_banner.enabled) {
+          await insertImage(requestId, 'trail_banner', form.trail_banner, sortOrder++);
+        }
+        if (selections.challenge_banner && form.challenge_banner.enabled) {
+          await insertImage(requestId, 'challenge_banner', form.challenge_banner, sortOrder++);
+        }
+        if (selections.community_banner && form.community_banner.enabled) {
+          await insertImage(requestId, 'community_banner', form.community_banner, sortOrder++);
+        }
 
-      // Auto-create app mockup if has_app
-      if (selections.has_app) {
-        const { error: mockupErr } = await supabase.from('briefing_images').insert({
-          request_id: requestId,
-          image_type: 'app_mockup',
-          sort_order: sortOrder++,
-          observations: 'Mockup do aplicativo — criado automaticamente',
-        } as any);
-        if (mockupErr) console.error('Erro ao criar mockup:', mockupErr);
+        // Auto-create app mockup if has_app
+        if (selections.has_app) {
+          const { error: mockupErr } = await supabase.from('briefing_images').insert({
+            request_id: requestId,
+            image_type: 'app_mockup',
+            sort_order: sortOrder++,
+            observations: 'Mockup do aplicativo — criado automaticamente',
+          } as any);
+          if (mockupErr) console.error('Erro ao criar mockup:', mockupErr);
+        }
+      } catch (err: any) {
+        await supabase.from('briefing_requests').delete().eq('id', requestId);
+        throw err;
       }
 
       setSubmitted(true);
