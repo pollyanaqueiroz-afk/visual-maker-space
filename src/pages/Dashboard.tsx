@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle, CalendarIcon, AlertCircle, Link2, FolderOpen, FileText, Palette, UserCheck, FileSpreadsheet, Search } from 'lucide-react';
+import { Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle, CalendarIcon, AlertCircle, Link2, FolderOpen, FileText, Palette, UserCheck, FileSpreadsheet, Search, UserPen } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -28,6 +28,32 @@ import BrandAssetsDialog from '@/components/briefing/BrandAssetsDialog';
 import BulkPhotoUploadDialog from '@/components/briefing/BulkPhotoUploadDialog';
 import BulkAssignDialog from '@/components/briefing/BulkAssignDialog';
 import { usePermissions } from '@/hooks/usePermissions';
+function ChangeDesignerForm({ imageId, currentEmail, onChanged }: { imageId: string; currentEmail: string; onChanged: () => void }) {
+  const [email, setEmail] = useState(currentEmail);
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!email) { toast.error('Informe o email'); return; }
+    setSaving(true);
+    const { error } = await supabase.from('briefing_images').update({ assigned_email: email }).eq('id', imageId);
+    setSaving(false);
+    if (error) { toast.error('Erro ao atualizar designer'); return; }
+    toast.success('Designer atualizado!');
+    onChanged();
+  };
+
+  return (
+    <div className="space-y-3">
+      <Label className="text-xs font-medium">Trocar designer responsável</Label>
+      <Input type="email" placeholder="novo-designer@email.com" value={email} onChange={e => setEmail(e.target.value)} className="h-8 text-sm" />
+      <Button onClick={handleSave} disabled={saving || email === currentEmail} size="sm" className="w-full">
+        {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <UserPen className="h-3 w-3 mr-1" />}
+        Salvar
+      </Button>
+    </div>
+  );
+}
+
 interface ImageWithRequest {
   id: string;
   image_type: string;
@@ -613,13 +639,29 @@ export default function Dashboard() {
                           </TableCell>
                           <TableCell>
                             {img.assigned_email ? (
-                              <div>
-                                <div className="text-sm">{img.assigned_email}</div>
-                                {img.deadline && (
-                                  <div className="text-xs text-muted-foreground">
-                                    Prazo: {new Date(img.deadline).toLocaleDateString('pt-BR')}
-                                  </div>
-                                )}
+                              <div className="group flex items-center gap-1">
+                                <div>
+                                  <div className="text-sm">{img.assigned_email}</div>
+                                  {img.deadline && (
+                                    <div className="text-xs text-muted-foreground">
+                                      Prazo: {new Date(img.deadline).toLocaleDateString('pt-BR')}
+                                    </div>
+                                  )}
+                                </div>
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" title="Trocar designer">
+                                      <UserPen className="h-3 w-3" />
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-72 p-3" align="start">
+                                    <ChangeDesignerForm
+                                      imageId={img.id}
+                                      currentEmail={img.assigned_email}
+                                      onChanged={fetchData}
+                                    />
+                                  </PopoverContent>
+                                </Popover>
                               </div>
                             ) : (
                               <span className="text-sm text-muted-foreground">Não atribuído</span>
