@@ -932,6 +932,12 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           <div>
             <h1 className="text-lg font-bold">Olá! 👋</h1>
             <p className="text-white/60 text-sm mt-0.5">Seu app está <span className="text-white font-bold">{cliente.porcentagem_geral}%</span> pronto</p>
+            {cliente.data_criacao && (
+              <p className="text-[11px] text-primary/80 mt-1.5 flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                Processo iniciado em <span className="font-semibold text-primary">{format(new Date(cliente.data_criacao), 'dd/MM/yyyy')}</span>
+              </p>
+            )}
           </div>
         )}
 
@@ -1057,12 +1063,12 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                           disabled={item.id !== 'mockup-virtual' && (!item.feito || !filledValue)}
                         >
                           {item.feito ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" /> : <Circle className="h-3.5 w-3.5 text-white/30 shrink-0" />}
-                          <span className={`text-left ${item.feito ? 'text-white/40 line-through' : 'text-white/70'}`}>{item.texto}</span>
-                          {item.feito && item.feito_em && (
-                            <span className="text-[9px] text-green-400/60 shrink-0 ml-auto">{format(new Date(item.feito_em), 'dd/MM/yy')}</span>
-                          )}
+                          <span className={`text-left flex-1 ${item.feito ? 'text-white/40 line-through' : 'text-white/70'}`}>{item.texto}</span>
                           {!item.feito && <Badge variant="outline" className="text-[9px] px-1 py-0 border-white/10 text-white/30 ml-auto shrink-0">{item.ator}</Badge>}
                         </button>
+                        {item.feito && item.feito_em && (
+                          <p className="text-[10px] text-green-400/60 ml-5 mt-0.5">✅ Concluído em {format(new Date(item.feito_em), "dd/MM/yyyy 'às' HH:mm")}</p>
+                        )}
                         {item.ator === 'analista' && !item.feito && (
                           <p className="text-[10px] text-amber-400/60 ml-5 mt-0.5">⏳ O analista tem até 1 dia útil após o envio para verificar</p>
                         )}
