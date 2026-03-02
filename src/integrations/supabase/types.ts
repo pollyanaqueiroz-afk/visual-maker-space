@@ -783,6 +783,45 @@ export type Database = {
           },
         ]
       }
+      client_field_definitions: {
+        Row: {
+          created_at: string | null
+          db_key: string
+          enum_options: string[] | null
+          field_type: string
+          id: string
+          is_hidden: boolean | null
+          is_required: boolean | null
+          label: string
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          db_key: string
+          enum_options?: string[] | null
+          field_type?: string
+          id?: string
+          is_hidden?: boolean | null
+          is_required?: boolean | null
+          label: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          db_key?: string
+          enum_options?: string[] | null
+          field_type?: string
+          id?: string
+          is_hidden?: boolean | null
+          is_required?: boolean | null
+          label?: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       client_interactions: {
         Row: {
           client_id: string

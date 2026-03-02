@@ -28,6 +28,7 @@ import KanbanPage from "./pages/KanbanPage";
 import KanbanBoardsPage from "./pages/KanbanBoardsPage";
 import PermissionsPage from "./pages/PermissionsPage";
 import PermissionGuard from "./components/PermissionGuard";
+import FieldManagementPage from "./pages/FieldManagementPage";
 import AplicativosPage from "./pages/AplicativosPage";
 import AplicativoDetailPage from "./pages/AplicativoDetailPage";
 import AppClientPortal from "./pages/AppClientPortal";
@@ -75,6 +76,7 @@ const App = () => (
               <Route path="lideranca" element={<PermissionGuard permission="lideranca.view"><LeadershipDashboard /></PermissionGuard>} />
               <Route path="admin/usuarios" element={<PermissionGuard permission="admin.view"><AdminUsersPage /></PermissionGuard>} />
               <Route path="admin/permissoes" element={<PermissionGuard permission="admin.manage_permissions"><PermissionsPage /></PermissionGuard>} />
+              <Route path="admin/campos" element={<PermissionGuard permission="admin.view"><FieldManagementPage /></PermissionGuard>} />
               <Route path="aplicativos" element={<PermissionGuard permission="aplicativos.view"><AplicativosPage /></PermissionGuard>} />
               <Route path="aplicativos/:clienteId" element={<PermissionGuard permission="aplicativos.view"><AplicativoDetailPage /></PermissionGuard>} />
             </Route>

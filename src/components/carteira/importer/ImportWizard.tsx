@@ -14,13 +14,14 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Upload, FileSpreadsheet, Link, Loader2, CheckCircle, AlertTriangle, ArrowLeft, ArrowRight,
-  ChevronDown, RotateCcw, Wand2, Eye, Filter, Download, Send, Check, X,
+  ChevronDown, RotateCcw, Wand2, Eye, Filter, Download, Send, Check, X, Plus,
 } from 'lucide-react';
 import {
   type WizardStep, type MappedColumn, type ColumnDataType, type ColumnDefinition,
-  WIZARD_STEPS, CURSEDUCA_TEMPLATE, DATA_TYPE_LABELS,
+  WIZARD_STEPS, DATA_TYPE_LABELS,
   validateValue, autoDetectType, similarityScore,
 } from './types';
+import { useFieldDefinitions } from '@/hooks/useFieldDefinitions';
 
 interface Props {
   open: boolean;
@@ -29,6 +30,7 @@ interface Props {
 }
 
 export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
+  const { fields: fieldDefs, createField } = useFieldDefinitions();
   const [step, setStep] = useState<WizardStep>('upload');
   const [rawData, setRawData] = useState<Record<string, string>[]>([]);
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
@@ -42,7 +44,19 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
   const [showOnlyErrors, setShowOnlyErrors] = useState(false);
   const [editingCell, setEditingCell] = useState<{ row: number; col: string } | null>(null);
   const [existingIds, setExistingIds] = useState<Set<string>>(new Set());
+  const [creatingFieldKey, setCreatingFieldKey] = useState<string | null>(null);
   const ROWS_PER_PAGE = 50;
+
+  // Build template from field definitions
+  const dynamicTemplate: ColumnDefinition[] = useMemo(() =>
+    fieldDefs.map(f => ({
+      label: f.label,
+      dbKey: f.db_key,
+      type: (f.field_type === 'numero' ? 'numero_inteiro' : f.field_type === 'moeda' ? 'moeda' : f.field_type) as ColumnDataType,
+      enumValues: f.enum_options?.length ? f.enum_options : undefined,
+    })),
+    [fieldDefs]
+  );
 
   const reset = useCallback(() => {
     setStep('upload');
@@ -83,7 +97,7 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
     const mapped: MappedColumn[] = headers.map(h => {
       let bestMatch: ColumnDefinition | null = null;
       let bestScore = 0;
-      for (const col of CURSEDUCA_TEMPLATE) {
+      for (const col of dynamicTemplate) {
         const s1 = similarityScore(h, col.label);
         const s2 = similarityScore(h, col.dbKey);
         const score = Math.max(s1, s2);
@@ -446,9 +460,26 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
                       <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
                       <Select
                         value={col.dbKey || '__none__' }
-                        onValueChange={(v) => {
+                        onValueChange={async (v) => {
+                          if (v === '__create__') {
+                            // Auto-create field from CSV header
+                            const dbKey = col.csvHeader.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 63);
+                            try {
+                              await createField.mutateAsync({
+                                label: col.csvHeader, db_key: dbKey, field_type: 'texto',
+                                enum_options: [], is_required: false, is_hidden: false, sort_order: fieldDefs.length,
+                              });
+                              setMappedColumns(prev => prev.map((m, i) =>
+                                i === idx ? { ...m, dbKey, label: col.csvHeader, type: 'texto', ignored: false } : m
+                              ));
+                              toast.success(`Campo "${col.csvHeader}" criado`);
+                            } catch (err: any) {
+                              toast.error('Erro ao criar campo: ' + err.message);
+                            }
+                            return;
+                          }
                           const target = v === '__none__' ? '' : v;
-                          const tmpl = CURSEDUCA_TEMPLATE.find(t => t.dbKey === target);
+                          const tmpl = dynamicTemplate.find(t => t.dbKey === target);
                           setMappedColumns(prev => prev.map((m, i) =>
                             i === idx ? {
                               ...m,
@@ -466,9 +497,12 @@ export default function ImportWizard({ open, onOpenChange, onSuccess }: Props) {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="__none__">— Não mapear —</SelectItem>
-                          {CURSEDUCA_TEMPLATE.map(t => (
+                          {dynamicTemplate.map(t => (
                             <SelectItem key={t.dbKey} value={t.dbKey}>{t.label}</SelectItem>
                           ))}
+                          <SelectItem value="__create__" className="text-primary font-medium">
+                            <span className="flex items-center gap-1"><Plus className="h-3 w-3" /> Criar novo campo</span>
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

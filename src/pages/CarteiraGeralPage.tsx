@@ -15,68 +15,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import ImportWizard from '@/components/carteira/importer/ImportWizard';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useFieldDefinitions, type FieldDefinition } from '@/hooks/useFieldDefinitions';
 
 interface ClientRecord {
   [key: string]: any;
 }
 
-const HIDDEN_COLS = ['id', 'created_at', 'updated_at'];
-
-// Fixed columns in exact order requested
-const FIXED_COLUMNS: { key: string; label: string }[] = [
-  { key: 'id_curseduca', label: 'ID Curseduca' },
-  { key: 'client_url', label: 'URL do Cliente' },
-  { key: 'client_name', label: 'Nome do Cliente' },
-  { key: 'email_do_cliente', label: 'E-mail do Cliente' },
-  { key: 'telefone_do_cliente', label: 'Telefone do Cliente' },
-  { key: 'portal_do_cliente', label: 'Portal do Cliente' },
-  { key: 'status_financeiro', label: 'Status Financeiro' },
-  { key: 'forma_de_pagamento', label: 'Forma de Pagamento' },
-  { key: 'valor_mensal', label: 'Valor Mensal' },
-  { key: 'valor_total_devido', label: 'Valor Total Devido' },
-  { key: 'data_da_primeira_parcela_vencida', label: 'Data da Primeira Parcela Vencida' },
-  { key: 'plano_detalhado', label: 'Plano Detalhado' },
-  { key: 'plano_contratado', label: 'Plano Contratado' },
-  { key: 'tipo_de_cs', label: 'Tipo de CS' },
-  { key: 'nome_antigo', label: 'Nome Antigo' },
-  { key: 'email_do_cs_antigo', label: 'E-mail do CS Antigo' },
-  { key: 'nome_do_cs_atual', label: 'Nome do CS Atual' },
-  { key: 'email_do_cs_atual', label: 'E-mail do CS Atual' },
-  { key: 'etapa_antiga_sensedata', label: 'Etapa Antiga Sensedata' },
-  { key: 'origem_do_dado', label: 'Origem do Dado' },
-  { key: 'nome_da_plataforma', label: 'Nome da Plataforma' },
-  { key: 'data_do_dado', label: 'Data do Dado' },
-  { key: 'data_do_processamento_do_dado', label: 'Data do Processamento do Dado' },
-  { key: 'banda_contratada', label: 'Banda Contratada' },
-  { key: 'banda_utilizada', label: 'Banda Utilizada' },
-  { key: 'armazenamento_contratado', label: 'Armazenamento Contratado' },
-  { key: 'armazenamento_utilizado', label: 'Armazenamento Utilizado' },
-  { key: 'token_de_ia_contratado', label: 'Token de IA Contratado' },
-  { key: 'token_de_ia_utilizado', label: 'Token de IA Utilizado' },
-  { key: 'certificado_mec_contratado', label: 'Certificado MEC Contratado' },
-  { key: 'certificado_mec_utilizado', label: 'Certificado MEC Utilizado' },
-  { key: 'data_da_primeira_compra', label: 'Data da Primeira Compra' },
-  { key: 'data_da_10_compra', label: 'Data da 10ª Compra' },
-  { key: 'data_da_50_compra', label: 'Data da 50ª Compra' },
-  { key: 'data_da_100_compra', label: 'Data da 100ª Compra' },
-  { key: 'data_da_200_compra', label: 'Data da 200ª Compra' },
-  { key: 'data_do_primeiro_conteudo_finalizado', label: 'Data do 1º Conteúdo Finalizado' },
-  { key: 'data_do_10_conteudo_finalizado', label: 'Data do 10º Conteúdo Finalizado' },
-  { key: 'data_do_50_conteudo_finalizado', label: 'Data do 50º Conteúdo Finalizado' },
-  { key: 'data_do_100_conteudo_finalizado', label: 'Data do 100º Conteúdo Finalizado' },
-  { key: 'data_do_200_conteudo_finalizado', label: 'Data do 200º Conteúdo Finalizado' },
-  { key: 'nome_do_closer', label: 'Nome do Closer' },
-  { key: 'email_do_closer', label: 'E-mail do Closer' },
-  { key: 'data_do_fechamento_do_contrato', label: 'Data do Fechamento do Contrato' },
-  { key: 'metrica_de_sucesso_acordada_na_venda', label: 'Métrica de Sucesso Acordada na Venda' },
-  { key: 'desconto_concedido', label: 'Desconto Concedido' },
-  { key: 'data_do_ultimo_login', label: 'Data do Último Login' },
-  { key: 'tempo_medio_de_uso_em_min', label: 'Tempo Médio de Uso (min)' },
-  { key: 'membros_do_mes_atual', label: 'Membros do Mês Atual' },
-  { key: 'variacao_de_quantidade_de_membros_por_mes', label: 'Variação de Membros por Mês' },
-  { key: 'dias_desde_o_ultimo_login', label: 'Dias Desde o Último Login' },
-  { key: 'email_do_cliente_2', label: 'E-mail do Cliente 2' },
-];
+const HIDDEN_COLS = ['id', 'created_at', 'updated_at', 'kanban_column_id'];
 
 function formatCellValue(value: any): string {
   if (value == null || value === '') return '—';
@@ -90,19 +35,22 @@ export default function CarteiraGeralPage() {
   const topScrollInnerRef = useRef<HTMLDivElement>(null);
   const { hasPermission } = usePermissions();
   const canImport = hasPermission('carteira.import');
+  const { visibleFields, isLoading: fieldsLoading } = useFieldDefinitions();
   const [clientRecords, setClientRecords] = useState<ClientRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [importOpen, setImportOpen] = useState(false);
-  const [filterPlano, setFilterPlano] = useState('__all__');
-  const [filterCs, setFilterCs] = useState('__all__');
-  const [filterStatus, setFilterStatus] = useState('__all__');
-  const [filterPortal, setFilterPortal] = useState('__all__');
   const [showFilters, setShowFilters] = useState(false);
+  const [dynamicFilters, setDynamicFilters] = useState<Record<string, string>>({});
+
+  // Determine which fields can be used as filters (enum + booleano)
+  const filterableFields = useMemo(
+    () => visibleFields.filter(f => f.field_type === 'enum' || f.field_type === 'booleano'),
+    [visibleFields]
+  );
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    // Fetch all clients (bypass 1000 row default limit)
     let allData: ClientRecord[] = [];
     let from = 0;
     const PAGE_SIZE = 1000;
@@ -119,15 +67,7 @@ export default function CarteiraGeralPage() {
       hasMore = (page || []).length === PAGE_SIZE;
       from += PAGE_SIZE;
     }
-    const data = allData;
-    const error = null;
-
-    if (error) {
-      console.error(error);
-      toast.error('Erro ao carregar dados');
-    } else {
-      setClientRecords((data || []) as ClientRecord[]);
-    }
+    setClientRecords(allData);
     setLoading(false);
   }, []);
 
@@ -141,36 +81,31 @@ export default function CarteiraGeralPage() {
     });
     observer.observe(tableScrollRef.current);
     return () => observer.disconnect();
-  }, [loading, clientRecords]);
+  }, [loading, clientRecords, visibleFields]);
 
-  // Extract unique filter options
+  // Extract unique filter options dynamically
   const filterOptions = useMemo(() => {
-    const planos = new Set<string>();
-    const css = new Set<string>();
-    const statuses = new Set<string>();
-    const portals = new Set<string>();
-    for (const c of clientRecords) {
-      if (c.plano_contratado) planos.add(c.plano_contratado);
-      if (c.nome_do_cs_atual) css.add(c.nome_do_cs_atual);
-      if (c.status_financeiro) statuses.add(c.status_financeiro);
-      if (c.portal_do_cliente) portals.add(c.portal_do_cliente);
+    const opts: Record<string, string[]> = {};
+    for (const field of filterableFields) {
+      const values = new Set<string>();
+      for (const c of clientRecords) {
+        if (c[field.db_key]) values.add(String(c[field.db_key]));
+      }
+      opts[field.db_key] = [...values].sort();
     }
-    return {
-      planos: [...planos].sort(),
-      css: [...css].sort(),
-      statuses: [...statuses].sort(),
-      portals: [...portals].sort(),
-    };
-  }, [clientRecords]);
+    return opts;
+  }, [clientRecords, filterableFields]);
 
-  const activeFilterCount = [filterPlano, filterCs, filterStatus, filterPortal].filter(f => f !== '__all__').length;
+  const activeFilterCount = Object.values(dynamicFilters).filter(v => v !== '__all__').length;
 
   // Filter
   const filtered = useMemo(() => {
     let result = clientRecords;
-    if (filterPlano !== '__all__') result = result.filter(c => c.plano_contratado === filterPlano);
-    if (filterCs !== '__all__') result = result.filter(c => c.nome_do_cs_atual === filterCs);
-    if (filterStatus !== '__all__') result = result.filter(c => c.status_financeiro === filterStatus);
+    for (const [key, val] of Object.entries(dynamicFilters)) {
+      if (val && val !== '__all__') {
+        result = result.filter(c => String(c[key] || '') === val);
+      }
+    }
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(cr =>
@@ -178,7 +113,7 @@ export default function CarteiraGeralPage() {
       );
     }
     return result;
-  }, [clientRecords, search, filterPlano, filterCs, filterStatus, filterPortal]);
+  }, [clientRecords, search, dynamicFilters]);
 
   const stats = useMemo(() => ({
     total: clientRecords.length,
@@ -188,17 +123,17 @@ export default function CarteiraGeralPage() {
   const buildExportData = useCallback(() => {
     return filtered.map(row => {
       const out: Record<string, string> = {};
-      for (const col of FIXED_COLUMNS) {
-        out[col.label] = row[col.key] != null && row[col.key] !== '' ? String(row[col.key]) : '';
+      for (const col of visibleFields) {
+        out[col.label] = row[col.db_key] != null && row[col.db_key] !== '' ? String(row[col.db_key]) : '';
       }
       return out;
     });
-  }, [filtered]);
+  }, [filtered, visibleFields]);
 
   const handleExportCSV = useCallback(() => {
     const data = buildExportData();
     if (data.length === 0) { toast.error('Nenhum dado para exportar'); return; }
-    const headers = FIXED_COLUMNS.map(c => c.label);
+    const headers = visibleFields.map(c => c.label);
     const csvRows = [headers.join(',')];
     for (const row of data) {
       csvRows.push(headers.map(h => {
@@ -215,7 +150,7 @@ export default function CarteiraGeralPage() {
     a.click();
     URL.revokeObjectURL(url);
     toast.success(`${data.length} registros exportados em CSV`);
-  }, [buildExportData]);
+  }, [buildExportData, visibleFields]);
 
   const handleExportExcel = useCallback(() => {
     const data = buildExportData();
@@ -227,7 +162,7 @@ export default function CarteiraGeralPage() {
     toast.success(`${data.length} registros exportados em Excel`);
   }, [buildExportData]);
 
-  if (loading) return (
+  if (loading || fieldsLoading) return (
     <div className="space-y-3 p-4">
       {Array.from({ length: 8 }).map((_, i) => (
         <Skeleton key={i} className="h-10 w-full rounded-md" />
@@ -273,7 +208,7 @@ export default function CarteiraGeralPage() {
         </Card>
         <Card>
           <CardContent className="p-4 flex flex-col items-center text-center gap-1">
-            <Users className="h-5 w-5 text-success" />
+            <Users className="h-5 w-5 text-primary" />
             <span className="text-2xl font-bold text-foreground">{filtered.length}</span>
             <span className="text-[11px] text-muted-foreground">Exibindo</span>
           </CardContent>
@@ -301,25 +236,27 @@ export default function CarteiraGeralPage() {
               className="pl-9 h-9 text-sm"
             />
           </div>
-          <Button
-            variant={showFilters ? 'secondary' : 'outline'}
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-            className="h-9"
-          >
-            <Filter className="h-4 w-4 mr-1.5" />
-            Filtros
-            {activeFilterCount > 0 && (
-              <Badge variant="default" className="ml-1.5 h-5 w-5 p-0 flex items-center justify-center text-[10px]">
-                {activeFilterCount}
-              </Badge>
-            )}
-          </Button>
+          {filterableFields.length > 0 && (
+            <Button
+              variant={showFilters ? 'secondary' : 'outline'}
+              size="sm"
+              onClick={() => setShowFilters(!showFilters)}
+              className="h-9"
+            >
+              <Filter className="h-4 w-4 mr-1.5" />
+              Filtros
+              {activeFilterCount > 0 && (
+                <Badge variant="default" className="ml-1.5 h-5 w-5 p-0 flex items-center justify-center text-[10px]">
+                  {activeFilterCount}
+                </Badge>
+              )}
+            </Button>
+          )}
           {activeFilterCount > 0 && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => { setFilterPlano('__all__'); setFilterCs('__all__'); setFilterStatus('__all__'); setFilterPortal('__all__'); }}
+              onClick={() => setDynamicFilters({})}
               className="h-9 text-muted-foreground"
             >
               <X className="h-4 w-4 mr-1" /> Limpar filtros
@@ -327,64 +264,27 @@ export default function CarteiraGeralPage() {
           )}
         </div>
 
-        {showFilters && (
+        {showFilters && filterableFields.length > 0 && (
           <div className="flex items-end gap-3 flex-wrap p-3 rounded-lg border bg-muted/30">
-            <div className="space-y-1.5 min-w-[180px]">
-              <label className="text-xs font-medium text-muted-foreground">Plano Contratado</label>
-              <Select value={filterPlano} onValueChange={setFilterPlano}>
-                <SelectTrigger className="h-9 text-sm">
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">Todos</SelectItem>
-                  {filterOptions.planos.map(p => (
-                    <SelectItem key={p} value={p}>{p}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5 min-w-[180px]">
-              <label className="text-xs font-medium text-muted-foreground">CS Responsável</label>
-              <Select value={filterCs} onValueChange={setFilterCs}>
-                <SelectTrigger className="h-9 text-sm">
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">Todos</SelectItem>
-                  {filterOptions.css.map(c => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5 min-w-[180px]">
-              <label className="text-xs font-medium text-muted-foreground">Status Financeiro</label>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="h-9 text-sm">
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">Todos</SelectItem>
-                  {filterOptions.statuses.map(s => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5 min-w-[180px]">
-              <label className="text-xs font-medium text-muted-foreground">Portal do Cliente</label>
-              <Select value={filterPortal} onValueChange={setFilterPortal}>
-                <SelectTrigger className="h-9 text-sm">
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">Todos</SelectItem>
-                  {filterOptions.portals.map(p => (
-                    <SelectItem key={p} value={p}>{p}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {filterableFields.map(field => (
+              <div key={field.db_key} className="space-y-1.5 min-w-[180px]">
+                <label className="text-xs font-medium text-muted-foreground">{field.label}</label>
+                <Select
+                  value={dynamicFilters[field.db_key] || '__all__'}
+                  onValueChange={v => setDynamicFilters(prev => ({ ...prev, [field.db_key]: v }))}
+                >
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">Todos</SelectItem>
+                    {(filterOptions[field.db_key] || []).map(opt => (
+                      <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -415,13 +315,13 @@ export default function CarteiraGeralPage() {
                 className="w-full overflow-x-auto"
                 onScroll={() => { if (topScrollRef.current) topScrollRef.current.scrollLeft = tableScrollRef.current!.scrollLeft; }}
               >
-                <div className="min-w-[4000px]">
+                <div style={{ minWidth: `${Math.max(visibleFields.length * 180, 2000)}px` }}>
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead className="text-[11px] uppercase tracking-wider">#</TableHead>
-                        {FIXED_COLUMNS.map(col => (
-                          <TableHead key={col.key} className="text-[11px] uppercase tracking-wider whitespace-nowrap">
+                        {visibleFields.map(col => (
+                          <TableHead key={col.db_key} className="text-[11px] uppercase tracking-wider whitespace-nowrap">
                             {col.label}
                           </TableHead>
                         ))}
@@ -435,14 +335,14 @@ export default function CarteiraGeralPage() {
                           onClick={() => row.id && navigate(`/hub/carteira/${row.id}`)}
                         >
                           <TableCell className="text-xs text-muted-foreground">{i + 1}</TableCell>
-                          {FIXED_COLUMNS.map(col => (
-                            <TableCell key={col.key} className="text-xs whitespace-nowrap max-w-[250px] truncate">
-                              {col.key === 'client_url' && row[col.key] ? (
-                                <a href={row[col.key]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" onClick={e => e.stopPropagation()}>
-                                  {row[col.key]}
+                          {visibleFields.map(col => (
+                            <TableCell key={col.db_key} className="text-xs whitespace-nowrap max-w-[250px] truncate">
+                              {(col.field_type === 'url' || col.db_key === 'client_url') && row[col.db_key] ? (
+                                <a href={row[col.db_key]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" onClick={e => e.stopPropagation()}>
+                                  {row[col.db_key]}
                                 </a>
                               ) : (
-                                formatCellValue(row[col.key])
+                                formatCellValue(row[col.db_key])
                               )}
                             </TableCell>
                           ))}
