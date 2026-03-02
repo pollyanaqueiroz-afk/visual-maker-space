@@ -9,8 +9,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import {
-  Globe, Users, Search, Loader2, Upload, DollarSign, Filter, X, Download,
+  Globe, Users, Search, Loader2, Upload, DollarSign, Filter, X, Download, Trash2,
 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import ImportWizard from '@/components/carteira/importer/ImportWizard';
@@ -36,6 +37,7 @@ export default function CarteiraGeralPage() {
   const { hasPermission } = usePermissions();
   const canImport = hasPermission('carteira.import');
   const canExport = hasPermission('carteira.export');
+  const canDelete = hasPermission('carteira.delete');
   const { visibleFields, isLoading: fieldsLoading } = useFieldDefinitions();
   const [clientRecords, setClientRecords] = useState<ClientRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,6 +45,8 @@ export default function CarteiraGeralPage() {
   const [importOpen, setImportOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [dynamicFilters, setDynamicFilters] = useState<Record<string, string>>({});
+  const [deleteTarget, setDeleteTarget] = useState<ClientRecord | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Determine which fields can be used as filters (enum + booleano)
   const filterableFields = useMemo(
@@ -162,6 +166,21 @@ export default function CarteiraGeralPage() {
     XLSX.writeFile(wb, `carteira_clientes_${new Date().toISOString().slice(0, 10)}.xlsx`);
     toast.success(`${data.length} registros exportados em Excel`);
   }, [buildExportData]);
+
+  const handleDeleteClient = useCallback(async () => {
+    if (!deleteTarget?.id) return;
+    setDeleting(true);
+    const { error } = await (supabase.from('clients' as any).delete().eq('id', deleteTarget.id) as any);
+    setDeleting(false);
+    setDeleteTarget(null);
+    if (error) {
+      console.error(error);
+      toast.error('Erro ao excluir cliente');
+    } else {
+      setClientRecords(prev => prev.filter(c => c.id !== deleteTarget.id));
+      toast.success(`Cliente "${deleteTarget.client_name || ''}" excluído com sucesso`);
+    }
+  }, [deleteTarget]);
 
   if (loading || fieldsLoading) return (
     <div className="space-y-3 p-4">
@@ -330,6 +349,7 @@ export default function CarteiraGeralPage() {
                             {col.label}
                           </TableHead>
                         ))}
+                        {canDelete && <TableHead className="text-[11px] uppercase tracking-wider w-[50px]" />}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -351,6 +371,18 @@ export default function CarteiraGeralPage() {
                               )}
                             </TableCell>
                           ))}
+                          {canDelete && (
+                            <TableCell className="text-xs">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                                onClick={e => { e.stopPropagation(); setDeleteTarget(row); }}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </TableCell>
+                          )}
                         </TableRow>
                       ))}
                     </TableBody>
@@ -361,6 +393,28 @@ export default function CarteiraGeralPage() {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={open => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir cliente</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir <strong>{deleteTarget?.client_name || 'este cliente'}</strong>? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteClient}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : <Trash2 className="h-4 w-4 mr-1.5" />}
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
