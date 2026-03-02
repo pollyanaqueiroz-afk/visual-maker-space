@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { Smartphone, Plus, Bell, AlertTriangle, Apple, Bot, Clock, CheckCircle, Users, TrendingUp, ClipboardList } from 'lucide-react';
+import { Smartphone, Plus, Bell, AlertTriangle, Apple, Bot, Clock, CheckCircle, Users, TrendingUp, ClipboardList, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -63,6 +63,7 @@ export default function AplicativosPage() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('kanban');
+  const [pendencyFilter, setPendencyFilter] = useState('todos');
   const [form, setForm] = useState({
     nome: '', url_cliente: '', email: '', whatsapp: '', plataforma: 'ambos', responsavel_nome: '',
   });
@@ -168,6 +169,24 @@ export default function AplicativosPage() {
     }).filter(g => g.cliente && g.cliente.fase_atual < 8)
       .sort((a, b) => (b.items.length - a.items.length));
   }, [allChecklist, clientes]);
+
+  // Filtered pendencies
+  const filteredPendencies = useMemo(() => {
+    if (pendencyFilter === 'todos') return internalPendencies;
+    if (pendencyFilter === 'sem_responsavel') {
+      return internalPendencies.filter(g => !g.cliente?.responsavel_nome);
+    }
+    return internalPendencies.filter(g => g.cliente?.responsavel_nome === pendencyFilter);
+  }, [internalPendencies, pendencyFilter]);
+
+  // Unique responsáveis for filter
+  const uniqueResponsaveis = useMemo(() => {
+    const names = new Set<string>();
+    internalPendencies.forEach(g => {
+      if (g.cliente?.responsavel_nome) names.add(g.cliente.responsavel_nome);
+    });
+    return Array.from(names).sort();
+  }, [internalPendencies]);
 
   const totalInternalPending = allChecklist.length;
 
@@ -499,18 +518,43 @@ export default function AplicativosPage() {
             </Card>
           </div>
 
+          {/* Filter bar */}
+          <div className="flex items-center gap-3">
+            <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Select value={pendencyFilter} onValueChange={setPendencyFilter}>
+              <SelectTrigger className="w-[240px]">
+                <SelectValue placeholder="Filtrar por responsável" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os responsáveis</SelectItem>
+                <SelectItem value="sem_responsavel">⚠️ Aguardando alocação</SelectItem>
+                {uniqueResponsaveis.map(name => (
+                  <SelectItem key={name} value={name}>{name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {pendencyFilter !== 'todos' && (
+              <Button variant="ghost" size="sm" onClick={() => setPendencyFilter('todos')} className="text-xs">
+                Limpar filtro
+              </Button>
+            )}
+            <span className="text-xs text-muted-foreground ml-auto">
+              {filteredPendencies.reduce((sum, g) => sum + g.items.length, 0)} pendências em {filteredPendencies.length} clientes
+            </span>
+          </div>
+
           {/* Pending items grouped by client */}
-          {internalPendencies.length === 0 ? (
+          {filteredPendencies.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center text-muted-foreground">
                 <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
                 <p className="font-medium">Nenhuma pendência interna</p>
-                <p className="text-sm mt-1">Todas as tarefas internas estão concluídas.</p>
+                <p className="text-sm mt-1">{pendencyFilter !== 'todos' ? 'Nenhum resultado para este filtro.' : 'Todas as tarefas internas estão concluídas.'}</p>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-3">
-              {internalPendencies.map(({ clienteId, cliente, items }) => {
+              {filteredPendencies.map(({ clienteId, cliente, items }) => {
                 if (!cliente) return null;
                 return (
                   <Card key={clienteId} className="overflow-hidden">
@@ -526,6 +570,11 @@ export default function AplicativosPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
+                        {cliente.responsavel_nome ? (
+                          <Badge variant="outline" className="text-xs">👤 {cliente.responsavel_nome}</Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs border-amber-500/30 text-amber-500">⚠️ Sem responsável</Badge>
+                        )}
                         <Badge variant="outline" className="text-xs">
                           Fase {cliente.fase_atual} — {FASE_NAMES[cliente.fase_atual] || '?'}
                         </Badge>
@@ -535,21 +584,50 @@ export default function AplicativosPage() {
                       </div>
                     </div>
                     <CardContent className="p-0">
+                      {/* Table header */}
+                      <div className="grid grid-cols-[1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-2 bg-muted/20 border-b border-border text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                        <span>Tarefa</span>
+                        <span>Responsável</span>
+                        <span>Data entrada</span>
+                        <span>Data recebida</span>
+                        <span>Status</span>
+                        <span>Fase</span>
+                      </div>
                       <div className="divide-y divide-border">
                         {items.map(item => {
                           const ator = atorLabel(item.ator);
+                          const createdAt = new Date(item.created_at);
+                          // "Data recebida" = client's data_criacao (when project entered the system)
+                          const dataEntrada = cliente.data_criacao ? new Date(cliente.data_criacao) : null;
+                          // Calculate if overdue: > 2 business days since created
+                          const daysSinceCreated = differenceInDays(new Date(), createdAt);
+                          const isOverdue = daysSinceCreated > 2;
+
                           return (
-                            <div key={item.id} className="flex items-center gap-3 px-4 py-3">
-                              <div className="flex-1 min-w-0">
+                            <div key={item.id} className="grid grid-cols-[1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-3 items-center">
+                              <div className="min-w-0">
                                 <p className="text-sm truncate">{item.texto}</p>
                                 {item.descricao && (
                                   <p className="text-xs text-muted-foreground truncate mt-0.5">{item.descricao}</p>
                                 )}
                               </div>
-                              <Badge variant="outline" className={`text-[10px] shrink-0 ${ator.color}`}>
+                              <Badge variant="outline" className={`text-[10px] w-fit ${ator.color}`}>
                                 {ator.text}
                               </Badge>
-                              <Badge variant="outline" className="text-[10px] shrink-0">
+                              <span className="text-xs text-muted-foreground">
+                                {dataEntrada ? format(dataEntrada, 'dd/MM/yy') : '—'}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {format(createdAt, 'dd/MM/yy')}
+                              </span>
+                              <div>
+                                {isOverdue ? (
+                                  <Badge variant="destructive" className="text-[10px]">Atrasado</Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-[10px] border-blue-500/30 text-blue-500">Em andamento</Badge>
+                                )}
+                              </div>
+                              <Badge variant="outline" className="text-[10px] w-fit">
                                 Fase {item.fase_numero}
                               </Badge>
                             </div>
