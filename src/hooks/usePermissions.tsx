@@ -49,6 +49,7 @@ export const PERMISSION_MODULES = [
       { key: 'carteira.view', label: 'Visualizar clientes' },
       { key: 'carteira.edit', label: 'Editar clientes' },
       { key: 'carteira.import', label: 'Importar clientes' },
+      { key: 'carteira.manage_fields', label: 'Gerenciar campos' },
     ],
   },
   {

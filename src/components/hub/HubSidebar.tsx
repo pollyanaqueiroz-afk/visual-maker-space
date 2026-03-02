@@ -36,7 +36,7 @@ const csModules = [
 const adminModules = [
   { title: 'Usuários e Permissões', url: '/hub/admin/usuarios', icon: Users, permission: 'admin.view' },
   { title: 'Permissões por Perfil', url: '/hub/admin/permissoes', icon: ShieldCheck, permission: 'admin.manage_permissions' },
-  { title: 'Campos da Carteira', url: '/hub/admin/campos', icon: Database, permission: 'admin.view' },
+  { title: 'Campos da Carteira', url: '/hub/admin/campos', icon: Database, permission: 'carteira.manage_fields' },
   { title: 'Hub do Cliente', url: '/cliente', icon: ExternalLink, permission: 'admin.view' },
 ];
 
