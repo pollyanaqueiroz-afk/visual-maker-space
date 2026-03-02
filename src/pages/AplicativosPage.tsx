@@ -114,11 +114,12 @@ export default function AplicativosPage() {
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      // Check for existing client by empresa (URL)
+      // Check for existing client by empresa (URL), email or nome
       const { data: existing } = await supabase
         .from('app_clientes')
         .select('id, nome')
-        .eq('empresa', form.url_cliente)
+        .or(`empresa.eq.${form.url_cliente},email.eq.${form.email},nome.eq.${form.nome}`)
+        .limit(1)
         .maybeSingle();
 
       if (existing) {

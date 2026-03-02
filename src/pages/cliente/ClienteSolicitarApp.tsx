@@ -36,20 +36,21 @@ export default function ClienteSolicitarApp() {
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      // Check if a project already exists with same empresa (URL) — created by internal team
-      const { data: existingByUrl } = await supabase
+      // Check if a project already exists with same URL, email or nome
+      const { data: existingByAny } = await supabase
         .from('app_clientes')
         .select('id')
-        .eq('empresa', form.url_cliente)
+        .or(`empresa.eq.${form.url_cliente},email.eq.${form.email},nome.eq.${form.nome}`)
+        .limit(1)
         .maybeSingle();
 
-      if (existingByUrl) {
-        // Link client to existing project (update email and contact info)
+      if (existingByAny) {
+        // Link client to existing project (update contact info)
         const { error } = await supabase.from('app_clientes').update({
           email: form.email,
           whatsapp: form.whatsapp || null,
           nome: form.nome,
-        }).eq('id', existingByUrl.id);
+        }).eq('id', existingByAny.id);
         if (error) throw error;
         return;
       }
