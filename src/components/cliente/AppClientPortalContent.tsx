@@ -888,7 +888,19 @@ export default function AppClientPortalContent({ clienteId }: Props) {
         {/* Expanded phase checklist */}
         <AnimatePresence>
           {selectedTimelineFase !== null && (() => {
-            const items = checklist.filter((i: any) => i.fase_numero === selectedTimelineFase);
+            let items: any[] = checklist.filter((i: any) => i.fase_numero === selectedTimelineFase);
+            // Add virtual mockup request item in phase 0
+            if (selectedTimelineFase === 0) {
+              items = [...items, {
+                id: 'mockup-virtual',
+                texto: 'Solicitar Mockup do Aplicativo',
+                feito: !!mockupRequest,
+                feito_em: mockupRequest?.created_at || null,
+                ator: 'cliente',
+                obrigatorio: true,
+                tipo: 'check',
+              }];
+            }
             const isFuture = selectedTimelineFase > cliente.fase_atual;
             const fase = fases.find((f: any) => f.numero === selectedTimelineFase);
             return (
