@@ -13,7 +13,7 @@ import { NavLink } from '@/components/NavLink';
 import { useNavigate } from 'react-router-dom';
 import {
   FileImage, CalendarDays, BarChart3, Briefcase, Crown, Loader2, Sparkles, Rocket,
-  AlertTriangle, Star, CheckCircle, ChevronRight,
+  AlertTriangle, Star, CheckCircle, ChevronRight, Smartphone,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import PendingItemDialog from '@/components/hub/PendingItemDialog';
@@ -22,6 +22,7 @@ import { ptBR } from 'date-fns/locale';
 
 const quickLinks = [
   { title: 'Gestão de Briefings', description: 'Gerencie briefings de design do time', url: '/hub/briefings', icon: FileImage, color: 'text-primary' },
+  { title: 'Gestão de Aplicativos', description: 'Acompanhe implantações de apps', url: '/hub/aplicativos', icon: Smartphone, color: 'text-primary' },
   { title: 'Agendamento', description: 'Agende e gerencie reuniões', url: '/hub/agendamento', icon: CalendarDays, color: 'text-info' },
   { title: 'Dashboards', description: 'Acompanhe suas métricas', url: '/hub/dashboards', icon: BarChart3, color: 'text-success' },
   { title: 'Carteira Geral', description: 'Visão geral dos clientes', url: '/hub/carteira', icon: Briefcase, color: 'text-warning' },
