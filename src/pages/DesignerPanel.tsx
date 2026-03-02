@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,57 +29,26 @@ interface DesignerImage {
 }
 
 export default function DesignerPanel() {
-  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [images, setImages] = useState<DesignerImage[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [isDesigner, setIsDesigner] = useState<boolean | null>(null);
 
-  // Check designer role
   useEffect(() => {
-    if (!user) return;
-    supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'designer')
-      .maybeSingle()
-      .then(({ data }) => {
-        setIsDesigner(!!data);
-        if (data && user.email) {
-          setEmail(user.email);
-        }
-      });
-  }, [user]);
-
-  // Auto-search when email is set from auth
-  useEffect(() => {
-    if (email.trim() && isDesigner) {
-      handleSearch();
+    const storedEmail = sessionStorage.getItem('designer_email');
+    if (!storedEmail) {
+      navigate('/designer/login', { replace: true });
+      return;
     }
-  }, [email, isDesigner]); // eslint-disable-line react-hooks/exhaustive-deps
+    setEmail(storedEmail);
+    loadData(storedEmail);
+  }, [navigate]);
 
-  if (authLoading || isDesigner === null) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground">Carregando...</div>
-      </div>
-    );
-  }
-
-  if (!user) return <Navigate to="/designer/login" replace />;
-  if (!isDesigner) return <Navigate to="/designer/login" replace />;
-
-  const handleSearch = async () => {
-    if (!email.trim()) return;
+  const loadData = async (designerEmail: string) => {
     setLoading(true);
-    setSearched(true);
-    // email is set from auth, no need for localStorage
-
     const { data: result, error } = await supabase.functions.invoke('designer-data', {
-      body: { email: email.trim().toLowerCase() },
+      body: { email: designerEmail },
     });
 
     if (error) {
@@ -91,6 +59,8 @@ export default function DesignerPanel() {
     }
     setLoading(false);
   };
+
+  if (!email && !loading) return <Navigate to="/designer/login" replace />;
 
   const getStatusBadge = (img: DesignerImage) => {
     if (img.revision_count > 0 && img.status === 'in_progress') {
@@ -106,8 +76,9 @@ export default function DesignerPanel() {
     return new Date(deadline) < new Date();
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
+    sessionStorage.removeItem('designer_email');
+    navigate('/designer/login', { replace: true });
   };
 
   return (
@@ -121,9 +92,11 @@ export default function DesignerPanel() {
       }
     >
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-
-        {/* Tabs: Artes + Feedbacks */}
-        {searched && !loading && (
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
           <Tabs defaultValue="artes" className="w-full">
             <TabsList className="w-full grid grid-cols-3">
               <TabsTrigger value="artes" className="gap-2">
@@ -265,11 +238,11 @@ export default function DesignerPanel() {
             </TabsContent>
 
             <TabsContent value="analytics" className="mt-4">
-              <DesignerAnalytics designerEmail={email.trim().toLowerCase()} />
+              <DesignerAnalytics designerEmail={email} />
             </TabsContent>
 
             <TabsContent value="feedbacks" className="mt-4">
-              <DesignerFeedback designerEmail={email.trim().toLowerCase()} />
+              <DesignerFeedback designerEmail={email} />
             </TabsContent>
           </Tabs>
         )}
