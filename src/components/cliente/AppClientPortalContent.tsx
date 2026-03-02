@@ -1122,96 +1122,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           </h2>
 
 
-          {hasClientAction ? (() => {
-            const genericItems = currentItems.filter(i => !GOOGLE_TEXTS.includes(i.texto) && !APPLE_TEXTS.includes(i.texto));
-            const googleItems = currentItems.filter(i => GOOGLE_TEXTS.includes(i.texto));
-            const appleItems = currentItems.filter(i => APPLE_TEXTS.includes(i.texto));
-            const hasBothPlatforms = googleItems.length > 0 && appleItems.length > 0;
-
-            return (
-              <div className="space-y-3">
-                {genericItems.map(item => renderChecklistItem(item))}
-                {hasBothPlatforms ? (
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <p className="text-xs font-semibold text-white/50">🤖 Google</p>
-                      {googleItems.map(item => renderChecklistItem(item))}
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-xs font-semibold text-white/50">🍎 Apple</p>
-                      {appleItems.map(item => renderChecklistItem(item))}
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    {googleItems.map(item => renderChecklistItem(item))}
-                    {appleItems.map(item => renderChecklistItem(item))}
-                  </>
-                )}
-              </div>
-            );
-          })() : cliente.fase_atual === 2 ? (() => {
-            const fase1 = fases.find((f: any) => f.numero === 1);
-                    const fase2 = fases.find((f: any) => f.numero === 2);
-                    const baseDate = fase1?.data_conclusao ? new Date(fase1.data_conclusao) : null;
-                    const startDate = fase2?.data_inicio ? new Date(fase2.data_inicio) : baseDate;
-                    const showGoogle = cliente.plataforma !== 'apple';
-                    const showApple = cliente.plataforma !== 'google';
-
-                    return (
-                      <div className="space-y-3">
-                <p className="text-sm text-white/60">Suas contas estão sendo analisadas pelas lojas. Este processo é automático e não requer ação sua.</p>
-                {baseDate && (
-                  <div className="rounded-lg p-3 bg-white/5 border border-white/10">
-                    <p className="text-xs text-white/50">📅 Etapa "Primeiros Passos" concluída em: <span className="font-semibold text-white/80">{format(baseDate, 'dd/MM/yyyy')}</span></p>
-                  </div>
-                )}
-                {showGoogle && (
-                  <div className="rounded-lg p-4 bg-blue-500/10 border border-blue-500/20 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium flex items-center gap-2">🤖 Google Play</span>
-                      <Badge variant="outline" className="text-xs border-blue-500/30 text-blue-400">1–3 dias úteis</Badge>
-                    </div>
-                    {startDate && (
-                      <div className="space-y-1">
-                        <Progress value={(() => {
-                          const elapsed = Math.floor((Date.now() - startDate.getTime()) / 86400000);
-                          return Math.min(Math.round((elapsed / 3) * 100), 95);
-                        })()} className="h-1.5" />
-                        <div className="flex justify-between text-[10px] text-white/40">
-                          <span>{format(startDate, 'dd/MM/yyyy')}</span>
-                          <span>até {format(addBusinessDays(startDate, 3), 'dd/MM/yyyy')}</span>
-                        </div>
-                        <p className="text-xs text-blue-400/80 mt-1">📆 Previsão de conclusão: <span className="font-semibold">{format(addBusinessDays(startDate, 3), 'dd/MM/yyyy')}</span></p>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {showApple && (
-                  <div className="rounded-lg p-4 bg-purple-500/10 border border-purple-500/20 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium flex items-center gap-2">🍎 App Store</span>
-                      <Badge variant="outline" className="text-xs border-purple-500/30 text-purple-400">5–7 dias úteis</Badge>
-                    </div>
-                    {startDate && (
-                      <div className="space-y-1">
-                        <Progress value={(() => {
-                          const elapsed = Math.floor((Date.now() - startDate.getTime()) / 86400000);
-                          return Math.min(Math.round((elapsed / 7) * 100), 95);
-                        })()} className="h-1.5" />
-                        <div className="flex justify-between text-[10px] text-white/40">
-                          <span>{format(startDate, 'dd/MM/yyyy')}</span>
-                          <span>até {format(addBusinessDays(startDate, 7), 'dd/MM/yyyy')}</span>
-                        </div>
-                        <p className="text-xs text-purple-400/80 mt-1">📆 Previsão de conclusão: <span className="font-semibold">{format(addBusinessDays(startDate, 7), 'dd/MM/yyyy')}</span></p>
-                      </div>
-                    )}
-                  </div>
-                )}
-                <p className="text-[10px] text-white/30 text-center">⏳ Você será notificado assim que as lojas aprovarem suas contas.</p>
-              </div>
-            );
-          })() : cliente.fase_atual === 3 ? (
+          {cliente.fase_atual === 3 ? (
             <div className="space-y-4">
               {/* Sub-step 1: Formulário do aplicativo */}
               <div className="space-y-3">
@@ -1317,7 +1228,96 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 </div>
               </div>
             </div>
-          ) : cliente.fase_atual === 0 ? (
+          ) : hasClientAction ? (() => {
+            const genericItems = currentItems.filter(i => !GOOGLE_TEXTS.includes(i.texto) && !APPLE_TEXTS.includes(i.texto));
+            const googleItems = currentItems.filter(i => GOOGLE_TEXTS.includes(i.texto));
+            const appleItems = currentItems.filter(i => APPLE_TEXTS.includes(i.texto));
+            const hasBothPlatforms = googleItems.length > 0 && appleItems.length > 0;
+
+            return (
+              <div className="space-y-3">
+                {genericItems.map(item => renderChecklistItem(item))}
+                {hasBothPlatforms ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-white/50">🤖 Google</p>
+                      {googleItems.map(item => renderChecklistItem(item))}
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-white/50">🍎 Apple</p>
+                      {appleItems.map(item => renderChecklistItem(item))}
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {googleItems.map(item => renderChecklistItem(item))}
+                    {appleItems.map(item => renderChecklistItem(item))}
+                  </>
+                )}
+              </div>
+            );
+          })() : cliente.fase_atual === 2 ? (() => {
+            const fase1 = fases.find((f: any) => f.numero === 1);
+                    const fase2 = fases.find((f: any) => f.numero === 2);
+                    const baseDate = fase1?.data_conclusao ? new Date(fase1.data_conclusao) : null;
+                    const startDate = fase2?.data_inicio ? new Date(fase2.data_inicio) : baseDate;
+                    const showGoogle = cliente.plataforma !== 'apple';
+                    const showApple = cliente.plataforma !== 'google';
+
+                    return (
+                      <div className="space-y-3">
+                <p className="text-sm text-white/60">Suas contas estão sendo analisadas pelas lojas. Este processo é automático e não requer ação sua.</p>
+                {baseDate && (
+                  <div className="rounded-lg p-3 bg-white/5 border border-white/10">
+                    <p className="text-xs text-white/50">📅 Etapa "Primeiros Passos" concluída em: <span className="font-semibold text-white/80">{format(baseDate, 'dd/MM/yyyy')}</span></p>
+                  </div>
+                )}
+                {showGoogle && (
+                  <div className="rounded-lg p-4 bg-blue-500/10 border border-blue-500/20 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium flex items-center gap-2">🤖 Google Play</span>
+                      <Badge variant="outline" className="text-xs border-blue-500/30 text-blue-400">1–3 dias úteis</Badge>
+                    </div>
+                    {startDate && (
+                      <div className="space-y-1">
+                        <Progress value={(() => {
+                          const elapsed = Math.floor((Date.now() - startDate.getTime()) / 86400000);
+                          return Math.min(Math.round((elapsed / 3) * 100), 95);
+                        })()} className="h-1.5" />
+                        <div className="flex justify-between text-[10px] text-white/40">
+                          <span>{format(startDate, 'dd/MM/yyyy')}</span>
+                          <span>até {format(addBusinessDays(startDate, 3), 'dd/MM/yyyy')}</span>
+                        </div>
+                        <p className="text-xs text-blue-400/80 mt-1">📆 Previsão de conclusão: <span className="font-semibold">{format(addBusinessDays(startDate, 3), 'dd/MM/yyyy')}</span></p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {showApple && (
+                  <div className="rounded-lg p-4 bg-purple-500/10 border border-purple-500/20 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium flex items-center gap-2">🍎 App Store</span>
+                      <Badge variant="outline" className="text-xs border-purple-500/30 text-purple-400">5–7 dias úteis</Badge>
+                    </div>
+                    {startDate && (
+                      <div className="space-y-1">
+                        <Progress value={(() => {
+                          const elapsed = Math.floor((Date.now() - startDate.getTime()) / 86400000);
+                          return Math.min(Math.round((elapsed / 7) * 100), 95);
+                        })()} className="h-1.5" />
+                        <div className="flex justify-between text-[10px] text-white/40">
+                          <span>{format(startDate, 'dd/MM/yyyy')}</span>
+                          <span>até {format(addBusinessDays(startDate, 7), 'dd/MM/yyyy')}</span>
+                        </div>
+                        <p className="text-xs text-purple-400/80 mt-1">📆 Previsão de conclusão: <span className="font-semibold">{format(addBusinessDays(startDate, 7), 'dd/MM/yyyy')}</span></p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                <p className="text-[10px] text-white/30 text-center">⏳ Você será notificado assim que as lojas aprovarem suas contas.</p>
+              </div>
+            );
+          })() : cliente.fase_atual === 0 ? (
             <div className="space-y-3">
               <p className="text-sm text-white/60">Nossa equipe está processando suas informações. Enquanto isso, você pode solicitar o design do seu app.</p>
             </div>
