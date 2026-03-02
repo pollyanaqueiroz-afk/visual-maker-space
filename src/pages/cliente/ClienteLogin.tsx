@@ -56,18 +56,20 @@ export default function ClienteLogin() {
       if (authError) throw authError;
 
       if (authData.user) {
-        await supabase.from('user_roles').insert({
+        const { error: roleError } = await supabase.from('user_roles').insert({
           user_id: authData.user.id,
           role: 'cliente' as any,
         });
+        if (roleError) console.error('Role insert error:', roleError);
 
-        await supabase.from('app_clientes').insert({
+        const { error: clienteError } = await supabase.from('app_clientes').insert({
           nome: nome.trim(),
           email: email.trim(),
           empresa: plataformaUrl.trim(),
           plataforma: 'ambos',
           status: 'no_prazo',
         });
+        if (clienteError) throw clienteError;
       }
 
       toast.success('Conta criada! Verifique seu e-mail para confirmar o cadastro.');
