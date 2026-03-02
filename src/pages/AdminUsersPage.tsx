@@ -132,7 +132,7 @@ export default function AdminUsersPage() {
     if (!bulkRole || selectedIds.size === 0) return;
     setBulkSaving(true);
     let success = 0;
-    const targetUsers = users.filter(u => selectedIds.has(u.id));
+    const targetUsers = filtered.filter(u => selectedIds.has(u.id));
     for (const u of targetUsers) {
       try {
         for (const existingRole of u.roles) {
