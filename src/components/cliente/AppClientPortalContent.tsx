@@ -986,32 +986,16 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                   {selectedTimelineFase === 2 && (() => {
                     const fase1 = fases.find((f: any) => f.numero === 1);
                     const fase1Done = fase1?.status === 'concluida';
-                    
-                    // Only show store analysis info after phase 1 is completed
-                    if (!fase1Done) {
-                      return (
-                        <div className="text-xs text-white/40 py-2 flex items-center gap-2">
-                          <Lock className="h-3.5 w-3.5 shrink-0" />
-                          <span>Conclua a etapa "Primeiros Passos" para liberar a validação pelas lojas</span>
-                        </div>
-                      );
-                    }
-                    
                     const fase2 = fases.find((f: any) => f.numero === 2);
                     const isCurrent = cliente.fase_atual === 2;
                     const isDone = fase2?.status === 'concluida';
-                    const baseDate = fase1?.data_conclusao ? new Date(fase1.data_conclusao) : null;
+                    const baseDate = fase1Done && fase1?.data_conclusao ? new Date(fase1.data_conclusao) : null;
                     const startDate = fase2?.data_inicio ? new Date(fase2.data_inicio) : baseDate;
                     const showGoogle = cliente.plataforma !== 'apple';
                     const showApple = cliente.plataforma !== 'google';
 
                     return (
                       <div className="space-y-2 pt-2 border-t border-white/10">
-                        {baseDate && !isDone && (
-                          <div className="rounded-lg p-3 bg-white/5 border border-white/10">
-                            <p className="text-[10px] text-white/50">📅 Data base (conclusão de Primeiros Passos): <span className="font-semibold text-white/80">{format(baseDate, 'dd/MM/yyyy')}</span></p>
-                          </div>
-                        )}
                         {showGoogle && (
                           <div className={`rounded-lg p-3 ${isDone ? 'bg-green-500/10 border border-green-500/20' : 'bg-blue-500/10 border border-blue-500/20'}`}>
                             <div className="flex items-center justify-between">
@@ -1023,14 +1007,10 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                                 {isDone ? '✅ Aprovado' : '1–3 dias úteis'}
                               </Badge>
                             </div>
-                            {!isDone && startDate && (
+                            {!isDone && fase1Done && startDate && (
                               <div className="mt-2 space-y-1">
-                                <div className="flex justify-between text-[10px] text-white/40">
-                                  <span>Início: {format(startDate, 'dd/MM/yyyy')}</span>
-                                  <span>Previsão: {format(addBusinessDays(startDate, 1), 'dd/MM')} – {format(addBusinessDays(startDate, 3), 'dd/MM/yyyy')}</span>
-                                </div>
+                                <p className="text-[10px] text-blue-400/70">📆 Previsão máxima: <span className="font-semibold">{format(addBusinessDays(startDate, 3), 'dd/MM/yyyy')}</span></p>
                                 <Progress value={isCurrent ? 50 : 0} className="h-1" />
-                                <p className="text-[10px] text-blue-400/70 mt-1">📆 Data prevista de conclusão: <span className="font-semibold">{format(addBusinessDays(startDate, 3), 'dd/MM/yyyy')}</span></p>
                               </div>
                             )}
                           </div>
@@ -1046,16 +1026,18 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                                 {isDone ? '✅ Aprovado' : '5–7 dias úteis'}
                               </Badge>
                             </div>
-                            {!isDone && startDate && (
+                            {!isDone && fase1Done && startDate && (
                               <div className="mt-2 space-y-1">
-                                <div className="flex justify-between text-[10px] text-white/40">
-                                  <span>Início: {format(startDate, 'dd/MM/yyyy')}</span>
-                                  <span>Previsão: {format(addBusinessDays(startDate, 5), 'dd/MM')} – {format(addBusinessDays(startDate, 7), 'dd/MM/yyyy')}</span>
-                                </div>
+                                <p className="text-[10px] text-purple-400/70">📆 Previsão máxima: <span className="font-semibold">{format(addBusinessDays(startDate, 7), 'dd/MM/yyyy')}</span></p>
                                 <Progress value={isCurrent ? 30 : 0} className="h-1" />
-                                <p className="text-[10px] text-purple-400/70 mt-1">📆 Data prevista de conclusão: <span className="font-semibold">{format(addBusinessDays(startDate, 7), 'dd/MM/yyyy')}</span></p>
                               </div>
                             )}
+                          </div>
+                        )}
+                        {!fase1Done && (
+                          <div className="text-xs text-white/40 py-1 flex items-center gap-2">
+                            <Lock className="h-3.5 w-3.5 shrink-0" />
+                            <span>As datas de previsão serão calculadas após a conclusão dos "Primeiros Passos"</span>
                           </div>
                         )}
                         {isCurrent && (
