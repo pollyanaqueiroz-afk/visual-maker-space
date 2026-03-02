@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { supabase } from '@/integrations/supabase/client';
@@ -84,6 +84,8 @@ function formatCellValue(value: any): string {
 
 export default function CarteiraGeralPage() {
   const navigate = useNavigate();
+  const topScrollRef = useRef<HTMLDivElement>(null);
+  const tableScrollRef = useRef<HTMLDivElement>(null);
   const { hasPermission } = usePermissions();
   const canImport = hasPermission('carteira.import');
   const [clientRecords, setClientRecords] = useState<ClientRecord[]>([]);
@@ -390,21 +392,16 @@ export default function CarteiraGeralPage() {
             <div className="w-full border rounded-md flex flex-col">
               {/* Top scrollbar */}
               <div
+                ref={topScrollRef}
                 className="w-full overflow-x-auto"
-                onScroll={(e) => {
-                  const bottom = (e.currentTarget as HTMLDivElement).nextElementSibling as HTMLDivElement;
-                  if (bottom) bottom.scrollLeft = (e.currentTarget as HTMLDivElement).scrollLeft;
-                }}
+                onScroll={() => { if (tableScrollRef.current) tableScrollRef.current.scrollLeft = topScrollRef.current!.scrollLeft; }}
               >
                 <div className="min-w-[4000px] h-[1px]" />
               </div>
-              {/* Table with synced scroll */}
               <div
+                ref={tableScrollRef}
                 className="w-full overflow-x-auto"
-                onScroll={(e) => {
-                  const top = (e.currentTarget as HTMLDivElement).previousElementSibling as HTMLDivElement;
-                  if (top) top.scrollLeft = (e.currentTarget as HTMLDivElement).scrollLeft;
-                }}
+                onScroll={() => { if (topScrollRef.current) topScrollRef.current.scrollLeft = tableScrollRef.current!.scrollLeft; }}
               >
                 <div className="min-w-[4000px]">
                   <Table>
