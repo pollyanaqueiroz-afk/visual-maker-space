@@ -301,7 +301,10 @@ export default function ClientDetailPage() {
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/hub/carteira')}>
+          <Button variant="ghost" size="icon" onClick={() => {
+            if (editing && !confirm('Você tem alterações não salvas. Deseja sair mesmo assim?')) return;
+            navigate('/hub/carteira');
+          }}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
