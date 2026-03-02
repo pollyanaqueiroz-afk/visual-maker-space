@@ -1157,7 +1157,43 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 <p className="text-[10px] text-white/30 text-center">⏳ Você será notificado assim que as lojas aprovarem suas contas.</p>
               </div>
             );
-          })() : (
+          })() : cliente.fase_atual === 4 ? (
+            <div className="space-y-3">
+              {formulario?.preenchido_completo ? (
+                <div className="rounded-lg p-4 bg-green-500/10 border border-green-500/20 flex items-start gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-green-400">Formulário enviado!</p>
+                    <p className="text-xs text-green-400/70 mt-0.5">Nossa equipe já recebeu os dados do seu app e está preparando a criação. Em breve você terá novidades.</p>
+                    {formulario.enviado_em && (
+                      <p className="text-[10px] text-green-400/50 mt-1">Enviado em {format(new Date(formulario.enviado_em), 'dd/MM/yyyy HH:mm')}</p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-white/60">Preencha os dados abaixo para que nossa equipe possa criar e publicar o seu app nas lojas.</p>
+                  <div className="rounded-lg p-3 bg-primary/10 border border-primary/20 flex items-center gap-3">
+                    <span className="text-xl">📝</span>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Formulário do seu aplicativo</p>
+                      <p className="text-xs text-white/50">Nome, descrição, links de privacidade e termos</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      className="shrink-0"
+                      onClick={() => {
+                        const el = document.getElementById('form-app-section');
+                        el?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                    >
+                      Preencher
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
             <div className="text-center py-4 text-white/50">
               <p>Você será notificado assim que precisarmos de você!</p>
             </div>
@@ -1331,7 +1367,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
 
       {/* Form (phase 4) */}
       {cliente.fase_atual === 4 && (
-        <Card className="bg-[#1E293B] border-white/10 p-6 space-y-4">
+        <Card id="form-app-section" className="bg-[#1E293B] border-white/10 p-6 space-y-4">
           <h2 className="text-lg font-semibold">📝 Dados do seu aplicativo</h2>
           <div className="space-y-3">
             <div>
