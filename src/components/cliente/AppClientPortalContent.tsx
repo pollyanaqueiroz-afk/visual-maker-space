@@ -1035,7 +1035,20 @@ export default function AppClientPortalContent({ clienteId }: Props) {
               >
                 <Card className="bg-white/5 border-white/10 p-4 space-y-2">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold">{FASE_NAMES[selectedTimelineFase]}</h3>
+                    <div>
+                      <h3 className="text-sm font-semibold">{FASE_NAMES[selectedTimelineFase]}</h3>
+                      {fase?.data_inicio && (
+                        <p className="text-[10px] text-primary/70 mt-0.5 flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          Iniciada em {format(new Date(fase.data_inicio), "dd/MM/yyyy 'às' HH:mm")}
+                        </p>
+                      )}
+                      {fase?.data_conclusao && (
+                        <p className="text-[10px] text-green-400/70 mt-0.5">
+                          ✅ Concluída em {format(new Date(fase.data_conclusao), "dd/MM/yyyy 'às' HH:mm")}
+                        </p>
+                      )}
+                    </div>
                     <button onClick={() => setSelectedTimelineFase(null)} className="text-white/40 hover:text-white text-xs">✕</button>
                   </div>
                   {items.length > 0 ? items.map((item: any) => {
