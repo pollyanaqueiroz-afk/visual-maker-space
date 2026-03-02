@@ -101,10 +101,7 @@ const STEP_BY_STEP: Record<string, string[]> = {
   ],
 };
 
-const FASE_NAMES = ['Pré-Requisitos','Primeiros Passos','Validação pela Loja','Assets e Mockup','Formulário do App','Criação e Submissão','Aprovação das Lojas','Teste do App','Publicado 🎉'];
-const HIDDEN_FASES = [3, 4]; // Hide Assets e Mockup (parallel) and Formulário (merged into Criação e Submissão)
-// Map fase_atual 4 to display as "Criação e Submissão"
-const getDisplayFase = (faseAtual: number) => faseAtual === 4 ? 5 : faseAtual;
+const FASE_NAMES = ['Pré-Requisitos','Primeiros Passos','Validação pela Loja','Criação e Submissão','Aprovação das Lojas','Teste do App','Publicado 🎉'];
 
 interface Props {
   clienteId: string;
@@ -352,7 +349,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
       }).eq('cliente_id', clienteId);
       if (error) throw error;
       if (complete) {
-        const formItems = checklist.filter(i => i.fase_numero === 4 && i.ator === 'cliente' && i.tipo === 'form');
+        const formItems = checklist.filter(i => i.fase_numero === 3 && i.ator === 'cliente' && i.tipo === 'form');
         for (const item of formItems) {
           await supabase.from('app_checklist_items').update({ feito: true, feito_em: new Date().toISOString(), feito_por: 'cliente' }).eq('id', item.id);
         }
@@ -367,7 +364,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
   });
 
   useEffect(() => {
-    if (cliente?.fase_atual === 8) {
+    if (cliente?.fase_atual === 6) {
       setTimeout(() => confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } }), 500);
     }
   }, [cliente?.fase_atual]);
@@ -811,7 +808,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
       {/* Hero */}
       {/* Horizontal Timeline */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
-        {cliente.fase_atual === 8 ? (
+        {cliente.fase_atual === 6 ? (
           <div className="text-center space-y-2 py-4">
             <h1 className="text-2xl font-extrabold">🎉 SEU APP ESTÁ PUBLICADO!</h1>
             <p className="text-white/70 text-sm">Parabéns! Seu app da {cliente.empresa} está disponível nas lojas.</p>
@@ -828,27 +825,22 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           <div className="absolute top-5 left-6 right-6 h-0.5 bg-white/10" />
           <div
             className="absolute top-5 left-6 h-0.5 bg-green-500 transition-all duration-500"
-            style={{ width: `calc(${((getDisplayFase(cliente.fase_atual)) / (FASE_NAMES.length - 1)) * 100}% - 48px)` }}
+            style={{ width: `calc(${(cliente.fase_atual / (FASE_NAMES.length - 1)) * 100}% - 48px)` }}
           />
 
           <div className="relative flex justify-between">
             {FASE_NAMES.map((name, idx) => {
-              if (HIDDEN_FASES.includes(idx)) return null;
               const fase = fases.find((f: any) => f.numero === idx);
-              // Phase 5 is "current" when fase_atual is 4 or 5
-              const isCurrent = idx === getDisplayFase(cliente.fase_atual);
-              const isDone = fase?.status === 'concluida' && (idx !== 5 || cliente.fase_atual > 5);
+              const isCurrent = idx === cliente.fase_atual;
+              const isDone = fase?.status === 'concluida';
               const isLate = fase?.status === 'atrasada';
-              // For phase 5, also include phase 4 items
-              const faseItems = idx === 5
-                ? checklist.filter((i: any) => i.fase_numero === 4 || i.fase_numero === 5)
-                : checklist.filter((i: any) => i.fase_numero === idx);
+              const faseItems = checklist.filter((i: any) => i.fase_numero === idx);
               const doneCount = faseItems.filter((i: any) => i.feito && i.obrigatorio).length;
               const totalCount = faseItems.filter((i: any) => i.obrigatorio).length;
               const progress = totalCount > 0 ? (doneCount / totalCount) * 100 : 0;
 
               return (
-                <div key={idx} className="flex flex-col items-center" style={{ width: `${100 / (FASE_NAMES.length - HIDDEN_FASES.length)}%` }}>
+                <div key={idx} className="flex flex-col items-center" style={{ width: `${100 / FASE_NAMES.length}%` }}>
                   {/* Circle with progress ring — clickable */}
                   <button
                     className="relative cursor-pointer"
@@ -896,11 +888,8 @@ export default function AppClientPortalContent({ clienteId }: Props) {
         {/* Expanded phase checklist */}
         <AnimatePresence>
           {selectedTimelineFase !== null && (() => {
-            // For phase 5, merge phase 4 (form) items as first items
-            const items = selectedTimelineFase === 5
-              ? [...checklist.filter((i: any) => i.fase_numero === 4), ...checklist.filter((i: any) => i.fase_numero === 5)]
-              : checklist.filter((i: any) => i.fase_numero === selectedTimelineFase);
-            const isFuture = selectedTimelineFase > getDisplayFase(cliente.fase_atual);
+            const items = checklist.filter((i: any) => i.fase_numero === selectedTimelineFase);
+            const isFuture = selectedTimelineFase > cliente.fase_atual;
             const fase = fases.find((f: any) => f.numero === selectedTimelineFase);
             return (
               <motion.div
@@ -1052,9 +1041,9 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           })()}
         </AnimatePresence>
 
-        {cliente.fase_atual < 8 && (
+        {cliente.fase_atual < 6 && (
           <div className="flex items-center justify-between text-xs text-white/50 pt-1">
-            <span>📍 {FASE_NAMES[getDisplayFase(cliente.fase_atual)]}</span>
+            <span>📍 {FASE_NAMES[cliente.fase_atual]}</span>
             {cliente.prazo_estimado && <span>🗓️ {format(new Date(cliente.prazo_estimado), 'dd/MM/yyyy')}</span>}
           </div>
         )}
@@ -1071,10 +1060,10 @@ export default function AppClientPortalContent({ clienteId }: Props) {
       )}
 
       {/* What to do now */}
-      {cliente.fase_atual < 8 && (
+      {cliente.fase_atual < 6 && (
         <Card className="bg-[#1E293B] border-white/10 p-6 space-y-4">
           <h2 className="text-lg font-semibold">
-            {cliente.fase_atual === 4
+            {cliente.fase_atual === 3
               ? (formulario?.preenchido_completo ? '⏳ Nossa equipe está validando o formulário' : '📋 O que fazer agora')
               : hasClientAction ? '📋 O que fazer agora' : '⏳ Nossa equipe está trabalhando'}
           </h2>
@@ -1169,7 +1158,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 <p className="text-[10px] text-white/30 text-center">⏳ Você será notificado assim que as lojas aprovarem suas contas.</p>
               </div>
             );
-          })() : cliente.fase_atual === 4 ? (
+          })() : cliente.fase_atual === 3 ? (
             <div className="space-y-4">
               {formulario?.preenchido_completo ? (
                 <div className="space-y-3">

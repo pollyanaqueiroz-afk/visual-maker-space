@@ -22,8 +22,6 @@ const FASE_NAMES = [
   'Pré-Requisitos',
   'Primeiros Passos',
   'Validação Loja',
-  'Assets',
-  'Formulário',
   'Criação',
   'Aprovação Lojas',
   'Teste',
@@ -167,8 +165,8 @@ export default function AplicativosPage() {
     },
   });
 
-  const totalAbertos = clientes.filter(c => c.fase_atual < 8).length;
-  const totalConcluidos = clientes.filter(c => c.fase_atual >= 8).length;
+  const totalAbertos = clientes.filter(c => c.fase_atual < 6).length;
+  const totalConcluidos = clientes.filter(c => c.fase_atual >= 6).length;
   const atrasados = clientes.filter(c => c.status === 'atrasado').length;
   const slaViolados = fases.filter(f => f.sla_violado).length;
   const fasesAtrasadas = fases.filter(f => f.sla_violado || f.status === 'atrasada').length;
@@ -178,17 +176,17 @@ export default function AplicativosPage() {
   }, [fases]);
 
   const avgProgress = totalAbertos > 0
-    ? Math.round(clientes.filter(c => c.fase_atual < 8).reduce((sum, c) => sum + c.porcentagem_geral, 0) / totalAbertos)
+    ? Math.round(clientes.filter(c => c.fase_atual < 6).reduce((sum, c) => sum + c.porcentagem_geral, 0) / totalAbertos)
     : 0;
 
   const columns = useMemo(() => {
     const cols: Record<number, AppCliente[]> = {};
-    for (let i = 0; i <= 8; i++) cols[i] = [];
+    for (let i = 0; i <= 6; i++) cols[i] = [];
     const filtered = kanbanFilter === 'atrasados'
       ? clientes.filter(c => clientesComFaseAtrasada.has(c.id) || c.status === 'atrasado')
       : clientes;
     filtered.forEach(c => {
-      const fase = Math.min(c.fase_atual, 8);
+      const fase = Math.min(c.fase_atual, 6);
       cols[fase].push(c);
     });
     return cols;
@@ -206,7 +204,7 @@ export default function AplicativosPage() {
     return Array.from(clientMap.entries()).map(([clienteId, items]) => {
       const cliente = clientes.find(c => c.id === clienteId);
       return { clienteId, cliente, items };
-    }).filter(g => g.cliente && g.cliente.fase_atual < 8)
+    }).filter(g => g.cliente && g.cliente.fase_atual < 6)
       .sort((a, b) => (b.items.length - a.items.length));
   }, [allChecklist, clientes]);
 
