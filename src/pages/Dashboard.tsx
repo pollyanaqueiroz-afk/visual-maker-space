@@ -201,13 +201,14 @@ export default function Dashboard() {
     }
   };
 
+  const SLA_DAYS = 7; // Prazo padrão para artes sem deadline definido
+
   const isOverdue = (img: ImageWithRequest) => {
     if (img.status === 'completed' || img.status === 'cancelled') return false;
     const deadline = img.deadline;
     if (!deadline) {
-      // SLA: 7 days from received_at (or created_at as fallback)
       const baseDate = new Date((img as any).received_at || img.created_at);
-      baseDate.setDate(baseDate.getDate() + 7);
+      baseDate.setDate(baseDate.getDate() + SLA_DAYS);
       return baseDate < new Date();
     }
     return new Date(deadline) < new Date();
