@@ -876,6 +876,13 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             {item.descricao && <p className="text-xs text-white/50 mt-1">{item.descricao}</p>}
             {renderSteps(item.texto, item.id)}
 
+            {item.texto === ADMIN_APPLE_TEXT && (
+              <div className="mt-2 rounded-lg bg-blue-500/10 border border-blue-500/20 p-3 flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-blue-400 mt-0.5 shrink-0" />
+                <p className="text-xs text-blue-300">Não esqueça de aceitar os termos ao final da página da Apple.</p>
+              </div>
+            )}
+
             {confirmingItemId === item.id && (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
