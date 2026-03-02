@@ -50,18 +50,12 @@ export default function ClienteLogin() {
         email: email.trim(),
         password,
         options: {
-          data: { display_name: nome.trim() },
+          data: { display_name: nome.trim(), is_client: true },
         },
       });
       if (authError) throw authError;
 
       if (authData.user) {
-        const { error: roleError } = await supabase.from('user_roles').insert({
-          user_id: authData.user.id,
-          role: 'cliente' as any,
-        });
-        if (roleError) console.error('Role insert error:', roleError);
-
         const { error: clienteError } = await supabase.from('app_clientes').insert({
           nome: nome.trim(),
           email: email.trim(),
