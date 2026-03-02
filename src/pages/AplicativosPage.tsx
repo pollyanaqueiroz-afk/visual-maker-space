@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
@@ -131,6 +132,25 @@ export default function AplicativosPage() {
       setDialogOpen(false);
       setForm({ nome: '', url_cliente: '', email: '', whatsapp: '', plataforma: 'ambos', responsavel_nome: '' });
       toast.success('Cliente criado com sucesso! Fases e checklist gerados automaticamente.');
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const completeTask = useMutation({
+    mutationFn: async (itemId: string) => {
+      const { error } = await supabase.from('app_checklist_items').update({
+        feito: true,
+        feito_em: new Date().toISOString(),
+        feito_por: 'equipe_interna',
+      }).eq('id', itemId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['app-checklist-full'] });
+      queryClient.invalidateQueries({ queryKey: ['app-checklist-counts'] });
+      queryClient.invalidateQueries({ queryKey: ['app-fases-all'] });
+      queryClient.invalidateQueries({ queryKey: ['app-clientes'] });
+      toast.success('Tarefa concluída! ✅');
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -585,7 +605,8 @@ export default function AplicativosPage() {
                     </div>
                     <CardContent className="p-0">
                       {/* Table header */}
-                      <div className="grid grid-cols-[1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-2 bg-muted/20 border-b border-border text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      <div className="grid grid-cols-[32px_1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-2 bg-muted/20 border-b border-border text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                        <span></span>
                         <span>Tarefa</span>
                         <span>Responsável</span>
                         <span>Data entrada</span>
@@ -597,14 +618,18 @@ export default function AplicativosPage() {
                         {items.map(item => {
                           const ator = atorLabel(item.ator);
                           const createdAt = new Date(item.created_at);
-                          // "Data recebida" = client's data_criacao (when project entered the system)
                           const dataEntrada = cliente.data_criacao ? new Date(cliente.data_criacao) : null;
-                          // Calculate if overdue: > 2 business days since created
                           const daysSinceCreated = differenceInDays(new Date(), createdAt);
                           const isOverdue = daysSinceCreated > 2;
 
                           return (
-                            <div key={item.id} className="grid grid-cols-[1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-3 items-center">
+                            <div key={item.id} className="grid grid-cols-[32px_1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-3 items-center">
+                              <Checkbox
+                                className="border-muted-foreground/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                                onCheckedChange={(checked) => {
+                                  if (checked) completeTask.mutate(item.id);
+                                }}
+                              />
                               <div className="min-w-0">
                                 <p className="text-sm truncate">{item.texto}</p>
                                 {item.descricao && (
