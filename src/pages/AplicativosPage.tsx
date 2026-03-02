@@ -204,7 +204,12 @@ export default function AplicativosPage() {
     return Array.from(clientMap.entries()).map(([clienteId, items]) => {
       const cliente = clientes.find(c => c.id === clienteId);
       return { clienteId, cliente, items };
-    }).filter(g => g.cliente && g.cliente.fase_atual < 6)
+    }).filter(g => {
+      if (!g.cliente) return false;
+      // Filter out items from phases the client has already passed (backfilled items)
+      g.items = g.items.filter((item: any) => item.fase_numero >= g.cliente!.fase_atual);
+      return g.items.length > 0;
+    })
       .sort((a, b) => (b.items.length - a.items.length));
   }, [allChecklist, clientes]);
 
@@ -241,7 +246,19 @@ export default function AplicativosPage() {
     return Array.from(names).sort();
   }, [internalPendencies]);
 
-  const totalInternalPending = allChecklist.length;
+  const totalInternalPending = useMemo(() => {
+    return internalPendencies.reduce((sum, g) => sum + g.items.length, 0);
+  }, [internalPendencies]);
+
+  const analystPending = useMemo(() => {
+    return internalPendencies.reduce((sum, g) => sum + g.items.filter((i: any) => i.ator === 'analista').length, 0);
+  }, [internalPendencies]);
+
+  const designerPending = useMemo(() => {
+    return internalPendencies.reduce((sum, g) => sum + g.items.filter((i: any) => i.ator === 'designer').length, 0);
+  }, [internalPendencies]);
+
+  const clientsWithPendencies = internalPendencies.length;
 
   const getChecklistStats = (clienteId: string, faseNum: number) => {
     const items = checklistCounts.filter(i => i.cliente_id === clienteId && i.fase_numero === faseNum && i.obrigatorio);
@@ -566,7 +583,7 @@ export default function AplicativosPage() {
                   <Users className="h-5 w-5 text-amber-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{allChecklist.filter(i => i.ator === 'analista').length}</p>
+                  <p className="text-2xl font-bold">{analystPending}</p>
                   <p className="text-xs text-muted-foreground">Do analista</p>
                 </div>
               </CardContent>
@@ -577,7 +594,7 @@ export default function AplicativosPage() {
                   <Users className="h-5 w-5 text-purple-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{allChecklist.filter(i => i.ator === 'designer').length}</p>
+                  <p className="text-2xl font-bold">{designerPending}</p>
                   <p className="text-xs text-muted-foreground">Do designer</p>
                 </div>
               </CardContent>
@@ -588,7 +605,7 @@ export default function AplicativosPage() {
                   <Users className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{internalPendencies.length}</p>
+                  <p className="text-2xl font-bold">{clientsWithPendencies}</p>
                   <p className="text-xs text-muted-foreground">Clientes com pendência</p>
                 </div>
               </CardContent>
