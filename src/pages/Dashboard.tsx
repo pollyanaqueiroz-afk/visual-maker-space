@@ -286,124 +286,124 @@ export default function Dashboard() {
 
   return (
       <div className="p-6 space-y-8 max-w-[1800px] mx-auto">
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <Card>
-            <CardContent className="pt-4 pb-4">
-              <div className="flex items-center gap-2 mb-1">
-                <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground whitespace-nowrap">Total Artes</p>
-              </div>
-              <p className="text-3xl font-bold">{totalImages}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4 pb-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Clock className="h-4 w-4 text-warning" />
-                <p className="text-sm text-muted-foreground">Pendentes</p>
-              </div>
-              <p className="text-3xl font-bold text-warning">{pendingImages}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4 pb-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Loader2 className="h-4 w-4 text-info" />
-                <p className="text-sm text-muted-foreground whitespace-nowrap">Em Produção</p>
-              </div>
-              <p className="text-3xl font-bold text-info">{inProgressImages}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4 pb-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Eye className="h-4 w-4 text-primary" />
-                <p className="text-sm text-muted-foreground whitespace-nowrap">Em Revisão</p>
-              </div>
-              <p className="text-3xl font-bold text-primary">{reviewImages}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4 pb-4">
-              <div className="flex items-center gap-2 mb-1">
-                <CheckCircle className="h-4 w-4 text-primary" />
-                <p className="text-sm text-muted-foreground">Concluídas</p>
-              </div>
-              <p className="text-3xl font-bold text-primary">{completedImages}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4 pb-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Users className="h-4 w-4 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground whitespace-nowrap">Clientes Abertos</p>
-              </div>
-              <p className="text-3xl font-bold">{openClients}</p>
-            </CardContent>
-          </Card>
+        {/* Stats + Links */}
+        <div className="flex gap-4 items-start">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 flex-1">
+            <Card>
+              <CardContent className="pt-3 pb-3 px-3">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <ImageIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground whitespace-nowrap">Total Artes</p>
+                </div>
+                <p className="text-2xl font-bold">{totalImages}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-3 pb-3 px-3">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <Clock className="h-3.5 w-3.5 text-warning" />
+                  <p className="text-xs text-muted-foreground">Pendentes</p>
+                </div>
+                <p className="text-2xl font-bold text-warning">{pendingImages}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-3 pb-3 px-3">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <Loader2 className="h-3.5 w-3.5 text-info" />
+                  <p className="text-xs text-muted-foreground whitespace-nowrap">Em Produção</p>
+                </div>
+                <p className="text-2xl font-bold text-info">{inProgressImages}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-3 pb-3 px-3">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <Eye className="h-3.5 w-3.5 text-primary" />
+                  <p className="text-xs text-muted-foreground whitespace-nowrap">Em Revisão</p>
+                </div>
+                <p className="text-2xl font-bold text-primary">{reviewImages}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-3 pb-3 px-3">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <CheckCircle className="h-3.5 w-3.5 text-primary" />
+                  <p className="text-xs text-muted-foreground">Concluídas</p>
+                </div>
+                <p className="text-2xl font-bold text-primary">{completedImages}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-3 pb-3 px-3">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground whitespace-nowrap">Clientes Abertos</p>
+                </div>
+                <p className="text-2xl font-bold">{openClients}</p>
+              </CardContent>
+            </Card>
+          </div>
+          <div className="flex flex-col gap-1.5 shrink-0">
+            <Button
+              variant="destructive"
+              size="sm"
+              className="flex items-center gap-2 justify-start text-xs h-8"
+              onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/briefing`);
+                toast.success('Link do formulário copiado!');
+              }}
+            >
+              <FileText className="h-3.5 w-3.5" />
+              Link Formulário
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2 justify-start text-xs h-8"
+              onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/designer`);
+                toast.success('Link do painel do designer copiado!');
+              }}
+            >
+              <Palette className="h-3.5 w-3.5" />
+              Link Designer
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2 justify-start text-xs h-8"
+              onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/client-review`);
+                toast.success('Link da validação do cliente copiado!');
+              }}
+            >
+              <UserCheck className="h-3.5 w-3.5" />
+              Link Validação
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2 justify-start text-xs h-8"
+              onClick={handleDownloadReport}
+              disabled={downloadingReport}
+            >
+              {downloadingReport ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileSpreadsheet className="h-3.5 w-3.5" />}
+              Relatório
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="artes" className="space-y-6">
-          <div className="flex flex-col gap-4">
-            <TabsList>
-              <TabsTrigger value="artes">Artes</TabsTrigger>
-              <TabsTrigger value="revisoes" className="flex items-center gap-2">
-                <RefreshCw className="h-4 w-4" /> Refações
-              </TabsTrigger>
-              <TabsTrigger value="analytics" className="flex items-center gap-2">
-                <BarChart3 className="h-4 w-4" /> Analytics
-              </TabsTrigger>
-            </TabsList>
-            <div className="flex flex-col gap-2 sm:max-w-xs">
-              <Button
-                variant="destructive"
-                size="sm"
-                className="flex items-center gap-2 justify-start"
-                onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/briefing`);
-                  toast.success('Link do formulário copiado!');
-                }}
-              >
-                <FileText className="h-4 w-4" />
-                Link Formulário
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2 justify-start"
-                onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/designer`);
-                  toast.success('Link do painel do designer copiado!');
-                }}
-              >
-                <Palette className="h-4 w-4" />
-                Link Painel Designer
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2 justify-start"
-                onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/client-review`);
-                  toast.success('Link da validação do cliente copiado!');
-                }}
-              >
-                <UserCheck className="h-4 w-4" />
-                Link Validação Cliente
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2 justify-start"
-                onClick={handleDownloadReport}
-                disabled={downloadingReport}
-              >
-                {downloadingReport ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />}
-                Relatório Externo
-              </Button>
-            </div>
-          </div>
+          <TabsList>
+            <TabsTrigger value="artes">Artes</TabsTrigger>
+            <TabsTrigger value="revisoes" className="flex items-center gap-2">
+              <RefreshCw className="h-4 w-4" /> Refações
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" /> Analytics
+            </TabsTrigger>
+          </TabsList>
 
           <TabsContent value="artes" className="space-y-6">
             {/* Filters */}
