@@ -86,11 +86,11 @@ export default function AdminUsersPage() {
 
   const handleAddRole = async () => {
     if (!addRoleUser || !selectedRole) return;
-    // Remove all existing roles first, then add the new one
+    const previousRoles = [...addRoleUser.roles];
     try {
-      for (const existingRole of addRoleUser.roles) {
+      for (const r of previousRoles) {
         await supabase.functions.invoke(`manage-users?action=remove-role`, {
-          body: { user_id: addRoleUser.id, role: existingRole },
+          body: { user_id: addRoleUser.id, role: r },
         });
       }
       const { error } = await supabase.functions.invoke(`manage-users?action=add-role`, {
@@ -100,7 +100,13 @@ export default function AdminUsersPage() {
       toast.success(`Perfil alterado para "${getRoleConfig(selectedRole).label}"`);
       fetchUsers();
     } catch (err: any) {
-      toast.error('Erro: ' + (err.message || 'Erro desconhecido'));
+      toast.error('Erro ao alterar perfil. Restaurando papéis anteriores...');
+      for (const r of previousRoles) {
+        await supabase.functions.invoke(`manage-users?action=add-role`, {
+          body: { user_id: addRoleUser.id, role: r },
+        }).catch(() => {});
+      }
+      await fetchUsers();
     }
     setAddRoleUser(null);
     setSelectedRole('');
