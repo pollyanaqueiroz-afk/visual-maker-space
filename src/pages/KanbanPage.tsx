@@ -506,7 +506,7 @@ export default function KanbanPage() {
                 className="pl-9 h-9"
               />
             </div>
-            <div className="max-h-[300px] overflow-y-auto space-y-1">
+            <div className={`max-h-[300px] overflow-y-auto space-y-1 ${addingClient ? 'opacity-60 pointer-events-none' : ''}`}>
               {availableClients.slice(0, 50).map(client => (
                 <div key={client.id} className="flex items-center justify-between p-2 rounded hover:bg-muted/50">
                   <div className="min-w-0">
