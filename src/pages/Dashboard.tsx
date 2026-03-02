@@ -121,6 +121,8 @@ export default function Dashboard() {
   const handleDownloadReport = async () => {
     setDownloadingReport(true);
     try {
+      const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
+      if (!key) { toast.error('Chave de API não configurada.'); setDownloadingReport(false); return; }
       const now = new Date();
       const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || 'aqmbaycbwljiohdjputq';
@@ -128,7 +130,7 @@ export default function Dashboard() {
         `https://${projectId}.supabase.co/functions/v1/monthly-designer-report?month=${month}&send=false`,
         {
           headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            'Authorization': `Bearer ${key}`,
             'Content-Type': 'application/json',
           },
         }
