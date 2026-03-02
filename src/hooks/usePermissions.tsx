@@ -72,6 +72,7 @@ export const PERMISSION_MODULES = [
     label: 'Aplicativos',
     permissions: [
       { key: 'aplicativos.view', label: 'Visualizar aplicativos' },
+      { key: 'aplicativos.edit', label: 'Editar dados dos clientes' },
     ],
   },
   {

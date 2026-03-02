@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { usePermissions } from '@/hooks/usePermissions';
 import { ArrowLeft, Copy, ExternalLink, Clock, CheckCircle2, Circle, Lock, AlertTriangle, Upload, MessageSquare, Image as ImageIcon, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +23,8 @@ const FASE_NAMES = ['Pré-Requisitos','Primeiros Passos','Validação pela Loja'
 export default function AplicativoDetailPage() {
   const { clienteId } = useParams();
   const navigate = useNavigate();
+  const { hasPermission } = usePermissions();
+  const canEdit = hasPermission('aplicativos.edit');
   const queryClient = useQueryClient();
   const [selectedFase, setSelectedFase] = useState<number | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -279,8 +282,8 @@ export default function AplicativoDetailPage() {
             <TabsList className="w-full">
               <TabsTrigger value="checklist" className="flex-1">Checklist</TabsTrigger>
               <TabsTrigger value="conversas" className="flex-1">Conversas</TabsTrigger>
-              {selectedFase === 4 && <TabsTrigger value="formulario" className="flex-1">Formulário</TabsTrigger>}
-              {selectedFase === 3 && <TabsTrigger value="assets" className="flex-1">Assets</TabsTrigger>}
+              {selectedFase === 3 && <TabsTrigger value="formulario" className="flex-1">Formulário</TabsTrigger>}
+              {selectedFase === 0 && <TabsTrigger value="assets" className="flex-1">Assets</TabsTrigger>}
             </TabsList>
             <TabsContent value="checklist">
               <ScrollArea className="h-[calc(100vh-220px)]">
@@ -328,7 +331,7 @@ export default function AplicativoDetailPage() {
                               ) : (
                                 <Checkbox
                                   checked={item.feito}
-                                  disabled={item.ator === 'cliente'}
+                                  disabled={item.ator === 'cliente' && !canEdit}
                                   onCheckedChange={(checked) => toggleItem.mutate({ id: item.id, feito: !!checked })}
                                 />
                               )}
@@ -422,7 +425,7 @@ export default function AplicativoDetailPage() {
             </TabsContent>
 
             {/* Formulário tab (phase 4) */}
-            {selectedFase === 4 && (
+            {selectedFase === 3 && (
               <TabsContent value="formulario">
                 <ScrollArea className="h-[calc(100vh-220px)]">
                   <div className="space-y-4 pr-2 py-2">
@@ -458,7 +461,7 @@ export default function AplicativoDetailPage() {
             )}
 
             {/* Assets tab (phase 3) */}
-            {selectedFase === 3 && (
+            {selectedFase === 0 && (
               <TabsContent value="assets">
                 <ScrollArea className="h-[calc(100vh-220px)]">
                   <div className="space-y-4 pr-2 py-2">
