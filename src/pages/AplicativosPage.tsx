@@ -114,6 +114,22 @@ export default function AplicativosPage() {
 
   const createMutation = useMutation({
     mutationFn: async () => {
+      // Check for existing client by empresa (URL)
+      const { data: existing } = await supabase
+        .from('app_clientes')
+        .select('id, nome')
+        .eq('empresa', form.url_cliente)
+        .maybeSingle();
+
+      if (existing) {
+        // Update the existing record with responsavel info
+        const { error } = await supabase.from('app_clientes').update({
+          responsavel_nome: form.responsavel_nome || null,
+        }).eq('id', existing.id);
+        if (error) throw error;
+        return { linked: true, name: existing.nome, id: existing.id };
+      }
+
       const { error } = await supabase.from('app_clientes').insert({
         nome: form.nome,
         empresa: form.url_cliente,
@@ -123,15 +139,20 @@ export default function AplicativosPage() {
         responsavel_nome: form.responsavel_nome || null,
       });
       if (error) throw error;
+      return { linked: false };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['app-clientes'] });
       queryClient.invalidateQueries({ queryKey: ['app-fases-all'] });
       queryClient.invalidateQueries({ queryKey: ['app-checklist-counts'] });
       queryClient.invalidateQueries({ queryKey: ['app-checklist-full'] });
       setDialogOpen(false);
       setForm({ nome: '', url_cliente: '', email: '', whatsapp: '', plataforma: 'ambos', responsavel_nome: '' });
-      toast.success('Cliente criado com sucesso! Fases e checklist gerados automaticamente.');
+      if (result?.linked) {
+        toast.success(`Cliente "${result.name}" já existia — responsável vinculado com sucesso!`);
+      } else {
+        toast.success('Cliente criado com sucesso! Fases e checklist gerados automaticamente.');
+      }
     },
     onError: (e: any) => toast.error(e.message),
   });

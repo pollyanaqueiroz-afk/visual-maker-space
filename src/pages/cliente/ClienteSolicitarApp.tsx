@@ -20,7 +20,7 @@ export default function ClienteSolicitarApp() {
     nome: '', url_cliente: '', email: clientEmail, whatsapp: '', plataforma: 'ambos',
   });
 
-  // Check if client already has an app project
+  // Check if client already has an app project (by email OR empresa/URL)
   const { data: existingApp, isLoading: checking } = useQuery({
     queryKey: ['cliente-app-exists', clientEmail],
     enabled: !!clientEmail,
@@ -36,6 +36,25 @@ export default function ClienteSolicitarApp() {
 
   const createMutation = useMutation({
     mutationFn: async () => {
+      // Check if a project already exists with same empresa (URL) — created by internal team
+      const { data: existingByUrl } = await supabase
+        .from('app_clientes')
+        .select('id')
+        .eq('empresa', form.url_cliente)
+        .maybeSingle();
+
+      if (existingByUrl) {
+        // Link client to existing project (update email and contact info)
+        const { error } = await supabase.from('app_clientes').update({
+          email: form.email,
+          whatsapp: form.whatsapp || null,
+          nome: form.nome,
+        }).eq('id', existingByUrl.id);
+        if (error) throw error;
+        return;
+      }
+
+      // No existing project — create new
       const { error } = await supabase.from('app_clientes').insert({
         nome: form.nome,
         empresa: form.url_cliente,
