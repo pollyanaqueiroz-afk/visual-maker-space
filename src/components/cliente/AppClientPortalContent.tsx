@@ -918,11 +918,39 @@ export default function AppClientPortalContent({ clienteId }: Props) {
       {/* Hero */}
       {/* Horizontal Timeline */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
-        {cliente.fase_atual === 6 && fase6Done ? (
-          <div className="text-center space-y-2 py-4">
-            <h1 className="text-2xl font-extrabold">🎉 SEU APP ESTÁ PUBLICADO!</h1>
-            <p className="text-white/70 text-sm">Parabéns! Seu app da {cliente.empresa} está disponível nas lojas.</p>
-          </div>
+        {cliente.fase_atual >= 6 && fase6Done ? (
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+            className="text-center space-y-4 py-6"
+          >
+            <div className="inline-flex items-center justify-center mx-auto">
+              <div className="relative">
+                <div className="absolute -inset-3 rounded-full bg-green-500/20 animate-ping" style={{ animationDuration: '2s' }} />
+                <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-emerald-600 shadow-lg shadow-green-500/30">
+                  <CheckCircle2 className="h-10 w-10 text-white" />
+                </div>
+              </div>
+            </div>
+            <div>
+              <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0 text-sm px-4 py-1.5 shadow-lg shadow-green-500/25 mb-3">
+                ✅ PUBLICADO NAS LOJAS
+              </Badge>
+              <h1 className="text-2xl font-extrabold mt-2">🎉 SEU APP ESTÁ PUBLICADO!</h1>
+              <p className="text-white/70 text-sm mt-1">Parabéns! Seu app da {cliente.empresa} está disponível nas lojas.</p>
+            </div>
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <a href="https://play.google.com" target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-lg bg-white/10 hover:bg-white/15 transition-colors px-4 py-2 text-xs font-medium text-white/80">
+                <ExternalLink className="h-3.5 w-3.5" /> Google Play
+              </a>
+              <a href="https://apps.apple.com" target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-lg bg-white/10 hover:bg-white/15 transition-colors px-4 py-2 text-xs font-medium text-white/80">
+                <ExternalLink className="h-3.5 w-3.5" /> App Store
+              </a>
+            </div>
+          </motion.div>
         ) : cliente.fase_atual === 6 && !fase6Done ? (
           <div>
             <h1 className="text-lg font-bold">Quase lá! 🚀</h1>
