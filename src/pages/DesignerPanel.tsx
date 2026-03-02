@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { IMAGE_TYPE_LABELS, STATUS_LABELS, STATUS_COLORS } from '@/types/briefing';
-import { Search, Loader2, Clock, ExternalLink, FileImage, Filter, MessageSquare, BarChart3 } from 'lucide-react';
+import { Loader2, Clock, ExternalLink, FileImage, Filter, MessageSquare, BarChart3, LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import CursEducaLayout from '@/components/CursEducaLayout';
 import DesignerFeedback from '@/components/designer/DesignerFeedback';
@@ -30,24 +30,54 @@ interface DesignerImage {
 }
 
 export default function DesignerPanel() {
-  const [email, setEmail] = useState(() => localStorage.getItem('designer_email') || '');
+  const { user, loading: authLoading } = useAuth();
+  const [email, setEmail] = useState('');
   const [images, setImages] = useState<DesignerImage[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [isDesigner, setIsDesigner] = useState<boolean | null>(null);
 
-  // Auto-search on mount if email is saved
+  // Check designer role
   useEffect(() => {
-    if (email.trim()) {
+    if (!user) return;
+    supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'designer')
+      .maybeSingle()
+      .then(({ data }) => {
+        setIsDesigner(!!data);
+        if (data && user.email) {
+          setEmail(user.email);
+        }
+      });
+  }, [user]);
+
+  // Auto-search when email is set from auth
+  useEffect(() => {
+    if (email.trim() && isDesigner) {
       handleSearch();
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [email, isDesigner]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (authLoading || isDesigner === null) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="animate-pulse text-muted-foreground">Carregando...</div>
+      </div>
+    );
+  }
+
+  if (!user) return <Navigate to="/designer/login" replace />;
+  if (!isDesigner) return <Navigate to="/designer/login" replace />;
 
   const handleSearch = async () => {
     if (!email.trim()) return;
     setLoading(true);
     setSearched(true);
-    localStorage.setItem('designer_email', email.trim().toLowerCase());
+    // email is set from auth, no need for localStorage
 
     const { data: result, error } = await supabase.functions.invoke('designer-data', {
       body: { email: email.trim().toLowerCase() },
@@ -76,32 +106,21 @@ export default function DesignerPanel() {
     return new Date(deadline) < new Date();
   };
 
-  return (
-    <CursEducaLayout title="Minhas Artes" subtitle="Painel do Designer">
-      <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
 
-        {/* Search */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex gap-3 items-end">
-              <div className="flex-1 space-y-2">
-                <Label htmlFor="designer-email">Seu email</Label>
-                <Input
-                  id="designer-email"
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleSearch()}
-                  placeholder="designer@email.com"
-                />
-              </div>
-              <Button onClick={handleSearch} disabled={loading || !email.trim()}>
-                {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Search className="h-4 w-4 mr-2" />}
-                Ver minhas artes
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+  return (
+    <CursEducaLayout
+      title="Minhas Artes"
+      subtitle={`Painel do Designer — ${email}`}
+      actions={
+        <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2 text-white border-white/20 hover:bg-white/10">
+          <LogOut className="h-4 w-4" /> Sair
+        </Button>
+      }
+    >
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
 
         {/* Tabs: Artes + Feedbacks */}
         {searched && !loading && (
