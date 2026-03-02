@@ -126,7 +126,15 @@ Deno.serve(async (req) => {
       if (!email) throw new Error("email is required");
 
       const { error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email);
-      if (error) throw error;
+      if (error) {
+        // If user already exists, treat as success
+        if (error.message?.includes("already been registered")) {
+          return new Response(JSON.stringify({ success: true, already_exists: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        throw error;
+      }
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
