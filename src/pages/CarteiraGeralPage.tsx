@@ -47,6 +47,7 @@ export default function CarteiraGeralPage() {
   const [dynamicFilters, setDynamicFilters] = useState<Record<string, string>>({});
   const [deleteTarget, setDeleteTarget] = useState<ClientRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [pokeCount, setPokeCount] = useState<number | null>(null);
 
   // Determine which fields can be used as filters (enum + booleano)
   const filterableFields = useMemo(
@@ -77,6 +78,23 @@ export default function CarteiraGeralPage() {
   }, []);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  useEffect(() => {
+    fetch('https://pokeapi.co/api/v2/pokemon/ditto')
+      .then(res => res.json())
+      .then(data => {
+        // Count total entries: moves + abilities + types + stats + forms + game_indices
+        const count =
+          (data.moves?.length || 0) +
+          (data.abilities?.length || 0) +
+          (data.types?.length || 0) +
+          (data.stats?.length || 0) +
+          (data.forms?.length || 0) +
+          (data.game_indices?.length || 0);
+        setPokeCount(count);
+      })
+      .catch(() => setPokeCount(0));
+  }, []);
 
   useEffect(() => {
     if (!tableScrollRef.current || !topScrollInnerRef.current) return;
@@ -222,12 +240,19 @@ export default function CarteiraGeralPage() {
       <ImportWizard open={importOpen} onOpenChange={setImportOpen} onSuccess={loadData} />
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card>
           <CardContent className="p-4 flex flex-col items-center text-center gap-1">
             <Globe className="h-5 w-5 text-foreground" />
             <span className="text-2xl font-bold text-foreground">{stats.total}</span>
             <span className="text-[11px] text-muted-foreground">Total de Clientes</span>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex flex-col items-center text-center gap-1">
+            <span className="text-xl">🔮</span>
+            <span className="text-2xl font-bold text-foreground">{pokeCount ?? '...'}</span>
+            <span className="text-[11px] text-muted-foreground">Registros Ditto (PokéAPI)</span>
           </CardContent>
         </Card>
         <Card>
