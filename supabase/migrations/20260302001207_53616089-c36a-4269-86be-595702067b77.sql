@@ -1,0 +1,1 @@
+CREATE POLICY "Authenticated users can delete requests" ON public.briefing_requests FOR DELETE USING (true);
