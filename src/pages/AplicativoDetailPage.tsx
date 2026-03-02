@@ -338,7 +338,11 @@ export default function AplicativoDetailPage() {
                               <div className="flex-1 min-w-0">
                                 <p className={`text-sm ${item.feito ? 'line-through text-muted-foreground' : ''}`}>{item.texto}</p>
                                 {item.descricao && <p className="text-xs text-muted-foreground mt-0.5">{item.descricao}</p>}
-                                {item.feito_em && <p className="text-[10px] text-muted-foreground mt-0.5">✓ {format(new Date(item.feito_em), 'dd/MM/yyyy HH:mm')}</p>}
+                                {item.feito_em && (
+                                  <p className={`text-[10px] mt-0.5 ${(selectedFase === 2 || selectedFase === 4) ? 'text-green-600 font-medium' : 'text-muted-foreground'}`}>
+                                    {(selectedFase === 2 || selectedFase === 4) ? `✅ Aprovado em ${format(new Date(item.feito_em), 'dd/MM/yyyy HH:mm')}` : `✓ ${format(new Date(item.feito_em), 'dd/MM/yyyy HH:mm')}`}
+                                  </p>
+                                )}
 
                                 {/* Show admin dates and status for validation item */}
                                 {isValidationItem && !item.feito && (
