@@ -136,8 +136,11 @@ export default function AplicativosPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const [completingIds, setCompletingIds] = useState<Set<string>>(new Set());
+
   const completeTask = useMutation({
     mutationFn: async (itemId: string) => {
+      setCompletingIds(prev => new Set(prev).add(itemId));
       const { error } = await supabase.from('app_checklist_items').update({
         feito: true,
         feito_em: new Date().toISOString(),
@@ -146,13 +149,20 @@ export default function AplicativosPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['app-checklist-full'] });
-      queryClient.invalidateQueries({ queryKey: ['app-checklist-counts'] });
-      queryClient.invalidateQueries({ queryKey: ['app-fases-all'] });
-      queryClient.invalidateQueries({ queryKey: ['app-clientes'] });
-      toast.success('Tarefa concluída! ✅');
+      // Small delay so user sees the "Concluído" state before item disappears
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['app-checklist-full'] });
+        queryClient.invalidateQueries({ queryKey: ['app-checklist-counts'] });
+        queryClient.invalidateQueries({ queryKey: ['app-fases-all'] });
+        queryClient.invalidateQueries({ queryKey: ['app-clientes'] });
+        setCompletingIds(new Set());
+      }, 800);
+      toast.success('Tarefa concluída! A próxima etapa será desbloqueada automaticamente se todas as pendências da fase estiverem resolvidas. ✅');
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => {
+      setCompletingIds(new Set());
+      toast.error(e.message);
+    },
   });
 
   const totalAbertos = clientes.filter(c => c.fase_atual < 8).length;
@@ -621,17 +631,20 @@ export default function AplicativosPage() {
                           const dataEntrada = cliente.data_criacao ? new Date(cliente.data_criacao) : null;
                           const daysSinceCreated = differenceInDays(new Date(), createdAt);
                           const isOverdue = daysSinceCreated > 2;
+                          const isCompleting = completingIds.has(item.id);
 
                           return (
-                            <div key={item.id} className="grid grid-cols-[32px_1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-3 items-center">
+                            <div key={item.id} className={`grid grid-cols-[32px_1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-3 items-center transition-opacity ${isCompleting ? 'opacity-50' : ''}`}>
                               <Checkbox
+                                checked={isCompleting}
+                                disabled={isCompleting}
                                 className="border-muted-foreground/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
                                 onCheckedChange={(checked) => {
                                   if (checked) completeTask.mutate(item.id);
                                 }}
                               />
                               <div className="min-w-0">
-                                <p className="text-sm truncate">{item.texto}</p>
+                                <p className={`text-sm truncate ${isCompleting ? 'line-through' : ''}`}>{item.texto}</p>
                                 {item.descricao && (
                                   <p className="text-xs text-muted-foreground truncate mt-0.5">{item.descricao}</p>
                                 )}
@@ -646,7 +659,9 @@ export default function AplicativosPage() {
                                 {format(createdAt, 'dd/MM/yy')}
                               </span>
                               <div>
-                                {isOverdue ? (
+                                {isCompleting ? (
+                                  <Badge className="text-[10px] bg-green-500/10 text-green-500 border border-green-500/20">✅ Concluído</Badge>
+                                ) : isOverdue ? (
                                   <Badge variant="destructive" className="text-[10px]">Atrasado</Badge>
                                 ) : (
                                   <Badge variant="outline" className="text-[10px] border-blue-500/30 text-blue-500">Em andamento</Badge>
