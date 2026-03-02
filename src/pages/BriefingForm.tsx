@@ -224,7 +224,7 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
       return;
     }
 
-    if (!form.brand_file && !form.brand_drive_link) {
+    if (!mockupOnly && !form.brand_file && !form.brand_drive_link) {
       toast.error('Envie o arquivo de identidade visual ou informe o link do Google Drive');
       setStep(2);
       return;
