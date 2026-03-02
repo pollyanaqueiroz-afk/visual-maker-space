@@ -224,7 +224,7 @@ export default function ClienteHome() {
                 {appCliente ? (
                   <>
                     <p className="text-sm font-medium">
-                      {appCliente.fase_atual >= 8
+                      {appCliente.fase_atual >= 6
                         ? '🎉 Publicado!'
                         : `${appCliente.porcentagem_geral}% concluído`}
                     </p>

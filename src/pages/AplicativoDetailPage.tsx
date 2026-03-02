@@ -17,7 +17,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { differenceInHours, differenceInDays, format } from 'date-fns';
 
-const FASE_NAMES = ['Pré-Requisitos','Primeiros Passos','Validação pela Loja','Assets e Mockup','Formulário do App','Criação e Submissão','Aprovação das Lojas','Teste do App','Publicado 🎉'];
+const FASE_NAMES = ['Pré-Requisitos','Primeiros Passos','Validação pela Loja','Criação e Submissão','Aprovação das Lojas','Teste do App','Publicado 🎉'];
 
 export default function AplicativoDetailPage() {
   const { clienteId } = useParams();
