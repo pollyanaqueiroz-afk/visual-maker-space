@@ -66,6 +66,7 @@ export default function AplicativosPage() {
   const [activeTab, setActiveTab] = useState('kanban');
   const [pendencyFilter, setPendencyFilter] = useState('todos');
   const [phaseFilter, setPhaseFilter] = useState('todas');
+  const [kanbanFilter, setKanbanFilter] = useState<'todos' | 'atrasados'>('todos');
   const [form, setForm] = useState({
     nome: '', url_cliente: '', email: '', whatsapp: '', plataforma: 'ambos', responsavel_nome: '',
   });
@@ -170,6 +171,11 @@ export default function AplicativosPage() {
   const totalConcluidos = clientes.filter(c => c.fase_atual >= 8).length;
   const atrasados = clientes.filter(c => c.status === 'atrasado').length;
   const slaViolados = fases.filter(f => f.sla_violado).length;
+  const fasesAtrasadas = fases.filter(f => f.sla_violado || f.status === 'atrasada').length;
+  const clientesComFaseAtrasada = useMemo(() => {
+    const ids = new Set(fases.filter(f => f.sla_violado || f.status === 'atrasada').map(f => f.cliente_id));
+    return ids;
+  }, [fases]);
 
   const avgProgress = totalAbertos > 0
     ? Math.round(clientes.filter(c => c.fase_atual < 8).reduce((sum, c) => sum + c.porcentagem_geral, 0) / totalAbertos)
@@ -178,12 +184,15 @@ export default function AplicativosPage() {
   const columns = useMemo(() => {
     const cols: Record<number, AppCliente[]> = {};
     for (let i = 0; i <= 8; i++) cols[i] = [];
-    clientes.forEach(c => {
+    const filtered = kanbanFilter === 'atrasados'
+      ? clientes.filter(c => clientesComFaseAtrasada.has(c.id) || c.status === 'atrasado')
+      : clientes;
+    filtered.forEach(c => {
       const fase = Math.min(c.fase_atual, 8);
       cols[fase].push(c);
     });
     return cols;
-  }, [clientes]);
+  }, [clientes, kanbanFilter, clientesComFaseAtrasada]);
 
   // Internal pendencies grouped by client
   const internalPendencies = useMemo(() => {
@@ -384,7 +393,7 @@ export default function AplicativosPage() {
           {/* Dashboard Gerencial */}
           {!isLoading && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 <Card>
                   <CardContent className="p-4 flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
@@ -403,7 +412,19 @@ export default function AplicativosPage() {
                     </div>
                     <div>
                       <p className="text-2xl font-bold">{atrasados}</p>
-                      <p className="text-xs text-muted-foreground">Atrasados</p>
+                      <p className="text-xs text-muted-foreground">Clientes atrasados</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className={`cursor-pointer transition-all ${kanbanFilter === 'atrasados' ? 'ring-2 ring-destructive' : ''}`}
+                  onClick={() => setKanbanFilter(prev => prev === 'atrasados' ? 'todos' : 'atrasados')}>
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
+                      <Clock className="h-5 w-5 text-destructive" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{fasesAtrasadas}</p>
+                      <p className="text-xs text-muted-foreground">Etapas atrasadas</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -430,6 +451,13 @@ export default function AplicativosPage() {
                   </CardContent>
                 </Card>
               </div>
+
+              {kanbanFilter === 'atrasados' && (
+                <div className="flex items-center gap-2 px-1">
+                  <Badge variant="destructive" className="text-xs">Filtro ativo: Apenas clientes com etapas atrasadas</Badge>
+                  <Button variant="ghost" size="sm" className="text-xs h-6" onClick={() => setKanbanFilter('todos')}>Limpar filtro</Button>
+                </div>
+              )}
 
               <Card>
                 <CardContent className="p-4 space-y-3">
