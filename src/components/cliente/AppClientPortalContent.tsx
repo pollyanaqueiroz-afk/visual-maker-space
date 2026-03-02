@@ -385,6 +385,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     if (i.texto === DUNS_TEXT && i.feito) return true;
     if (i.feito) return false;
     if (cliente.plataforma === 'google' && i.texto === 'Confirmei que meu CNPJ é ME ou LTDA') return false;
+    if (cliente.plataforma === 'google' && i.texto === DUNS_TEXT) return false;
     // Filter platform-specific items
     if (cliente.plataforma === 'google' && APPLE_TEXTS.includes(i.texto)) return false;
     if (cliente.plataforma === 'apple' && GOOGLE_TEXTS.includes(i.texto)) return false;
