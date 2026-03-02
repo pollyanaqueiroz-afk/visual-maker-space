@@ -1075,14 +1075,17 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                           }}
                           disabled={item.id !== 'mockup-virtual' && (!item.feito || !filledValue)}
                         >
-                          {item.feito ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" /> : <Circle className="h-3.5 w-3.5 text-white/30 shrink-0" />}
-                          <span className={`text-left flex-1 ${item.feito ? 'text-white/40 line-through' : 'text-white/70'}`}>{item.texto}</span>
-                          {!item.feito && <Badge variant="outline" className="text-[9px] px-1 py-0 border-white/10 text-white/30 ml-auto shrink-0">{item.ator}</Badge>}
+                          {(item.feito || fase?.status === 'concluida') ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" /> : <Circle className="h-3.5 w-3.5 text-white/30 shrink-0" />}
+                          <span className={`text-left flex-1 ${(item.feito || fase?.status === 'concluida') ? 'text-white/40 line-through' : 'text-white/70'}`}>{item.texto}</span>
+                          {!(item.feito || fase?.status === 'concluida') && <Badge variant="outline" className="text-[9px] px-1 py-0 border-white/10 text-white/30 ml-auto shrink-0">{item.ator}</Badge>}
                         </button>
                         {item.feito && item.feito_em && (
                           <p className="text-[10px] text-green-400/60 ml-5 mt-0.5">✅ Concluído em {format(new Date(item.feito_em), "dd/MM/yyyy 'às' HH:mm")}</p>
                         )}
-                        {item.ator === 'analista' && !item.feito && (
+                        {!item.feito && fase?.status === 'concluida' && fase?.data_conclusao && (
+                          <p className="text-[10px] text-green-400/60 ml-5 mt-0.5">✅ Concluído em {format(new Date(fase.data_conclusao), "dd/MM/yyyy 'às' HH:mm")}</p>
+                        )}
+                        {item.ator === 'analista' && !item.feito && fase?.status !== 'concluida' && (
                           <p className="text-[10px] text-amber-400/60 ml-5 mt-0.5">⏳ O analista tem até 1 dia útil após o envio para verificar</p>
                         )}
                         <AnimatePresence>
@@ -1145,6 +1148,9 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                                 <Progress value={isCurrent ? 50 : 0} className="h-1" />
                               </div>
                             )}
+                            {isDone && fase2?.data_conclusao && (
+                              <p className="text-[10px] text-green-400/70 mt-2">✅ Concluído em {format(new Date(fase2.data_conclusao), "dd/MM/yyyy 'às' HH:mm")}</p>
+                            )}
                           </div>
                         )}
                         {showApple && (
@@ -1163,6 +1169,9 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                                 <p className="text-[10px] text-purple-400/70">📆 Previsão máxima: <span className="font-semibold">{format(addBusinessDays(startDate, 7), 'dd/MM/yyyy')}</span></p>
                                 <Progress value={isCurrent ? 30 : 0} className="h-1" />
                               </div>
+                            )}
+                            {isDone && fase2?.data_conclusao && (
+                              <p className="text-[10px] text-green-400/70 mt-2">✅ Concluído em {format(new Date(fase2.data_conclusao), "dd/MM/yyyy 'às' HH:mm")}</p>
                             )}
                           </div>
                         )}
