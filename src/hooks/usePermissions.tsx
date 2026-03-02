@@ -68,6 +68,13 @@ export const PERMISSION_MODULES = [
     ],
   },
   {
+    module: 'aplicativos',
+    label: 'Aplicativos',
+    permissions: [
+      { key: 'aplicativos.view', label: 'Visualizar aplicativos' },
+    ],
+  },
+  {
     module: 'admin',
     label: 'Administração',
     permissions: [
