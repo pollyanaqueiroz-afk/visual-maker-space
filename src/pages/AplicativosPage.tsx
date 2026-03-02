@@ -64,6 +64,7 @@ export default function AplicativosPage() {
   const [activeTab, setActiveTab] = useState('kanban');
   const [pendencyFilter, setPendencyFilter] = useState('todos');
   const [phaseFilter, setPhaseFilter] = useState('todas');
+  const [statusFilter, setStatusFilter] = useState('pendente');
   const [kanbanFilter, setKanbanFilter] = useState<'todos' | 'atrasados'>('todos');
   const [form, setForm] = useState({
     nome: '', url_cliente: '', email: '', whatsapp: '', plataforma: 'ambos', responsavel_nome: '',
@@ -102,8 +103,7 @@ export default function AplicativosPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('app_checklist_items')
-        .select('id, cliente_id, fase_numero, texto, descricao, ator, feito, feito_em, created_at')
-        .eq('feito', false)
+        .select('id, cliente_id, fase_numero, texto, descricao, ator, feito, feito_em, feito_por, created_at')
         .neq('ator', 'cliente')
         .order('fase_numero')
         .order('created_at');
@@ -250,8 +250,15 @@ export default function AplicativosPage() {
         items: g.items.filter((item: any) => item.fase_numero === phase),
       })).filter(g => g.items.length > 0);
     }
+    if (statusFilter !== 'todos') {
+      const feito = statusFilter === 'concluido';
+      result = result.map(g => ({
+        ...g,
+        items: g.items.filter((item: any) => item.feito === feito),
+      })).filter(g => g.items.length > 0);
+    }
     return result;
-  }, [internalPendencies, pendencyFilter, phaseFilter]);
+  }, [internalPendencies, pendencyFilter, phaseFilter, statusFilter]);
 
   const uniquePhases = useMemo(() => {
     const phases = new Set<number>();
@@ -269,18 +276,18 @@ export default function AplicativosPage() {
   }, [internalPendencies]);
 
   const totalInternalPending = useMemo(() => {
-    return internalPendencies.reduce((sum, g) => sum + g.items.length, 0);
+    return internalPendencies.reduce((sum, g) => sum + g.items.filter((i: any) => !i.feito).length, 0);
   }, [internalPendencies]);
 
   const analystPending = useMemo(() => {
-    return internalPendencies.reduce((sum, g) => sum + g.items.filter((i: any) => i.ator === 'analista').length, 0);
+    return internalPendencies.reduce((sum, g) => sum + g.items.filter((i: any) => i.ator === 'analista' && !i.feito).length, 0);
   }, [internalPendencies]);
 
   const designerPending = useMemo(() => {
-    return internalPendencies.reduce((sum, g) => sum + g.items.filter((i: any) => i.ator === 'designer').length, 0);
+    return internalPendencies.reduce((sum, g) => sum + g.items.filter((i: any) => i.ator === 'designer' && !i.feito).length, 0);
   }, [internalPendencies]);
 
-  const clientsWithPendencies = internalPendencies.length;
+  const clientsWithPendencies = internalPendencies.filter(g => g.items.some((i: any) => !i.feito)).length;
 
   const getChecklistStats = (clienteId: string, faseNum: number) => {
     const items = checklistCounts.filter(i => i.cliente_id === clienteId && i.fase_numero === faseNum && i.obrigatorio);
@@ -659,12 +666,22 @@ export default function AplicativosPage() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Filtrar por status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os status</SelectItem>
+                <SelectItem value="pendente">🔵 Pendente</SelectItem>
+                <SelectItem value="concluido">✅ Concluído</SelectItem>
+              </SelectContent>
+            </Select>
             {(() => {
-              const activeFilterCount = [pendencyFilter, phaseFilter].filter(f => f !== 'todos' && f !== 'todas').length;
+              const activeFilterCount = [pendencyFilter, phaseFilter, statusFilter].filter(f => f !== 'todos' && f !== 'todas' && f !== 'pendente').length;
               return activeFilterCount > 0 ? (
                 <>
                   <Badge variant="secondary" className="text-xs">{activeFilterCount} filtro{activeFilterCount > 1 ? 's' : ''}</Badge>
-                  <Button variant="ghost" size="sm" onClick={() => { setPendencyFilter('todos'); setPhaseFilter('todas'); }} className="text-xs">
+                  <Button variant="ghost" size="sm" onClick={() => { setPendencyFilter('todos'); setPhaseFilter('todas'); setStatusFilter('pendente'); }} className="text-xs">
                     Limpar filtros
                   </Button>
                 </>
@@ -732,23 +749,27 @@ export default function AplicativosPage() {
                           const createdAt = new Date(item.created_at);
                           const dataEntrada = cliente.data_criacao ? new Date(cliente.data_criacao) : null;
                           const daysSinceCreated = differenceInDays(new Date(), createdAt);
-                          const isOverdue = daysSinceCreated > 2;
+                          const isOverdue = !item.feito && daysSinceCreated > 2;
                           const isCompleting = completingIds.has(item.id);
+                          const isDone = item.feito || isCompleting;
 
                           return (
                             <div key={item.id} className={`grid grid-cols-[32px_1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-3 items-center transition-opacity ${isCompleting ? 'opacity-50' : ''}`}>
                               <Checkbox
-                                checked={isCompleting}
-                                disabled={isCompleting}
+                                checked={isDone}
+                                disabled={isDone}
                                 className="border-muted-foreground/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
                                 onCheckedChange={(checked) => {
-                                  if (checked) completeTask.mutate(item.id);
+                                  if (checked && !item.feito) completeTask.mutate(item.id);
                                 }}
                               />
                               <div className="min-w-0">
-                                <p className={`text-sm truncate ${isCompleting ? 'line-through' : ''}`}>{item.texto}</p>
+                                <p className={`text-sm truncate ${isDone ? 'line-through text-muted-foreground' : ''}`}>{item.texto}</p>
                                 {item.descricao && (
                                   <p className="text-xs text-muted-foreground truncate mt-0.5">{item.descricao}</p>
+                                )}
+                                {item.feito && item.feito_em && (
+                                  <p className="text-[10px] text-green-500/70 mt-0.5">Concluído em {format(new Date(item.feito_em), "dd/MM/yy 'às' HH:mm")}</p>
                                 )}
                               </div>
                               <Badge variant="outline" className={`text-[10px] w-fit ${ator.color}`}>
@@ -761,7 +782,9 @@ export default function AplicativosPage() {
                                 {format(createdAt, 'dd/MM/yy')}
                               </span>
                               <div>
-                                {isCompleting ? (
+                                {item.feito ? (
+                                  <Badge className="text-[10px] bg-green-500/10 text-green-500 border border-green-500/20">✅ Concluído</Badge>
+                                ) : isCompleting ? (
                                   <Badge className="text-[10px] bg-green-500/10 text-green-500 border border-green-500/20">✅ Concluído</Badge>
                                 ) : isOverdue ? (
                                   <Badge variant="destructive" className="text-[10px]">Atrasado</Badge>
