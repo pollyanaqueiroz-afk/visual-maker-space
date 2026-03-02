@@ -532,8 +532,8 @@ export default function AplicativosPage() {
           {isLoading ? (
             <div className="text-center py-12 text-muted-foreground">Carregando...</div>
           ) : (
-            <ScrollArea className="w-full">
-              <div className="flex gap-3 pb-4" style={{ minWidth: 9 * 280 }}>
+            <div className="w-full overflow-x-auto pb-2">
+              <div className="flex gap-3 pb-2" style={{ minWidth: `${7 * 280 + 6 * 12}px` }}>
                 {FASE_NAMES.map((name, idx) => (
                   <div key={idx} className="w-[280px] shrink-0">
                     <div className="flex items-center justify-between mb-2 px-1">
@@ -579,8 +579,7 @@ export default function AplicativosPage() {
                   </div>
                 ))}
               </div>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
+            </div>
           )}
         </TabsContent>
 
