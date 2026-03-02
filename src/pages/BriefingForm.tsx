@@ -307,6 +307,11 @@ export default function BriefingForm() {
       toast.error('Preencha todos os campos obrigatórios');
       return;
     }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (step === 1 && !emailRegex.test(form.requester_email)) {
+      toast.error('Informe um email válido');
+      return;
+    }
     if (step === 2 && !hasAnySelection) {
       toast.error('Selecione pelo menos um tipo de arte');
       return;
