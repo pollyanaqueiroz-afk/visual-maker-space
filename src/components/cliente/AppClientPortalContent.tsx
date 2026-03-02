@@ -582,6 +582,72 @@ export default function AppClientPortalContent({ clienteId }: Props) {
       return null; // Rendered separately in form section
     }
 
+    // Approval final — strong confirmation for app publication
+    if (item.tipo === 'approval_final') {
+      return (
+        <div key={item.id} className="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
+          <div className="flex items-start gap-3">
+            <Checkbox
+              checked={item.feito}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  setConfirmingItemId(item.id);
+                } else {
+                  toggleCheck.mutate({ id: item.id, feito: false, texto: item.texto });
+                }
+              }}
+              className="mt-0.5 border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+            />
+            <div className="flex-1">
+              <p className="text-sm font-medium">{item.texto}</p>
+              {item.descricao && <p className="text-xs text-white/50 mt-1">{item.descricao}</p>}
+              {renderSteps(item.texto, item.id)}
+
+              {confirmingItemId === item.id && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  className="mt-3 overflow-hidden"
+                >
+                  <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5 text-amber-400" />
+                      <p className="text-sm text-amber-300 font-semibold">Tem certeza que deseja aprovar?</p>
+                    </div>
+                    <p className="text-xs text-amber-300/70">
+                      Ao aprovar, você confirma que testou o aplicativo, verificou que tudo está funcionando corretamente 
+                      e autoriza a publicação nas lojas. <span className="font-semibold text-amber-300">Esta ação não pode ser desfeita.</span>
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        className="flex-1 bg-green-600 hover:bg-green-700"
+                        onClick={() => {
+                          toggleCheck.mutate({ id: item.id, feito: true, texto: item.texto });
+                          setConfirmingItemId(null);
+                          toast.success('🎉 App aprovado para publicação!');
+                        }}
+                      >
+                        ✅ Sim, aprovar publicação
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-white/60"
+                        onClick={() => setConfirmingItemId(null)}
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     // CNPJ item — show input prompt
     if (item.texto === CNPJ_TEXT) {
       const formatCnpj = (value: string) => {
