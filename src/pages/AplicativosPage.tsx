@@ -618,11 +618,17 @@ export default function AplicativosPage() {
                 ))}
               </SelectContent>
             </Select>
-            {(pendencyFilter !== 'todos' || phaseFilter !== 'todas') && (
-              <Button variant="ghost" size="sm" onClick={() => { setPendencyFilter('todos'); setPhaseFilter('todas'); }} className="text-xs">
-                Limpar filtros
-              </Button>
-            )}
+            {(() => {
+              const activeFilterCount = [pendencyFilter, phaseFilter].filter(f => f !== 'todos' && f !== 'todas').length;
+              return activeFilterCount > 0 ? (
+                <>
+                  <Badge variant="secondary" className="text-xs">{activeFilterCount} filtro{activeFilterCount > 1 ? 's' : ''}</Badge>
+                  <Button variant="ghost" size="sm" onClick={() => { setPendencyFilter('todos'); setPhaseFilter('todas'); }} className="text-xs">
+                    Limpar filtros
+                  </Button>
+                </>
+              ) : null;
+            })()}
             <span className="text-xs text-muted-foreground ml-auto">
               {filteredPendencies.reduce((sum, g) => sum + g.items.length, 0)} pendências em {filteredPendencies.length} clientes
             </span>
