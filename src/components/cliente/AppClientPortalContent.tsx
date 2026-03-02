@@ -1242,6 +1242,10 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 </div>
               )}
             </div>
+          ) : cliente.fase_atual === 0 ? (
+            <div className="space-y-3">
+              <p className="text-sm text-white/60">Nossa equipe está processando suas informações. Enquanto isso, você pode solicitar o design do seu app.</p>
+            </div>
           ) : (
             <div className="text-center py-4 text-white/50">
               <p>Você será notificado assim que precisarmos de você!</p>
