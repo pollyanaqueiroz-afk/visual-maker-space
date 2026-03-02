@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -13,7 +14,7 @@ import ImageBriefingSection from '@/components/briefing/ImageBriefingSection';
 import MultiBannerSection from '@/components/briefing/MultiBannerSection';
 import BrandIdentity from '@/components/briefing/BrandIdentity';
 import AIBriefingAssistant from '@/components/briefing/AIBriefingAssistant';
-import { CheckCircle, Loader2, ArrowRight, ArrowLeft, Palette, MonitorSmartphone, Image, LayoutGrid, Route, Trophy, Users, Smartphone, PartyPopper } from 'lucide-react';
+import { CheckCircle, Loader2, ArrowRight, ArrowLeft, Palette, MonitorSmartphone, Image, LayoutGrid, Route, Trophy, Users, Smartphone, PartyPopper, Home } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -59,6 +60,7 @@ interface BriefingFormProps {
 
 export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [step, setStep] = useState(mockupOnly ? 1 : 0);
   const [form, setForm] = useState<BriefingFormData>(initialForm);
   const [additionalInfo, setAdditionalInfo] = useState('');
@@ -454,6 +456,13 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
                 </div>
                 <Button onClick={nextStep} size="lg" className="mt-4 min-w-[220px] text-base">
                   Começar <ArrowRight className="h-5 w-5 ml-2" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => navigate('/cliente')}
+                  className="text-white/60 hover:text-white hover:bg-white/10 gap-2"
+                >
+                  <Home className="h-4 w-4" /> Voltar ao Portal
                 </Button>
               </div>
             </>
