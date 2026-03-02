@@ -366,11 +366,14 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     },
   });
 
+  const fase6 = fases.find((f: any) => f.numero === 6);
+  const fase6Done = fase6?.status === 'concluida';
+
   useEffect(() => {
-    if (cliente?.fase_atual === 6) {
+    if (cliente?.fase_atual === 6 && fase6Done) {
       setTimeout(() => confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } }), 500);
     }
-  }, [cliente?.fase_atual]);
+  }, [cliente?.fase_atual, fase6Done]);
 
   if (isLoading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-white/40" /></div>;
   if (!cliente) return <div className="text-center py-12 text-white/50">Dados não encontrados</div>;
@@ -915,10 +918,15 @@ export default function AppClientPortalContent({ clienteId }: Props) {
       {/* Hero */}
       {/* Horizontal Timeline */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
-        {cliente.fase_atual === 6 ? (
+        {cliente.fase_atual === 6 && fase6Done ? (
           <div className="text-center space-y-2 py-4">
             <h1 className="text-2xl font-extrabold">🎉 SEU APP ESTÁ PUBLICADO!</h1>
             <p className="text-white/70 text-sm">Parabéns! Seu app da {cliente.empresa} está disponível nas lojas.</p>
+          </div>
+        ) : cliente.fase_atual === 6 && !fase6Done ? (
+          <div>
+            <h1 className="text-lg font-bold">Quase lá! 🚀</h1>
+            <p className="text-white/60 text-sm mt-0.5">Seu app foi aprovado! Nossa equipe está publicando nas lojas.</p>
           </div>
         ) : (
           <div>
@@ -1243,10 +1251,12 @@ export default function AppClientPortalContent({ clienteId }: Props) {
       )}
 
       {/* What to do now */}
-      {cliente.fase_atual < 6 && (
+      {((cliente.fase_atual < 6) || (cliente.fase_atual === 6 && !fase6Done)) && (
         <Card className="bg-[#1E293B] border-white/10 p-6 space-y-4">
           <h2 className="text-lg font-semibold">
-            {cliente.fase_atual === 3
+            {cliente.fase_atual === 6
+              ? '🚀 Publicação em andamento'
+              : cliente.fase_atual === 3
               ? (formulario?.preenchido_completo ? '⏳ Nossa equipe está validando o formulário' : '📋 O que fazer agora')
               : hasClientAction ? '📋 O que fazer agora' : '⏳ Nossa equipe está trabalhando'}
           </h2>
@@ -1447,7 +1457,19 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 <p className="text-[10px] text-white/30 text-center">⏳ Você será notificado assim que as lojas aprovarem suas contas.</p>
               </div>
             );
-          })() : cliente.fase_atual === 0 ? (
+          })() : cliente.fase_atual === 6 ? (
+            <div className="space-y-3">
+              <div className="rounded-lg p-4 bg-primary/10 border border-primary/20 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-primary" />
+                  <p className="text-sm font-medium">Publicar na loja</p>
+                </div>
+                <p className="text-xs text-white/50">O analista está publicando seu aplicativo nas lojas oficiais. Você será notificado assim que estiver disponível!</p>
+                <Progress value={50} className="h-1.5" />
+              </div>
+              <p className="text-[10px] text-white/30 text-center">⏳ Este é o último passo! Em breve seu app estará nas lojas.</p>
+            </div>
+          ) : cliente.fase_atual === 0 ? (
             <div className="space-y-3">
               <p className="text-sm text-white/60">Nossa equipe está processando suas informações. Enquanto isso, você pode solicitar o design do seu app.</p>
             </div>
