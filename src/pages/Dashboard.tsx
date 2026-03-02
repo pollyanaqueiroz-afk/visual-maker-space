@@ -121,16 +121,17 @@ export default function Dashboard() {
   const handleDownloadReport = async () => {
     setDownloadingReport(true);
     try {
-      const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
-      if (!key) { toast.error('Chave de API não configurada.'); setDownloadingReport(false); return; }
       const now = new Date();
       const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) { toast.error('Você precisa estar logado.'); setDownloadingReport(false); return; }
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || 'aqmbaycbwljiohdjputq';
       const res = await fetch(
         `https://${projectId}.supabase.co/functions/v1/monthly-designer-report?month=${month}&send=false`,
         {
           headers: {
-            'Authorization': `Bearer ${key}`,
+            'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
           },
         }
