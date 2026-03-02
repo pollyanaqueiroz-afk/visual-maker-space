@@ -65,6 +65,7 @@ export default function AplicativosPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('kanban');
   const [pendencyFilter, setPendencyFilter] = useState('todos');
+  const [phaseFilter, setPhaseFilter] = useState('todas');
   const [form, setForm] = useState({
     nome: '', url_cliente: '', email: '', whatsapp: '', plataforma: 'ambos', responsavel_nome: '',
   });
@@ -202,12 +203,27 @@ export default function AplicativosPage() {
 
   // Filtered pendencies
   const filteredPendencies = useMemo(() => {
-    if (pendencyFilter === 'todos') return internalPendencies;
+    let result = internalPendencies;
     if (pendencyFilter === 'sem_responsavel') {
-      return internalPendencies.filter(g => !g.cliente?.responsavel_nome);
+      result = result.filter(g => !g.cliente?.responsavel_nome);
+    } else if (pendencyFilter !== 'todos') {
+      result = result.filter(g => g.cliente?.responsavel_nome === pendencyFilter);
     }
-    return internalPendencies.filter(g => g.cliente?.responsavel_nome === pendencyFilter);
-  }, [internalPendencies, pendencyFilter]);
+    if (phaseFilter !== 'todas') {
+      const phase = parseInt(phaseFilter);
+      result = result.map(g => ({
+        ...g,
+        items: g.items.filter((item: any) => item.fase_numero === phase),
+      })).filter(g => g.items.length > 0);
+    }
+    return result;
+  }, [internalPendencies, pendencyFilter, phaseFilter]);
+
+  const uniquePhases = useMemo(() => {
+    const phases = new Set<number>();
+    internalPendencies.forEach(g => g.items.forEach((item: any) => phases.add(item.fase_numero)));
+    return Array.from(phases).sort((a, b) => a - b);
+  }, [internalPendencies]);
 
   // Unique responsáveis for filter
   const uniqueResponsaveis = useMemo(() => {
@@ -563,9 +579,20 @@ export default function AplicativosPage() {
                 ))}
               </SelectContent>
             </Select>
-            {pendencyFilter !== 'todos' && (
-              <Button variant="ghost" size="sm" onClick={() => setPendencyFilter('todos')} className="text-xs">
-                Limpar filtro
+            <Select value={phaseFilter} onValueChange={setPhaseFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filtrar por fase" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas as fases</SelectItem>
+                {uniquePhases.map(phase => (
+                  <SelectItem key={phase} value={String(phase)}>Fase {phase}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {(pendencyFilter !== 'todos' || phaseFilter !== 'todas') && (
+              <Button variant="ghost" size="sm" onClick={() => { setPendencyFilter('todos'); setPhaseFilter('todas'); }} className="text-xs">
+                Limpar filtros
               </Button>
             )}
             <span className="text-xs text-muted-foreground ml-auto">
