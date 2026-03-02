@@ -77,15 +77,12 @@ const emptyForm = {
 };
 
   const buildGoogleCalendarUrl = (meeting: { title: string; description?: string | null; meeting_date: string; meeting_time: string; duration_minutes: number; meeting_url?: string | null; client_name?: string | null; client_email?: string | null }) => {
-    const startDate = meeting.meeting_date.replace(/-/g, '');
-    const [h, m] = meeting.meeting_time.split(':').map(Number);
-    const startTime = `${String(h).padStart(2, '0')}${String(m).padStart(2, '0')}00`;
-    const endMinutes = h * 60 + m + meeting.duration_minutes;
-    const endH = Math.floor(endMinutes / 60);
-    const endM = endMinutes % 60;
-    const endTime = `${String(endH).padStart(2, '0')}${String(endM).padStart(2, '0')}00`;
-
-    const dates = `${startDate}T${startTime}/${startDate}T${endTime}`;
+    const startDt = new Date(`${meeting.meeting_date}T${meeting.meeting_time}:00`);
+    const endDt = new Date(startDt.getTime() + meeting.duration_minutes * 60000);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const formatDt = (dt: Date) =>
+      `${dt.getFullYear()}${pad(dt.getMonth()+1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}00`;
+    const dates = `${formatDt(startDt)}/${formatDt(endDt)}`;
     const details = [meeting.description, meeting.meeting_url ? `Link: ${meeting.meeting_url}` : ''].filter(Boolean).join('\n');
 
     const params = new URLSearchParams({
