@@ -1,4 +1,4 @@
-import { FileImage, LayoutDashboard, LogOut, CalendarDays, Crown, Briefcase, BarChart3, Package, Headset, Home, Settings, Users, Kanban, ShieldCheck, Smartphone, ExternalLink } from 'lucide-react';
+import { FileImage, LayoutDashboard, LogOut, CalendarDays, Crown, Briefcase, BarChart3, Package, Headset, Home, Settings, Users, Kanban, ShieldCheck, Smartphone, ExternalLink, Database } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -36,6 +36,7 @@ const csModules = [
 const adminModules = [
   { title: 'Usuários e Permissões', url: '/hub/admin/usuarios', icon: Users, permission: 'admin.view' },
   { title: 'Permissões por Perfil', url: '/hub/admin/permissoes', icon: ShieldCheck, permission: 'admin.manage_permissions' },
+  { title: 'Campos da Carteira', url: '/hub/admin/campos', icon: Database, permission: 'admin.view' },
   { title: 'Hub do Cliente', url: '/cliente', icon: ExternalLink, permission: 'admin.view' },
 ];
 
