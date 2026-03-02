@@ -1085,6 +1085,70 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                       </div>
                     );
                   })()}
+                  {/* Phase 4 — store approval visibility */}
+                  {selectedTimelineFase === 4 && (() => {
+                    const fase3 = fases.find((f: any) => f.numero === 3);
+                    const fase3Done = fase3?.status === 'concluida';
+                    const fase4 = fases.find((f: any) => f.numero === 4);
+                    const isCurrent = cliente.fase_atual === 4;
+                    const isDone = fase4?.status === 'concluida';
+                    const baseDate = fase3Done && fase3?.data_conclusao ? new Date(fase3.data_conclusao) : null;
+                    const startDate = fase4?.data_inicio ? new Date(fase4.data_inicio) : baseDate;
+                    const showGoogle = cliente.plataforma !== 'apple';
+                    const showApple = cliente.plataforma !== 'google';
+
+                    return (
+                      <div className="space-y-2 pt-2 border-t border-white/10">
+                        {showGoogle && (
+                          <div className={`rounded-lg p-3 ${isDone ? 'bg-green-500/10 border border-green-500/20' : 'bg-blue-500/10 border border-blue-500/20'}`}>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm">🤖</span>
+                                <span className="text-xs font-medium">{isDone ? 'Google Play — Aprovado' : 'Google Play — Aguardando aprovação'}</span>
+                              </div>
+                              <Badge variant="outline" className={`text-[10px] ${isDone ? 'border-green-500/30 text-green-400' : 'border-blue-500/30 text-blue-400'}`}>
+                                {isDone ? '✅ Aprovado' : '2–4 dias úteis'}
+                              </Badge>
+                            </div>
+                            {!isDone && fase3Done && startDate && (
+                              <div className="mt-2 space-y-1">
+                                <p className="text-[10px] text-blue-400/70">📆 Previsão máxima: <span className="font-semibold">{format(addBusinessDays(startDate, 4), 'dd/MM/yyyy')}</span></p>
+                                <Progress value={isCurrent ? 50 : 0} className="h-1" />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {showApple && (
+                          <div className={`rounded-lg p-3 ${isDone ? 'bg-green-500/10 border border-green-500/20' : 'bg-purple-500/10 border border-purple-500/20'}`}>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm">🍎</span>
+                                <span className="text-xs font-medium">{isDone ? 'App Store — Aprovado' : 'App Store — Aguardando aprovação'}</span>
+                              </div>
+                              <Badge variant="outline" className={`text-[10px] ${isDone ? 'border-green-500/30 text-green-400' : 'border-purple-500/30 text-purple-400'}`}>
+                                {isDone ? '✅ Aprovado' : '5–10 dias úteis'}
+                              </Badge>
+                            </div>
+                            {!isDone && fase3Done && startDate && (
+                              <div className="mt-2 space-y-1">
+                                <p className="text-[10px] text-purple-400/70">📆 Previsão máxima: <span className="font-semibold">{format(addBusinessDays(startDate, 10), 'dd/MM/yyyy')}</span></p>
+                                <Progress value={isCurrent ? 30 : 0} className="h-1" />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {!fase3Done && (
+                          <div className="text-xs text-white/40 py-1 flex items-center gap-2">
+                            <Lock className="h-3.5 w-3.5 shrink-0" />
+                            <span>As datas de previsão serão calculadas após a conclusão da "Criação e Submissão"</span>
+                          </div>
+                        )}
+                        {isCurrent && (
+                          <p className="text-[10px] text-white/30 text-center">⏳ Esta etapa depende exclusivamente da aprovação das lojas. Você será notificado assim que houver retorno.</p>
+                        )}
+                      </div>
+                    );
+                  })()}
                   {fase?.data_previsao && (
                     <p className="text-[10px] text-white/30 pt-1">📅 Previsão: {format(new Date(fase.data_previsao), 'dd/MM/yyyy')}</p>
                   )}
