@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { usePermissions } from '@/hooks/usePermissions';
-import { ArrowLeft, Copy, ExternalLink, Clock, CheckCircle2, Circle, Lock, AlertTriangle, Upload, MessageSquare, Image as ImageIcon, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Copy, ExternalLink, Clock, CheckCircle2, Circle, Lock, AlertTriangle, Upload, MessageSquare, Image as ImageIcon, ShieldCheck, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -107,7 +107,7 @@ export default function AplicativoDetailPage() {
       const { error } = await supabase.from('app_checklist_items').update({
         feito,
         feito_em: feito ? new Date().toISOString() : null,
-        feito_por: 'admin',
+        feito_por: feito ? 'admin' : null,
       }).eq('id', id);
       if (error) throw error;
     },
@@ -116,6 +116,74 @@ export default function AplicativoDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['app-fases', clienteId] });
       queryClient.invalidateQueries({ queryKey: ['app-cliente', clienteId] });
     },
+  });
+
+  const revertFase = useMutation({
+    mutationFn: async (targetFase: number) => {
+      // Set fase_atual back
+      const { error: clienteErr } = await supabase.from('app_clientes').update({
+        fase_atual: targetFase,
+      }).eq('id', clienteId!);
+      if (clienteErr) throw clienteErr;
+
+      // Reopen the target phase
+      const { error: faseErr } = await supabase.from('app_fases').update({
+        status: 'em_andamento',
+        data_conclusao: null,
+      }).eq('cliente_id', clienteId!).eq('numero', targetFase);
+      if (faseErr) throw faseErr;
+
+      // Block all phases after target
+      const { error: blockErr } = await supabase.from('app_fases').update({
+        status: 'bloqueada',
+        data_inicio: null,
+        data_conclusao: null,
+        sla_vencimento: null,
+        sla_violado: false,
+      }).eq('cliente_id', clienteId!).gt('numero', targetFase);
+      if (blockErr) throw blockErr;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['app-fases', clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['app-cliente', clienteId] });
+      toast.success('Fase revertida com sucesso!');
+    },
+    onError: (e: any) => toast.error('Erro ao reverter: ' + e.message),
+  });
+
+  const reopenFase = useMutation({
+    mutationFn: async (faseNumero: number) => {
+      // Reopen the phase
+      const { error: faseErr } = await supabase.from('app_fases').update({
+        status: 'em_andamento',
+        data_conclusao: null,
+      }).eq('cliente_id', clienteId!).eq('numero', faseNumero);
+      if (faseErr) throw faseErr;
+
+      // If fase < fase_atual, revert fase_atual
+      if (cliente && faseNumero < (cliente.fase_atual || 0)) {
+        const { error: clienteErr } = await supabase.from('app_clientes').update({
+          fase_atual: faseNumero,
+        }).eq('id', clienteId!);
+        if (clienteErr) throw clienteErr;
+
+        // Block phases after this one
+        const { error: blockErr } = await supabase.from('app_fases').update({
+          status: 'bloqueada',
+          data_inicio: null,
+          data_conclusao: null,
+          sla_vencimento: null,
+          sla_violado: false,
+        }).eq('cliente_id', clienteId!).gt('numero', faseNumero);
+        if (blockErr) throw blockErr;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['app-fases', clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['app-cliente', clienteId] });
+      toast.success('Fase reaberta!');
+    },
+    onError: (e: any) => toast.error('Erro: ' + e.message),
   });
 
   const sendMessage = useMutation({
@@ -274,9 +342,40 @@ export default function AplicativoDetailPage() {
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent className="w-full sm:max-w-lg">
           <SheetHeader>
-            <SheetTitle>
-              {selectedFase !== null ? `F${selectedFase} — ${FASE_NAMES[selectedFase] || ''}` : 'Detalhes'}
-            </SheetTitle>
+            <div className="flex items-center justify-between">
+              <SheetTitle>
+                {selectedFase !== null ? `F${selectedFase} — ${FASE_NAMES[selectedFase] || ''}` : 'Detalhes'}
+              </SheetTitle>
+              {canEdit && selectedFase !== null && (() => {
+                const fase = fases.find(f => f.numero === selectedFase);
+                if (!fase) return null;
+                const isConcluded = fase.status === 'concluida';
+                const isAfterCurrent = selectedFase > (cliente?.fase_atual || 0);
+                if (isConcluded || isAfterCurrent) {
+                  return (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 text-xs"
+                      disabled={revertFase.isPending || reopenFase.isPending}
+                      onClick={() => {
+                        if (confirm(`Tem certeza que deseja reabrir a fase "${FASE_NAMES[selectedFase]}"? Fases posteriores serão bloqueadas.`)) {
+                          if (isConcluded) {
+                            reopenFase.mutate(selectedFase);
+                          } else {
+                            revertFase.mutate(selectedFase);
+                          }
+                        }
+                      }}
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" />
+                      {isConcluded ? 'Reabrir fase' : 'Voltar para esta fase'}
+                    </Button>
+                  );
+                }
+                return null;
+              })()}
+            </div>
           </SheetHeader>
           <Tabs defaultValue="checklist" className="mt-4">
             <TabsList className="w-full">
