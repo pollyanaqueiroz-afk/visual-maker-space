@@ -32,7 +32,7 @@ export default function HubLayout({ children }: Props) {
           <header className="h-12 flex items-center border-b border-border/40 px-4">
             <SidebarToggleButton />
           </header>
-          <main className="flex-1 p-6">
+          <main className="flex-1 p-6 min-w-0 overflow-hidden">
             {children}
           </main>
         </div>
