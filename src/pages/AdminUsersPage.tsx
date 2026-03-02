@@ -320,7 +320,7 @@ export default function AdminUsersPage() {
         <Input
           placeholder="Buscar por nome ou email..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => { setSearch(e.target.value); setSelectedIds(new Set()); }}
           className="pl-9"
         />
       </div>
