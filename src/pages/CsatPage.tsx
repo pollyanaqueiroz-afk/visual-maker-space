@@ -178,14 +178,17 @@ export default function CsatPage() {
               <label className="text-sm font-medium text-gray-700">
                 Gostaria de deixar um comentário? (opcional)
               </label>
-              <Textarea
-                value={comment}
-                onChange={e => setComment(e.target.value)}
-                placeholder="Conte-nos mais sobre sua experiência..."
-                rows={3}
-                className="resize-none"
-                maxLength={2000}
-              />
+              <div className="space-y-1">
+                <Textarea
+                  value={comment}
+                  onChange={e => setComment(e.target.value)}
+                  placeholder="Conte-nos mais sobre sua experiência..."
+                  rows={3}
+                  className="resize-none"
+                  maxLength={2000}
+                />
+                <p className="text-xs text-right text-muted-foreground">{comment.length}/2000</p>
+              </div>
             </div>
 
             {/* Submit */}
