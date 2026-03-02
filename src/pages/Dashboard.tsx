@@ -287,12 +287,12 @@ export default function Dashboard() {
   return (
       <div className="p-6 space-y-8 max-w-[1800px] mx-auto">
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <Card>
             <CardContent className="pt-4 pb-4">
               <div className="flex items-center gap-2 mb-1">
                 <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">Total Artes</p>
+                <p className="text-sm text-muted-foreground whitespace-nowrap">Total Artes</p>
               </div>
               <p className="text-3xl font-bold">{totalImages}</p>
             </CardContent>
@@ -310,7 +310,7 @@ export default function Dashboard() {
             <CardContent className="pt-4 pb-4">
               <div className="flex items-center gap-2 mb-1">
                 <Loader2 className="h-4 w-4 text-info" />
-                <p className="text-sm text-muted-foreground">Em Produção</p>
+                <p className="text-sm text-muted-foreground whitespace-nowrap">Em Produção</p>
               </div>
               <p className="text-3xl font-bold text-info">{inProgressImages}</p>
             </CardContent>
@@ -319,7 +319,7 @@ export default function Dashboard() {
             <CardContent className="pt-4 pb-4">
               <div className="flex items-center gap-2 mb-1">
                 <Eye className="h-4 w-4 text-primary" />
-                <p className="text-sm text-muted-foreground">Em Revisão</p>
+                <p className="text-sm text-muted-foreground whitespace-nowrap">Em Revisão</p>
               </div>
               <p className="text-3xl font-bold text-primary">{reviewImages}</p>
             </CardContent>
@@ -337,7 +337,7 @@ export default function Dashboard() {
             <CardContent className="pt-4 pb-4">
               <div className="flex items-center gap-2 mb-1">
                 <Users className="h-4 w-4 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">Clientes Abertos</p>
+                <p className="text-sm text-muted-foreground whitespace-nowrap">Clientes Abertos</p>
               </div>
               <p className="text-3xl font-bold">{openClients}</p>
             </CardContent>
@@ -345,7 +345,7 @@ export default function Dashboard() {
         </div>
 
         <Tabs defaultValue="artes" className="space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4">
             <TabsList>
               <TabsTrigger value="artes">Artes</TabsTrigger>
               <TabsTrigger value="revisoes" className="flex items-center gap-2">
@@ -355,11 +355,11 @@ export default function Dashboard() {
                 <BarChart3 className="h-4 w-4" /> Analytics
               </TabsTrigger>
             </TabsList>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-2 sm:max-w-xs">
               <Button
                 variant="destructive"
                 size="sm"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 justify-start"
                 onClick={() => {
                   navigator.clipboard.writeText(`${window.location.origin}/briefing`);
                   toast.success('Link do formulário copiado!');
@@ -371,7 +371,7 @@ export default function Dashboard() {
               <Button
                 variant="outline"
                 size="sm"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 justify-start"
                 onClick={() => {
                   navigator.clipboard.writeText(`${window.location.origin}/designer`);
                   toast.success('Link do painel do designer copiado!');
@@ -383,7 +383,7 @@ export default function Dashboard() {
               <Button
                 variant="outline"
                 size="sm"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 justify-start"
                 onClick={() => {
                   navigator.clipboard.writeText(`${window.location.origin}/client-review`);
                   toast.success('Link da validação do cliente copiado!');
@@ -395,7 +395,7 @@ export default function Dashboard() {
               <Button
                 variant="outline"
                 size="sm"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 justify-start"
                 onClick={handleDownloadReport}
                 disabled={downloadingReport}
               >
