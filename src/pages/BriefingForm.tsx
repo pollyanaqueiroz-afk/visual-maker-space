@@ -53,9 +53,13 @@ const initialForm: BriefingFormData = {
   community_banner: { ...defaultImageBriefing },
 };
 
-export default function BriefingForm() {
+interface BriefingFormProps {
+  mockupOnly?: boolean;
+}
+
+export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) {
   const { user } = useAuth();
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(mockupOnly ? 1 : 0);
   const [form, setForm] = useState<BriefingFormData>(initialForm);
   const [additionalInfo, setAdditionalInfo] = useState('');
   const [selections, setSelections] = useState<ArtSelection>({
@@ -65,7 +69,7 @@ export default function BriefingForm() {
     trail_banner: false,
     challenge_banner: false,
     community_banner: false,
-    has_app: false,
+    has_app: mockupOnly,
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -316,12 +320,22 @@ export default function BriefingForm() {
       toast.error('Selecione pelo menos um tipo de arte');
       return;
     }
-    setStep(s => s + 1);
+    // Skip step 2 when mockupOnly (go from step 1 directly to step 3)
+    if (mockupOnly && step === 1) {
+      setStep(3);
+    } else {
+      setStep(s => s + 1);
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const prevStep = () => {
-    setStep(s => s - 1);
+    // Skip step 2 when mockupOnly (go from step 3 back to step 1)
+    if (mockupOnly && step === 3) {
+      setStep(1);
+    } else {
+      setStep(s => s - 1);
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 

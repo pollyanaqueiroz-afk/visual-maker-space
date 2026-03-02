@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -108,6 +109,7 @@ interface Props {
 }
 
 export default function AppClientPortalContent({ clienteId }: Props) {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [expandedFase, setExpandedFase] = useState<number | null>(null);
   const [selectedTimelineFase, setSelectedTimelineFase] = useState<number | null>(null);
@@ -932,8 +934,14 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                       <div key={item.id}>
                         <button
                           className="w-full flex items-center gap-2 text-xs py-1.5 hover:bg-white/5 rounded px-1 -mx-1 transition-colors"
-                          onClick={() => item.feito && filledValue ? setExpandedTimelineItem(isExpanded ? null : item.id) : null}
-                          disabled={!item.feito || !filledValue}
+                          onClick={() => {
+                            if (item.id === 'mockup-virtual' && !item.feito) {
+                              navigate('/cliente/solicitar?mockup=1');
+                            } else if (item.feito && filledValue) {
+                              setExpandedTimelineItem(isExpanded ? null : item.id);
+                            }
+                          }}
+                          disabled={item.id !== 'mockup-virtual' && (!item.feito || !filledValue)}
                         >
                           {item.feito ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" /> : <Circle className="h-3.5 w-3.5 text-white/30 shrink-0" />}
                           <span className={`text-left ${item.feito ? 'text-white/40 line-through' : 'text-white/70'}`}>{item.texto}</span>
@@ -1256,44 +1264,13 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           {/* Mockup request subtask — shown in phase 0 */}
           {cliente.fase_atual === 0 && !mockupRequest && (
             <div className="border-t border-white/10 pt-4 mt-2">
-              {!showMockupForm ? (
-                <Button
-                  variant="outline"
-                  className="w-full border-primary/30 text-primary hover:bg-primary/10"
-                  onClick={() => setShowMockupForm(true)}
-                >
-                  <Palette className="h-4 w-4 mr-2" /> Solicitar Mockup do Aplicativo
-                </Button>
-              ) : (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  className="space-y-3 overflow-hidden"
-                >
-                  <h3 className="text-sm font-semibold flex items-center gap-2">
-                    <Palette className="h-4 w-4 text-primary" /> Solicitar Mockup
-                  </h3>
-                  <p className="text-xs text-white/50">Seu mockup será criado pela equipe de design. Descreva observações ou referências caso tenha:</p>
-                  <Textarea
-                    placeholder="Ex: gostaria de cores vibrantes, referência do app X..."
-                    className="bg-white/5 border-white/10 text-white text-sm min-h-[60px]"
-                    value={mockupObservations}
-                    onChange={e => setMockupObservations(e.target.value)}
-                  />
-                  <div className="flex gap-2">
-                    <Button
-                      className="flex-1"
-                      onClick={() => submitMockupRequest.mutate()}
-                      disabled={submitMockupRequest.isPending}
-                    >
-                      {submitMockupRequest.isPending ? 'Enviando...' : '🎨 Enviar solicitação'}
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => { setShowMockupForm(false); setMockupObservations(''); }}>
-                      Cancelar
-                    </Button>
-                  </div>
-                </motion.div>
-              )}
+              <Button
+                variant="outline"
+                className="w-full border-primary/30 text-primary hover:bg-primary/10"
+                onClick={() => navigate('/cliente/solicitar?mockup=1')}
+              >
+                <Palette className="h-4 w-4 mr-2" /> Solicitar Mockup do Aplicativo
+              </Button>
             </div>
           )}
           {cliente.fase_atual === 0 && mockupRequest && (
