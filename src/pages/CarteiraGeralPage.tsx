@@ -35,6 +35,7 @@ export default function CarteiraGeralPage() {
   const topScrollInnerRef = useRef<HTMLDivElement>(null);
   const { hasPermission } = usePermissions();
   const canImport = hasPermission('carteira.import');
+  const canExport = hasPermission('carteira.export');
   const { visibleFields, isLoading: fieldsLoading } = useFieldDefinitions();
   const [clientRecords, setClientRecords] = useState<ClientRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -178,14 +179,18 @@ export default function CarteiraGeralPage() {
           <p className="text-sm text-muted-foreground">Visão geral de todos os clientes importados</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleExportCSV}>
-            <Download className="h-4 w-4 mr-1.5" />
-            CSV
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleExportExcel}>
-            <Download className="h-4 w-4 mr-1.5" />
-            Excel
-          </Button>
+          {canExport && (
+            <>
+              <Button variant="outline" size="sm" onClick={handleExportCSV}>
+                <Download className="h-4 w-4 mr-1.5" />
+                CSV
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleExportExcel}>
+                <Download className="h-4 w-4 mr-1.5" />
+                Excel
+              </Button>
+            </>
+          )}
           {canImport && (
             <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
               <Upload className="h-4 w-4 mr-1.5" />
