@@ -17,14 +17,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const handleSession = async (session: Session | null) => {
+      if (session?.user?.email && !session.user.email.endsWith('@curseduca.com')) {
+        await supabase.auth.signOut();
+        return;
+      }
       setSession(session);
       setLoading(false);
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      handleSession(session);
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
+      handleSession(session);
     });
 
     return () => subscription.unsubscribe();
