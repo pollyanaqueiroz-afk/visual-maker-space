@@ -102,7 +102,9 @@ const STEP_BY_STEP: Record<string, string[]> = {
 };
 
 const FASE_NAMES = ['Pré-Requisitos','Primeiros Passos','Validação pela Loja','Assets e Mockup','Formulário do App','Criação e Submissão','Aprovação das Lojas','Teste do App','Publicado 🎉'];
-const HIDDEN_FASES = [3]; // Hide Assets e Mockup from main timeline — now parallel
+const HIDDEN_FASES = [3, 4]; // Hide Assets e Mockup (parallel) and Formulário (merged into Criação e Submissão)
+// Map fase_atual 4 to display as "Criação e Submissão"
+const getDisplayFase = (faseAtual: number) => faseAtual === 4 ? 5 : faseAtual;
 
 interface Props {
   clienteId: string;
@@ -825,17 +827,21 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           <div className="absolute top-5 left-6 right-6 h-0.5 bg-white/10" />
           <div
             className="absolute top-5 left-6 h-0.5 bg-green-500 transition-all duration-500"
-            style={{ width: `calc(${((cliente.fase_atual) / (FASE_NAMES.length - 1)) * 100}% - 48px)` }}
+            style={{ width: `calc(${((getDisplayFase(cliente.fase_atual)) / (FASE_NAMES.length - 1)) * 100}% - 48px)` }}
           />
 
           <div className="relative flex justify-between">
             {FASE_NAMES.map((name, idx) => {
               if (HIDDEN_FASES.includes(idx)) return null;
               const fase = fases.find((f: any) => f.numero === idx);
-              const isCurrent = idx === cliente.fase_atual;
-              const isDone = fase?.status === 'concluida';
+              // Phase 5 is "current" when fase_atual is 4 or 5
+              const isCurrent = idx === getDisplayFase(cliente.fase_atual);
+              const isDone = fase?.status === 'concluida' && (idx !== 5 || cliente.fase_atual > 5);
               const isLate = fase?.status === 'atrasada';
-              const faseItems = checklist.filter((i: any) => i.fase_numero === idx);
+              // For phase 5, also include phase 4 items
+              const faseItems = idx === 5
+                ? checklist.filter((i: any) => i.fase_numero === 4 || i.fase_numero === 5)
+                : checklist.filter((i: any) => i.fase_numero === idx);
               const doneCount = faseItems.filter((i: any) => i.feito && i.obrigatorio).length;
               const totalCount = faseItems.filter((i: any) => i.obrigatorio).length;
               const progress = totalCount > 0 ? (doneCount / totalCount) * 100 : 0;
@@ -889,8 +895,11 @@ export default function AppClientPortalContent({ clienteId }: Props) {
         {/* Expanded phase checklist */}
         <AnimatePresence>
           {selectedTimelineFase !== null && (() => {
-            const items = checklist.filter((i: any) => i.fase_numero === selectedTimelineFase);
-            const isFuture = selectedTimelineFase > cliente.fase_atual;
+            // For phase 5, merge phase 4 (form) items as first items
+            const items = selectedTimelineFase === 5
+              ? [...checklist.filter((i: any) => i.fase_numero === 4), ...checklist.filter((i: any) => i.fase_numero === 5)]
+              : checklist.filter((i: any) => i.fase_numero === selectedTimelineFase);
+            const isFuture = selectedTimelineFase > getDisplayFase(cliente.fase_atual);
             const fase = fases.find((f: any) => f.numero === selectedTimelineFase);
             return (
               <motion.div
@@ -1044,7 +1053,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
 
         {cliente.fase_atual < 8 && (
           <div className="flex items-center justify-between text-xs text-white/50 pt-1">
-            <span>📍 {FASE_NAMES[cliente.fase_atual]}</span>
+            <span>📍 {FASE_NAMES[getDisplayFase(cliente.fase_atual)]}</span>
             {cliente.prazo_estimado && <span>🗓️ {format(new Date(cliente.prazo_estimado), 'dd/MM/yyyy')}</span>}
           </div>
         )}
@@ -1064,7 +1073,9 @@ export default function AppClientPortalContent({ clienteId }: Props) {
       {cliente.fase_atual < 8 && (
         <Card className="bg-[#1E293B] border-white/10 p-6 space-y-4">
           <h2 className="text-lg font-semibold">
-            {hasClientAction ? '📋 O que fazer agora' : '⏳ Nossa equipe está trabalhando'}
+            {cliente.fase_atual === 4
+              ? (formulario?.preenchido_completo ? '⏳ Nossa equipe está validando o formulário' : '📋 O que fazer agora')
+              : hasClientAction ? '📋 O que fazer agora' : '⏳ Nossa equipe está trabalhando'}
           </h2>
 
 
@@ -1158,39 +1169,77 @@ export default function AppClientPortalContent({ clienteId }: Props) {
               </div>
             );
           })() : cliente.fase_atual === 4 ? (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {formulario?.preenchido_completo ? (
-                <div className="rounded-lg p-4 bg-green-500/10 border border-green-500/20 flex items-start gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-green-400">Formulário enviado!</p>
-                    <p className="text-xs text-green-400/70 mt-0.5">Nossa equipe já recebeu os dados do seu app e está preparando a criação. Em breve você terá novidades.</p>
-                    {formulario.enviado_em && (
-                      <p className="text-[10px] text-green-400/50 mt-1">Enviado em {format(new Date(formulario.enviado_em), 'dd/MM/yyyy HH:mm')}</p>
-                    )}
+                <div className="space-y-3">
+                  <div className="rounded-lg p-4 bg-green-500/10 border border-green-500/20 flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-green-400">Formulário enviado!</p>
+                      <p className="text-xs text-green-400/70 mt-0.5">Nossa equipe está validando os dados. Após a validação, a criação e submissão será iniciada.</p>
+                      {formulario.enviado_em && (
+                        <p className="text-[10px] text-green-400/50 mt-1">Enviado em {format(new Date(formulario.enviado_em), 'dd/MM/yyyy HH:mm')}</p>
+                      )}
+                    </div>
                   </div>
+                  {/* Show form data summary */}
+                  <div className="rounded-lg bg-white/5 border border-white/10 p-4 space-y-2">
+                    <p className="text-xs font-semibold text-white/50">📝 Dados enviados</p>
+                    <div className="space-y-1.5 text-xs">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                        <span className="text-white/70">Nome do aplicativo:</span>
+                        <span className="text-white/90 font-medium">{formulario.nome_app}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                        <span className="text-white/70">Descrição curta:</span>
+                        <span className="text-white/90 font-medium truncate">{formulario.descricao_curta}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                        <span className="text-white/70">Descrição completa:</span>
+                        <span className="text-white/90 font-medium">{formulario.descricao_longa ? '✅ Preenchida' : '—'}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                        <span className="text-white/70">Política de privacidade:</span>
+                        <span className="text-white/90 font-medium truncate">{formulario.url_privacidade}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-white/30 text-center">⏳ O analista tem até 1 dia útil para validar o formulário.</p>
                 </div>
               ) : (
-                <>
-                  <p className="text-sm text-white/60">Preencha os dados abaixo para que nossa equipe possa criar e publicar o seu app nas lojas.</p>
-                  <div className="rounded-lg p-3 bg-primary/10 border border-primary/20 flex items-center gap-3">
-                    <span className="text-xl">📝</span>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Formulário do seu aplicativo</p>
-                      <p className="text-xs text-white/50">Nome, descrição, links de privacidade e termos</p>
+                <div className="space-y-4">
+                  <p className="text-sm text-white/60">Preencha os dados do seu aplicativo para iniciar a criação nas lojas.</p>
+                  <div id="form-app-section" className="space-y-3 rounded-lg bg-white/5 border border-white/10 p-4">
+                    <h3 className="text-sm font-semibold flex items-center gap-2">📝 Formulário do Aplicativo</h3>
+                    <div>
+                      <Label className="text-white/70">Nome do aplicativo *</Label>
+                      <Input className="bg-white/5 border-white/10 text-white" value={formData.nome_app} onChange={e => setFormData(p => ({ ...p, nome_app: e.target.value }))} />
                     </div>
-                    <Button
-                      size="sm"
-                      className="shrink-0"
-                      onClick={() => {
-                        const el = document.getElementById('form-app-section');
-                        el?.scrollIntoView({ behavior: 'smooth' });
-                      }}
-                    >
-                      Preencher
+                    <div>
+                      <Label className="text-white/70">Descrição curta * ({formData.descricao_curta.length}/80)</Label>
+                      <Input className="bg-white/5 border-white/10 text-white" value={formData.descricao_curta} maxLength={80} onChange={e => setFormData(p => ({ ...p, descricao_curta: e.target.value }))} />
+                    </div>
+                    <div>
+                      <Label className="text-white/70">Descrição completa ({formData.descricao_longa.length}/4000)</Label>
+                      <Textarea className="bg-white/5 border-white/10 text-white min-h-[120px]" value={formData.descricao_longa} maxLength={4000} onChange={e => setFormData(p => ({ ...p, descricao_longa: e.target.value }))} />
+                    </div>
+                    <div>
+                      <Label className="text-white/70">URL Política de Privacidade *</Label>
+                      <Input className="bg-white/5 border-white/10 text-white" value={formData.url_privacidade} onChange={e => setFormData(p => ({ ...p, url_privacidade: e.target.value }))} />
+                    </div>
+                    <div>
+                      <Label className="text-white/70">URL Termos de Uso</Label>
+                      <Input className="bg-white/5 border-white/10 text-white" value={formData.url_termos} onChange={e => setFormData(p => ({ ...p, url_termos: e.target.value }))} />
+                    </div>
+                    <Button className="w-full" onClick={() => saveForm.mutate()} disabled={saveForm.isPending || !formData.nome_app || !formData.descricao_curta || !formData.url_privacidade}>
+                      {saveForm.isPending ? 'Salvando...' : 'Enviar formulário'}
                     </Button>
                   </div>
-                </>
+                </div>
               )}
             </div>
           ) : (
@@ -1362,38 +1411,6 @@ export default function AppClientPortalContent({ clienteId }: Props) {
               ))}
             </div>
           )}
-        </Card>
-      )}
-
-      {/* Form (phase 4) */}
-      {cliente.fase_atual === 4 && (
-        <Card id="form-app-section" className="bg-[#1E293B] border-white/10 p-6 space-y-4">
-          <h2 className="text-lg font-semibold">📝 Dados do seu aplicativo</h2>
-          <div className="space-y-3">
-            <div>
-              <Label className="text-white/70">Nome do aplicativo *</Label>
-              <Input className="bg-white/5 border-white/10 text-white" value={formData.nome_app} onChange={e => setFormData(p => ({ ...p, nome_app: e.target.value }))} />
-            </div>
-            <div>
-              <Label className="text-white/70">Descrição curta * ({formData.descricao_curta.length}/80)</Label>
-              <Input className="bg-white/5 border-white/10 text-white" value={formData.descricao_curta} maxLength={80} onChange={e => setFormData(p => ({ ...p, descricao_curta: e.target.value }))} />
-            </div>
-            <div>
-              <Label className="text-white/70">Descrição completa ({formData.descricao_longa.length}/4000)</Label>
-              <Textarea className="bg-white/5 border-white/10 text-white min-h-[120px]" value={formData.descricao_longa} maxLength={4000} onChange={e => setFormData(p => ({ ...p, descricao_longa: e.target.value }))} />
-            </div>
-            <div>
-              <Label className="text-white/70">URL Política de Privacidade *</Label>
-              <Input className="bg-white/5 border-white/10 text-white" value={formData.url_privacidade} onChange={e => setFormData(p => ({ ...p, url_privacidade: e.target.value }))} />
-            </div>
-            <div>
-              <Label className="text-white/70">URL Termos de Uso</Label>
-              <Input className="bg-white/5 border-white/10 text-white" value={formData.url_termos} onChange={e => setFormData(p => ({ ...p, url_termos: e.target.value }))} />
-            </div>
-            <Button className="w-full" onClick={() => saveForm.mutate()} disabled={saveForm.isPending || !formData.nome_app || !formData.descricao_curta || !formData.url_privacidade}>
-              {saveForm.isPending ? 'Salvando...' : 'Enviar formulário'}
-            </Button>
-          </div>
         </Card>
       )}
 
