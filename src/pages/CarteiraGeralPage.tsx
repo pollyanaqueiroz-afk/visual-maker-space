@@ -9,8 +9,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import {
-  Globe, Users, Search, Loader2, DollarSign, Filter, X, Trash2, RefreshCw,
+  Globe, Users, Search, Loader2, DollarSign, Filter, X, Trash2, RefreshCw, Info,
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -149,29 +150,28 @@ export default function CarteiraGeralPage() {
 
   useEffect(() => { loadData(apiPage, debouncedSearch); }, [apiPage, debouncedSearch]);
 
-  // Load summary data from hub-summary endpoint
-  useEffect(() => {
-    const loadSummary = async () => {
-      try {
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-        const res = await fetch(`${supabaseUrl}/functions/v1/fetch-hub-summary`, {
-          headers: {
-            'Authorization': `Bearer ${supabaseKey}`,
-            'apikey': supabaseKey,
-          },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.total_clientes != null) setSummaryTotal(data.total_clientes);
-          if (data.receita_total != null) setSummaryReceita(data.receita_total);
-        }
-      } catch (err) {
-        console.error('Erro ao carregar summary:', err);
+  const loadSummary = useCallback(async () => {
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const res = await fetch(`${supabaseUrl}/functions/v1/fetch-hub-summary`, {
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'apikey': supabaseKey,
+        },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.total_clientes != null) setSummaryTotal(data.total_clientes);
+        if (data.receita_total != null) setSummaryReceita(data.receita_total);
       }
-    };
-    loadSummary();
+    } catch (err) {
+      console.error('Erro ao carregar summary:', err);
+    }
   }, []);
+
+  // Load summary data from hub-summary endpoint
+  useEffect(() => { loadSummary(); }, [loadSummary]);
 
   // Extract unique filter options dynamically
   const filterOptions = useMemo(() => {
@@ -248,10 +248,11 @@ export default function CarteiraGeralPage() {
                   toast.success(
                     `Sincronização concluída: ${data.synced} registros sincronizados${data.errors > 0 ? `, ${data.errors} erros` : ''}`
                   );
-                  loadData(1, debouncedSearch);
-                } catch (err: any) {
-                  console.error(err);
-                  toast.error(`Erro na sincronização: ${err.message}`);
+                   loadData(1, debouncedSearch);
+                   loadSummary();
+                 } catch (err: any) {
+                   console.error(err);
+                   toast.error(`Erro na sincronização: ${err.message}`);
                 } finally {
                   setSyncing(false);
                 }
@@ -277,7 +278,7 @@ export default function CarteiraGeralPage() {
         <Card>
           <CardContent className="p-4 flex flex-col items-center text-center gap-1">
             <Users className="h-5 w-5 text-primary" />
-            <span className="text-2xl font-bold text-foreground">0</span>
+            <span className="text-2xl font-bold text-foreground">{filtered.length}</span>
             <span className="text-[11px] text-muted-foreground">Exibindo</span>
           </CardContent>
         </Card>
@@ -287,7 +288,19 @@ export default function CarteiraGeralPage() {
             <span className="text-2xl font-bold text-foreground">
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.totalRevenue)}
             </span>
-            <span className="text-[11px] text-muted-foreground">Receita Total</span>
+            <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+              Receita Total
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-[260px] text-xs">
+                    Soma dos valores de fatura de todos os clientes adimplentes da base. Considera apenas clientes com status financeiro "Adimplente" e valor de fatura válido. Atualizado em tempo real.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </span>
           </CardContent>
         </Card>
       </div>
