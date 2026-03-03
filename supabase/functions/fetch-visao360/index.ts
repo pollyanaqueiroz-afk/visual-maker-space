@@ -88,10 +88,14 @@ Deno.serve(async (req) => {
     const idCurseduca = url.searchParams.get("id_curseduca");
     const page = url.searchParams.get("page") || "1";
     const perPage = url.searchParams.get("per_page") || "10";
+    const search = url.searchParams.get("search") || "";
 
     const basicAuth = btoa(`${apiUser}:${apiPass}`);
 
     let apiUrl = `${API_URL}?page=${page}&per_page=${perPage}`;
+    if (search) {
+      apiUrl += `&search=${encodeURIComponent(search)}`;
+    }
     if (idCurseduca) {
       apiUrl = `${API_URL}?id_curseduca=${encodeURIComponent(idCurseduca)}`;
     }
