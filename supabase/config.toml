@@ -38,3 +38,27 @@ verify_jwt = false
 
 [functions.monthly-app-report]
 verify_jwt = false
+
+[functions.fetch-visao360]
+verify_jwt = false
+
+[functions.sync-visao360]
+verify_jwt = false
+
+[functions.import-google-sheet]
+verify_jwt = false
+
+[functions.send-csat-email]
+verify_jwt = false
+
+[functions.submit-csat]
+verify_jwt = false
+
+[functions.notify-app-client]
+verify_jwt = false
+
+[functions.hubspot-webhook]
+verify_jwt = false
+
+[functions.dev-login]
+verify_jwt = false
