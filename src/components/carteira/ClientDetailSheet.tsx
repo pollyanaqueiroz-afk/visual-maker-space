@@ -18,103 +18,98 @@ interface Props {
 interface Section {
   title: string;
   icon: React.ReactNode;
-  fields: { label: string; key: string; format?: 'bytes' | 'currency' | 'link' | 'date' | 'number' }[];
+  fields: { label: string; key: string; format?: 'bytes' | 'currency' | 'link' | 'date' | 'number' | 'percent' }[];
 }
 
 const SECTIONS: Section[] = [
   {
-    title: 'Dados do Cliente',
+    title: 'Identificação',
     icon: <User className="h-4 w-4" />,
     fields: [
-      { label: 'Nome', key: 'client_name' },
-      { label: 'Email', key: 'email_do_cliente' },
+      { label: 'Nome', key: 'cliente_nome' },
+      { label: 'Email', key: 'cliente_email' },
       { label: 'ID Curseduca', key: 'id_curseduca' },
-      { label: 'URL da Plataforma', key: 'client_url', format: 'link' },
-      { label: 'Nome da Plataforma', key: 'nome_da_plataforma' },
+      { label: 'URL da Plataforma', key: 'url_plataforma', format: 'link' },
+    ],
+  },
+  {
+    title: 'Contrato & CS',
+    icon: <DollarSign className="h-4 w-4" />,
+    fields: [
       { label: 'Status Financeiro', key: 'status_financeiro' },
-      { label: 'Valor Mensal', key: 'valor_mensal', format: 'currency' },
-      { label: 'Plano Contratado', key: 'plano_contratado' },
-      { label: 'Plano Detalhado', key: 'plano_detalhado' },
-      { label: 'Origem do Dado', key: 'origem_do_dado' },
+      { label: 'Fatura Total', key: 'fatura_total', format: 'currency' },
+      { label: 'Plano Contratado', key: 'plano_base_consolidada' },
+      { label: 'Plano Detalhado', key: 'plano_nome_formatado' },
+      { label: 'CS Responsável', key: 'cs_nome' },
+      { label: 'Email CS', key: 'cs_email' },
+      { label: 'Etapa do CS', key: 'etapa_do_cs' },
+      { label: 'Origem', key: 'origem' },
     ],
   },
   {
-    title: 'Customer Success',
-    icon: <Activity className="h-4 w-4" />,
-    fields: [
-      { label: 'CS Responsável', key: 'nome_do_cs_atual' },
-      { label: 'Email CS', key: 'email_do_cs_atual' },
-      { label: 'Etapa do CS', key: 'etapa_antiga_sensedata' },
-    ],
-  },
-  {
-    title: 'Engajamento',
-    icon: <TrendingUp className="h-4 w-4" />,
-    fields: [
-      { label: 'Último Login', key: 'data_do_ultimo_login' },
-      { label: 'Dias Desde Último Login', key: 'dias_desde_o_ultimo_login' },
-      { label: 'Tempo Médio de Uso (min)', key: 'tempo_medio_de_uso_em_min' },
-      { label: 'Membros Mês Atual', key: 'membros_do_mes_atual' },
-      { label: 'Variação Membros', key: 'variacao_de_quantidade_de_membros_por_mes' },
-    ],
-  },
-  {
-    title: 'Consumo de Recursos',
+    title: 'Produtos / Uso',
     icon: <HardDrive className="h-4 w-4" />,
     fields: [
-      { label: 'Banda Contratada', key: 'banda_contratada', format: 'bytes' },
-      { label: 'Banda Utilizada', key: 'banda_utilizada', format: 'bytes' },
-      { label: 'Armazenamento Contratado', key: 'armazenamento_contratado', format: 'bytes' },
-      { label: 'Armazenamento Utilizado', key: 'armazenamento_utilizado', format: 'bytes' },
+      { label: 'Plataforma', key: 'plataforma_nome' },
+      { label: 'Métricas Geradas em', key: 'metricas_gerado_em' },
+      { label: 'Métricas Processadas em', key: 'metricas_processado_em' },
+      { label: 'Banda Contratada', key: 'player_banda_contratada', format: 'bytes' },
+      { label: 'Banda Utilizada', key: 'player_banda_utilizada', format: 'bytes' },
+      { label: 'Armazenamento Contratado', key: 'player_armazenamento_contratado', format: 'bytes' },
+      { label: 'Armazenamento Utilizado', key: 'player_armazenamento_utilizado', format: 'bytes' },
     ],
   },
   {
     title: 'IA & Certificados',
     icon: <Cpu className="h-4 w-4" />,
     fields: [
-      { label: 'Tokens IA Contratados', key: 'token_de_ia_contratado', format: 'number' },
-      { label: 'Tokens IA Utilizados', key: 'token_de_ia_utilizado', format: 'number' },
-      { label: 'Certificados MEC Contratados', key: 'certificado_mec_contratado', format: 'number' },
-      { label: 'Certificados MEC Utilizados', key: 'certificado_mec_utilizado', format: 'number' },
+      { label: 'Tokens IA Contratados', key: 'ia_tokens_contratados', format: 'number' },
+      { label: 'Tokens IA Utilizados', key: 'ia_tokens_utilizados', format: 'number' },
+      { label: 'Certificados MEC Contratados', key: 'certificados_mec_contratados', format: 'number' },
+      { label: 'Certificados MEC Utilizados', key: 'certificados_mec_utilizados', format: 'number' },
     ],
   },
   {
-    title: 'Marcos de Compras',
+    title: 'Leadtime — Compras',
     icon: <ShoppingCart className="h-4 w-4" />,
     fields: [
-      { label: '1ª Compra', key: 'data_da_primeira_compra' },
-      { label: '10ª Compra', key: 'data_da_10_compra' },
-      { label: '50ª Compra', key: 'data_da_50_compra' },
-      { label: '100ª Compra', key: 'data_da_100_compra' },
-      { label: '200ª Compra', key: 'data_da_200_compra' },
+      { label: '1ª Compra', key: 'compras_data_primeira' },
+      { label: '10ª Compra', key: 'compras_data_decima' },
+      { label: '50ª Compra', key: 'compras_data_quinquagesima' },
+      { label: '100ª Compra', key: 'compras_data_centesima' },
+      { label: '200ª Compra', key: 'compras_data_ducentesima' },
     ],
   },
   {
-    title: 'Marcos de Conteúdos',
+    title: 'Leadtime — Conteúdos',
     icon: <BookOpen className="h-4 w-4" />,
     fields: [
-      { label: '1º Finalizado', key: 'data_do_primeiro_conteudo_finalizado' },
-      { label: '10º Finalizado', key: 'data_do_10_conteudo_finalizado' },
-      { label: '50º Finalizado', key: 'data_do_50_conteudo_finalizado' },
-      { label: '100º Finalizado', key: 'data_do_100_conteudo_finalizado' },
-      { label: '200º Finalizado', key: 'data_do_200_conteudo_finalizado' },
+      { label: '1º Finalizado', key: 'conteudos_data_primeiro_finalizado' },
+      { label: '10º Finalizado', key: 'conteudos_data_decimo_finalizado' },
+      { label: '50º Finalizado', key: 'conteudos_data_quinquagesimo_finalizado' },
+      { label: '100º Finalizado', key: 'conteudos_data_centesimo_finalizado' },
+      { label: '200º Finalizado', key: 'conteudos_data_ducentesimo_finalizado' },
     ],
   },
   {
     title: 'HubSpot',
     icon: <Calendar className="h-4 w-4" />,
     fields: [
-      { label: 'Data do Contrato', key: 'data_do_fechamento_do_contrato' },
-      { label: 'Métrica de Sucesso', key: 'metrica_de_sucesso_acordada_na_venda' },
-      { label: 'Desconto Concedido', key: 'desconto_concedido' },
+      { label: 'Data do Contrato', key: 'hubspot_data_contrato' },
+      { label: 'Métrica de Sucesso', key: 'hubspot_metrica_sucesso_cliente' },
+      { label: 'Desconto Concedido', key: 'hubspot_desconto_concedido' },
+      { label: 'Processado em', key: 'hubspot_processado_em' },
     ],
   },
   {
-    title: 'Métricas',
-    icon: <Clock className="h-4 w-4" />,
+    title: 'Engajamento',
+    icon: <TrendingUp className="h-4 w-4" />,
     fields: [
-      { label: 'Dados Gerados em', key: 'data_do_dado' },
-      { label: 'Dados Processados em', key: 'data_do_processamento_do_dado' },
+      { label: 'Último Login', key: 'data_ultimo_login' },
+      { label: 'Dias Desde Último Login', key: 'dias_desde_ultimo_login', format: 'number' },
+      { label: 'Tempo Médio de Uso (min)', key: 'tempo_medio_uso_web_minutos', format: 'number' },
+      { label: 'Membros Mês Atual', key: 'membros_mes_atual', format: 'number' },
+      { label: 'Variação Membros', key: 'variacao_m0_vs_m1', format: 'percent' },
     ],
   },
 ];
@@ -123,10 +118,10 @@ function formatBytes(bytes: number | null | undefined): string {
   if (bytes == null) return '—';
   const n = Number(bytes);
   if (isNaN(n)) return String(bytes);
-  if (n === 0) return '0 B';
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(n) / Math.log(1024));
-  return `${(n / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
+  if (n === 0) return '0 MB';
+  // API returns MB values
+  if (n < 1024) return `${n.toLocaleString('pt-BR')} MB`;
+  return `${(n / 1024).toFixed(1)} GB`;
 }
 
 function formatNumber(value: any): string {
@@ -139,6 +134,10 @@ function formatValue(value: any, format?: string): React.ReactNode {
   if (value == null || value === '') return <span className="text-muted-foreground">—</span>;
   if (format === 'bytes') return formatBytes(value);
   if (format === 'number') return formatNumber(value);
+  if (format === 'percent') {
+    const n = Number(value);
+    if (!isNaN(n)) return `${n >= 0 ? '+' : ''}${n.toFixed(1)}%`;
+  }
   if (format === 'currency') {
     const n = Number(value);
     if (!isNaN(n)) return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n);
@@ -198,8 +197,11 @@ export default function ClientDetailSheet({ idCurseduca, open, onOpenChange }: P
   // Filter sections to only show those with at least one populated field
   const visibleSections = data
     ? SECTIONS.filter(section => {
-        if (section.title === 'Dados do Cliente') return true;
-        return section.fields.some(f => data[f.key] != null && data[f.key] !== '');
+        if (section.title === 'Identificação') return true;
+        return section.fields.some(f => {
+          const v = data[f.key];
+          return v != null && v !== '' && v !== 0 || v === 0;
+        });
       })
     : SECTIONS;
 
@@ -208,7 +210,7 @@ export default function ClientDetailSheet({ idCurseduca, open, onOpenChange }: P
       <SheetContent className="w-full sm:max-w-xl p-0 flex flex-col">
         <SheetHeader className="px-6 pt-6 pb-4 border-b shrink-0">
           <SheetTitle className="text-lg">
-            {loading ? 'Carregando...' : data?.client_name || 'Detalhes do Cliente'}
+            {loading ? 'Carregando...' : data?.cliente_nome || 'Detalhes do Cliente'}
           </SheetTitle>
           {data && (
             <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -217,11 +219,11 @@ export default function ClientDetailSheet({ idCurseduca, open, onOpenChange }: P
                   {data.status_financeiro}
                 </Badge>
               )}
-              {data.plano_detalhado && (
-                <Badge variant="outline">{data.plano_detalhado}</Badge>
+              {data.plano_base_consolidada && (
+                <Badge variant="outline">{data.plano_base_consolidada}</Badge>
               )}
-              {data.etapa_antiga_sensedata && (
-                <Badge variant="secondary">{data.etapa_antiga_sensedata}</Badge>
+              {data.etapa_do_cs && (
+                <Badge variant="secondary">{data.etapa_do_cs}</Badge>
               )}
             </div>
           )}
@@ -250,8 +252,7 @@ export default function ClientDetailSheet({ idCurseduca, open, onOpenChange }: P
             )}
 
             {!loading && data && visibleSections.map((section, idx) => {
-              // For "Dados do Cliente", show all fields; for others, only show populated ones
-              const isMain = section.title === 'Dados do Cliente';
+              const isMain = section.title === 'Identificação';
               const fieldsToShow = isMain
                 ? section.fields
                 : section.fields.filter(f => data[f.key] != null && data[f.key] !== '');
