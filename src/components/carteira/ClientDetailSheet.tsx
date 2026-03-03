@@ -18,7 +18,7 @@ interface Props {
 interface Section {
   title: string;
   icon: React.ReactNode;
-  fields: { label: string; key: string; format?: 'bytes' | 'currency' | 'link' | 'date' | 'number' | 'percent' }[];
+  fields: { label: string; key: string; format?: 'gb' | 'currency' | 'link' | 'date' | 'number' | 'percent' }[];
 }
 
 const SECTIONS: Section[] = [
@@ -53,10 +53,10 @@ const SECTIONS: Section[] = [
       { label: 'Plataforma', key: 'plataforma_nome' },
       { label: 'Métricas Geradas em', key: 'metricas_gerado_em' },
       { label: 'Métricas Processadas em', key: 'metricas_processado_em' },
-      { label: 'Banda Contratada', key: 'player_banda_contratada', format: 'bytes' },
-      { label: 'Banda Utilizada', key: 'player_banda_utilizada', format: 'bytes' },
-      { label: 'Armazenamento Contratado', key: 'player_armazenamento_contratado', format: 'bytes' },
-      { label: 'Armazenamento Utilizado', key: 'player_armazenamento_utilizado', format: 'bytes' },
+      { label: 'Banda Contratada', key: 'player_banda_contratada_gb', format: 'gb' },
+      { label: 'Banda Utilizada', key: 'player_banda_utilizada_gb', format: 'gb' },
+      { label: 'Armazenamento Contratado', key: 'player_armazenamento_contratado_gb', format: 'gb' },
+      { label: 'Armazenamento Utilizado', key: 'player_armazenamento_utilizado_gb', format: 'gb' },
     ],
   },
   {
@@ -114,14 +114,13 @@ const SECTIONS: Section[] = [
   },
 ];
 
-function formatBytes(bytes: number | null | undefined): string {
-  if (bytes == null) return '—';
-  const n = Number(bytes);
-  if (isNaN(n)) return String(bytes);
-  if (n === 0) return '0 MB';
-  // API returns MB values
-  if (n < 1024) return `${n.toLocaleString('pt-BR')} MB`;
-  return `${(n / 1024).toFixed(1)} GB`;
+function formatGb(value: number | null | undefined): string {
+  if (value == null) return '—';
+  const n = Number(value);
+  if (isNaN(n)) return String(value);
+  if (n === 0) return '0 GB';
+  if (n >= 1024) return `${(n / 1024).toFixed(2)} TB`;
+  return `${n.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} GB`;
 }
 
 function formatNumber(value: any): string {
@@ -132,7 +131,7 @@ function formatNumber(value: any): string {
 
 function formatValue(value: any, format?: string): React.ReactNode {
   if (value == null || value === '') return <span className="text-muted-foreground">—</span>;
-  if (format === 'bytes') return formatBytes(value);
+  if (format === 'gb') return formatGb(value);
   if (format === 'number') return formatNumber(value);
   if (format === 'percent') {
     const n = Number(value);
