@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import {
-  Globe, Users, Search, Loader2, DollarSign, Filter, X, Trash2, RefreshCw, Info,
+  Globe, Users, Search, Loader2, DollarSign, Filter, X, Trash2, RefreshCw, Info, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -446,22 +446,58 @@ export default function CarteiraGeralPage() {
               <span className="text-xs text-muted-foreground">
                 Página {apiPage} de {apiTotalPages} ({apiTotal} registros)
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="icon"
+                  className="h-8 w-8"
                   disabled={apiPage <= 1 || pageLoading}
                   onClick={() => setApiPage(p => p - 1)}
                 >
-                  Anterior
+                  <ChevronLeft className="h-4 w-4" />
                 </Button>
+                {(() => {
+                  const pages: (number | '...')[] = [];
+                  const total = apiTotalPages;
+                  const current = apiPage;
+
+                  if (total <= 7) {
+                    for (let i = 1; i <= total; i++) pages.push(i);
+                  } else {
+                    pages.push(1);
+                    if (current > 3) pages.push('...');
+                    const start = Math.max(2, current - 1);
+                    const end = Math.min(total - 1, current + 1);
+                    for (let i = start; i <= end; i++) pages.push(i);
+                    if (current < total - 2) pages.push('...');
+                    pages.push(total);
+                  }
+
+                  return pages.map((p, idx) =>
+                    p === '...' ? (
+                      <span key={`ellipsis-${idx}`} className="px-1 text-xs text-muted-foreground select-none">···</span>
+                    ) : (
+                      <Button
+                        key={p}
+                        variant={p === current ? 'default' : 'outline'}
+                        size="icon"
+                        className="h-8 w-8 text-xs"
+                        disabled={pageLoading}
+                        onClick={() => setApiPage(p)}
+                      >
+                        {p}
+                      </Button>
+                    )
+                  );
+                })()}
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="icon"
+                  className="h-8 w-8"
                   disabled={apiPage >= apiTotalPages || pageLoading}
                   onClick={() => setApiPage(p => p + 1)}
                 >
-                  Próximo
+                  <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>
