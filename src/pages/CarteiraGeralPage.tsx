@@ -59,7 +59,7 @@ function formatCellValue(value: any): string {
 
 export default function CarteiraGeralPage() {
   const navigate = useNavigate();
-  const tableScrollRef = useRef<HTMLDivElement>(null);
+  
   const { hasPermission } = usePermissions();
   const canImport = hasPermission('carteira.import');
   const canExport = hasPermission('carteira.export');
@@ -401,60 +401,53 @@ export default function CarteiraGeralPage() {
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 </div>
               )}
-              <div
-                ref={tableScrollRef}
-                className="w-full overflow-x-auto"
-              >
-                <div style={{ minWidth: `${Math.max(displayFields.length * 180, 2000)}px` }}>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-[11px] uppercase tracking-wider">#</TableHead>
-                        {displayFields.map(col => (
-                          <TableHead key={col.db_key} className="text-[11px] uppercase tracking-wider whitespace-nowrap">
-                            {col.label}
-                          </TableHead>
-                        ))}
-                        {canDelete && <TableHead className="text-[11px] uppercase tracking-wider w-[50px]" />}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filtered.map((row, i) => (
-                        <TableRow
-                          key={row.id || i}
-                          className="cursor-pointer"
-                          onClick={() => row.id && navigate(`/hub/carteira/${row.id}`)}
-                        >
-                          <TableCell className="text-xs text-muted-foreground">{(apiPage - 1) * PER_PAGE + i + 1}</TableCell>
-                          {displayFields.map(col => (
-                            <TableCell key={col.db_key} className="text-xs whitespace-nowrap max-w-[250px] truncate">
-                              {(col.field_type === 'url' || col.db_key === 'client_url') && row[col.db_key] ? (
-                                <a href={row[col.db_key]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" onClick={e => e.stopPropagation()}>
-                                  {row[col.db_key]}
-                                </a>
-                              ) : (
-                                formatCellValue(row[col.db_key])
-                              )}
-                            </TableCell>
-                          ))}
-                          {canDelete && (
-                            <TableCell className="text-xs">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                                onClick={e => { e.stopPropagation(); setDeleteTarget(row); }}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </TableCell>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-[11px] uppercase tracking-wider">#</TableHead>
+                    {displayFields.map(col => (
+                      <TableHead key={col.db_key} className="text-[11px] uppercase tracking-wider whitespace-nowrap">
+                        {col.label}
+                      </TableHead>
+                    ))}
+                    {canDelete && <TableHead className="text-[11px] uppercase tracking-wider w-[50px]" />}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((row, i) => (
+                    <TableRow
+                      key={row.id || i}
+                      className="cursor-pointer"
+                      onClick={() => row.id && navigate(`/hub/carteira/${row.id}`)}
+                    >
+                      <TableCell className="text-xs text-muted-foreground">{(apiPage - 1) * PER_PAGE + i + 1}</TableCell>
+                      {displayFields.map(col => (
+                        <TableCell key={col.db_key} className="text-xs whitespace-nowrap max-w-[250px] truncate">
+                          {(col.field_type === 'url' || col.db_key === 'client_url') && row[col.db_key] ? (
+                            <a href={row[col.db_key]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" onClick={e => e.stopPropagation()}>
+                              {row[col.db_key]}
+                            </a>
+                          ) : (
+                            formatCellValue(row[col.db_key])
                           )}
-                        </TableRow>
+                        </TableCell>
                       ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
+                      {canDelete && (
+                        <TableCell className="text-xs">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                            onClick={e => { e.stopPropagation(); setDeleteTarget(row); }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
           {/* Pagination */}
