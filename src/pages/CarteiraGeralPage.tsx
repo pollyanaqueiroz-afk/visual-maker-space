@@ -10,13 +10,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import {
-  Globe, Users, Search, Loader2, DollarSign, RefreshCw, Info, ChevronLeft, ChevronRight,
+  Globe, Users, Search, Loader2, DollarSign, RefreshCw, Info,
   Wallet, Package, Activity, Trash2,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 import ClientDetailSheet from '@/components/carteira/ClientDetailSheet';
+import TablePagination from '@/components/carteira/TablePagination';
 import { usePermissions } from '@/hooks/usePermissions';
 
 interface ClientRecord {
@@ -326,7 +327,17 @@ export default function CarteiraGeralPage() {
             Clientes ({apiTotal})
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
+          {/* Pagination top */}
+          <TablePagination
+            currentPage={apiPage}
+            totalPages={apiTotalPages}
+            totalRecords={apiTotal}
+            perPage={PER_PAGE}
+            loading={pageLoading}
+            onPageChange={setApiPage}
+          />
+
           {clientRecords.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">Nenhum cliente encontrado</p>
           ) : (
@@ -385,68 +396,16 @@ export default function CarteiraGeralPage() {
               </Table>
             </div>
           )}
-          {/* Pagination */}
-          {apiTotalPages > 1 && (
-            <div className="flex items-center justify-between pt-4">
-              <span className="text-xs text-muted-foreground">
-                Página {apiPage} de {apiTotalPages} ({apiTotal} registros)
-              </span>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  disabled={apiPage <= 1 || pageLoading}
-                  onClick={() => setApiPage(p => p - 1)}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                {(() => {
-                  const pages: (number | '...')[] = [];
-                  const total = apiTotalPages;
-                  const current = apiPage;
 
-                  if (total <= 7) {
-                    for (let i = 1; i <= total; i++) pages.push(i);
-                  } else {
-                    pages.push(1);
-                    if (current > 3) pages.push('...');
-                    const start = Math.max(2, current - 1);
-                    const end = Math.min(total - 1, current + 1);
-                    for (let i = start; i <= end; i++) pages.push(i);
-                    if (current < total - 2) pages.push('...');
-                    pages.push(total);
-                  }
-
-                  return pages.map((p, idx) =>
-                    p === '...' ? (
-                      <span key={`ellipsis-${idx}`} className="px-1 text-xs text-muted-foreground select-none">···</span>
-                    ) : (
-                      <Button
-                        key={p}
-                        variant={p === current ? 'default' : 'outline'}
-                        size="icon"
-                        className="h-8 w-8 text-xs"
-                        disabled={pageLoading}
-                        onClick={() => setApiPage(p)}
-                      >
-                        {p}
-                      </Button>
-                    )
-                  );
-                })()}
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  disabled={apiPage >= apiTotalPages || pageLoading}
-                  onClick={() => setApiPage(p => p + 1)}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
+          {/* Pagination bottom */}
+          <TablePagination
+            currentPage={apiPage}
+            totalPages={apiTotalPages}
+            totalRecords={apiTotal}
+            perPage={PER_PAGE}
+            loading={pageLoading}
+            onPageChange={setApiPage}
+          />
         </CardContent>
       </Card>
 
