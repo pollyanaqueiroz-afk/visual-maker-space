@@ -1,7 +1,7 @@
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const API_URL = "https://us-central1-curseduca-inc-ia.cloudfunctions.net/hub-clientes";
@@ -48,7 +48,6 @@ Deno.serve(async (req) => {
 
     const apiData = await apiRes.json();
 
-    // When using views, pass through the API response directly (already has only relevant fields)
     return new Response(
       JSON.stringify({
         data: apiData.data || [],
