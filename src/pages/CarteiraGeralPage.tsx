@@ -276,6 +276,13 @@ export default function CarteiraGeralPage() {
         </Card>
         <Card>
           <CardContent className="p-4 flex flex-col items-center text-center gap-1">
+            <Users className="h-5 w-5 text-primary" />
+            <span className="text-2xl font-bold text-foreground">0</span>
+            <span className="text-[11px] text-muted-foreground">Exibindo</span>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex flex-col items-center text-center gap-1">
             <DollarSign className="h-5 w-5 text-primary" />
             <span className="text-2xl font-bold text-foreground">
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.totalRevenue)}
