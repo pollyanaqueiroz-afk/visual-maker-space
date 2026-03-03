@@ -75,6 +75,13 @@ function formatCellValue(value: any, key?: string): string {
       return `${sign}${num.toFixed(1)}%`;
     }
   }
+  if (key?.includes('_gb')) {
+    const num = Number(value);
+    if (!isNaN(num)) {
+      if (num >= 1024) return `${(num / 1024).toFixed(2)} TB`;
+      return `${num.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} GB`;
+    }
+  }
   return String(value);
 }
 
