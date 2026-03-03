@@ -48,7 +48,10 @@ export default function CarteiraGeralPage() {
   const [deleteTarget, setDeleteTarget] = useState<ClientRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [syncing, setSyncing] = useState(false);
-  
+  const [apiPage, setApiPage] = useState(1);
+  const [apiTotalPages, setApiTotalPages] = useState(1);
+  const [apiTotal, setApiTotal] = useState(0);
+  const PER_PAGE = 10;
 
   // Determine which fields can be used as filters (enum + booleano)
   const filterableFields = useMemo(
@@ -56,29 +59,50 @@ export default function CarteiraGeralPage() {
     [visibleFields]
   );
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (page = 1) => {
     setLoading(true);
-    let allData: ClientRecord[] = [];
-    let from = 0;
-    const PAGE_SIZE = 1000;
-    let hasMore = true;
-    while (hasMore) {
-      const { data: page, error: pageError } = await (supabase.from('clients' as any).select('*').order('client_name', { ascending: true }).range(from, from + PAGE_SIZE - 1) as any);
-      if (pageError) {
-        console.error(pageError);
-        toast.error('Erro ao carregar dados');
-        setLoading(false);
-        return;
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-visao360', {
+        body: null,
+        method: 'GET',
+      });
+
+      // The edge function uses query params, but invoke sends POST by default.
+      // Let's use a workaround: call via fetch directly
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      
+      const res = await fetch(
+        `${supabaseUrl}/functions/v1/fetch-visao360?page=${page}&per_page=${PER_PAGE}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${supabaseKey}`,
+            'apikey': supabaseKey,
+          },
+        }
+      );
+      
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(errText);
       }
-      allData = allData.concat((page || []) as ClientRecord[]);
-      hasMore = (page || []).length === PAGE_SIZE;
-      from += PAGE_SIZE;
+      
+      const result = await res.json();
+      if (result.error) throw new Error(result.error);
+      
+      setClientRecords(result.data || []);
+      setApiPage(result.page || 1);
+      setApiTotalPages(result.total_pages || 1);
+      setApiTotal(result.total || 0);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(`Erro ao carregar dados da API: ${err.message}`);
+    } finally {
+      setLoading(false);
     }
-    setClientRecords(allData);
-    setLoading(false);
   }, []);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => { loadData(apiPage); }, [apiPage]);
 
 
   useEffect(() => {
@@ -124,9 +148,9 @@ export default function CarteiraGeralPage() {
   }, [clientRecords, search, dynamicFilters]);
 
   const stats = useMemo(() => ({
-    total: clientRecords.length,
+    total: apiTotal,
     totalRevenue: clientRecords.reduce((s, c) => s + (Number(c.valor_mensal) || 0), 0),
-  }), [clientRecords]);
+  }), [clientRecords, apiTotal]);
 
   const buildExportData = useCallback(() => {
     return filtered.map(row => {
@@ -418,6 +442,32 @@ export default function CarteiraGeralPage() {
                     </TableBody>
                   </Table>
                 </div>
+              </div>
+            </div>
+          )}
+          {/* Pagination */}
+          {apiTotalPages > 1 && (
+            <div className="flex items-center justify-between pt-4">
+              <span className="text-xs text-muted-foreground">
+                Página {apiPage} de {apiTotalPages} ({apiTotal} registros)
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={apiPage <= 1 || loading}
+                  onClick={() => setApiPage(p => p - 1)}
+                >
+                  Anterior
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={apiPage >= apiTotalPages || loading}
+                  onClick={() => setApiPage(p => p + 1)}
+                >
+                  Próximo
+                </Button>
               </div>
             </div>
           )}
