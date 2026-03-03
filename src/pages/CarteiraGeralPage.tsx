@@ -62,6 +62,12 @@ const VIEW_TABS: { value: ViewType; label: string; icon: typeof Wallet }[] = [
   { value: 'engajamento', label: 'Engajamento', icon: Activity },
 ];
 
+const NUMERIC_KEYS = new Set([
+  'ia_tokens_utilizados', 'ia_tokens_contratados',
+  'certificados_mec_utilizados', 'certificados_mec_contratados',
+  'membros_mes_atual', 'tempo_medio_uso_web_minutos', 'dias_desde_ultimo_login',
+]);
+
 function formatCellValue(value: any, key?: string): string {
   if (value == null || value === '') return '—';
   if (key === 'fatura_total') {
@@ -81,6 +87,10 @@ function formatCellValue(value: any, key?: string): string {
       if (num >= 1024) return `${(num / 1024).toFixed(2)} TB`;
       return `${num.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} GB`;
     }
+  }
+  if (key && NUMERIC_KEYS.has(key)) {
+    const num = Number(value);
+    if (!isNaN(num)) return new Intl.NumberFormat('pt-BR').format(num);
   }
   return String(value);
 }
