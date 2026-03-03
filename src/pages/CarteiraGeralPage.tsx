@@ -24,6 +24,34 @@ interface ClientRecord {
 
 const HIDDEN_COLS = ['id', 'created_at', 'updated_at', 'kanban_column_id'];
 
+const FALLBACK_COLUMNS: { db_key: string; label: string }[] = [
+  { db_key: 'client_name', label: 'Nome do Cliente' },
+  { db_key: 'client_url', label: 'URL da Plataforma' },
+  { db_key: 'id_curseduca', label: 'ID Curseduca' },
+  { db_key: 'email_do_cliente', label: 'Email' },
+  { db_key: 'status_financeiro', label: 'Status Financeiro' },
+  { db_key: 'valor_mensal', label: 'Valor Mensal' },
+  { db_key: 'plano_contratado', label: 'Plano Contratado' },
+  { db_key: 'plano_detalhado', label: 'Plano Detalhado' },
+  { db_key: 'nome_do_cs_atual', label: 'CS Atual' },
+  { db_key: 'email_do_cs_atual', label: 'Email CS' },
+  { db_key: 'etapa_antiga_sensedata', label: 'Etapa CS' },
+  { db_key: 'origem_do_dado', label: 'Origem' },
+  { db_key: 'nome_da_plataforma', label: 'Nome da Plataforma' },
+  { db_key: 'banda_contratada', label: 'Banda Contratada' },
+  { db_key: 'banda_utilizada', label: 'Banda Utilizada' },
+  { db_key: 'armazenamento_contratado', label: 'Armaz. Contratado' },
+  { db_key: 'armazenamento_utilizado', label: 'Armaz. Utilizado' },
+  { db_key: 'token_de_ia_contratado', label: 'Tokens IA Contratados' },
+  { db_key: 'token_de_ia_utilizado', label: 'Tokens IA Utilizados' },
+  { db_key: 'dias_desde_o_ultimo_login', label: 'Dias Desde Último Login' },
+  { db_key: 'tempo_medio_de_uso_em_min', label: 'Tempo Médio Uso (min)' },
+  { db_key: 'membros_do_mes_atual', label: 'Membros Mês Atual' },
+  { db_key: 'data_do_ultimo_login', label: 'Último Login' },
+  { db_key: 'data_do_fechamento_do_contrato', label: 'Fechamento Contrato' },
+  { db_key: 'desconto_concedido', label: 'Desconto Concedido' },
+];
+
 function formatCellValue(value: any): string {
   if (value == null || value === '') return '—';
   return String(value);
@@ -39,6 +67,10 @@ export default function CarteiraGeralPage() {
   const canExport = hasPermission('carteira.export');
   const canDelete = hasPermission('carteira.delete');
   const { visibleFields, isLoading: fieldsLoading } = useFieldDefinitions();
+  const displayFields = useMemo(() => 
+    visibleFields.length > 0 ? visibleFields : FALLBACK_COLUMNS.map(c => ({ ...c, field_type: 'texto', is_required: false, is_hidden: false, sort_order: 0, enum_options: [] } as FieldDefinition)),
+    [visibleFields]
+  );
   const [clientRecords, setClientRecords] = useState<ClientRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -55,20 +87,13 @@ export default function CarteiraGeralPage() {
 
   // Determine which fields can be used as filters (enum + booleano)
   const filterableFields = useMemo(
-    () => visibleFields.filter(f => f.field_type === 'enum' || f.field_type === 'booleano'),
-    [visibleFields]
+    () => displayFields.filter(f => f.field_type === 'enum' || f.field_type === 'booleano'),
+    [displayFields]
   );
 
   const loadData = useCallback(async (page = 1) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('fetch-visao360', {
-        body: null,
-        method: 'GET',
-      });
-
-      // The edge function uses query params, but invoke sends POST by default.
-      // Let's use a workaround: call via fetch directly
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       
@@ -113,7 +138,7 @@ export default function CarteiraGeralPage() {
     });
     observer.observe(tableScrollRef.current);
     return () => observer.disconnect();
-  }, [loading, clientRecords, visibleFields]);
+  }, [loading, clientRecords, displayFields]);
 
   // Extract unique filter options dynamically
   const filterOptions = useMemo(() => {
@@ -155,17 +180,17 @@ export default function CarteiraGeralPage() {
   const buildExportData = useCallback(() => {
     return filtered.map(row => {
       const out: Record<string, string> = {};
-      for (const col of visibleFields) {
+      for (const col of displayFields) {
         out[col.label] = row[col.db_key] != null && row[col.db_key] !== '' ? String(row[col.db_key]) : '';
       }
       return out;
     });
-  }, [filtered, visibleFields]);
+  }, [filtered, displayFields]);
 
   const handleExportCSV = useCallback(() => {
     const data = buildExportData();
     if (data.length === 0) { toast.error('Nenhum dado para exportar'); return; }
-    const headers = visibleFields.map(c => c.label);
+    const headers = displayFields.map(c => c.label);
     const csvRows = [headers.join(',')];
     for (const row of data) {
       csvRows.push(headers.map(h => {
@@ -182,7 +207,7 @@ export default function CarteiraGeralPage() {
     a.click();
     URL.revokeObjectURL(url);
     toast.success(`${data.length} registros exportados em CSV`);
-  }, [buildExportData, visibleFields]);
+  }, [buildExportData, displayFields]);
 
   const handleExportExcel = useCallback(() => {
     const data = buildExportData();
@@ -393,12 +418,12 @@ export default function CarteiraGeralPage() {
                 className="w-full overflow-x-auto"
                 onScroll={() => { if (topScrollRef.current) topScrollRef.current.scrollLeft = tableScrollRef.current!.scrollLeft; }}
               >
-                <div style={{ minWidth: `${Math.max(visibleFields.length * 180, 2000)}px` }}>
+                <div style={{ minWidth: `${Math.max(displayFields.length * 180, 2000)}px` }}>
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead className="text-[11px] uppercase tracking-wider">#</TableHead>
-                        {visibleFields.map(col => (
+                        {displayFields.map(col => (
                           <TableHead key={col.db_key} className="text-[11px] uppercase tracking-wider whitespace-nowrap">
                             {col.label}
                           </TableHead>
@@ -414,7 +439,7 @@ export default function CarteiraGeralPage() {
                           onClick={() => row.id && navigate(`/hub/carteira/${row.id}`)}
                         >
                           <TableCell className="text-xs text-muted-foreground">{i + 1}</TableCell>
-                          {visibleFields.map(col => (
+                          {displayFields.map(col => (
                             <TableCell key={col.db_key} className="text-xs whitespace-nowrap max-w-[250px] truncate">
                               {(col.field_type === 'url' || col.db_key === 'client_url') && row[col.db_key] ? (
                                 <a href={row[col.db_key]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" onClick={e => e.stopPropagation()}>
