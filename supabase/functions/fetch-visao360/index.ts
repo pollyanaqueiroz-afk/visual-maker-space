@@ -85,15 +85,20 @@ Deno.serve(async (req) => {
     }
 
     const url = new URL(req.url);
+    const idCurseduca = url.searchParams.get("id_curseduca");
     const page = url.searchParams.get("page") || "1";
     const perPage = url.searchParams.get("per_page") || "10";
 
     const basicAuth = btoa(`${apiUser}:${apiPass}`);
 
-    const apiRes = await fetch(
-      `${API_URL}?page=${page}&per_page=${perPage}`,
-      { headers: { Authorization: `Basic ${basicAuth}` } }
-    );
+    let apiUrl = `${API_URL}?page=${page}&per_page=${perPage}`;
+    if (idCurseduca) {
+      apiUrl = `${API_URL}?id_curseduca=${encodeURIComponent(idCurseduca)}`;
+    }
+
+    const apiRes = await fetch(apiUrl, {
+      headers: { Authorization: `Basic ${basicAuth}` },
+    });
 
     if (!apiRes.ok) {
       const errText = await apiRes.text();

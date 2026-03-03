@@ -15,6 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import ImportWizard from '@/components/carteira/importer/ImportWizard';
+import ClientDetailSheet from '@/components/carteira/ClientDetailSheet';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useFieldDefinitions, type FieldDefinition } from '@/hooks/useFieldDefinitions';
 
@@ -83,6 +84,7 @@ export default function CarteiraGeralPage() {
   const [apiTotalPages, setApiTotalPages] = useState(1);
   const [apiTotal, setApiTotal] = useState(0);
   const PER_PAGE = 10;
+  const [detailId, setDetailId] = useState<string | null>(null);
 
   // Determine which fields can be used as filters (enum + booleano)
   const filterableFields = useMemo(
@@ -418,7 +420,7 @@ export default function CarteiraGeralPage() {
                     <TableRow
                       key={row.id || i}
                       className="cursor-pointer"
-                      onClick={() => row.id && navigate(`/hub/carteira/${row.id}`)}
+                      onClick={() => row.id_curseduca && setDetailId(row.id_curseduca)}
                     >
                       <TableCell className="text-xs text-muted-foreground">{(apiPage - 1) * PER_PAGE + i + 1}</TableCell>
                       {displayFields.map(col => (
@@ -478,6 +480,12 @@ export default function CarteiraGeralPage() {
           )}
         </CardContent>
       </Card>
+
+      <ClientDetailSheet
+        idCurseduca={detailId}
+        open={!!detailId}
+        onOpenChange={(open) => { if (!open) setDetailId(null); }}
+      />
 
       <AlertDialog open={!!deleteTarget} onOpenChange={open => { if (!open) setDeleteTarget(null); }}>
         <AlertDialogContent>
