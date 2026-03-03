@@ -74,6 +74,8 @@ export default function CarteiraGeralPage() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [pageLoading, setPageLoading] = useState(false);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const [showFilters, setShowFilters] = useState(false);
   const [dynamicFilters, setDynamicFilters] = useState<Record<string, string>>({});
@@ -92,7 +94,7 @@ export default function CarteiraGeralPage() {
     [displayFields]
   );
 
-  const loadData = useCallback(async (page = 1) => {
+  const loadData = useCallback(async (page = 1, searchTerm = '') => {
     const isInitial = clientRecords.length === 0;
     if (isInitial) setInitialLoading(true);
     setPageLoading(true);
@@ -100,15 +102,17 @@ export default function CarteiraGeralPage() {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       
-      const res = await fetch(
-        `${supabaseUrl}/functions/v1/fetch-visao360?page=${page}&per_page=${PER_PAGE}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${supabaseKey}`,
-            'apikey': supabaseKey,
-          },
-        }
-      );
+      let fetchUrl = `${supabaseUrl}/functions/v1/fetch-visao360?page=${page}&per_page=${PER_PAGE}`;
+      if (searchTerm) {
+        fetchUrl += `&search=${encodeURIComponent(searchTerm)}`;
+      }
+      
+      const res = await fetch(fetchUrl, {
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'apikey': supabaseKey,
+        },
+      });
       
       if (!res.ok) {
         const errText = await res.text();
@@ -131,7 +135,17 @@ export default function CarteiraGeralPage() {
     }
   }, [clientRecords.length]);
 
-  useEffect(() => { loadData(apiPage); }, [apiPage]);
+  // Debounce search: when user types, wait 400ms then reset to page 1 and search server-side
+  useEffect(() => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      setDebouncedSearch(search);
+      setApiPage(1);
+    }, 400);
+    return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
+  }, [search]);
+
+  useEffect(() => { loadData(apiPage, debouncedSearch); }, [apiPage, debouncedSearch]);
 
   // Extract unique filter options dynamically
   const filterOptions = useMemo(() => {
@@ -148,7 +162,7 @@ export default function CarteiraGeralPage() {
 
   const activeFilterCount = Object.values(dynamicFilters).filter(v => v !== '__all__').length;
 
-  // Filter
+  // Filter (only dynamic filters — search is now server-side)
   const filtered = useMemo(() => {
     let result = clientRecords;
     for (const [key, val] of Object.entries(dynamicFilters)) {
@@ -156,14 +170,8 @@ export default function CarteiraGeralPage() {
         result = result.filter(c => String(c[key] || '') === val);
       }
     }
-    if (search) {
-      const q = search.toLowerCase();
-      result = result.filter(cr =>
-        Object.values(cr).some(v => v != null && String(v).toLowerCase().includes(q))
-      );
-    }
     return result;
-  }, [clientRecords, search, dynamicFilters]);
+  }, [clientRecords, dynamicFilters]);
 
   const stats = useMemo(() => ({
     total: apiTotal,
@@ -214,7 +222,7 @@ export default function CarteiraGeralPage() {
                   toast.success(
                     `Sincronização concluída: ${data.synced} registros sincronizados${data.errors > 0 ? `, ${data.errors} erros` : ''}`
                   );
-                  loadData();
+                  loadData(1, debouncedSearch);
                 } catch (err: any) {
                   console.error(err);
                   toast.error(`Erro na sincronização: ${err.message}`);
@@ -264,11 +272,14 @@ export default function CarteiraGeralPage() {
           <div className="relative flex-1 min-w-[200px] max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar em qualquer coluna..."
+              placeholder="Buscar cliente por nome, email, URL..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="pl-9 h-9 text-sm"
             />
+            {search && pageLoading && (
+              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+            )}
           </div>
           {filterableFields.length > 0 && (
             <Button
