@@ -343,7 +343,7 @@ export default function CarteiraGeralPage() {
                         {col.label}
                       </TableHead>
                     ))}
-                    {canDelete && <TableHead className="text-[11px] uppercase tracking-wider w-[50px]" />}
+                    
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -365,18 +365,6 @@ export default function CarteiraGeralPage() {
                           )}
                         </TableCell>
                       ))}
-                      {canDelete && (
-                        <TableCell className="text-xs">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                            onClick={e => { e.stopPropagation(); setDeleteTarget(row); }}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </TableCell>
-                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -402,27 +390,6 @@ export default function CarteiraGeralPage() {
         onOpenChange={(open) => { if (!open) setDetailId(null); }}
       />
 
-      <AlertDialog open={!!deleteTarget} onOpenChange={open => { if (!open) setDeleteTarget(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir cliente</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir <strong>{deleteTarget?.client_name || deleteTarget?.cliente_nome || 'este cliente'}</strong>? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteClient}
-              disabled={deleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : <Trash2 className="h-4 w-4 mr-1.5" />}
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
