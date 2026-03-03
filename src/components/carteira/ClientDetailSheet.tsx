@@ -198,9 +198,8 @@ export default function ClientDetailSheet({ idCurseduca, open, onOpenChange }: P
   // Filter sections to only show those with at least one populated field
   const visibleSections = data
     ? SECTIONS.filter(section => {
-        // Always show "Dados do Cliente"
         if (section.title === 'Dados do Cliente') return true;
-        return section.fields.some(f => data[f.key] != null && data[f.key] !== '' && data[f.key] !== '0');
+        return section.fields.some(f => data[f.key] != null && data[f.key] !== '');
       })
     : SECTIONS;
 
@@ -255,7 +254,7 @@ export default function ClientDetailSheet({ idCurseduca, open, onOpenChange }: P
               const isMain = section.title === 'Dados do Cliente';
               const fieldsToShow = isMain
                 ? section.fields
-                : section.fields.filter(f => data[f.key] != null && data[f.key] !== '' && data[f.key] !== '0');
+                : section.fields.filter(f => data[f.key] != null && data[f.key] !== '');
 
               return (
                 <div key={idx}>
