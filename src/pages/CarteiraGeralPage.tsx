@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import {
-  Globe, Users, Search, Loader2, Upload, DollarSign, Filter, X, Download, Trash2,
+  Globe, Users, Search, Loader2, Upload, DollarSign, Filter, X, Download, Trash2, RefreshCw,
 } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -47,6 +47,7 @@ export default function CarteiraGeralPage() {
   const [dynamicFilters, setDynamicFilters] = useState<Record<string, string>>({});
   const [deleteTarget, setDeleteTarget] = useState<ClientRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   
 
   // Determine which fields can be used as filters (enum + booleano)
@@ -213,10 +214,37 @@ export default function CarteiraGeralPage() {
             </>
           )}
           {canImport && (
-            <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
-              <Upload className="h-4 w-4 mr-1.5" />
-              Importar
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  setSyncing(true);
+                  try {
+                    const { data, error } = await supabase.functions.invoke('sync-visao360');
+                    if (error) throw error;
+                    if (data?.error) throw new Error(data.error);
+                    toast.success(
+                      `Sincronização concluída: ${data.synced} registros sincronizados${data.errors > 0 ? `, ${data.errors} erros` : ''}`
+                    );
+                    loadData();
+                  } catch (err: any) {
+                    console.error(err);
+                    toast.error(`Erro na sincronização: ${err.message}`);
+                  } finally {
+                    setSyncing(false);
+                  }
+                }}
+                disabled={syncing}
+              >
+                <RefreshCw className={`h-4 w-4 mr-1.5 ${syncing ? 'animate-spin' : ''}`} />
+                {syncing ? 'Sincronizando...' : 'Sincronizar API'}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+                <Upload className="h-4 w-4 mr-1.5" />
+                Importar
+              </Button>
+            </>
           )}
         </div>
       </div>
