@@ -59,9 +59,7 @@ function formatCellValue(value: any): string {
 
 export default function CarteiraGeralPage() {
   const navigate = useNavigate();
-  const topScrollRef = useRef<HTMLDivElement>(null);
   const tableScrollRef = useRef<HTMLDivElement>(null);
-  const topScrollInnerRef = useRef<HTMLDivElement>(null);
   const { hasPermission } = usePermissions();
   const canImport = hasPermission('carteira.import');
   const canExport = hasPermission('carteira.export');
@@ -72,7 +70,8 @@ export default function CarteiraGeralPage() {
     [visibleFields]
   );
   const [clientRecords, setClientRecords] = useState<ClientRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [pageLoading, setPageLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [importOpen, setImportOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -92,7 +91,9 @@ export default function CarteiraGeralPage() {
   );
 
   const loadData = useCallback(async (page = 1) => {
-    setLoading(true);
+    const isInitial = clientRecords.length === 0;
+    if (isInitial) setInitialLoading(true);
+    setPageLoading(true);
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -123,22 +124,12 @@ export default function CarteiraGeralPage() {
       console.error(err);
       toast.error(`Erro ao carregar dados da API: ${err.message}`);
     } finally {
-      setLoading(false);
+      setInitialLoading(false);
+      setPageLoading(false);
     }
-  }, []);
+  }, [clientRecords.length]);
 
   useEffect(() => { loadData(apiPage); }, [apiPage]);
-
-
-  useEffect(() => {
-    if (!tableScrollRef.current || !topScrollInnerRef.current) return;
-    const observer = new ResizeObserver(() => {
-      if (tableScrollRef.current && topScrollInnerRef.current)
-        topScrollInnerRef.current.style.width = tableScrollRef.current.scrollWidth + 'px';
-    });
-    observer.observe(tableScrollRef.current);
-    return () => observer.disconnect();
-  }, [loading, clientRecords, displayFields]);
 
   // Extract unique filter options dynamically
   const filterOptions = useMemo(() => {
@@ -234,7 +225,7 @@ export default function CarteiraGeralPage() {
     }
   }, [deleteTarget]);
 
-  if (loading || fieldsLoading) return (
+  if (initialLoading || fieldsLoading) return (
     <div className="space-y-3 p-4">
       {Array.from({ length: 8 }).map((_, i) => (
         <Skeleton key={i} className="h-10 w-full rounded-md" />
@@ -404,19 +395,15 @@ export default function CarteiraGeralPage() {
           {filtered.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">Nenhum cliente encontrado</p>
           ) : (
-            <div className="w-full border rounded-md flex flex-col">
-              {/* Top scrollbar */}
-              <div
-                ref={topScrollRef}
-                className="w-full overflow-x-auto"
-                onScroll={() => { if (tableScrollRef.current) tableScrollRef.current.scrollLeft = topScrollRef.current!.scrollLeft; }}
-              >
-                <div ref={topScrollInnerRef} className="h-[1px]" />
-              </div>
+            <div className="relative w-full">
+              {pageLoading && (
+                <div className="absolute inset-0 bg-background/60 z-10 flex items-center justify-center rounded-md">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              )}
               <div
                 ref={tableScrollRef}
                 className="w-full overflow-x-auto"
-                onScroll={() => { if (topScrollRef.current) topScrollRef.current.scrollLeft = tableScrollRef.current!.scrollLeft; }}
               >
                 <div style={{ minWidth: `${Math.max(displayFields.length * 180, 2000)}px` }}>
                   <Table>
@@ -438,7 +425,7 @@ export default function CarteiraGeralPage() {
                           className="cursor-pointer"
                           onClick={() => row.id && navigate(`/hub/carteira/${row.id}`)}
                         >
-                          <TableCell className="text-xs text-muted-foreground">{i + 1}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground">{(apiPage - 1) * PER_PAGE + i + 1}</TableCell>
                           {displayFields.map(col => (
                             <TableCell key={col.db_key} className="text-xs whitespace-nowrap max-w-[250px] truncate">
                               {(col.field_type === 'url' || col.db_key === 'client_url') && row[col.db_key] ? (
@@ -480,7 +467,7 @@ export default function CarteiraGeralPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  disabled={apiPage <= 1 || loading}
+                  disabled={apiPage <= 1 || pageLoading}
                   onClick={() => setApiPage(p => p - 1)}
                 >
                   Anterior
@@ -488,7 +475,7 @@ export default function CarteiraGeralPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  disabled={apiPage >= apiTotalPages || loading}
+                  disabled={apiPage >= apiTotalPages || pageLoading}
                   onClick={() => setApiPage(p => p + 1)}
                 >
                   Próximo
