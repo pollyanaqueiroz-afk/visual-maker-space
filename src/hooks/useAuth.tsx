@@ -14,10 +14,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // --- DEV BYPASS START ---
 const DEV_BYPASS_KEY = 'dev_bypass';
-const isDevEnvironment = () => {
-  const h = window.location.hostname;
-  return h === 'localhost' || h === '127.0.0.1' || h.includes('lovable.app');
-};
 const FAKE_USER = {
   id: 'dev-bypass-user',
   email: 'dev@curseduca.com',
@@ -33,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   // --- DEV BYPASS START ---
   const [devBypass, setDevBypass] = useState(() =>
-    isDevEnvironment() && sessionStorage.getItem(DEV_BYPASS_KEY) === 'true'
+    sessionStorage.getItem(DEV_BYPASS_KEY) === 'true'
   );
   // --- DEV BYPASS END ---
 
