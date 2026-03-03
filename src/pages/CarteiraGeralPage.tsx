@@ -201,7 +201,7 @@ export default function CarteiraGeralPage() {
 
   const stats = useMemo(() => ({
     total: summaryTotal ?? apiTotal,
-    totalRevenue: summaryReceita ?? clientRecords.reduce((s, c) => s + (Number(c.valor_mensal) || 0), 0),
+    totalRevenue: summaryReceita ?? 0,
   }), [summaryTotal, summaryReceita, clientRecords, apiTotal]);
 
   const handleDeleteClient = useCallback(async () => {
