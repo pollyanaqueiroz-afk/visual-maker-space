@@ -177,7 +177,7 @@ export default function ClientDetailSheet({ idCurseduca, open, onOpenChange }: P
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
         const res = await fetch(
-          `${supabaseUrl}/functions/v1/fetch-visao360?id_curseduca=${encodeURIComponent(idCurseduca)}`,
+          `${supabaseUrl}/functions/v1/fetch-hub-summary?endpoint=clientes&id_curseduca=${encodeURIComponent(idCurseduca)}`,
           { headers: { Authorization: `Bearer ${supabaseKey}`, apikey: supabaseKey } },
         );
         if (!res.ok) throw new Error(`Erro ${res.status}`);

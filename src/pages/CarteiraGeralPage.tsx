@@ -111,7 +111,7 @@ export default function CarteiraGeralPage() {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-      let fetchUrl = `${supabaseUrl}/functions/v1/fetch-visao360?view=${view}&page=${page}&per_page=${PER_PAGE}`;
+      let fetchUrl = `${supabaseUrl}/functions/v1/fetch-hub-summary?endpoint=clientes&view=${view}&page=${page}&per_page=${PER_PAGE}`;
       if (searchTerm) {
         fetchUrl += `&search=${encodeURIComponent(searchTerm)}`;
       }
