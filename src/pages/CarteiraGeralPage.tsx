@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import * as XLSX from 'xlsx';
+
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,12 +9,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import {
-  Globe, Users, Search, Loader2, Upload, DollarSign, Filter, X, Download, Trash2, RefreshCw,
+  Globe, Users, Search, Loader2, DollarSign, Filter, X, Trash2, RefreshCw,
 } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import ImportWizard from '@/components/carteira/importer/ImportWizard';
+
 import ClientDetailSheet from '@/components/carteira/ClientDetailSheet';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useFieldDefinitions, type FieldDefinition } from '@/hooks/useFieldDefinitions';
@@ -63,7 +63,7 @@ export default function CarteiraGeralPage() {
   
   const { hasPermission } = usePermissions();
   const canImport = hasPermission('carteira.import');
-  const canExport = hasPermission('carteira.export');
+  
   const canDelete = hasPermission('carteira.delete');
   const { visibleFields, isLoading: fieldsLoading } = useFieldDefinitions();
   const displayFields = useMemo(() => 
@@ -74,7 +74,7 @@ export default function CarteiraGeralPage() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [pageLoading, setPageLoading] = useState(false);
   const [search, setSearch] = useState('');
-  const [importOpen, setImportOpen] = useState(false);
+  
   const [showFilters, setShowFilters] = useState(false);
   const [dynamicFilters, setDynamicFilters] = useState<Record<string, string>>({});
   const [deleteTarget, setDeleteTarget] = useState<ClientRecord | null>(null);
@@ -170,48 +170,6 @@ export default function CarteiraGeralPage() {
     totalRevenue: clientRecords.reduce((s, c) => s + (Number(c.valor_mensal) || 0), 0),
   }), [clientRecords, apiTotal]);
 
-  const buildExportData = useCallback(() => {
-    return filtered.map(row => {
-      const out: Record<string, string> = {};
-      for (const col of displayFields) {
-        out[col.label] = row[col.db_key] != null && row[col.db_key] !== '' ? String(row[col.db_key]) : '';
-      }
-      return out;
-    });
-  }, [filtered, displayFields]);
-
-  const handleExportCSV = useCallback(() => {
-    const data = buildExportData();
-    if (data.length === 0) { toast.error('Nenhum dado para exportar'); return; }
-    const headers = displayFields.map(c => c.label);
-    const csvRows = [headers.join(',')];
-    for (const row of data) {
-      csvRows.push(headers.map(h => {
-        const v = row[h] || '';
-        return v.includes(',') || v.includes('"') || v.includes('\n') ? `"${v.replace(/"/g, '""')}"` : v;
-      }).join(','));
-    }
-    const bom = '\uFEFF';
-    const blob = new Blob([bom + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `carteira_clientes_${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success(`${data.length} registros exportados em CSV`);
-  }, [buildExportData, displayFields]);
-
-  const handleExportExcel = useCallback(() => {
-    const data = buildExportData();
-    if (data.length === 0) { toast.error('Nenhum dado para exportar'); return; }
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Clientes');
-    XLSX.writeFile(wb, `carteira_clientes_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    toast.success(`${data.length} registros exportados em Excel`);
-  }, [buildExportData]);
-
   const handleDeleteClient = useCallback(async () => {
     if (!deleteTarget?.id) return;
     setDeleting(true);
@@ -243,55 +201,35 @@ export default function CarteiraGeralPage() {
           <p className="text-sm text-muted-foreground">Visão geral de todos os clientes importados</p>
         </div>
         <div className="flex items-center gap-2">
-          {canExport && (
-            <>
-              <Button variant="outline" size="sm" onClick={handleExportCSV}>
-                <Download className="h-4 w-4 mr-1.5" />
-                CSV
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleExportExcel}>
-                <Download className="h-4 w-4 mr-1.5" />
-                Excel
-              </Button>
-            </>
-          )}
           {canImport && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={async () => {
-                  setSyncing(true);
-                  try {
-                    const { data, error } = await supabase.functions.invoke('sync-visao360');
-                    if (error) throw error;
-                    if (data?.error) throw new Error(data.error);
-                    toast.success(
-                      `Sincronização concluída: ${data.synced} registros sincronizados${data.errors > 0 ? `, ${data.errors} erros` : ''}`
-                    );
-                    loadData();
-                  } catch (err: any) {
-                    console.error(err);
-                    toast.error(`Erro na sincronização: ${err.message}`);
-                  } finally {
-                    setSyncing(false);
-                  }
-                }}
-                disabled={syncing}
-              >
-                <RefreshCw className={`h-4 w-4 mr-1.5 ${syncing ? 'animate-spin' : ''}`} />
-                {syncing ? 'Sincronizando...' : 'Sincronizar API'}
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
-                <Upload className="h-4 w-4 mr-1.5" />
-                Importar
-              </Button>
-            </>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                setSyncing(true);
+                try {
+                  const { data, error } = await supabase.functions.invoke('sync-visao360');
+                  if (error) throw error;
+                  if (data?.error) throw new Error(data.error);
+                  toast.success(
+                    `Sincronização concluída: ${data.synced} registros sincronizados${data.errors > 0 ? `, ${data.errors} erros` : ''}`
+                  );
+                  loadData();
+                } catch (err: any) {
+                  console.error(err);
+                  toast.error(`Erro na sincronização: ${err.message}`);
+                } finally {
+                  setSyncing(false);
+                }
+              }}
+              disabled={syncing}
+            >
+              <RefreshCw className={`h-4 w-4 mr-1.5 ${syncing ? 'animate-spin' : ''}`} />
+              {syncing ? 'Sincronizando...' : 'Sincronizar API'}
+            </Button>
           )}
         </div>
       </div>
-
-      <ImportWizard open={importOpen} onOpenChange={setImportOpen} onSuccess={loadData} />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
