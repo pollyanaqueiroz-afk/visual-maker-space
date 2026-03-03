@@ -4,7 +4,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const API_URL = "https://us-central1-curseduca-inc-ia.cloudfunctions.net/visao-360-api";
+const API_URL = "https://us-central1-curseduca-inc-ia.cloudfunctions.net/hub-clientes";
 
 function mapRecord(r: any): Record<string, any> {
   const s = (v: any) => (v == null ? null : String(v));

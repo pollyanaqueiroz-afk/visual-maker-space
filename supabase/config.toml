@@ -42,6 +42,9 @@ verify_jwt = false
 [functions.fetch-visao360]
 verify_jwt = false
 
+[functions.fetch-hub-summary]
+verify_jwt = false
+
 [functions.sync-visao360]
 verify_jwt = false
 

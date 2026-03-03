@@ -87,6 +87,8 @@ export default function CarteiraGeralPage() {
   const [apiTotal, setApiTotal] = useState(0);
   const PER_PAGE = 10;
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [summaryTotal, setSummaryTotal] = useState<number | null>(null);
+  const [summaryReceita, setSummaryReceita] = useState<number | null>(null);
 
   // Determine which fields can be used as filters (enum + booleano)
   const filterableFields = useMemo(
@@ -147,6 +149,30 @@ export default function CarteiraGeralPage() {
 
   useEffect(() => { loadData(apiPage, debouncedSearch); }, [apiPage, debouncedSearch]);
 
+  // Load summary data from hub-summary endpoint
+  useEffect(() => {
+    const loadSummary = async () => {
+      try {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        const res = await fetch(`${supabaseUrl}/functions/v1/fetch-hub-summary`, {
+          headers: {
+            'Authorization': `Bearer ${supabaseKey}`,
+            'apikey': supabaseKey,
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.total_clientes != null) setSummaryTotal(data.total_clientes);
+          if (data.receita_total != null) setSummaryReceita(data.receita_total);
+        }
+      } catch (err) {
+        console.error('Erro ao carregar summary:', err);
+      }
+    };
+    loadSummary();
+  }, []);
+
   // Extract unique filter options dynamically
   const filterOptions = useMemo(() => {
     const opts: Record<string, string[]> = {};
@@ -174,9 +200,9 @@ export default function CarteiraGeralPage() {
   }, [clientRecords, dynamicFilters]);
 
   const stats = useMemo(() => ({
-    total: apiTotal,
-    totalRevenue: clientRecords.reduce((s, c) => s + (Number(c.valor_mensal) || 0), 0),
-  }), [clientRecords, apiTotal]);
+    total: summaryTotal ?? apiTotal,
+    totalRevenue: summaryReceita ?? clientRecords.reduce((s, c) => s + (Number(c.valor_mensal) || 0), 0),
+  }), [summaryTotal, summaryReceita, clientRecords, apiTotal]);
 
   const handleDeleteClient = useCallback(async () => {
     if (!deleteTarget?.id) return;
@@ -244,7 +270,7 @@ export default function CarteiraGeralPage() {
         <Card>
           <CardContent className="p-4 flex flex-col items-center text-center gap-1">
             <Globe className="h-5 w-5 text-foreground" />
-            <span className="text-2xl font-bold text-foreground">{stats.total}</span>
+            <span className="text-2xl font-bold text-foreground">{new Intl.NumberFormat('pt-BR').format(stats.total)}</span>
             <span className="text-[11px] text-muted-foreground">Total de Clientes</span>
           </CardContent>
         </Card>
