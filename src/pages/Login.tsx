@@ -96,6 +96,25 @@ export default function Login() {
                 {loading ? 'Entrando...' : 'Entrar'}
               </Button>
             </form>
+
+            {/* --- DEV BYPASS START --- */}
+            {(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.includes('lovable.app')) && (
+              <>
+                <Separator />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  className="w-full"
+                  onClick={() => {
+                    sessionStorage.setItem('dev_bypass', 'true');
+                    window.location.href = '/hub';
+                  }}
+                >
+                  🔧 Dev Access (temporário)
+                </Button>
+              </>
+            )}
+            {/* --- DEV BYPASS END --- */}
           </CardContent>
         </Card>
       </div>
