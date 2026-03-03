@@ -6,6 +6,7 @@ interface AuthContextType {
   session: Session | null;
   user: User | null;
   loading: boolean;
+  isDevBypass: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -82,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // --- DEV BYPASS END ---
 
   return (
-    <AuthContext.Provider value={{ session, user, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ session, user, loading, isDevBypass: devBypass, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );
