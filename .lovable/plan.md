@@ -1,33 +1,26 @@
 
 
-## Painel do Designer — "Minhas Artes"
+## Plano: Bypass temporário de login para desenvolvimento
 
-Criar uma pagina publica onde o designer digita seu email e ve todas as artes atribuidas a ele, com status, prazo e link para entregar cada uma.
+### O que será feito
+
+Adicionar um botão "Dev Access" visível apenas em ambiente de desenvolvimento (preview/localhost) na tela de Login. Ao clicar, o usuário será redirecionado diretamente para `/hub` sem autenticação real.
 
 ### Como funciona
 
-1. O designer acessa `/designer` (ou clica num link no email)
-2. Digita seu email
-3. O sistema busca todas as `briefing_images` onde `assigned_email` = email informado
-4. Mostra uma lista com: tipo de arte, cliente, prazo, status e botao para ir direto na pagina de entrega (`/delivery/:token`)
+1. **`src/pages/Login.tsx`** — Adicionar um botão condicional que aparece apenas quando `window.location.hostname` inclui `localhost`, `127.0.0.1` ou `lovable.app` (preview).
 
-### Implementacao
+2. **`src/hooks/useAuth.tsx`** — Adicionar suporte a um flag `sessionStorage.setItem('dev_bypass', 'true')` que o hook reconhece como "usuário logado" temporariamente, retornando um objeto user fake.
 
-**Novo arquivo `src/pages/DesignerPanel.tsx`:**
-- Tela simples com campo de email e botao "Ver minhas artes"
-- Ao buscar, consulta `briefing_images` filtrando por `assigned_email` (com join em `briefing_requests` para pegar nome do cliente)
-- Exibe tabela/cards com: tipo de arte, produto, cliente, prazo, status e link "Entregar" apontando para `/delivery/{delivery_token}`
-- Sem necessidade de login — a filtragem por email ja garante que o designer so ve suas artes
+3. **`src/components/ProtectedRoute.tsx`** e **`src/pages/HubPage.tsx`** — Já usam `useAuth()`, então funcionarão automaticamente se o hook reconhecer o bypass.
 
-**Rota no `src/App.tsx`:**
-- Adicionar `<Route path="/designer" element={<DesignerPanel />} />`
+### Reversão
 
-**Link no email de briefing:**
-- Adicionar no email (edge function `send-briefing-email`) um link secundario "Ver todas as minhas artes" apontando para `/designer`
+Quando quiser remover, basta apagar as linhas do bypass — um único prompt resolve.
 
-### Detalhes tecnicos
+### Riscos
 
-- A query usa `assigned_email` que ja e publica (RLS da `briefing_images` permite SELECT com `true`)
-- Nenhuma migracao necessaria — os dados ja existem
-- O componente reutiliza os mesmos `IMAGE_TYPE_LABELS` e patterns visuais do `DeliveryPage`
+- Zero impacto em produção (condicional por hostname)
+- Não altera tabelas, RLS, ou edge functions
+- Permissões podem ficar limitadas (sem role real no banco), mas navegação funcionará
 
