@@ -64,7 +64,7 @@ export default function HubWelcome() {
     if (!user) return;
 
     // --- DEV BYPASS START ---
-    if ((user as any).id === 'dev-bypass-user') {
+    if ((user as any).id === '00000000-0000-0000-0000-000000000000') {
       setDisplayName('Dev');
       setLoading(false);
       return;

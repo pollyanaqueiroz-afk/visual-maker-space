@@ -16,7 +16,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // --- DEV BYPASS START ---
 const DEV_BYPASS_KEY = 'dev_bypass';
 const FAKE_USER = {
-  id: 'dev-bypass-user',
+  id: '00000000-0000-0000-0000-000000000000',
   email: 'dev@curseduca.com',
   app_metadata: {},
   user_metadata: { display_name: 'Dev User' },

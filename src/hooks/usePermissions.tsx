@@ -104,7 +104,7 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
     }
 
     // --- DEV BYPASS START ---
-    if ((user as any).id === 'dev-bypass-user') {
+    if ((user as any).id === '00000000-0000-0000-0000-000000000000') {
       setPermissions(new Set(ALL_PERMISSION_KEYS));
       setLoading(false);
       return;
