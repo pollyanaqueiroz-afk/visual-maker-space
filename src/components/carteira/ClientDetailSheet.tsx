@@ -18,7 +18,7 @@ interface Props {
 interface Section {
   title: string;
   icon: React.ReactNode;
-  fields: { label: string; key: string; format?: 'bytes' | 'currency' | 'link' | 'date' }[];
+  fields: { label: string; key: string; format?: 'bytes' | 'currency' | 'link' | 'date' | 'number' }[];
 }
 
 const SECTIONS: Section[] = [
@@ -26,96 +26,95 @@ const SECTIONS: Section[] = [
     title: 'Dados do Cliente',
     icon: <User className="h-4 w-4" />,
     fields: [
-      { label: 'Nome', key: 'cliente_nome' },
-      { label: 'Email', key: 'cliente_email' },
+      { label: 'Nome', key: 'client_name' },
+      { label: 'Email', key: 'email_do_cliente' },
       { label: 'ID Curseduca', key: 'id_curseduca' },
-      { label: 'URL da Plataforma', key: 'url_plataforma', format: 'link' },
-      { label: 'Nome da Plataforma', key: 'plataforma_nome' },
+      { label: 'URL da Plataforma', key: 'client_url', format: 'link' },
+      { label: 'Nome da Plataforma', key: 'nome_da_plataforma' },
       { label: 'Status Financeiro', key: 'status_financeiro' },
-      { label: 'Valor da Fatura', key: 'fatura_total', format: 'currency' },
-      { label: 'Plano Base', key: 'plano_base_consolidada' },
-      { label: 'Plano Formatado', key: 'plano_nome_formatado' },
-      { label: 'Origem', key: 'origem' },
+      { label: 'Valor Mensal', key: 'valor_mensal', format: 'currency' },
+      { label: 'Plano Contratado', key: 'plano_contratado' },
+      { label: 'Plano Detalhado', key: 'plano_detalhado' },
+      { label: 'Origem do Dado', key: 'origem_do_dado' },
     ],
   },
   {
     title: 'Customer Success',
     icon: <Activity className="h-4 w-4" />,
     fields: [
-      { label: 'CS Responsável', key: 'cs_nome' },
-      { label: 'Email CS', key: 'cs_email' },
-      { label: 'Etapa do CS', key: 'etapa_do_cs' },
+      { label: 'CS Responsável', key: 'nome_do_cs_atual' },
+      { label: 'Email CS', key: 'email_do_cs_atual' },
+      { label: 'Etapa do CS', key: 'etapa_antiga_sensedata' },
     ],
   },
   {
     title: 'Engajamento',
     icon: <TrendingUp className="h-4 w-4" />,
     fields: [
-      { label: 'Último Login', key: 'data_ultimo_login', format: 'date' },
-      { label: 'Dias Desde Último Login', key: 'dias_desde_ultimo_login' },
-      { label: 'Tempo Médio de Uso (min)', key: 'tempo_medio_uso_web_minutos' },
-      { label: 'Membros Mês Atual', key: 'membros_mes_atual' },
-      { label: 'Variação Membros (M0 vs M1)', key: 'variacao_m0_vs_m1' },
+      { label: 'Último Login', key: 'data_do_ultimo_login' },
+      { label: 'Dias Desde Último Login', key: 'dias_desde_o_ultimo_login' },
+      { label: 'Tempo Médio de Uso (min)', key: 'tempo_medio_de_uso_em_min' },
+      { label: 'Membros Mês Atual', key: 'membros_do_mes_atual' },
+      { label: 'Variação Membros', key: 'variacao_de_quantidade_de_membros_por_mes' },
     ],
   },
   {
     title: 'Consumo de Recursos',
     icon: <HardDrive className="h-4 w-4" />,
     fields: [
-      { label: 'Banda Contratada', key: 'player_banda_contratada', format: 'bytes' },
-      { label: 'Banda Utilizada', key: 'player_banda_utilizada', format: 'bytes' },
-      { label: 'Armazenamento Contratado', key: 'player_armazenamento_contratado', format: 'bytes' },
-      { label: 'Armazenamento Utilizado', key: 'player_armazenamento_utilizado', format: 'bytes' },
+      { label: 'Banda Contratada', key: 'banda_contratada', format: 'bytes' },
+      { label: 'Banda Utilizada', key: 'banda_utilizada', format: 'bytes' },
+      { label: 'Armazenamento Contratado', key: 'armazenamento_contratado', format: 'bytes' },
+      { label: 'Armazenamento Utilizado', key: 'armazenamento_utilizado', format: 'bytes' },
     ],
   },
   {
     title: 'IA & Certificados',
     icon: <Cpu className="h-4 w-4" />,
     fields: [
-      { label: 'Tokens IA Contratados', key: 'ia_tokens_contratados' },
-      { label: 'Tokens IA Utilizados', key: 'ia_tokens_utilizados' },
-      { label: 'Certificados MEC Contratados', key: 'certificados_mec_contratados' },
-      { label: 'Certificados MEC Utilizados', key: 'certificados_mec_utilizados' },
+      { label: 'Tokens IA Contratados', key: 'token_de_ia_contratado', format: 'number' },
+      { label: 'Tokens IA Utilizados', key: 'token_de_ia_utilizado', format: 'number' },
+      { label: 'Certificados MEC Contratados', key: 'certificado_mec_contratado', format: 'number' },
+      { label: 'Certificados MEC Utilizados', key: 'certificado_mec_utilizado', format: 'number' },
     ],
   },
   {
     title: 'Marcos de Compras',
     icon: <ShoppingCart className="h-4 w-4" />,
     fields: [
-      { label: '1ª Compra', key: 'compras_data_primeira', format: 'date' },
-      { label: '10ª Compra', key: 'compras_data_decima', format: 'date' },
-      { label: '50ª Compra', key: 'compras_data_quinquagesima', format: 'date' },
-      { label: '100ª Compra', key: 'compras_data_centesima', format: 'date' },
-      { label: '200ª Compra', key: 'compras_data_ducentesima', format: 'date' },
+      { label: '1ª Compra', key: 'data_da_primeira_compra' },
+      { label: '10ª Compra', key: 'data_da_10_compra' },
+      { label: '50ª Compra', key: 'data_da_50_compra' },
+      { label: '100ª Compra', key: 'data_da_100_compra' },
+      { label: '200ª Compra', key: 'data_da_200_compra' },
     ],
   },
   {
     title: 'Marcos de Conteúdos',
     icon: <BookOpen className="h-4 w-4" />,
     fields: [
-      { label: '1º Conteúdo Finalizado', key: 'conteudos_data_primeiro_finalizado', format: 'date' },
-      { label: '10º Conteúdo Finalizado', key: 'conteudos_data_decimo_finalizado', format: 'date' },
-      { label: '50º Conteúdo Finalizado', key: 'conteudos_data_quinquagesimo_finalizado', format: 'date' },
-      { label: '100º Conteúdo Finalizado', key: 'conteudos_data_centesimo_finalizado', format: 'date' },
-      { label: '200º Conteúdo Finalizado', key: 'conteudos_data_ducentesimo_finalizado', format: 'date' },
+      { label: '1º Finalizado', key: 'data_do_primeiro_conteudo_finalizado' },
+      { label: '10º Finalizado', key: 'data_do_10_conteudo_finalizado' },
+      { label: '50º Finalizado', key: 'data_do_50_conteudo_finalizado' },
+      { label: '100º Finalizado', key: 'data_do_100_conteudo_finalizado' },
+      { label: '200º Finalizado', key: 'data_do_200_conteudo_finalizado' },
     ],
   },
   {
     title: 'HubSpot',
     icon: <Calendar className="h-4 w-4" />,
     fields: [
-      { label: 'Data do Contrato', key: 'hubspot_data_contrato', format: 'date' },
-      { label: 'Métrica de Sucesso', key: 'hubspot_metrica_sucesso_cliente' },
-      { label: 'Desconto Concedido', key: 'hubspot_desconto_concedido' },
-      { label: 'Processado em', key: 'hubspot_processado_em', format: 'date' },
+      { label: 'Data do Contrato', key: 'data_do_fechamento_do_contrato' },
+      { label: 'Métrica de Sucesso', key: 'metrica_de_sucesso_acordada_na_venda' },
+      { label: 'Desconto Concedido', key: 'desconto_concedido' },
     ],
   },
   {
     title: 'Métricas',
     icon: <Clock className="h-4 w-4" />,
     fields: [
-      { label: 'Métricas Geradas em', key: 'metricas_gerado_em', format: 'date' },
-      { label: 'Métricas Processadas em', key: 'metricas_processado_em', format: 'date' },
+      { label: 'Dados Gerados em', key: 'data_do_dado' },
+      { label: 'Dados Processados em', key: 'data_do_processamento_do_dado' },
     ],
   },
 ];
@@ -130,9 +129,16 @@ function formatBytes(bytes: number | null | undefined): string {
   return `${(n / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
 }
 
+function formatNumber(value: any): string {
+  const n = Number(value);
+  if (isNaN(n)) return String(value);
+  return new Intl.NumberFormat('pt-BR').format(n);
+}
+
 function formatValue(value: any, format?: string): React.ReactNode {
   if (value == null || value === '') return <span className="text-muted-foreground">—</span>;
   if (format === 'bytes') return formatBytes(value);
+  if (format === 'number') return formatNumber(value);
   if (format === 'currency') {
     const n = Number(value);
     if (!isNaN(n)) return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n);
@@ -189,20 +195,34 @@ export default function ClientDetailSheet({ idCurseduca, open, onOpenChange }: P
     return () => { cancelled = true; };
   }, [open, idCurseduca]);
 
+  // Filter sections to only show those with at least one populated field
+  const visibleSections = data
+    ? SECTIONS.filter(section => {
+        // Always show "Dados do Cliente"
+        if (section.title === 'Dados do Cliente') return true;
+        return section.fields.some(f => data[f.key] != null && data[f.key] !== '' && data[f.key] !== '0');
+      })
+    : SECTIONS;
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-xl p-0 flex flex-col">
         <SheetHeader className="px-6 pt-6 pb-4 border-b shrink-0">
           <SheetTitle className="text-lg">
-            {loading ? 'Carregando...' : data?.cliente_nome || 'Detalhes do Cliente'}
+            {loading ? 'Carregando...' : data?.client_name || 'Detalhes do Cliente'}
           </SheetTitle>
           {data && (
-            <div className="flex items-center gap-2 mt-1">
-              <Badge variant={statusColor(data.status_financeiro) as any}>
-                {data.status_financeiro || 'N/A'}
-              </Badge>
-              {data.plano_nome_formatado && (
-                <Badge variant="outline">{data.plano_nome_formatado}</Badge>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              {data.status_financeiro && (
+                <Badge variant={statusColor(data.status_financeiro) as any}>
+                  {data.status_financeiro}
+                </Badge>
+              )}
+              {data.plano_detalhado && (
+                <Badge variant="outline">{data.plano_detalhado}</Badge>
+              )}
+              {data.etapa_antiga_sensedata && (
+                <Badge variant="secondary">{data.etapa_antiga_sensedata}</Badge>
               )}
             </div>
           )}
@@ -230,29 +250,30 @@ export default function ClientDetailSheet({ idCurseduca, open, onOpenChange }: P
               <p className="text-sm text-muted-foreground text-center py-8">Nenhum dado encontrado</p>
             )}
 
-            {!loading && data && SECTIONS.map((section, idx) => {
-              const hasData = section.fields.some(f => data[f.key] != null && data[f.key] !== '');
+            {!loading && data && visibleSections.map((section, idx) => {
+              // For "Dados do Cliente", show all fields; for others, only show populated ones
+              const isMain = section.title === 'Dados do Cliente';
+              const fieldsToShow = isMain
+                ? section.fields
+                : section.fields.filter(f => data[f.key] != null && data[f.key] !== '' && data[f.key] !== '0');
+
               return (
                 <div key={idx}>
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-primary">{section.icon}</span>
                     <h3 className="text-sm font-semibold text-foreground">{section.title}</h3>
                   </div>
-                  {!hasData ? (
-                    <p className="text-xs text-muted-foreground ml-6 mb-2">Sem dados disponíveis</p>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 ml-6">
-                      {section.fields.map(f => (
-                        <div key={f.key} className="space-y-0.5">
-                          <span className="text-[11px] text-muted-foreground">{f.label}</span>
-                          <p className="text-sm text-foreground break-words">
-                            {formatValue(data[f.key], f.format)}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {idx < SECTIONS.length - 1 && <Separator className="mt-4" />}
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 ml-6">
+                    {fieldsToShow.map(f => (
+                      <div key={f.key} className="space-y-0.5">
+                        <span className="text-[11px] text-muted-foreground">{f.label}</span>
+                        <p className="text-sm text-foreground break-words">
+                          {formatValue(data[f.key], f.format)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                  {idx < visibleSections.length - 1 && <Separator className="mt-4" />}
                 </div>
               );
             })}
