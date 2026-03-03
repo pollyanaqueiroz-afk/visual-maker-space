@@ -239,36 +239,6 @@ export default function CarteiraGeralPage() {
           <h1 className="text-2xl font-bold text-foreground">Carteira Geral</h1>
           <p className="text-sm text-muted-foreground">Visão geral de todos os clientes</p>
         </div>
-        <div className="flex items-center gap-2">
-          {canImport && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={async () => {
-                setSyncing(true);
-                try {
-                  const { data, error } = await supabase.functions.invoke('sync-visao360');
-                  if (error) throw error;
-                  if (data?.error) throw new Error(data.error);
-                  toast.success(
-                    `Sincronização concluída: ${data.synced} registros sincronizados${data.errors > 0 ? `, ${data.errors} erros` : ''}`
-                  );
-                  loadData(1, debouncedSearch, activeView);
-                  loadSummary();
-                } catch (err: any) {
-                  console.error(err);
-                  toast.error(`Erro na sincronização: ${err.message}`);
-                } finally {
-                  setSyncing(false);
-                }
-              }}
-              disabled={syncing}
-            >
-              <RefreshCw className={`h-4 w-4 mr-1.5 ${syncing ? 'animate-spin' : ''}`} />
-              {syncing ? 'Sincronizando...' : 'Sincronizar API'}
-            </Button>
-          )}
-        </div>
       </div>
 
       {/* KPI Cards */}
