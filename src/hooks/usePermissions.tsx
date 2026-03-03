@@ -103,6 +103,14 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // --- DEV BYPASS START ---
+    if ((user as any).id === 'dev-bypass-user') {
+      setPermissions(new Set(ALL_PERMISSION_KEYS));
+      setLoading(false);
+      return;
+    }
+    // --- DEV BYPASS END ---
+
     // Get user roles
     const { data: roles } = await supabase
       .from('user_roles')

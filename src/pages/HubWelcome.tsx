@@ -62,6 +62,15 @@ export default function HubWelcome() {
 
   useEffect(() => {
     if (!user) return;
+
+    // --- DEV BYPASS START ---
+    if ((user as any).id === 'dev-bypass-user') {
+      setDisplayName('Dev');
+      setLoading(false);
+      return;
+    }
+    // --- DEV BYPASS END ---
+
     (async () => {
       const { data } = await supabase
         .from('profiles')
