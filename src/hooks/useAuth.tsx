@@ -6,42 +6,17 @@ interface AuthContextType {
   session: Session | null;
   user: User | null;
   loading: boolean;
-  isDevBypass: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// --- DEV BYPASS START ---
-const DEV_BYPASS_KEY = 'dev_bypass';
-const FAKE_USER = {
-  id: '00000000-0000-0000-0000-000000000000',
-  email: 'dev@curseduca.com',
-  app_metadata: {},
-  user_metadata: { display_name: 'Dev User' },
-  aud: 'authenticated',
-  created_at: new Date().toISOString(),
-} as unknown as User;
-// --- DEV BYPASS END ---
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  // --- DEV BYPASS START ---
-  const [devBypass, setDevBypass] = useState(() =>
-    sessionStorage.getItem(DEV_BYPASS_KEY) === 'true'
-  );
-  // --- DEV BYPASS END ---
 
   useEffect(() => {
-    // --- DEV BYPASS START ---
-    if (devBypass) {
-      setLoading(false);
-      return;
-    }
-    // --- DEV BYPASS END ---
-
     const handleSession = async (session: Session | null) => {
       if (session?.user?.email && !session.user.email.endsWith('@curseduca.com')) {
         await supabase.auth.signOut();
@@ -60,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [devBypass]);
+  }, []);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -68,22 +43,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    // --- DEV BYPASS START ---
-    if (devBypass) {
-      sessionStorage.removeItem(DEV_BYPASS_KEY);
-      setDevBypass(false);
-      return;
-    }
-    // --- DEV BYPASS END ---
     await supabase.auth.signOut();
   };
 
-  // --- DEV BYPASS START ---
-  const user = devBypass ? FAKE_USER : session?.user ?? null;
-  // --- DEV BYPASS END ---
+  const user = session?.user ?? null;
 
   return (
-    <AuthContext.Provider value={{ session, user, loading, isDevBypass: devBypass, signIn, signOut }}>
+    <AuthContext.Provider value={{ session, user, loading, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

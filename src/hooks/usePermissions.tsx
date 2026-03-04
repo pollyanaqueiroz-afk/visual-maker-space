@@ -103,13 +103,6 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // --- DEV BYPASS START ---
-    if ((user as any).id === '00000000-0000-0000-0000-000000000000') {
-      setPermissions(new Set(ALL_PERMISSION_KEYS));
-      setLoading(false);
-      return;
-    }
-    // --- DEV BYPASS END ---
 
     // Get user roles
     const { data: roles } = await supabase
