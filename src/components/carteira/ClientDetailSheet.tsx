@@ -44,8 +44,6 @@ const SECTIONS: Section[] = [
       { label: 'Email CS Atual', key: 'cs_email_atual' },
       { label: 'CS Anterior', key: 'cs_antigo' },
       { label: 'Email CS Anterior', key: 'cs_email_antigo' },
-      { label: 'CS Responsável', key: 'cs_nome' },
-      { label: 'Email CS', key: 'cs_email' },
       { label: 'Etapa do CS', key: 'etapa_do_cs' },
       { label: 'Origem', key: 'origem' },
     ],
