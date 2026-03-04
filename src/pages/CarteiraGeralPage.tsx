@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,11 +35,13 @@ const VIEW_COLUMNS: Record<ViewType, { key: string; label: string }[]> = {
     { key: 'fatura_total', label: 'Fatura' },
     { key: 'plano_base_consolidada', label: 'Plano' },
     { key: 'cs_nome', label: 'CS' },
+    { key: 'cs_atual', label: 'CS Atual' },
     { key: 'etapa_do_cs', label: 'Etapa' },
   ],
   produtos: [
     { key: 'id_curseduca', label: 'ID' },
     { key: 'cliente_nome', label: 'Cliente' },
+    { key: 'cs_atual', label: 'CS Atual' },
     { key: 'plataforma_nome', label: 'Plataforma' },
     { key: 'player_banda_utilizada_gb', label: 'Banda (GB)' },
     { key: 'player_armazenamento_utilizado_gb', label: 'Armaz. (GB)' },
@@ -48,6 +51,7 @@ const VIEW_COLUMNS: Record<ViewType, { key: string; label: string }[]> = {
   engajamento: [
     { key: 'id_curseduca', label: 'ID' },
     { key: 'cliente_nome', label: 'Cliente' },
+    { key: 'cs_atual', label: 'CS Atual' },
     { key: 'data_ultimo_login', label: 'Último Login' },
     { key: 'tempo_medio_uso_web_minutos', label: 'Tempo Uso (min)' },
     { key: 'membros_mes_atual', label: 'Membros' },
@@ -97,9 +101,12 @@ function formatCellValue(value: any, key?: string): string {
 
 export default function CarteiraGeralPage() {
   const navigate = useNavigate();
-  const { hasPermission } = usePermissions();
+  const { user } = useAuth();
+  const { hasPermission, hasRole } = usePermissions();
   const canImport = hasPermission('carteira.import');
   const canDelete = hasPermission('carteira.delete');
+  const isCs = hasRole('cs') && !hasRole('admin');
+  const userEmail = user?.email || '';
 
   const [activeView, setActiveView] = useState<ViewType>('financeiro');
   const [clientRecords, setClientRecords] = useState<ClientRecord[]>([]);
@@ -133,6 +140,9 @@ export default function CarteiraGeralPage() {
       if (searchTerm) {
         fetchUrl += `&search=${encodeURIComponent(searchTerm)}`;
       }
+      if (isCs && userEmail) {
+        fetchUrl += `&cs_email_atual=${encodeURIComponent(userEmail)}`;
+      }
 
       const res = await fetch(fetchUrl, {
         headers: {
@@ -160,7 +170,7 @@ export default function CarteiraGeralPage() {
       setInitialLoading(false);
       setPageLoading(false);
     }
-  }, [clientRecords.length]);
+  }, [clientRecords.length, isCs, userEmail]);
 
   // Debounce search
   useEffect(() => {
@@ -186,7 +196,11 @@ export default function CarteiraGeralPage() {
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      const res = await fetch(`${supabaseUrl}/functions/v1/fetch-hub-summary`, {
+      let summaryUrl = `${supabaseUrl}/functions/v1/fetch-hub-summary`;
+      if (isCs && userEmail) {
+        summaryUrl += `?cs_email_atual=${encodeURIComponent(userEmail)}`;
+      }
+      const res = await fetch(summaryUrl, {
         headers: {
           'Authorization': `Bearer ${supabaseKey}`,
           'apikey': supabaseKey,
@@ -200,7 +214,7 @@ export default function CarteiraGeralPage() {
     } catch (err) {
       console.error('Erro ao carregar summary:', err);
     }
-  }, []);
+  }, [isCs, userEmail]);
 
   useEffect(() => { loadSummary(); }, [loadSummary]);
 
