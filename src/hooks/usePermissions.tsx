@@ -5,8 +5,10 @@ import { useAuth } from '@/hooks/useAuth';
 interface PermissionsContextType {
   permissions: Set<string>;
   loading: boolean;
+  userRoles: string[];
   hasPermission: (permission: string) => boolean;
   hasAnyPermission: (...permissions: string[]) => boolean;
+  hasRole: (role: string) => boolean;
   refresh: () => Promise<void>;
 }
 
@@ -94,11 +96,13 @@ export const ALL_PERMISSION_KEYS = PERMISSION_MODULES.flatMap(m => m.permissions
 export function PermissionsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [permissions, setPermissions] = useState<Set<string>>(new Set());
+  const [userRoles, setUserRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     if (!user) {
       setPermissions(new Set());
+      setUserRoles([]);
       setLoading(false);
       return;
     }
@@ -112,17 +116,19 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
 
     if (!roles || roles.length === 0) {
       setPermissions(new Set());
+      setUserRoles([]);
       setLoading(false);
       return;
     }
 
-    const userRoles = roles.map(r => r.role);
+    const userRolesList = roles.map(r => r.role);
+    setUserRoles(userRolesList);
 
     // Get permissions for those roles
     const { data: perms } = await (supabase
       .from('role_permissions' as any)
       .select('permission')
-      .in('role', userRoles) as any);
+      .in('role', userRolesList) as any);
 
     const permSet = new Set<string>(
       (perms || []).map((p: any) => p.permission)
@@ -144,8 +150,13 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
     [permissions]
   );
 
+  const hasRole = useCallback(
+    (role: string) => userRoles.includes(role),
+    [userRoles]
+  );
+
   return (
-    <PermissionsContext.Provider value={{ permissions, loading, hasPermission, hasAnyPermission, refresh }}>
+    <PermissionsContext.Provider value={{ permissions, loading, userRoles, hasPermission, hasAnyPermission, hasRole, refresh }}>
       {children}
     </PermissionsContext.Provider>
   );

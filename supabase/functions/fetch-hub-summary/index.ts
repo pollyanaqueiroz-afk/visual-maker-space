@@ -30,6 +30,7 @@ Deno.serve(async (req) => {
       const perPage = url.searchParams.get("per_page") || "10";
       const search = url.searchParams.get("search") || "";
       const view = url.searchParams.get("view") || "";
+      const csEmail = url.searchParams.get("cs_email_atual") || "";
 
       let apiUrl: string;
       if (idCurseduca) {
@@ -38,6 +39,7 @@ Deno.serve(async (req) => {
         const params = new URLSearchParams({ page, per_page: perPage });
         if (view) params.set("view", view);
         if (search) params.set("search", search);
+        if (csEmail) params.set("cs_email_atual", csEmail);
         apiUrl = `https://us-central1-curseduca-inc-ia.cloudfunctions.net/hub-clientes?${params.toString()}`;
       }
 
@@ -67,7 +69,12 @@ Deno.serve(async (req) => {
     }
 
     // Default: summary endpoint
-    const apiRes = await fetch(API_URL, {
+    const csEmailSummary = url.searchParams.get("cs_email_atual") || "";
+    let summaryUrl = API_URL;
+    if (csEmailSummary) {
+      summaryUrl += `?cs_email_atual=${encodeURIComponent(csEmailSummary)}`;
+    }
+    const apiRes = await fetch(summaryUrl, {
       headers: { Authorization: `Basic ${basicAuth}` },
     });
 
