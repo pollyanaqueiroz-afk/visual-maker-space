@@ -97,20 +97,6 @@ export default function Login() {
               </Button>
             </form>
 
-            {/* --- DEV BYPASS START --- */}
-            <Separator />
-            <Button
-              type="button"
-              variant="destructive"
-              className="w-full"
-              onClick={() => {
-                sessionStorage.setItem('dev_bypass', 'true');
-                window.location.reload();
-              }}
-            >
-              🔧 Dev Access (temporário)
-            </Button>
-            {/* --- DEV BYPASS END --- */}
           </CardContent>
         </Card>
       </div>
