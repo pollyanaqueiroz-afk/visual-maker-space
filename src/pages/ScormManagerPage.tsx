@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Upload, Trash2, ExternalLink, Package, FileArchive, Loader2 } from 'lucide-react';
+import { Upload, Trash2, ExternalLink, Package, FileArchive, Loader2, Copy, Link } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
