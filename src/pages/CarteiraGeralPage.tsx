@@ -12,7 +12,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import {
   Globe, Users, Search, Loader2, DollarSign, RefreshCw, Info,
-  Wallet, Package, Activity, Trash2, Filter, CheckCircle,
+  Wallet, Package, Activity, Trash2, Filter, CheckCircle, AlertTriangle,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -271,8 +271,12 @@ export default function CarteiraGeralPage() {
     return clientRecords.filter(r => r.status_assinatura === assinaturaFilter);
   }, [clientRecords, assinaturaFilter]);
 
-  const assinaturasAtivas = useMemo(() =>
-    clientRecords.filter(r => r.status_assinatura === 'ATIVA').length,
+  const adimplentes = useMemo(() =>
+    clientRecords.filter(r => r.status_financeiro === 'Adimplente').length,
+  [clientRecords]);
+
+  const inadimplentes = useMemo(() =>
+    clientRecords.filter(r => r.status_financeiro === 'Inadimplente').length,
   [clientRecords]);
 
   const stats = useMemo(() => ({
@@ -323,13 +327,6 @@ export default function CarteiraGeralPage() {
         </Card>
         <Card>
           <CardContent className="p-4 flex flex-col items-center text-center gap-1">
-            <Users className="h-5 w-5 text-primary" />
-            <span className="text-2xl font-bold text-foreground">0</span>
-            <span className="text-[11px] text-muted-foreground">Exibindo (pendente validação)</span>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center text-center gap-1">
             <DollarSign className="h-5 w-5 text-primary" />
             <span className="text-2xl font-bold text-foreground">
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.totalRevenue)}
@@ -352,8 +349,15 @@ export default function CarteiraGeralPage() {
         <Card>
           <CardContent className="p-4 flex flex-col items-center text-center gap-1">
             <CheckCircle className="h-5 w-5 text-emerald-500" />
-            <span className="text-2xl font-bold text-emerald-600">{assinaturasAtivas}</span>
-            <span className="text-[11px] text-muted-foreground">Assinaturas Ativas</span>
+            <span className="text-2xl font-bold text-emerald-600">{adimplentes}</span>
+            <span className="text-[11px] text-muted-foreground">Adimplentes</span>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex flex-col items-center text-center gap-1">
+            <AlertTriangle className="h-5 w-5 text-destructive" />
+            <span className="text-2xl font-bold text-destructive">{inadimplentes}</span>
+            <span className="text-[11px] text-muted-foreground">Inadimplentes</span>
           </CardContent>
         </Card>
       </div>
