@@ -87,7 +87,7 @@ function formatCellValue(value: any, key?: string): string {
     const num = Number(value);
     if (!isNaN(num)) return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num);
   }
-  if (key === 'variacao_m0_vs_m1') {
+  if (key === 'variacao_vs_mes_anterior' || key === 'mm_2_meses' || key === 'mm_3_meses') {
     const num = Number(value);
     if (!isNaN(num)) {
       const sign = num > 0 ? '+' : '';
