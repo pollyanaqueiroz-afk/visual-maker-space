@@ -275,8 +275,8 @@ export default function CarteiraGeralPage() {
 
   const filteredRecords = clientRecords;
 
-  const [summaryAdimplentes, setSummaryAdimplentes] = useState<number | null>(null);
-  const [summaryInadimplentes, setSummaryInadimplentes] = useState<number | null>(null);
+
+
 
   const stats = useMemo(() => ({
     total: summaryTotal ?? apiTotal,
