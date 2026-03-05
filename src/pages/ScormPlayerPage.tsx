@@ -10,6 +10,7 @@ export default function ScormPlayerPage() {
   const [pkg, setPkg] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [iframeSrc, setIframeSrc] = useState('');
 
   useEffect(() => {
     if (!id) return;
@@ -20,11 +21,41 @@ export default function ScormPlayerPage() {
         .single();
       if (err || !data) {
         setError('Pacote SCORM não encontrado');
-      } else {
-        setPkg(data);
+        setLoading(false);
+        return;
       }
+      setPkg(data);
+
+      // Build the base URL for storage
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const baseUrl = `https://${projectId}.supabase.co/storage/v1/object/public/scorm-packages/${data.storage_path}`;
+      const entryUrl = `${baseUrl}/${data.entry_point}`;
+
+      try {
+        // Fetch the HTML content
+        const res = await fetch(entryUrl);
+        const htmlText = await res.text();
+
+        // Rewrite relative URLs to absolute so assets load correctly
+        const baseHref = `<base href="${baseUrl}/">`;
+        const modifiedHtml = htmlText.replace(/<head>/i, `<head>${baseHref}`);
+
+        // Create a blob URL with correct content type
+        const blob = new Blob([modifiedHtml], { type: 'text/html' });
+        const blobUrl = URL.createObjectURL(blob);
+        setIframeSrc(blobUrl);
+      } catch (e) {
+        console.error('Error loading SCORM content:', e);
+        setError('Erro ao carregar conteúdo SCORM');
+      }
+
       setLoading(false);
     })();
+
+    return () => {
+      // Cleanup blob URL
+      if (iframeSrc) URL.revokeObjectURL(iframeSrc);
+    };
   }, [id]);
 
   if (loading) {
@@ -46,9 +77,6 @@ export default function ScormPlayerPage() {
     );
   }
 
-  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-  const scormUrl = `https://${projectId}.supabase.co/storage/v1/object/public/scorm-packages/${pkg.storage_path}/${pkg.entry_point}`;
-
   return (
     <div className="flex flex-col h-screen bg-background">
       <div className="flex items-center gap-3 px-4 py-2 border-b bg-card shrink-0">
@@ -57,13 +85,15 @@ export default function ScormPlayerPage() {
         </Button>
         <h1 className="text-sm font-medium truncate">{pkg.title}</h1>
       </div>
-      <iframe
-        src={scormUrl}
-        className="flex-1 w-full border-0"
-        title={pkg.title}
-        allow="autoplay; fullscreen; microphone; camera"
-        style={{ minHeight: 0 }}
-      />
+      {iframeSrc && (
+        <iframe
+          src={iframeSrc}
+          className="flex-1 w-full border-0"
+          title={pkg.title}
+          allow="autoplay; fullscreen; microphone; camera"
+          style={{ minHeight: 0 }}
+        />
+      )}
     </div>
   );
 }
