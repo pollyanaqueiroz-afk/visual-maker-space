@@ -134,7 +134,7 @@ export default function CarteiraGeralPage() {
   const [summaryReceita, setSummaryReceita] = useState<number | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ClientRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [assinaturaFilter, setAssinaturaFilter] = useState<string>('');
+  
 
   const columns = VIEW_COLUMNS[activeView];
 
@@ -265,11 +265,7 @@ export default function CarteiraGeralPage() {
     loadCsList();
   }, [isAdmin]);
 
-  // Client-side filter for assinatura
-  const filteredRecords = useMemo(() => {
-    if (!assinaturaFilter) return clientRecords;
-    return clientRecords.filter(r => r.status_assinatura === assinaturaFilter);
-  }, [clientRecords, assinaturaFilter]);
+  const filteredRecords = clientRecords;
 
   const adimplentes = useMemo(() =>
     clientRecords.filter(r => r.status_financeiro === 'Adimplente').length,
@@ -390,16 +386,6 @@ export default function CarteiraGeralPage() {
                 </SelectContent>
               </Select>
             )}
-            <Select value={assinaturaFilter} onValueChange={(val) => setAssinaturaFilter(val === '__all__' ? '' : val)}>
-              <SelectTrigger className="h-9 w-[160px] text-sm">
-                <SelectValue placeholder="Assinatura" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">Todas</SelectItem>
-                <SelectItem value="ATIVA">Ativa</SelectItem>
-                <SelectItem value="INATIVA">Inativa</SelectItem>
-              </SelectContent>
-            </Select>
             <div className="relative flex-1 min-w-[200px] max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
