@@ -122,6 +122,17 @@ export default function ScormManagerPage() {
 
   const getPlayerUrl = (pkg: any) => `/scorm/${pkg.id}`;
 
+  const getPublicUrl = (pkg: any) => {
+    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+    return `https://${projectId}.supabase.co/storage/v1/object/public/scorm-packages/${pkg.storage_path}/${pkg.entry_point}`;
+  };
+
+  const copyPublicLink = (pkg: any) => {
+    const url = getPublicUrl(pkg);
+    navigator.clipboard.writeText(url);
+    toast.success('Link público copiado!');
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
