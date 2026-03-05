@@ -386,16 +386,6 @@ export default function CarteiraGeralPage() {
                 </SelectContent>
               </Select>
             )}
-            <Select value={assinaturaFilter} onValueChange={(val) => setAssinaturaFilter(val === '__all__' ? '' : val)}>
-              <SelectTrigger className="h-9 w-[160px] text-sm">
-                <SelectValue placeholder="Assinatura" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">Todas</SelectItem>
-                <SelectItem value="ATIVA">Ativa</SelectItem>
-                <SelectItem value="INATIVA">Inativa</SelectItem>
-              </SelectContent>
-            </Select>
             <div className="relative flex-1 min-w-[200px] max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
