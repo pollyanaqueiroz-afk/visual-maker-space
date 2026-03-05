@@ -81,6 +81,15 @@ export const PERMISSION_MODULES = [
     ],
   },
   {
+    module: 'scorm',
+    label: 'SCORM',
+    permissions: [
+      { key: 'scorm.view', label: 'Visualizar SCORMs' },
+      { key: 'scorm.create', label: 'Importar SCORMs' },
+      { key: 'scorm.delete', label: 'Excluir SCORMs' },
+    ],
+  },
+  {
     module: 'admin',
     label: 'Administração',
     permissions: [

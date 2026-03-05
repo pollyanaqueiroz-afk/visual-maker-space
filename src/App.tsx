@@ -33,6 +33,8 @@ import AplicativosPage from "./pages/AplicativosPage";
 import AplicativoDetailPage from "./pages/AplicativoDetailPage";
 import AppClientPortal from "./pages/AppClientPortal";
 import FunilCancelamentoPage from "./pages/FunilCancelamentoPage";
+import ScormManagerPage from "./pages/ScormManagerPage";
+import ScormPlayerPage from "./pages/ScormPlayerPage";
 import ClienteLogin from "./pages/cliente/ClienteLogin";
 import ClienteHubLayout from "./pages/cliente/ClienteHubLayout";
 import ClienteHome from "./pages/cliente/ClienteHome";
@@ -81,6 +83,7 @@ const App = () => (
               <Route path="aplicativos" element={<PermissionGuard permission="aplicativos.view"><AplicativosPage /></PermissionGuard>} />
               <Route path="aplicativos/:clienteId" element={<PermissionGuard permission="aplicativos.view"><AplicativoDetailPage /></PermissionGuard>} />
               <Route path="funil-cancelamento" element={<PermissionGuard permission="carteira.view"><FunilCancelamentoPage /></PermissionGuard>} />
+              <Route path="scorm" element={<PermissionGuard permission="scorm.view"><ScormManagerPage /></PermissionGuard>} />
             </Route>
             {/* Legacy route redirect */}
             <Route path="/dashboard" element={<Navigate to="/hub/briefings" replace />} />
@@ -91,6 +94,7 @@ const App = () => (
             <Route path="/csat/:token" element={<CsatPage />} />
             <Route path="/assets/:platformUrl" element={<ClientAssetsPage />} />
             <Route path="/app/:token" element={<AppClientPortal />} />
+            <Route path="/scorm/:id" element={<ScormPlayerPage />} />
             {/* Client Hub */}
             <Route path="/cliente/login" element={<ClienteLogin />} />
             <Route path="/cliente" element={<ClienteHubLayout />}>

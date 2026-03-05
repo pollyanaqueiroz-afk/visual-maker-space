@@ -1,72 +1,26 @@
 
 
-# Plano: Importador e Gerenciador de SCORM
+## Plano: Bypass temporário de login para desenvolvimento
 
-## Visao Geral
+### O que será feito
 
-Criar um modulo completo para upload de pacotes SCORM (ZIP), extracaoo e armazenamento dos arquivos, e exibicaoo do conteudo SCORM em uma pagina dedicada via URL.
+Adicionar um botão "Dev Access" visível apenas em ambiente de desenvolvimento (preview/localhost) na tela de Login. Ao clicar, o usuário será redirecionado diretamente para `/hub` sem autenticação real.
 
-## Arquitetura
+### Como funciona
 
-```text
-[Upload ZIP] --> [Edge Function: process-scorm]
-                      |
-                      ├─ Extrai ZIP em memoria (JSZip)
-                      ├─ Identifica imsmanifest.xml
-                      ├─ Faz upload de cada arquivo para Storage bucket "scorm-packages"
-                      ├─ Salva registro na tabela "scorm_packages"
-                      └─ Retorna URL do pacote
+1. **`src/pages/Login.tsx`** — Adicionar um botão condicional que aparece apenas quando `window.location.hostname` inclui `localhost`, `127.0.0.1` ou `lovable.app` (preview).
 
-[Pagina /hub/scorm]        --> Lista todos os SCORMs com acoes (abrir, excluir)
-[Pagina /scorm/:id/player] --> Carrega o SCORM via iframe apontando para o index.html no Storage
-```
+2. **`src/hooks/useAuth.tsx`** — Adicionar suporte a um flag `sessionStorage.setItem('dev_bypass', 'true')` que o hook reconhece como "usuário logado" temporariamente, retornando um objeto user fake.
 
-## Componentes
+3. **`src/components/ProtectedRoute.tsx`** e **`src/pages/HubPage.tsx`** — Já usam `useAuth()`, então funcionarão automaticamente se o hook reconhecer o bypass.
 
-### 1. Banco de dados
-- Tabela `scorm_packages`: id, title, description, entry_point (caminho relativo do HTML principal), storage_path, file_count, file_size_bytes, created_by, created_at, updated_at
-- RLS: usuarios autenticados podem CRUD
-- Permissoes: `scorm.view`, `scorm.create`, `scorm.delete` no modulo de permissoes
+### Reversão
 
-### 2. Storage
-- Bucket `scorm-packages` (publico para leitura, para que o iframe consiga carregar os assets)
-- Estrutura: `scorm-packages/{scorm_id}/imsmanifest.xml`, `scorm-packages/{scorm_id}/...`
+Quando quiser remover, basta apagar as linhas do bypass — um único prompt resolve.
 
-### 3. Edge Function `process-scorm`
-- Recebe o ZIP via multipart/form-data
-- Usa JSZip para extrair
-- Parseia imsmanifest.xml para encontrar o entry point (recurso principal)
-- Faz upload de todos os arquivos para o bucket sob `{scorm_id}/`
-- Insere registro na tabela scorm_packages
-- Retorna o ID e URL do player
+### Riscos
 
-### 4. Frontend
-
-**Pagina de gestao (`/hub/scorm` - ScormManagerPage)**
-- Tabela listando SCORMs importados (titulo, data, tamanho, qtd arquivos)
-- Botao "Importar SCORM" abre dialog de upload (drag & drop do ZIP + titulo)
-- Acoes por linha: Abrir (link para player), Excluir
-- Segue padrao visual da CarteiraGeralPage
-
-**Pagina do Player (`/scorm/:id` - ScormPlayerPage)**
-- Pagina full-screen com iframe apontando para o entry_point no Storage
-- Header minimo com titulo e botao voltar
-- API SCORM basica (scorm 1.2 / 2004) injetada via postMessage para compatibilidade
-
-### 5. Navegacao
-- Novo item "SCORM" no sidebar sob grupo "Implantacao"
-- Rota `/hub/scorm` protegida por `scorm.view`
-- Rota publica `/scorm/:id` para o player
-
-### 6. Permissoes
-- Adicionar modulo `scorm` ao `PERMISSION_MODULES` em usePermissions.tsx
-- Permissoes: `scorm.view`, `scorm.create`, `scorm.delete`
-
-## Ordem de implementacao
-1. Criar tabela + bucket via migration
-2. Criar Edge Function process-scorm
-3. Criar pagina de gestao ScormManagerPage
-4. Criar pagina do player ScormPlayerPage
-5. Adicionar rotas e navegacao no sidebar
-6. Adicionar permissoes ao sistema
+- Zero impacto em produção (condicional por hostname)
+- Não altera tabelas, RLS, ou edge functions
+- Permissões podem ficar limitadas (sem role real no banco), mas navegação funcionará
 
