@@ -36,8 +36,9 @@ const SECTIONS: Section[] = [
     title: 'Contrato & CS',
     icon: <DollarSign className="h-4 w-4" />,
     fields: [
-      { label: 'Status da Assinatura', key: 'status_assinatura' },
-      { label: 'Status Financeiro', key: 'status_financeiro' },
+      { label: 'Status da Assinatura', key: 'status_financeiro' },
+      { label: 'Status Inadimplência', key: 'status_financeiro_inadimplencia' },
+      { label: 'Status Curseduca', key: 'status_curseduca' },
       { label: 'Fatura Total', key: 'fatura_total', format: 'currency' },
       { label: 'Plano Contratado', key: 'plano_base_consolidada' },
       { label: 'Plano Detalhado', key: 'plano_nome_formatado' },
