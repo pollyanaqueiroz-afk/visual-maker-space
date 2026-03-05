@@ -453,12 +453,30 @@ export default function CarteiraGeralPage() {
                       <TableCell className="text-xs text-muted-foreground">{(apiPage - 1) * PER_PAGE + i + 1}</TableCell>
                       {columns.map(col => (
                         <TableCell key={col.key} className="text-xs whitespace-nowrap max-w-[250px] truncate">
-                          {col.key === 'status_assinatura' ? (
+                          {col.key === 'status_financeiro' ? (
                             row[col.key] === 'ATIVA' ? (
                               <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0 text-[11px]">Ativa</Badge>
                             ) : row[col.key] === 'INATIVA' ? (
                               <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-0 text-[11px]">Inativa</Badge>
-                            ) : null
+                            ) : <span className="text-xs">{row[col.key] || '—'}</span>
+                          ) : col.key === 'status_financeiro_inadimplencia' ? (
+                            row[col.key] === 'Adimplente' ? (
+                              <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0 text-[11px]">Adimplente</Badge>
+                            ) : row[col.key] === 'Inadimplente' ? (
+                              <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-0 text-[11px]">Inadimplente</Badge>
+                            ) : <span className="text-xs">{row[col.key] || '—'}</span>
+                          ) : col.key === 'status_curseduca' ? (
+                            (() => {
+                              const val = row[col.key];
+                              if (!val) return <span className="text-xs">—</span>;
+                              const colorMap: Record<string, string> = {
+                                'Ativo': 'bg-emerald-100 text-emerald-700',
+                                'Risco por Engajamento': 'bg-amber-100 text-amber-700',
+                                'Implantacao': 'bg-blue-100 text-blue-700',
+                              };
+                              const cls = colorMap[val] || 'bg-gray-100 text-gray-700';
+                              return <Badge className={`${cls} hover:${cls.split(' ')[0]} border-0 text-[11px]`}>{val}</Badge>;
+                            })()
                           ) : col.key === 'url_plataforma' && row[col.key] ? (
                             <a href={row[col.key]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" onClick={e => e.stopPropagation()}>
                               {row[col.key]}
