@@ -134,9 +134,10 @@ Deno.serve(async (req) => {
       };
       const contentType = contentTypeMap[ext] || "application/octet-stream";
 
+      const blob = new Blob([content], { type: contentType });
       const { error: uploadError } = await supabase.storage
         .from("scorm-packages")
-        .upload(storagFilePath, content, {
+        .upload(storagFilePath, blob, {
           contentType,
           upsert: true,
         });
