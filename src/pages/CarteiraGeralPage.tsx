@@ -271,13 +271,8 @@ export default function CarteiraGeralPage() {
 
   const filteredRecords = clientRecords;
 
-  const adimplentes = useMemo(() =>
-    clientRecords.filter(r => r.status_financeiro === 'Adimplente').length,
-  [clientRecords]);
-
-  const inadimplentes = useMemo(() =>
-    clientRecords.filter(r => r.status_financeiro === 'Inadimplente').length,
-  [clientRecords]);
+  const [summaryAdimplentes, setSummaryAdimplentes] = useState<number | null>(null);
+  const [summaryInadimplentes, setSummaryInadimplentes] = useState<number | null>(null);
 
   const stats = useMemo(() => ({
     total: summaryTotal ?? apiTotal,
