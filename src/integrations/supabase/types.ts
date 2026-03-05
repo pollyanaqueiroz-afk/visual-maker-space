@@ -1327,6 +1327,45 @@ export type Database = {
         }
         Relationships: []
       }
+      scorm_packages: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          entry_point: string
+          file_count: number
+          file_size_bytes: number
+          id: string
+          storage_path: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          entry_point: string
+          file_count?: number
+          file_size_bytes?: number
+          id?: string
+          storage_path: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          entry_point?: string
+          file_count?: number
+          file_size_bytes?: number
+          id?: string
+          storage_path?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
