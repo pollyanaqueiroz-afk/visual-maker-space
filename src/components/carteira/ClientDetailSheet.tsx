@@ -248,9 +248,9 @@ export default function ClientDetailSheet({ idCurseduca, open, onOpenChange }: P
                   'bg-gray-100 text-gray-700'
                 }`}>{data.status_curseduca}</Badge>
               )}
-              {data.status_financeiro && (
-                <Badge variant={statusColor(data.status_financeiro) as any}>
-                  {data.status_financeiro}
+              {data.status_financeiro_inadimplencia && (
+                <Badge variant={data.status_financeiro_inadimplencia === 'Inadimplente' ? 'destructive' : 'default'}>
+                  {data.status_financeiro_inadimplencia}
                 </Badge>
               )}
               {data.plano_base_consolidada && (
