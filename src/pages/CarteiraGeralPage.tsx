@@ -60,8 +60,10 @@ const VIEW_COLUMNS: Record<ViewType, { key: string; label: string }[]> = {
     { key: 'cs_nome', label: 'CS Original (Base)' },
     { key: 'data_ultimo_login', label: 'Último Login' },
     { key: 'tempo_medio_uso_web_minutos', label: 'Tempo Uso (min)' },
-    { key: 'membros_mes_atual', label: 'Membros' },
-    { key: 'variacao_m0_vs_m1', label: 'Variação' },
+    { key: 'numero_alunos', label: 'Alunos' },
+    { key: 'variacao_vs_mes_anterior', label: 'Variação' },
+    { key: 'mm_2_meses', label: 'MM 2 Meses' },
+    { key: 'mm_3_meses', label: 'MM 3 Meses' },
     { key: 'dias_desde_ultimo_login', label: 'Dias s/ Login' },
   ],
 };
