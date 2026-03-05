@@ -88,10 +88,11 @@ interface ReviewRecord {
 }
 
 export default function Dashboard() {
-  const { hasPermission } = usePermissions();
-  const canCreate = hasPermission('briefings.create');
-  const canEdit = hasPermission('briefings.edit');
-  const canAssign = hasPermission('briefings.assign');
+  const { hasPermission, hasRole } = usePermissions();
+  const isGerenteImpl = hasRole('gerente_implantacao');
+  const canCreate = hasPermission('briefings.create') || isGerenteImpl;
+  const canEdit = hasPermission('briefings.edit') || isGerenteImpl;
+  const canAssign = hasPermission('briefings.assign') || isGerenteImpl;
   const [images, setImages] = useState<ImageWithRequest[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
   const [reviews, setReviews] = useState<ReviewRecord[]>([]);
