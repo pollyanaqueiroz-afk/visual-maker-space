@@ -136,6 +136,8 @@ export default function CarteiraGeralPage() {
   const [detailId, setDetailId] = useState<string | null>(null);
   const [summaryTotal, setSummaryTotal] = useState<number | null>(null);
   const [summaryReceita, setSummaryReceita] = useState<number | null>(null);
+  const [summaryAdimplentes, setSummaryAdimplentes] = useState<number | null>(null);
+  const [summaryInadimplentes, setSummaryInadimplentes] = useState<number | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ClientRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
   
