@@ -35,6 +35,7 @@ import AppClientPortal from "./pages/AppClientPortal";
 import FunilCancelamentoPage from "./pages/FunilCancelamentoPage";
 import ScormManagerPage from "./pages/ScormManagerPage";
 import ScormPlayerPage from "./pages/ScormPlayerPage";
+import BIDashboardPage from "./pages/BIDashboardPage";
 import ClienteLogin from "./pages/cliente/ClienteLogin";
 import ClienteHubLayout from "./pages/cliente/ClienteHubLayout";
 import ClienteHome from "./pages/cliente/ClienteHome";
