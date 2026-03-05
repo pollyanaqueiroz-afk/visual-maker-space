@@ -229,10 +229,8 @@ export default function ScormManagerPage() {
                     <TableCell>{formatSize(pkg.file_size_bytes)}</TableCell>
                     <TableCell>{format(new Date(pkg.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}</TableCell>
                     <TableCell className="text-right space-x-2">
-                      <Button size="sm" variant="outline" asChild>
-                        <a href={getPlayerUrl(pkg)} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="mr-1 h-3 w-3" /> Abrir
-                        </a>
+                      <Button size="sm" variant="outline" onClick={() => navigate(getPlayerUrl(pkg))}>
+                        <ExternalLink className="mr-1 h-3 w-3" /> Abrir
                       </Button>
                       <Button
                         size="sm"
