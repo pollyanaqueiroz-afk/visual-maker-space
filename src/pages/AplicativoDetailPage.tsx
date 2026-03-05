@@ -431,7 +431,7 @@ export default function AplicativoDetailPage() {
                               ) : (
                                 <Checkbox
                                   checked={item.feito}
-                                  disabled={item.ator === 'cliente' && !canEdit}
+                                  disabled={item.ator === 'cliente' && !canEdit && !isGerenteImpl}
                                   onCheckedChange={(checked) => toggleItem.mutate({ id: item.id, feito: !!checked })}
                                 />
                               )}
