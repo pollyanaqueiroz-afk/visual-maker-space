@@ -33,8 +33,9 @@ const VIEW_COLUMNS: Record<ViewType, { key: string; label: string }[]> = {
   financeiro: [
     { key: 'id_curseduca', label: 'ID' },
     { key: 'cliente_nome', label: 'Cliente' },
-    { key: 'status_assinatura', label: 'Assinatura' },
-    { key: 'status_financeiro', label: 'Status Financeiro' },
+    { key: 'status_financeiro', label: 'Assinatura' },
+    { key: 'status_financeiro_inadimplencia', label: 'Inadimplência' },
+    { key: 'status_curseduca', label: 'Status Curseduca' },
     { key: 'fatura_total', label: 'Fatura' },
     { key: 'plano_base_consolidada', label: 'Plano' },
     { key: 'cs_atual', label: 'CS Atual' },
