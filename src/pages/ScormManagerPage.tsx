@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Upload, Trash2, ExternalLink, Package, FileArchive, Loader2 } from 'lucide-react';
+import { Upload, Trash2, ExternalLink, Package, FileArchive, Loader2, Copy, Link } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -122,6 +122,17 @@ export default function ScormManagerPage() {
 
   const getPlayerUrl = (pkg: any) => `/scorm/${pkg.id}`;
 
+  const getPublicUrl = (pkg: any) => {
+    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+    return `https://${projectId}.supabase.co/storage/v1/object/public/scorm-packages/${pkg.storage_path}/${pkg.entry_point}`;
+  };
+
+  const copyPublicLink = (pkg: any) => {
+    const url = getPublicUrl(pkg);
+    navigator.clipboard.writeText(url);
+    toast.success('Link público copiado!');
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -229,6 +240,9 @@ export default function ScormManagerPage() {
                     <TableCell>{formatSize(pkg.file_size_bytes)}</TableCell>
                     <TableCell>{format(new Date(pkg.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}</TableCell>
                     <TableCell className="text-right space-x-2">
+                      <Button size="sm" variant="outline" onClick={() => copyPublicLink(pkg)} title="Copiar link público">
+                        <Link className="mr-1 h-3 w-3" /> Link
+                      </Button>
                       <Button size="sm" variant="outline" onClick={() => navigate(getPlayerUrl(pkg))}>
                         <ExternalLink className="mr-1 h-3 w-3" /> Abrir
                       </Button>
