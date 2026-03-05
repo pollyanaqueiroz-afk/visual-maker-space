@@ -327,13 +327,6 @@ export default function CarteiraGeralPage() {
         </Card>
         <Card>
           <CardContent className="p-4 flex flex-col items-center text-center gap-1">
-            <Users className="h-5 w-5 text-primary" />
-            <span className="text-2xl font-bold text-foreground">0</span>
-            <span className="text-[11px] text-muted-foreground">Exibindo (pendente validação)</span>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center text-center gap-1">
             <DollarSign className="h-5 w-5 text-primary" />
             <span className="text-2xl font-bold text-foreground">
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.totalRevenue)}
@@ -356,8 +349,15 @@ export default function CarteiraGeralPage() {
         <Card>
           <CardContent className="p-4 flex flex-col items-center text-center gap-1">
             <CheckCircle className="h-5 w-5 text-emerald-500" />
-            <span className="text-2xl font-bold text-emerald-600">{assinaturasAtivas}</span>
-            <span className="text-[11px] text-muted-foreground">Assinaturas Ativas</span>
+            <span className="text-2xl font-bold text-emerald-600">{adimplentes}</span>
+            <span className="text-[11px] text-muted-foreground">Adimplentes</span>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex flex-col items-center text-center gap-1">
+            <AlertTriangle className="h-5 w-5 text-destructive" />
+            <span className="text-2xl font-bold text-destructive">{inadimplentes}</span>
+            <span className="text-[11px] text-muted-foreground">Inadimplentes</span>
           </CardContent>
         </Card>
       </div>
