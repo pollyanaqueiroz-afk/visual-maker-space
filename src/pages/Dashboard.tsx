@@ -658,23 +658,43 @@ export default function Dashboard() {
                                     </div>
                                   )}
                                 </div>
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" title="Trocar designer">
-                                      <UserPen className="h-3 w-3" />
-                                    </Button>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-72 p-3" align="start">
-                                    <ChangeDesignerForm
-                                      imageId={img.id}
-                                      currentEmail={img.assigned_email}
-                                      onChanged={fetchData}
-                                    />
-                                  </PopoverContent>
-                                </Popover>
+                                {canAssign && (
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" title="Trocar designer">
+                                        <UserPen className="h-3 w-3" />
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-72 p-3" align="start">
+                                      <ChangeDesignerForm
+                                        imageId={img.id}
+                                        currentEmail={img.assigned_email}
+                                        onChanged={fetchData}
+                                      />
+                                    </PopoverContent>
+                                  </Popover>
+                                )}
                               </div>
                             ) : (
-                              <span className="text-sm text-muted-foreground">Não atribuído</span>
+                              <div className="group flex items-center gap-1">
+                                <span className="text-sm text-muted-foreground">Não atribuído</span>
+                                {canAssign && (
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" title="Atribuir designer">
+                                        <UserPen className="h-3 w-3" />
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-72 p-3" align="start">
+                                      <ChangeDesignerForm
+                                        imageId={img.id}
+                                        currentEmail=""
+                                        onChanged={fetchData}
+                                      />
+                                    </PopoverContent>
+                                  </Popover>
+                                )}
+                              </div>
                             )}
                           </TableCell>
                           <TableCell>
