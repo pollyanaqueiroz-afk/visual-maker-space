@@ -12,7 +12,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import {
   Globe, Users, Search, Loader2, DollarSign, RefreshCw, Info,
-  Wallet, Package, Activity, Trash2, Filter, CheckCircle,
+  Wallet, Package, Activity, Trash2, Filter, CheckCircle, AlertTriangle,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
