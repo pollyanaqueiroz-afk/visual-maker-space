@@ -228,6 +228,8 @@ export default function CarteiraGeralPage() {
         const data = await res.json();
         if (data.total_clientes != null) setSummaryTotal(data.total_clientes);
         if (data.receita_total != null) setSummaryReceita(data.receita_total);
+        if (data.total_adimplentes != null) setSummaryAdimplentes(data.total_adimplentes);
+        if (data.total_inadimplentes != null) setSummaryInadimplentes(data.total_inadimplentes);
       }
     } catch (err) {
       console.error('Erro ao carregar summary:', err);
