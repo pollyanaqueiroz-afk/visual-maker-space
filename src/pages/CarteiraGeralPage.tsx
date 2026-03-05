@@ -346,7 +346,7 @@ export default function CarteiraGeralPage() {
         <Card>
           <CardContent className="p-4 flex flex-col items-center text-center gap-1">
             <CheckCircle className="h-5 w-5 text-emerald-500" />
-            <span className="text-2xl font-bold text-emerald-600">{adimplentes}</span>
+            <span className="text-2xl font-bold text-emerald-600">{summaryAdimplentes != null ? new Intl.NumberFormat('pt-BR').format(summaryAdimplentes) : '—'}</span>
             <span className="text-[11px] text-muted-foreground">Adimplentes</span>
           </CardContent>
         </Card>
