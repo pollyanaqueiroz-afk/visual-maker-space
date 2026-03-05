@@ -16,7 +16,7 @@ function mapRecord(r: any): Record<string, string | null> {
     client_url: s(r.url_plataforma),
     client_name: s(r.cliente_nome),
     email_do_cliente: s(r.cliente_email),
-    status_financeiro: s(r.status_financeiro),
+    status_financeiro: s(r.status_financeiro_inadimplencia),
     valor_mensal: s(r.fatura_total),
     plano_contratado: s(r.plano_base_consolidada),
     plano_detalhado: s(r.plano_nome_formatado),
