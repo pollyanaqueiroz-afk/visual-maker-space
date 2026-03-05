@@ -1,4 +1,4 @@
-import { FileImage, LayoutDashboard, LogOut, CalendarDays, Crown, Briefcase, BarChart3, Package, Headset, Home, Settings, Users, Kanban, ShieldCheck, Smartphone, ExternalLink, Database, AlertTriangle, GraduationCap } from 'lucide-react';
+import { FileImage, LayoutDashboard, LogOut, CalendarDays, Crown, Briefcase, BarChart3, Package, Headset, Home, Settings, Users, Kanban, ShieldCheck, Smartphone, ExternalLink, Database, AlertTriangle, GraduationCap, PieChart } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -33,6 +33,7 @@ const csModules = [
   { title: 'Kanban', url: '/hub/kanban', icon: Kanban, permission: 'kanban.view' },
   { title: 'Dashboard Liderança', url: '/hub/lideranca', icon: Crown, permission: 'lideranca.view' },
   { title: 'Funil de Cancelamento', url: '/hub/funil-cancelamento', icon: AlertTriangle, permission: 'carteira.view' },
+  { title: 'Dashboard BI', url: '/hub/bi', icon: PieChart, permission: 'dashboards.view' },
 ];
 
 const adminModules = [
