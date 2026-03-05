@@ -36,6 +36,7 @@ const SECTIONS: Section[] = [
     title: 'Contrato & CS',
     icon: <DollarSign className="h-4 w-4" />,
     fields: [
+      { label: 'Status da Assinatura', key: 'status_assinatura' },
       { label: 'Status Financeiro', key: 'status_financeiro' },
       { label: 'Fatura Total', key: 'fatura_total', format: 'currency' },
       { label: 'Plano Contratado', key: 'plano_base_consolidada' },
@@ -131,7 +132,12 @@ function formatNumber(value: any): string {
   return new Intl.NumberFormat('pt-BR').format(n);
 }
 
-function formatValue(value: any, format?: string): React.ReactNode {
+function formatValue(value: any, format?: string, key?: string): React.ReactNode {
+  if (key === 'status_assinatura') {
+    if (value === 'ATIVA') return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0">Ativa</Badge>;
+    if (value === 'INATIVA') return <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-0">Inativa</Badge>;
+    return <span className="text-muted-foreground">—</span>;
+  }
   if (value == null || value === '') return <span className="text-muted-foreground">—</span>;
   if (format === 'gb') return formatGb(value);
   if (format === 'number') return formatNumber(value);
@@ -215,6 +221,12 @@ export default function ClientDetailSheet({ idCurseduca, open, onOpenChange }: P
           </SheetTitle>
           {data && (
             <div className="flex items-center gap-2 mt-1 flex-wrap">
+              {data.status_assinatura === 'ATIVA' && (
+                <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0">Ativa</Badge>
+              )}
+              {data.status_assinatura === 'INATIVA' && (
+                <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-0">Inativa</Badge>
+              )}
               {data.status_financeiro && (
                 <Badge variant={statusColor(data.status_financeiro) as any}>
                   {data.status_financeiro}
@@ -269,7 +281,7 @@ export default function ClientDetailSheet({ idCurseduca, open, onOpenChange }: P
                       <div key={f.key} className="space-y-0.5">
                         <span className="text-[11px] text-muted-foreground">{f.label}</span>
                         <p className="text-sm text-foreground break-words">
-                          {formatValue(data[f.key], f.format)}
+                          {formatValue(data[f.key], f.format, f.key)}
                         </p>
                       </div>
                     ))}

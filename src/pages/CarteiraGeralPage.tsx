@@ -12,8 +12,9 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import {
   Globe, Users, Search, Loader2, DollarSign, RefreshCw, Info,
-  Wallet, Package, Activity, Trash2, Filter,
+  Wallet, Package, Activity, Trash2, Filter, CheckCircle,
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -32,6 +33,7 @@ const VIEW_COLUMNS: Record<ViewType, { key: string; label: string }[]> = {
   financeiro: [
     { key: 'id_curseduca', label: 'ID' },
     { key: 'cliente_nome', label: 'Cliente' },
+    { key: 'status_assinatura', label: 'Assinatura' },
     { key: 'status_financeiro', label: 'Status Financeiro' },
     { key: 'fatura_total', label: 'Fatura' },
     { key: 'plano_base_consolidada', label: 'Plano' },
@@ -132,6 +134,7 @@ export default function CarteiraGeralPage() {
   const [summaryReceita, setSummaryReceita] = useState<number | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ClientRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [assinaturaFilter, setAssinaturaFilter] = useState<string>('');
 
   const columns = VIEW_COLUMNS[activeView];
 
@@ -262,6 +265,16 @@ export default function CarteiraGeralPage() {
     loadCsList();
   }, [isAdmin]);
 
+  // Client-side filter for assinatura
+  const filteredRecords = useMemo(() => {
+    if (!assinaturaFilter) return clientRecords;
+    return clientRecords.filter(r => r.status_assinatura === assinaturaFilter);
+  }, [clientRecords, assinaturaFilter]);
+
+  const assinaturasAtivas = useMemo(() =>
+    clientRecords.filter(r => r.status_assinatura === 'ATIVA').length,
+  [clientRecords]);
+
   const stats = useMemo(() => ({
     total: summaryTotal ?? apiTotal,
     totalRevenue: summaryReceita ?? 0,
@@ -300,7 +313,7 @@ export default function CarteiraGeralPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card>
           <CardContent className="p-4 flex flex-col items-center text-center gap-1">
             <Globe className="h-5 w-5 text-foreground" />
@@ -336,6 +349,13 @@ export default function CarteiraGeralPage() {
             </span>
           </CardContent>
         </Card>
+        <Card>
+          <CardContent className="p-4 flex flex-col items-center text-center gap-1">
+            <CheckCircle className="h-5 w-5 text-emerald-500" />
+            <span className="text-2xl font-bold text-emerald-600">{assinaturasAtivas}</span>
+            <span className="text-[11px] text-muted-foreground">Assinaturas Ativas</span>
+          </CardContent>
+        </Card>
       </div>
 
       {/* View Tabs */}
@@ -366,6 +386,16 @@ export default function CarteiraGeralPage() {
                 </SelectContent>
               </Select>
             )}
+            <Select value={assinaturaFilter} onValueChange={(val) => setAssinaturaFilter(val === '__all__' ? '' : val)}>
+              <SelectTrigger className="h-9 w-[160px] text-sm">
+                <SelectValue placeholder="Assinatura" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Todas</SelectItem>
+                <SelectItem value="ATIVA">Ativa</SelectItem>
+                <SelectItem value="INATIVA">Inativa</SelectItem>
+              </SelectContent>
+            </Select>
             <div className="relative flex-1 min-w-[200px] max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -423,7 +453,7 @@ export default function CarteiraGeralPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {clientRecords.map((row, i) => (
+                  {filteredRecords.map((row, i) => (
                     <TableRow
                       key={row.id_curseduca || i}
                       className="cursor-pointer"
@@ -432,7 +462,13 @@ export default function CarteiraGeralPage() {
                       <TableCell className="text-xs text-muted-foreground">{(apiPage - 1) * PER_PAGE + i + 1}</TableCell>
                       {columns.map(col => (
                         <TableCell key={col.key} className="text-xs whitespace-nowrap max-w-[250px] truncate">
-                          {col.key === 'url_plataforma' && row[col.key] ? (
+                          {col.key === 'status_assinatura' ? (
+                            row[col.key] === 'ATIVA' ? (
+                              <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0 text-[11px]">Ativa</Badge>
+                            ) : row[col.key] === 'INATIVA' ? (
+                              <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-0 text-[11px]">Inativa</Badge>
+                            ) : null
+                          ) : col.key === 'url_plataforma' && row[col.key] ? (
                             <a href={row[col.key]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" onClick={e => e.stopPropagation()}>
                               {row[col.key]}
                             </a>
