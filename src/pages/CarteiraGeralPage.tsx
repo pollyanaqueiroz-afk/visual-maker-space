@@ -353,7 +353,7 @@ export default function CarteiraGeralPage() {
         <Card>
           <CardContent className="p-4 flex flex-col items-center text-center gap-1">
             <AlertTriangle className="h-5 w-5 text-destructive" />
-            <span className="text-2xl font-bold text-destructive">{inadimplentes}</span>
+            <span className="text-2xl font-bold text-destructive">{summaryInadimplentes != null ? new Intl.NumberFormat('pt-BR').format(summaryInadimplentes) : '—'}</span>
             <span className="text-[11px] text-muted-foreground">Inadimplentes</span>
           </CardContent>
         </Card>
