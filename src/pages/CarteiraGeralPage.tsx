@@ -265,11 +265,7 @@ export default function CarteiraGeralPage() {
     loadCsList();
   }, [isAdmin]);
 
-  // Client-side filter for assinatura
-  const filteredRecords = useMemo(() => {
-    if (!assinaturaFilter) return clientRecords;
-    return clientRecords.filter(r => r.status_assinatura === assinaturaFilter);
-  }, [clientRecords, assinaturaFilter]);
+  const filteredRecords = clientRecords;
 
   const adimplentes = useMemo(() =>
     clientRecords.filter(r => r.status_financeiro === 'Adimplente').length,
