@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 const implantacaoModules = [
   { title: 'Gestão de Briefings', url: '/hub/briefings', icon: FileImage, permission: 'briefings.view' },
   { title: 'Gestão de Aplicativos', url: '/hub/aplicativos', icon: Smartphone, permission: 'aplicativos.view' },
+  { title: 'SCORM', url: '/hub/scorm', icon: GraduationCap, permission: 'scorm.view' },
 ];
 
 const csModules = [

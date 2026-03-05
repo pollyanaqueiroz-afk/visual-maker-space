@@ -94,6 +94,7 @@ const App = () => (
             <Route path="/csat/:token" element={<CsatPage />} />
             <Route path="/assets/:platformUrl" element={<ClientAssetsPage />} />
             <Route path="/app/:token" element={<AppClientPortal />} />
+            <Route path="/scorm/:id" element={<ScormPlayerPage />} />
             {/* Client Hub */}
             <Route path="/cliente/login" element={<ClienteLogin />} />
             <Route path="/cliente" element={<ClienteHubLayout />}>
