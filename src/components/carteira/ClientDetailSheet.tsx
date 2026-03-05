@@ -136,10 +136,20 @@ function formatNumber(value: any): string {
 }
 
 function formatValue(value: any, format?: string, key?: string): React.ReactNode {
-  if (key === 'status_assinatura') {
+  if (key === 'status_financeiro') {
     if (value === 'ATIVA') return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0">Ativa</Badge>;
     if (value === 'INATIVA') return <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-0">Inativa</Badge>;
     return <span className="text-muted-foreground">—</span>;
+  }
+  if (key === 'status_curseduca') {
+    if (!value) return <span className="text-muted-foreground">—</span>;
+    const colorMap: Record<string, string> = {
+      'Ativo': 'bg-emerald-100 text-emerald-700',
+      'Risco por Engajamento': 'bg-amber-100 text-amber-700',
+      'Implantacao': 'bg-blue-100 text-blue-700',
+    };
+    const cls = colorMap[value] || 'bg-gray-100 text-gray-700';
+    return <Badge className={`${cls} border-0`}>{value}</Badge>;
   }
   if (value == null || value === '') return <span className="text-muted-foreground">—</span>;
   if (format === 'gb') return formatGb(value);
