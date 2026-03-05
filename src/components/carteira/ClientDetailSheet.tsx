@@ -112,8 +112,10 @@ const SECTIONS: Section[] = [
       { label: 'Último Login', key: 'data_ultimo_login' },
       { label: 'Dias Desde Último Login', key: 'dias_desde_ultimo_login', format: 'number' },
       { label: 'Tempo Médio de Uso (min)', key: 'tempo_medio_uso_web_minutos', format: 'number' },
-      { label: 'Membros Mês Atual', key: 'membros_mes_atual', format: 'number' },
-      { label: 'Variação Membros', key: 'variacao_m0_vs_m1', format: 'percent' },
+      { label: 'Nº de Alunos', key: 'numero_alunos', format: 'number' },
+      { label: 'Variação vs Mês Anterior', key: 'variacao_vs_mes_anterior', format: 'percent' },
+      { label: 'Média Móvel 2 Meses', key: 'mm_2_meses', format: 'number' },
+      { label: 'Média Móvel 3 Meses', key: 'mm_3_meses', format: 'number' },
     ],
   },
 ];
