@@ -61,7 +61,8 @@ export default function ScormPlayerPage() {
         src={scormUrl}
         className="flex-1 w-full border-0"
         title={pkg.title}
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+        allow="autoplay; fullscreen; microphone; camera"
+        style={{ minHeight: 0 }}
       />
     </div>
   );
