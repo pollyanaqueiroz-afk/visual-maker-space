@@ -12,8 +12,9 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import {
   Globe, Users, Search, Loader2, DollarSign, RefreshCw, Info,
-  Wallet, Package, Activity, Trash2,
+  Wallet, Package, Activity, Trash2, Filter,
 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
@@ -107,8 +108,12 @@ export default function CarteiraGeralPage() {
   const { hasPermission, hasRole } = usePermissions();
   const canImport = hasPermission('carteira.import');
   const canDelete = hasPermission('carteira.delete');
-  const isCs = hasRole('cs') && !hasRole('admin');
+  const isAdmin = hasRole('admin');
+  const isCs = hasRole('cs') && !isAdmin;
   const userEmail = user?.email || '';
+  const [csFilter, setCsFilter] = useState<string>('');
+  const [availableCs, setAvailableCs] = useState<string[]>([]);
+  const [csNames, setCsNames] = useState<Record<string, string>>({});
 
   const [activeView, setActiveView] = useState<ViewType>('financeiro');
   const [clientRecords, setClientRecords] = useState<ClientRecord[]>([]);
@@ -144,6 +149,8 @@ export default function CarteiraGeralPage() {
       }
       if (isCs && userEmail) {
         fetchUrl += `&cs_email_atual=${encodeURIComponent(userEmail)}`;
+      } else if (isAdmin && csFilter) {
+        fetchUrl += `&cs_email_atual=${encodeURIComponent(csFilter)}`;
       }
 
       const res = await fetch(fetchUrl, {
@@ -172,7 +179,7 @@ export default function CarteiraGeralPage() {
       setInitialLoading(false);
       setPageLoading(false);
     }
-  }, [clientRecords.length, isCs, userEmail]);
+  }, [clientRecords.length, isCs, isAdmin, userEmail, csFilter]);
 
   // Debounce search
   useEffect(() => {
@@ -186,7 +193,7 @@ export default function CarteiraGeralPage() {
 
   useEffect(() => {
     loadData(apiPage, debouncedSearch, activeView);
-  }, [apiPage, debouncedSearch, activeView]);
+  }, [apiPage, debouncedSearch, activeView, csFilter]);
 
   // When switching tabs, reset to page 1
   const handleViewChange = (view: string) => {
@@ -201,6 +208,8 @@ export default function CarteiraGeralPage() {
       let summaryUrl = `${supabaseUrl}/functions/v1/fetch-hub-summary`;
       if (isCs && userEmail) {
         summaryUrl += `?cs_email_atual=${encodeURIComponent(userEmail)}`;
+      } else if (isAdmin && csFilter) {
+        summaryUrl += `?cs_email_atual=${encodeURIComponent(csFilter)}`;
       }
       const res = await fetch(summaryUrl, {
         headers: {
@@ -216,9 +225,42 @@ export default function CarteiraGeralPage() {
     } catch (err) {
       console.error('Erro ao carregar summary:', err);
     }
-  }, [isCs, userEmail]);
+  }, [isCs, isAdmin, userEmail, csFilter]);
 
   useEffect(() => { loadSummary(); }, [loadSummary]);
+
+  // Load available CS list for admin filter
+  useEffect(() => {
+    if (!isAdmin) return;
+    const loadCsList = async () => {
+      try {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        // Fetch all clients (page 1, large per_page) to extract unique CS emails
+        const res = await fetch(
+          `${supabaseUrl}/functions/v1/fetch-hub-summary?endpoint=clientes&view=financeiro&page=1&per_page=1000`,
+          { headers: { 'Authorization': `Bearer ${supabaseKey}`, 'apikey': supabaseKey } }
+        );
+        if (res.ok) {
+          const result = await res.json();
+          const csMap = new Map<string, string>();
+          (result.data || []).forEach((c: any) => {
+            if (c.cs_email_atual && c.cs_atual) {
+              csMap.set(c.cs_email_atual, c.cs_atual);
+            }
+          });
+          // Store as "email|||name" for display
+          const entries = Array.from(csMap.entries())
+            .sort((a, b) => a[1].localeCompare(b[1]));
+          setAvailableCs(entries.map(([email]) => email));
+          setCsNames(Object.fromEntries(entries));
+        }
+      } catch (err) {
+        console.error('Erro ao carregar lista de CS:', err);
+      }
+    };
+    loadCsList();
+  }, [isAdmin]);
 
   const stats = useMemo(() => ({
     total: summaryTotal ?? apiTotal,
@@ -307,17 +349,35 @@ export default function CarteiraGeralPage() {
               </TabsTrigger>
             ))}
           </TabsList>
-          <div className="relative flex-1 min-w-[200px] max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar cliente..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="pl-9 h-9 text-sm"
-            />
-            {search && pageLoading && (
-              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            {isAdmin && availableCs.length > 0 && (
+              <Select value={csFilter} onValueChange={(val) => { setCsFilter(val === '__all__' ? '' : val); setApiPage(1); }}>
+                <SelectTrigger className="h-9 w-[200px] text-sm">
+                  <Filter className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+                  <SelectValue placeholder="Todos os CSs" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">Todos os CSs</SelectItem>
+                  {availableCs.map(email => (
+                    <SelectItem key={email} value={email}>
+                      {csNames[email] || email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
+            <div className="relative flex-1 min-w-[200px] max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar cliente..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="pl-9 h-9 text-sm"
+              />
+              {search && pageLoading && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+              )}
+            </div>
           </div>
         </div>
       </Tabs>
