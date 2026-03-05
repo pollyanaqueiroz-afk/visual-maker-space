@@ -23,8 +23,9 @@ const FASE_NAMES = ['Pré-Requisitos','Primeiros Passos','Validação pela Loja'
 export default function AplicativoDetailPage() {
   const { clienteId } = useParams();
   const navigate = useNavigate();
-  const { hasPermission } = usePermissions();
-  const canEdit = hasPermission('aplicativos.edit');
+  const { hasPermission, hasRole } = usePermissions();
+  const isGerenteImpl = hasRole('gerente_implantacao');
+  const canEdit = hasPermission('aplicativos.edit') || isGerenteImpl;
   const queryClient = useQueryClient();
   const [selectedFase, setSelectedFase] = useState<number | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -430,7 +431,7 @@ export default function AplicativoDetailPage() {
                               ) : (
                                 <Checkbox
                                   checked={item.feito}
-                                  disabled={item.ator === 'cliente' && !canEdit}
+                                  disabled={item.ator === 'cliente' && !canEdit && !isGerenteImpl}
                                   onCheckedChange={(checked) => toggleItem.mutate({ id: item.id, feito: !!checked })}
                                 />
                               )}
