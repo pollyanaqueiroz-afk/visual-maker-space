@@ -271,8 +271,12 @@ export default function CarteiraGeralPage() {
     return clientRecords.filter(r => r.status_assinatura === assinaturaFilter);
   }, [clientRecords, assinaturaFilter]);
 
-  const assinaturasAtivas = useMemo(() =>
-    clientRecords.filter(r => r.status_assinatura === 'ATIVA').length,
+  const adimplentes = useMemo(() =>
+    clientRecords.filter(r => r.status_financeiro === 'Adimplente').length,
+  [clientRecords]);
+
+  const inadimplentes = useMemo(() =>
+    clientRecords.filter(r => r.status_financeiro === 'Inadimplente').length,
   [clientRecords]);
 
   const stats = useMemo(() => ({
