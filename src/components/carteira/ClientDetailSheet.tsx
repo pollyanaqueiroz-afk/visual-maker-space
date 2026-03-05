@@ -234,11 +234,19 @@ export default function ClientDetailSheet({ idCurseduca, open, onOpenChange }: P
           </SheetTitle>
           {data && (
             <div className="flex items-center gap-2 mt-1 flex-wrap">
-              {data.status_assinatura === 'ATIVA' && (
+              {data.status_financeiro === 'ATIVA' && (
                 <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0">Ativa</Badge>
               )}
-              {data.status_assinatura === 'INATIVA' && (
+              {data.status_financeiro === 'INATIVA' && (
                 <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-0">Inativa</Badge>
+              )}
+              {data.status_curseduca && (
+                <Badge className={`border-0 ${
+                  data.status_curseduca === 'Ativo' ? 'bg-emerald-100 text-emerald-700' :
+                  data.status_curseduca === 'Risco por Engajamento' ? 'bg-amber-100 text-amber-700' :
+                  data.status_curseduca === 'Implantacao' ? 'bg-blue-100 text-blue-700' :
+                  'bg-gray-100 text-gray-700'
+                }`}>{data.status_curseduca}</Badge>
               )}
               {data.status_financeiro && (
                 <Badge variant={statusColor(data.status_financeiro) as any}>
