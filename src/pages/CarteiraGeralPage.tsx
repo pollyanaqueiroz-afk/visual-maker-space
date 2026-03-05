@@ -77,7 +77,8 @@ const VIEW_TABS: { value: ViewType; label: string; icon: typeof Wallet }[] = [
 const NUMERIC_KEYS = new Set([
   'ia_tokens_utilizados', 'ia_tokens_contratados',
   'certificados_mec_utilizados', 'certificados_mec_contratados',
-  'membros_mes_atual', 'tempo_medio_uso_web_minutos', 'dias_desde_ultimo_login',
+  'numero_alunos', 'tempo_medio_uso_web_minutos', 'dias_desde_ultimo_login',
+  'mm_2_meses', 'mm_3_meses',
 ]);
 
 function formatCellValue(value: any, key?: string): string {
