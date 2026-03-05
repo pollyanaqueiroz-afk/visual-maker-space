@@ -134,7 +134,7 @@ export default function CarteiraGeralPage() {
   const [summaryReceita, setSummaryReceita] = useState<number | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ClientRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [assinaturaFilter, setAssinaturaFilter] = useState<string>('');
+  
 
   const columns = VIEW_COLUMNS[activeView];
 
