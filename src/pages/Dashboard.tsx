@@ -316,7 +316,7 @@ export default function Dashboard() {
       <div className="p-6 space-y-8 max-w-[1800px] mx-auto">
         {/* Stats + Links */}
         <div className="flex gap-4 items-start">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 flex-1">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 flex-1">
             <Card>
               <CardContent className="pt-3 pb-3 px-3">
                 <div className="flex items-center gap-1.5 mb-0.5">
@@ -324,6 +324,15 @@ export default function Dashboard() {
                   <p className="text-xs text-muted-foreground whitespace-nowrap">Total Artes</p>
                 </div>
                 <p className="text-2xl font-bold">{totalImages}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-3 pb-3 px-3">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground whitespace-nowrap">Solicitações</p>
+                </div>
+                <p className="text-2xl font-bold">{requests.length}</p>
               </CardContent>
             </Card>
             <Card>
