@@ -16,7 +16,7 @@ function mapRecord(r: any): Record<string, string | null> {
     client_url: s(r.url_plataforma),
     client_name: s(r.cliente_nome),
     email_do_cliente: s(r.cliente_email),
-    status_financeiro: s(r.status_financeiro),
+    status_financeiro: s(r.status_financeiro_inadimplencia),
     valor_mensal: s(r.fatura_total),
     plano_contratado: s(r.plano_base_consolidada),
     plano_detalhado: s(r.plano_nome_formatado),
@@ -50,8 +50,8 @@ function mapRecord(r: any): Record<string, string | null> {
     desconto_concedido: s(r.hubspot_desconto_concedido),
     data_do_ultimo_login: s(r.data_ultimo_login),
     tempo_medio_de_uso_em_min: s(r.tempo_medio_uso_web_minutos),
-    membros_do_mes_atual: s(r.membros_mes_atual),
-    variacao_de_quantidade_de_membros_por_mes: s(r.variacao_m0_vs_m1),
+    membros_do_mes_atual: s(r.numero_alunos),
+    variacao_de_quantidade_de_membros_por_mes: s(r.variacao_vs_mes_anterior),
     dias_desde_o_ultimo_login: s(r.dias_desde_ultimo_login),
   };
 }

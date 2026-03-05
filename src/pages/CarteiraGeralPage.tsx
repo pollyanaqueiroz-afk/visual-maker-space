@@ -33,8 +33,9 @@ const VIEW_COLUMNS: Record<ViewType, { key: string; label: string }[]> = {
   financeiro: [
     { key: 'id_curseduca', label: 'ID' },
     { key: 'cliente_nome', label: 'Cliente' },
-    { key: 'status_assinatura', label: 'Assinatura' },
-    { key: 'status_financeiro', label: 'Status Financeiro' },
+    { key: 'status_financeiro', label: 'Assinatura' },
+    { key: 'status_financeiro_inadimplencia', label: 'Inadimplência' },
+    { key: 'status_curseduca', label: 'Status Curseduca' },
     { key: 'fatura_total', label: 'Fatura' },
     { key: 'plano_base_consolidada', label: 'Plano' },
     { key: 'cs_atual', label: 'CS Atual' },
@@ -59,8 +60,10 @@ const VIEW_COLUMNS: Record<ViewType, { key: string; label: string }[]> = {
     { key: 'cs_nome', label: 'CS Original (Base)' },
     { key: 'data_ultimo_login', label: 'Último Login' },
     { key: 'tempo_medio_uso_web_minutos', label: 'Tempo Uso (min)' },
-    { key: 'membros_mes_atual', label: 'Membros' },
-    { key: 'variacao_m0_vs_m1', label: 'Variação' },
+    { key: 'numero_alunos', label: 'Alunos' },
+    { key: 'variacao_vs_mes_anterior', label: 'Variação' },
+    { key: 'mm_2_meses', label: 'MM 2 Meses' },
+    { key: 'mm_3_meses', label: 'MM 3 Meses' },
     { key: 'dias_desde_ultimo_login', label: 'Dias s/ Login' },
   ],
 };
@@ -74,7 +77,8 @@ const VIEW_TABS: { value: ViewType; label: string; icon: typeof Wallet }[] = [
 const NUMERIC_KEYS = new Set([
   'ia_tokens_utilizados', 'ia_tokens_contratados',
   'certificados_mec_utilizados', 'certificados_mec_contratados',
-  'membros_mes_atual', 'tempo_medio_uso_web_minutos', 'dias_desde_ultimo_login',
+  'numero_alunos', 'tempo_medio_uso_web_minutos', 'dias_desde_ultimo_login',
+  'mm_2_meses', 'mm_3_meses',
 ]);
 
 function formatCellValue(value: any, key?: string): string {
@@ -83,7 +87,7 @@ function formatCellValue(value: any, key?: string): string {
     const num = Number(value);
     if (!isNaN(num)) return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num);
   }
-  if (key === 'variacao_m0_vs_m1') {
+  if (key === 'variacao_vs_mes_anterior' || key === 'mm_2_meses' || key === 'mm_3_meses') {
     const num = Number(value);
     if (!isNaN(num)) {
       const sign = num > 0 ? '+' : '';
@@ -132,6 +136,8 @@ export default function CarteiraGeralPage() {
   const [detailId, setDetailId] = useState<string | null>(null);
   const [summaryTotal, setSummaryTotal] = useState<number | null>(null);
   const [summaryReceita, setSummaryReceita] = useState<number | null>(null);
+  const [summaryAdimplentes, setSummaryAdimplentes] = useState<number | null>(null);
+  const [summaryInadimplentes, setSummaryInadimplentes] = useState<number | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ClientRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
   
@@ -224,6 +230,8 @@ export default function CarteiraGeralPage() {
         const data = await res.json();
         if (data.total_clientes != null) setSummaryTotal(data.total_clientes);
         if (data.receita_total != null) setSummaryReceita(data.receita_total);
+        if (data.total_adimplentes != null) setSummaryAdimplentes(data.total_adimplentes);
+        if (data.total_inadimplentes != null) setSummaryInadimplentes(data.total_inadimplentes);
       }
     } catch (err) {
       console.error('Erro ao carregar summary:', err);
@@ -267,13 +275,8 @@ export default function CarteiraGeralPage() {
 
   const filteredRecords = clientRecords;
 
-  const adimplentes = useMemo(() =>
-    clientRecords.filter(r => r.status_financeiro === 'Adimplente').length,
-  [clientRecords]);
 
-  const inadimplentes = useMemo(() =>
-    clientRecords.filter(r => r.status_financeiro === 'Inadimplente').length,
-  [clientRecords]);
+
 
   const stats = useMemo(() => ({
     total: summaryTotal ?? apiTotal,
@@ -345,14 +348,14 @@ export default function CarteiraGeralPage() {
         <Card>
           <CardContent className="p-4 flex flex-col items-center text-center gap-1">
             <CheckCircle className="h-5 w-5 text-emerald-500" />
-            <span className="text-2xl font-bold text-emerald-600">{adimplentes}</span>
+            <span className="text-2xl font-bold text-emerald-600">{summaryAdimplentes != null ? new Intl.NumberFormat('pt-BR').format(summaryAdimplentes) : '—'}</span>
             <span className="text-[11px] text-muted-foreground">Adimplentes</span>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 flex flex-col items-center text-center gap-1">
             <AlertTriangle className="h-5 w-5 text-destructive" />
-            <span className="text-2xl font-bold text-destructive">{inadimplentes}</span>
+            <span className="text-2xl font-bold text-destructive">{summaryInadimplentes != null ? new Intl.NumberFormat('pt-BR').format(summaryInadimplentes) : '—'}</span>
             <span className="text-[11px] text-muted-foreground">Inadimplentes</span>
           </CardContent>
         </Card>
@@ -452,12 +455,30 @@ export default function CarteiraGeralPage() {
                       <TableCell className="text-xs text-muted-foreground">{(apiPage - 1) * PER_PAGE + i + 1}</TableCell>
                       {columns.map(col => (
                         <TableCell key={col.key} className="text-xs whitespace-nowrap max-w-[250px] truncate">
-                          {col.key === 'status_assinatura' ? (
+                          {col.key === 'status_financeiro' ? (
                             row[col.key] === 'ATIVA' ? (
                               <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0 text-[11px]">Ativa</Badge>
                             ) : row[col.key] === 'INATIVA' ? (
                               <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-0 text-[11px]">Inativa</Badge>
-                            ) : null
+                            ) : <span className="text-xs">{row[col.key] || '—'}</span>
+                          ) : col.key === 'status_financeiro_inadimplencia' ? (
+                            row[col.key] === 'Adimplente' ? (
+                              <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0 text-[11px]">Adimplente</Badge>
+                            ) : row[col.key] === 'Inadimplente' ? (
+                              <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-0 text-[11px]">Inadimplente</Badge>
+                            ) : <span className="text-xs">{row[col.key] || '—'}</span>
+                          ) : col.key === 'status_curseduca' ? (
+                            (() => {
+                              const val = row[col.key];
+                              if (!val) return <span className="text-xs">—</span>;
+                              const colorMap: Record<string, string> = {
+                                'Ativo': 'bg-emerald-100 text-emerald-700',
+                                'Risco por Engajamento': 'bg-amber-100 text-amber-700',
+                                'Implantacao': 'bg-blue-100 text-blue-700',
+                              };
+                              const cls = colorMap[val] || 'bg-gray-100 text-gray-700';
+                              return <Badge className={`${cls} hover:${cls.split(' ')[0]} border-0 text-[11px]`}>{val}</Badge>;
+                            })()
                           ) : col.key === 'url_plataforma' && row[col.key] ? (
                             <a href={row[col.key]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" onClick={e => e.stopPropagation()}>
                               {row[col.key]}

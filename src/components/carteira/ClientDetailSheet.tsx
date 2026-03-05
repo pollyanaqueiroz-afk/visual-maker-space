@@ -36,8 +36,9 @@ const SECTIONS: Section[] = [
     title: 'Contrato & CS',
     icon: <DollarSign className="h-4 w-4" />,
     fields: [
-      { label: 'Status da Assinatura', key: 'status_assinatura' },
-      { label: 'Status Financeiro', key: 'status_financeiro' },
+      { label: 'Status da Assinatura', key: 'status_financeiro' },
+      { label: 'Status Inadimplência', key: 'status_financeiro_inadimplencia' },
+      { label: 'Status Curseduca', key: 'status_curseduca' },
       { label: 'Fatura Total', key: 'fatura_total', format: 'currency' },
       { label: 'Plano Contratado', key: 'plano_base_consolidada' },
       { label: 'Plano Detalhado', key: 'plano_nome_formatado' },
@@ -111,8 +112,10 @@ const SECTIONS: Section[] = [
       { label: 'Último Login', key: 'data_ultimo_login' },
       { label: 'Dias Desde Último Login', key: 'dias_desde_ultimo_login', format: 'number' },
       { label: 'Tempo Médio de Uso (min)', key: 'tempo_medio_uso_web_minutos', format: 'number' },
-      { label: 'Membros Mês Atual', key: 'membros_mes_atual', format: 'number' },
-      { label: 'Variação Membros', key: 'variacao_m0_vs_m1', format: 'percent' },
+      { label: 'Nº de Alunos', key: 'numero_alunos', format: 'number' },
+      { label: 'Variação vs Mês Anterior', key: 'variacao_vs_mes_anterior', format: 'percent' },
+      { label: 'Média Móvel 2 Meses', key: 'mm_2_meses', format: 'number' },
+      { label: 'Média Móvel 3 Meses', key: 'mm_3_meses', format: 'number' },
     ],
   },
 ];
@@ -133,10 +136,20 @@ function formatNumber(value: any): string {
 }
 
 function formatValue(value: any, format?: string, key?: string): React.ReactNode {
-  if (key === 'status_assinatura') {
+  if (key === 'status_financeiro') {
     if (value === 'ATIVA') return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0">Ativa</Badge>;
     if (value === 'INATIVA') return <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-0">Inativa</Badge>;
     return <span className="text-muted-foreground">—</span>;
+  }
+  if (key === 'status_curseduca') {
+    if (!value) return <span className="text-muted-foreground">—</span>;
+    const colorMap: Record<string, string> = {
+      'Ativo': 'bg-emerald-100 text-emerald-700',
+      'Risco por Engajamento': 'bg-amber-100 text-amber-700',
+      'Implantacao': 'bg-blue-100 text-blue-700',
+    };
+    const cls = colorMap[value] || 'bg-gray-100 text-gray-700';
+    return <Badge className={`${cls} border-0`}>{value}</Badge>;
   }
   if (value == null || value === '') return <span className="text-muted-foreground">—</span>;
   if (format === 'gb') return formatGb(value);
@@ -221,15 +234,23 @@ export default function ClientDetailSheet({ idCurseduca, open, onOpenChange }: P
           </SheetTitle>
           {data && (
             <div className="flex items-center gap-2 mt-1 flex-wrap">
-              {data.status_assinatura === 'ATIVA' && (
+              {data.status_financeiro === 'ATIVA' && (
                 <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0">Ativa</Badge>
               )}
-              {data.status_assinatura === 'INATIVA' && (
+              {data.status_financeiro === 'INATIVA' && (
                 <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-0">Inativa</Badge>
               )}
-              {data.status_financeiro && (
-                <Badge variant={statusColor(data.status_financeiro) as any}>
-                  {data.status_financeiro}
+              {data.status_curseduca && (
+                <Badge className={`border-0 ${
+                  data.status_curseduca === 'Ativo' ? 'bg-emerald-100 text-emerald-700' :
+                  data.status_curseduca === 'Risco por Engajamento' ? 'bg-amber-100 text-amber-700' :
+                  data.status_curseduca === 'Implantacao' ? 'bg-blue-100 text-blue-700' :
+                  'bg-gray-100 text-gray-700'
+                }`}>{data.status_curseduca}</Badge>
+              )}
+              {data.status_financeiro_inadimplencia && (
+                <Badge variant={data.status_financeiro_inadimplencia === 'Inadimplente' ? 'destructive' : 'default'}>
+                  {data.status_financeiro_inadimplencia}
                 </Badge>
               )}
               {data.plano_base_consolidada && (
