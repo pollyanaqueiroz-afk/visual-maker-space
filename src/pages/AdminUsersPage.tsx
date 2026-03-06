@@ -56,14 +56,32 @@ export default function AdminUsersPage() {
 
   const fetchUsers = async () => {
     setLoading(true);
+    setSessionExpired(false);
     try {
       const { data, error } = await supabase.functions.invoke('manage-users?action=list', {
         method: 'GET',
       });
-      if (error) throw error;
+      if (error) {
+        // Check for session/auth errors
+        const msg = typeof error === 'object' ? (error as any)?.message || JSON.stringify(error) : String(error);
+        if (msg.includes('Unauthorized') || msg.includes('401') || msg.includes('session')) {
+          setSessionExpired(true);
+          return;
+        }
+        throw error;
+      }
+      if (data?.error === 'Unauthorized') {
+        setSessionExpired(true);
+        return;
+      }
       setUsers(data.users || []);
     } catch (err: any) {
-      toast.error('Erro ao carregar usuários: ' + (err.message || 'Erro desconhecido'));
+      const msg = err?.message || 'Erro desconhecido';
+      if (msg.includes('Unauthorized') || msg.includes('401')) {
+        setSessionExpired(true);
+      } else {
+        toast.error('Erro ao carregar usuários: ' + msg);
+      }
     } finally {
       setLoading(false);
     }
