@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
 
   // Check admin role
   const { data: isAdmin } = await supabaseAdmin.rpc("has_role", {
-    _user_id: caller.id,
+    _user_id: callerId,
     _role: "admin",
   });
 
