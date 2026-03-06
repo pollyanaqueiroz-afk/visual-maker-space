@@ -4,13 +4,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useDashboardBI } from '@/hooks/useDashboardBI';
-import { RefreshCw, X, BarChart3, DollarSign, Headset, Activity, AlertTriangle, Globe } from 'lucide-react';
+import { RefreshCw, X, BarChart3, DollarSign, Headset, Activity, AlertTriangle, Globe, TrendingDown, Rocket } from 'lucide-react';
 import BIOverviewPage from './bi/BIOverviewPage';
 import BIFinanceiroPage from './bi/BIFinanceiroPage';
 import BICustomerSuccessPage from './bi/BICustomerSuccessPage';
 import BIEngajamentoPage from './bi/BIEngajamentoPage';
 import BIChurnRiskPage from './bi/BIChurnRiskPage';
 import BIOrigensPage from './bi/BIOrigensPage';
+import BIChurnPage from './bi/BIChurnPage';
+import BIUpsellPage from './bi/BIUpsellPage';
 
 interface CSItem { cs_nome: string; cs_email: string; total: number; }
 
@@ -68,16 +70,20 @@ export default function BIDashboardPage() {
           <TabsTrigger value="financeiro" className="text-xs gap-1.5"><DollarSign className="h-3.5 w-3.5" />Financeiro</TabsTrigger>
           <TabsTrigger value="cs" className="text-xs gap-1.5"><Headset className="h-3.5 w-3.5" />Customer Success</TabsTrigger>
           <TabsTrigger value="engajamento" className="text-xs gap-1.5"><Activity className="h-3.5 w-3.5" />Engajamento</TabsTrigger>
-          <TabsTrigger value="churn" className="text-xs gap-1.5"><AlertTriangle className="h-3.5 w-3.5" />Risco de Churn</TabsTrigger>
+          <TabsTrigger value="churn-risk" className="text-xs gap-1.5"><AlertTriangle className="h-3.5 w-3.5" />Risco de Churn</TabsTrigger>
           <TabsTrigger value="origens" className="text-xs gap-1.5"><Globe className="h-3.5 w-3.5" />Origens</TabsTrigger>
+          <TabsTrigger value="churn" className="text-xs gap-1.5"><TrendingDown className="h-3.5 w-3.5" />Churn</TabsTrigger>
+          <TabsTrigger value="upsell" className="text-xs gap-1.5"><Rocket className="h-3.5 w-3.5" />Upsell</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview"><BIOverviewPage csEmail={csEmail} /></TabsContent>
         <TabsContent value="financeiro"><BIFinanceiroPage csEmail={csEmail} /></TabsContent>
         <TabsContent value="cs"><BICustomerSuccessPage csEmail={csEmail} onSelectCS={(email) => setCsFilter(email)} /></TabsContent>
         <TabsContent value="engajamento"><BIEngajamentoPage csEmail={csEmail} /></TabsContent>
-        <TabsContent value="churn"><BIChurnRiskPage csEmail={csEmail} /></TabsContent>
+        <TabsContent value="churn-risk"><BIChurnRiskPage csEmail={csEmail} /></TabsContent>
         <TabsContent value="origens"><BIOrigensPage csEmail={csEmail} /></TabsContent>
+        <TabsContent value="churn"><BIChurnPage csEmail={csEmail} /></TabsContent>
+        <TabsContent value="upsell"><BIUpsellPage csEmail={csEmail} /></TabsContent>
       </Tabs>
     </div>
   );
