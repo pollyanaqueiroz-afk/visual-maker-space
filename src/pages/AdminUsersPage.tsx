@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { UserPlus, Trash2, Search, Users, ShieldCheck, Plus, Loader2 } from 'lucide-react';
+import { UserPlus, Trash2, Search, Users, ShieldCheck, Plus, Loader2, LogIn, AlertTriangle } from 'lucide-react';
 
 interface UserRow {
   id: string;
@@ -39,9 +39,10 @@ function getRoleConfig(role: string) {
 }
 
 export default function AdminUsersPage() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const [search, setSearch] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -55,14 +56,32 @@ export default function AdminUsersPage() {
 
   const fetchUsers = async () => {
     setLoading(true);
+    setSessionExpired(false);
     try {
       const { data, error } = await supabase.functions.invoke('manage-users?action=list', {
         method: 'GET',
       });
-      if (error) throw error;
+      if (error) {
+        // Check for session/auth errors
+        const msg = typeof error === 'object' ? (error as any)?.message || JSON.stringify(error) : String(error);
+        if (msg.includes('Unauthorized') || msg.includes('401') || msg.includes('session')) {
+          setSessionExpired(true);
+          return;
+        }
+        throw error;
+      }
+      if (data?.error === 'Unauthorized') {
+        setSessionExpired(true);
+        return;
+      }
       setUsers(data.users || []);
     } catch (err: any) {
-      toast.error('Erro ao carregar usuários: ' + (err.message || 'Erro desconhecido'));
+      const msg = err?.message || 'Erro desconhecido';
+      if (msg.includes('Unauthorized') || msg.includes('401')) {
+        setSessionExpired(true);
+      } else {
+        toast.error('Erro ao carregar usuários: ' + msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -365,7 +384,28 @@ export default function AdminUsersPage() {
       {/* Users Table */}
       <Card>
         <CardContent className="p-0">
-          {loading ? (
+          {sessionExpired ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-4">
+              <div className="rounded-full bg-amber-500/10 p-4">
+                <AlertTriangle className="h-10 w-10 text-amber-500" />
+              </div>
+              <div className="text-center space-y-1">
+                <h3 className="text-lg font-semibold">Sessão expirada</h3>
+                <p className="text-sm text-muted-foreground max-w-md">
+                  Sua sessão de autenticação expirou. Faça login novamente para continuar gerenciando os usuários.
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={fetchUsers}>
+                  Tentar novamente
+                </Button>
+                <Button onClick={() => signOut()} className="gap-2">
+                  <LogIn className="h-4 w-4" />
+                  Fazer login novamente
+                </Button>
+              </div>
+            </div>
+          ) : loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-pulse text-muted-foreground">Carregando usuários...</div>
             </div>
