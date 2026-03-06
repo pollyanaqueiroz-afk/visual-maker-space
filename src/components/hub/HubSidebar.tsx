@@ -32,7 +32,7 @@ const csModules = [
   { title: 'Carteira Geral', url: '/hub/carteira', icon: Briefcase, permission: 'carteira.view' },
   { title: 'Kanban', url: '/hub/kanban', icon: Kanban, permission: 'kanban.view' },
   { title: 'Dashboard Liderança', url: '/hub/lideranca', icon: Crown, permission: 'lideranca.view' },
-  { title: 'Funil de Cancelamento', url: '/hub/funil-cancelamento', icon: AlertTriangle, permission: 'carteira.view' },
+  { title: 'Funil de Cancelamento', url: '/hub/funil-cancelamento', icon: AlertTriangle, permission: 'funil.view' },
   { title: 'BI', url: '/hub/bi', icon: PieChart, permission: 'dashboards.view' },
   { title: 'Churn & Upsell', url: '/hub/churn-upsell', icon: TrendingDown, permission: 'dashboards.view' },
 ];
