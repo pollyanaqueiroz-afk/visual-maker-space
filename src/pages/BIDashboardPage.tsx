@@ -4,15 +4,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useDashboardBI } from '@/hooks/useDashboardBI';
-import { RefreshCw, X, BarChart3, DollarSign, Headset, Activity, AlertTriangle, Globe, TrendingDown, Rocket } from 'lucide-react';
+import { RefreshCw, X, BarChart3, DollarSign, Headset, Activity, AlertTriangle, Globe } from 'lucide-react';
 import BIOverviewPage from './bi/BIOverviewPage';
 import BIFinanceiroPage from './bi/BIFinanceiroPage';
 import BICustomerSuccessPage from './bi/BICustomerSuccessPage';
 import BIEngajamentoPage from './bi/BIEngajamentoPage';
 import BIChurnRiskPage from './bi/BIChurnRiskPage';
 import BIOrigensPage from './bi/BIOrigensPage';
-import BIChurnPage from './bi/BIChurnPage';
-import BIUpsellPage from './bi/BIUpsellPage';
 
 interface CSItem { cs_nome: string; cs_email: string; total: number; }
 
