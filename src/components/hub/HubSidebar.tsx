@@ -34,6 +34,7 @@ const csModules = [
   { title: 'Dashboard Liderança', url: '/hub/lideranca', icon: Crown, permission: 'lideranca.view' },
   { title: 'Funil de Cancelamento', url: '/hub/funil-cancelamento', icon: AlertTriangle, permission: 'carteira.view' },
   { title: 'BI', url: '/hub/bi', icon: PieChart, permission: 'dashboards.view' },
+  { title: 'Churn & Upsell', url: '/hub/churn-upsell', icon: TrendingDown, permission: 'dashboards.view' },
 ];
 
 const adminModules = [
