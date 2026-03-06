@@ -112,6 +112,7 @@ const App = () => (
               <Route path="aplicativo" element={<ClienteApp />} />
               <Route path="solicitar" element={<ClienteSolicitar />} />
               <Route path="solicitar-app" element={<ClienteSolicitarApp />} />
+              <Route path="scorm" element={<ClienteScorm />} />
             </Route>
             <Route path="*" element={<NotFound />} />
             <Route path="*" element={<NotFound />} />
