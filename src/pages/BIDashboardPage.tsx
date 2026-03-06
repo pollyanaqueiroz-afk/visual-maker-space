@@ -70,16 +70,20 @@ export default function BIDashboardPage() {
           <TabsTrigger value="financeiro" className="text-xs gap-1.5"><DollarSign className="h-3.5 w-3.5" />Financeiro</TabsTrigger>
           <TabsTrigger value="cs" className="text-xs gap-1.5"><Headset className="h-3.5 w-3.5" />Customer Success</TabsTrigger>
           <TabsTrigger value="engajamento" className="text-xs gap-1.5"><Activity className="h-3.5 w-3.5" />Engajamento</TabsTrigger>
-          <TabsTrigger value="churn" className="text-xs gap-1.5"><AlertTriangle className="h-3.5 w-3.5" />Risco de Churn</TabsTrigger>
+          <TabsTrigger value="churn-risk" className="text-xs gap-1.5"><AlertTriangle className="h-3.5 w-3.5" />Risco de Churn</TabsTrigger>
           <TabsTrigger value="origens" className="text-xs gap-1.5"><Globe className="h-3.5 w-3.5" />Origens</TabsTrigger>
+          <TabsTrigger value="churn" className="text-xs gap-1.5"><TrendingDown className="h-3.5 w-3.5" />Churn</TabsTrigger>
+          <TabsTrigger value="upsell" className="text-xs gap-1.5"><Rocket className="h-3.5 w-3.5" />Upsell</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview"><BIOverviewPage csEmail={csEmail} /></TabsContent>
         <TabsContent value="financeiro"><BIFinanceiroPage csEmail={csEmail} /></TabsContent>
         <TabsContent value="cs"><BICustomerSuccessPage csEmail={csEmail} onSelectCS={(email) => setCsFilter(email)} /></TabsContent>
         <TabsContent value="engajamento"><BIEngajamentoPage csEmail={csEmail} /></TabsContent>
-        <TabsContent value="churn"><BIChurnRiskPage csEmail={csEmail} /></TabsContent>
+        <TabsContent value="churn-risk"><BIChurnRiskPage csEmail={csEmail} /></TabsContent>
         <TabsContent value="origens"><BIOrigensPage csEmail={csEmail} /></TabsContent>
+        <TabsContent value="churn"><BIChurnPage csEmail={csEmail} /></TabsContent>
+        <TabsContent value="upsell"><BIUpsellPage csEmail={csEmail} /></TabsContent>
       </Tabs>
     </div>
   );

@@ -53,7 +53,7 @@ function GaugeCard({ label, value }: { label: string; value: number }) {
         <ResponsiveContainer width={140} height={140}>
           <RadialBarChart cx="50%" cy="50%" innerRadius="70%" outerRadius="100%" startAngle={180} endAngle={0} data={gaugeData} barSize={12}>
             <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
-            <RadialBar background clockWise dataKey="value" cornerRadius={6} />
+            <RadialBar background dataKey="value" cornerRadius={6} />
           </RadialBarChart>
         </ResponsiveContainer>
         <span className="text-2xl font-bold -mt-8" style={{ color }}>{pct.toFixed(0)}%</span>
