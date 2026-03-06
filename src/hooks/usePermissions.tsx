@@ -58,6 +58,14 @@ export const PERMISSION_MODULES = [
     ],
   },
   {
+    module: 'funil_cancelamento',
+    label: 'Funil de Cancelamento',
+    permissions: [
+      { key: 'funil.view', label: 'Visualizar funil' },
+      { key: 'funil.edit', label: 'Editar dados do funil' },
+    ],
+  },
+  {
     module: 'kanban',
     label: 'Kanban',
     permissions: [
