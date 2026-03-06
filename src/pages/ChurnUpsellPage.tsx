@@ -1,20 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useDashboardBI } from '@/hooks/useDashboardBI';
-import { RefreshCw, X, BarChart3, DollarSign, Headset, Activity, AlertTriangle, Globe } from 'lucide-react';
-import BIOverviewPage from './bi/BIOverviewPage';
-import BIFinanceiroPage from './bi/BIFinanceiroPage';
-import BICustomerSuccessPage from './bi/BICustomerSuccessPage';
-import BIEngajamentoPage from './bi/BIEngajamentoPage';
-import BIChurnRiskPage from './bi/BIChurnRiskPage';
-import BIOrigensPage from './bi/BIOrigensPage';
+import { RefreshCw, X, TrendingDown, Rocket } from 'lucide-react';
+import BIChurnPage from './bi/BIChurnPage';
+import BIUpsellPage from './bi/BIUpsellPage';
 
 interface CSItem { cs_nome: string; cs_email: string; total: number; }
 
-export default function BIDashboardPage() {
+export default function ChurnUpsellPage() {
   const [csFilter, setCsFilter] = useState<string>('');
   const [refreshKey, setRefreshKey] = useState(0);
   const { data: csOptions } = useDashboardBI<CSItem[]>('cs');
@@ -29,14 +25,12 @@ export default function BIDashboardPage() {
 
   return (
     <div className="space-y-6" key={refreshKey}>
-      {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Dashboard BI</h1>
-          <p className="text-sm text-muted-foreground">Visão analítica da operação CS Curseduca</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Churn & Upsell</h1>
+          <p className="text-sm text-muted-foreground">Análise de risco de cancelamento e oportunidades de expansão</p>
         </div>
         <div className="flex items-center gap-3">
-          {/* CS Filter */}
           <Select value={csFilter} onValueChange={v => setCsFilter(v === '__clear__' ? '' : v)}>
             <SelectTrigger className="w-[220px] h-8 text-sm">
               <SelectValue placeholder="Filtrar por CS..." />
@@ -61,23 +55,14 @@ export default function BIDashboardPage() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="flex-wrap h-auto gap-1 p-1">
-          <TabsTrigger value="overview" className="text-xs gap-1.5"><BarChart3 className="h-3.5 w-3.5" />Visão Geral</TabsTrigger>
-          <TabsTrigger value="financeiro" className="text-xs gap-1.5"><DollarSign className="h-3.5 w-3.5" />Financeiro</TabsTrigger>
-          <TabsTrigger value="cs" className="text-xs gap-1.5"><Headset className="h-3.5 w-3.5" />Customer Success</TabsTrigger>
-          <TabsTrigger value="engajamento" className="text-xs gap-1.5"><Activity className="h-3.5 w-3.5" />Engajamento</TabsTrigger>
-          <TabsTrigger value="churn-risk" className="text-xs gap-1.5"><AlertTriangle className="h-3.5 w-3.5" />Risco de Churn</TabsTrigger>
-          <TabsTrigger value="origens" className="text-xs gap-1.5"><Globe className="h-3.5 w-3.5" />Origens</TabsTrigger>
+      <Tabs defaultValue="churn" className="w-full">
+        <TabsList className="h-auto gap-1 p-1">
+          <TabsTrigger value="churn" className="text-xs gap-1.5"><TrendingDown className="h-3.5 w-3.5" />Churn</TabsTrigger>
+          <TabsTrigger value="upsell" className="text-xs gap-1.5"><Rocket className="h-3.5 w-3.5" />Upsell</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview"><BIOverviewPage csEmail={csEmail} /></TabsContent>
-        <TabsContent value="financeiro"><BIFinanceiroPage csEmail={csEmail} /></TabsContent>
-        <TabsContent value="cs"><BICustomerSuccessPage csEmail={csEmail} onSelectCS={(email) => setCsFilter(email)} /></TabsContent>
-        <TabsContent value="engajamento"><BIEngajamentoPage csEmail={csEmail} /></TabsContent>
-        <TabsContent value="churn-risk"><BIChurnRiskPage csEmail={csEmail} /></TabsContent>
-        <TabsContent value="origens"><BIOrigensPage csEmail={csEmail} /></TabsContent>
+        <TabsContent value="churn"><BIChurnPage csEmail={csEmail} /></TabsContent>
+        <TabsContent value="upsell"><BIUpsellPage csEmail={csEmail} /></TabsContent>
       </Tabs>
     </div>
   );

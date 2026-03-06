@@ -36,6 +36,7 @@ import FunilCancelamentoPage from "./pages/FunilCancelamentoPage";
 import ScormManagerPage from "./pages/ScormManagerPage";
 import ScormPlayerPage from "./pages/ScormPlayerPage";
 import BIDashboardPage from "./pages/BIDashboardPage";
+import ChurnUpsellPage from "./pages/ChurnUpsellPage";
 import ClienteLogin from "./pages/cliente/ClienteLogin";
 import ClienteHubLayout from "./pages/cliente/ClienteHubLayout";
 import ClienteHome from "./pages/cliente/ClienteHome";
@@ -86,6 +87,7 @@ const App = () => (
               <Route path="funil-cancelamento" element={<PermissionGuard permission="carteira.view"><FunilCancelamentoPage /></PermissionGuard>} />
               <Route path="scorm" element={<PermissionGuard permission="scorm.view"><ScormManagerPage /></PermissionGuard>} />
               <Route path="bi" element={<PermissionGuard permission="dashboards.view"><BIDashboardPage /></PermissionGuard>} />
+              <Route path="churn-upsell" element={<PermissionGuard permission="dashboards.view"><ChurnUpsellPage /></PermissionGuard>} />
             </Route>
             {/* Legacy route redirect */}
             <Route path="/dashboard" element={<Navigate to="/hub/briefings" replace />} />
