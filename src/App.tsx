@@ -38,6 +38,7 @@ import ScormPlayerPage from "./pages/ScormPlayerPage";
 import BIDashboardPage from "./pages/BIDashboardPage";
 import ChurnUpsellPage from "./pages/ChurnUpsellPage";
 import AuditoriaPage from "./pages/AuditoriaPage";
+import PipelinePage from "./pages/PipelinePage";
 import ClienteLogin from "./pages/cliente/ClienteLogin";
 import ClienteHubLayout from "./pages/cliente/ClienteHubLayout";
 import ClienteHome from "./pages/cliente/ClienteHome";
