@@ -1,13 +1,14 @@
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { Home, Palette, Smartphone, LogOut } from 'lucide-react';
+import { Home, Palette, Smartphone, LogOut, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
 const navItems = [
   { label: 'Home', icon: Home, path: '/cliente' },
-  { label: 'Validação de Artes', icon: Palette, path: '/cliente/artes' },
+  { label: 'Artes', icon: Palette, path: '/cliente/artes' },
   { label: 'Aplicativo', icon: Smartphone, path: '/cliente/aplicativo' },
+  { label: 'SCORM', icon: GraduationCap, path: '/cliente/scorm' },
 ];
 
 export default function ClienteHubLayout() {

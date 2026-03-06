@@ -46,6 +46,7 @@ import ClienteArtes from "./pages/cliente/ClienteArtes";
 import ClienteApp from "./pages/cliente/ClienteApp";
 import ClienteSolicitar from "./pages/cliente/ClienteSolicitar";
 import ClienteSolicitarApp from "./pages/cliente/ClienteSolicitarApp";
+import ClienteScorm from "./pages/cliente/ClienteScorm";
 
 const queryClient = new QueryClient({
   defaultOptions: {
