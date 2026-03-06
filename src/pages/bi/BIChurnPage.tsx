@@ -22,8 +22,8 @@ interface ChurnOverview {
 interface ChurnMotivo { motivo_cs: string; motivo_cliente: string; total: number; receita_perdida: number; }
 interface ChurnCohort {
   status: string; total: number;
-  media_m0: number; media_m1: number; media_m2: number; media_m3: number; media_m4: number;
-  media_var_m0_m1: number; media_var_m1_m2: number; media_taxa_retencao: number;
+  media_m0: number | null; media_m1: number | null; media_m2: number | null; media_m3: number | null; media_m4: number | null;
+  media_var_m0_m1: number | null; media_var_m1_m2: number | null; media_taxa_retencao: number | null;
 }
 interface ChurnDetalhe {
   id_curseduca: string; nome: string; contrato_status: string; plano: string; receita: number | null;
