@@ -42,7 +42,8 @@ export default function BIUpsellPage({ csEmail }: { csEmail?: string }) {
 
 // ── Gauge component ──
 function GaugeCard({ label, value }: { label: string; value: number }) {
-  const pct = Math.min(value * 100, 100);
+  // value already comes as absolute percentage (1.40 = 1.40%)
+  const pct = Math.min(value, 100);
   const color = pct > 80 ? '#ef4444' : pct > 50 ? '#f97316' : '#22c55e';
   const gaugeData = [{ value: pct, fill: color }];
 
@@ -56,7 +57,7 @@ function GaugeCard({ label, value }: { label: string; value: number }) {
             <RadialBar background dataKey="value" cornerRadius={6} />
           </RadialBarChart>
         </ResponsiveContainer>
-        <span className="text-2xl font-bold -mt-8" style={{ color }}>{pct.toFixed(0)}%</span>
+        <span className="text-2xl font-bold -mt-8" style={{ color }}>{value.toFixed(1)}%</span>
       </CardContent>
     </Card>
   );
