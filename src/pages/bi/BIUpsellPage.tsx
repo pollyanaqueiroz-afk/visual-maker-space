@@ -110,10 +110,10 @@ function UpsellPorTipo({ csEmail }: { csEmail?: string }) {
 
   const usoBadge = (pct: number | null) => {
     if (pct == null) return <span className="text-xs text-muted-foreground">N/A</span>;
-    const v = pct * 100;
-    if (pct > 0.8) return <Badge variant="destructive" className="text-[10px]">Saturado ({v.toFixed(0)}%)</Badge>;
-    if (pct >= 0.5) return <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/30 text-[10px]" variant="outline">Alto uso ({v.toFixed(0)}%)</Badge>;
-    return <span className="text-sm">{v.toFixed(0)}%</span>;
+    // pct already comes as absolute percentage (196.61 = 196.61%)
+    if (pct > 80) return <Badge variant="destructive" className="text-[10px]">Saturado ({pct.toFixed(0)}%)</Badge>;
+    if (pct >= 50) return <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/30 text-[10px]" variant="outline">Alto uso ({pct.toFixed(0)}%)</Badge>;
+    return <span className="text-sm">{pct.toFixed(0)}%</span>;
   };
 
   return (
