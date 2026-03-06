@@ -1,4 +1,4 @@
-import { FileImage, LayoutDashboard, LogOut, CalendarDays, Crown, Briefcase, BarChart3, Package, Headset, Home, Settings, Users, Kanban, ShieldCheck, Smartphone, ExternalLink, Database, AlertTriangle, GraduationCap, PieChart, TrendingDown } from 'lucide-react';
+import { FileImage, LayoutDashboard, LogOut, CalendarDays, Crown, Briefcase, BarChart3, Package, Headset, Home, Settings, Users, Kanban, ShieldCheck, Smartphone, ExternalLink, Database, AlertTriangle, GraduationCap, PieChart, TrendingDown, ClipboardCheck } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -35,6 +35,10 @@ const csModules = [
   { title: 'Funil de Cancelamento', url: '/hub/funil-cancelamento', icon: AlertTriangle, permission: 'carteira.view' },
   { title: 'BI', url: '/hub/bi', icon: PieChart, permission: 'dashboards.view' },
   { title: 'Churn & Upsell', url: '/hub/churn-upsell', icon: TrendingDown, permission: 'dashboards.view' },
+];
+
+const auditoriaModules = [
+  { title: 'Auditoria', url: '/hub/auditoria', icon: ClipboardCheck, permission: 'admin.view' },
 ];
 
 const adminModules = [
@@ -154,6 +158,28 @@ export function HubSidebar() {
             <CollapsibleContent>
               <SidebarGroupContent>
                 {renderItems(csModules)}
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
+        )}
+
+        {/* Auditoria Group */}
+        {hasVisibleItems(auditoriaModules) && (
+        <SidebarGroup>
+          <Collapsible defaultOpen={true}>
+            <CollapsibleTrigger className="w-full">
+              <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground transition-colors">
+                <span className="flex items-center gap-2">
+                  <ClipboardCheck className="h-3.5 w-3.5" />
+                  {!collapsed && 'Auditoria'}
+                </span>
+                {!collapsed && <ChevronDown className="h-3.5 w-3.5 transition-transform [[data-state=open]_&]:rotate-180" />}
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                {renderItems(auditoriaModules)}
               </SidebarGroupContent>
             </CollapsibleContent>
           </Collapsible>
