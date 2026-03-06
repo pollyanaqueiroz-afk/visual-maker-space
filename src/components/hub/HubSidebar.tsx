@@ -164,6 +164,28 @@ export function HubSidebar() {
         </SidebarGroup>
         )}
 
+        {/* Auditoria Group */}
+        {hasVisibleItems(auditoriaModules) && (
+        <SidebarGroup>
+          <Collapsible defaultOpen={true}>
+            <CollapsibleTrigger className="w-full">
+              <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground transition-colors">
+                <span className="flex items-center gap-2">
+                  <ClipboardCheck className="h-3.5 w-3.5" />
+                  {!collapsed && 'Auditoria'}
+                </span>
+                {!collapsed && <ChevronDown className="h-3.5 w-3.5 transition-transform [[data-state=open]_&]:rotate-180" />}
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                {renderItems(auditoriaModules)}
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
+        )}
+
         {/* Administração Group */}
         {hasVisibleItems(adminModules) && (
         <SidebarGroup>
