@@ -86,7 +86,7 @@ const App = () => (
               <Route path="admin/campos" element={<PermissionGuard permission="carteira.manage_fields"><FieldManagementPage /></PermissionGuard>} />
               <Route path="aplicativos" element={<PermissionGuard permission="aplicativos.view"><AplicativosPage /></PermissionGuard>} />
               <Route path="aplicativos/:clienteId" element={<PermissionGuard permission="aplicativos.view"><AplicativoDetailPage /></PermissionGuard>} />
-              <Route path="funil-cancelamento" element={<PermissionGuard permission="carteira.view"><FunilCancelamentoPage /></PermissionGuard>} />
+              <Route path="funil-cancelamento" element={<PermissionGuard permission="funil.view"><FunilCancelamentoPage /></PermissionGuard>} />
               <Route path="scorm" element={<PermissionGuard permission="scorm.view"><ScormManagerPage /></PermissionGuard>} />
               <Route path="bi" element={<PermissionGuard permission="dashboards.view"><BIDashboardPage /></PermissionGuard>} />
               <Route path="churn-upsell" element={<PermissionGuard permission="dashboards.view"><ChurnUpsellPage /></PermissionGuard>} />
