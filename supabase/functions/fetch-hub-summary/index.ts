@@ -6,6 +6,20 @@ const corsHeaders = {
 
 const API_URL = "https://us-central1-curseduca-inc-ia.cloudfunctions.net/hub-summary";
 
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3): Promise<Response> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const res = await fetch(url, options);
+    if (res.status === 429 && attempt < maxRetries) {
+      const delay = Math.pow(2, attempt) * 1000 + Math.random() * 500;
+      console.log(`Rate limited, retrying in ${Math.round(delay)}ms (attempt ${attempt + 1}/${maxRetries})`);
+      await new Promise(r => setTimeout(r, delay));
+      continue;
+    }
+    return res;
+  }
+  throw new Error("Max retries exceeded");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -19,11 +33,11 @@ Deno.serve(async (req) => {
     }
 
     const basicAuth = btoa(`${apiUser}:${apiPass}`);
+    const fetchOpts = { headers: { Authorization: `Basic ${basicAuth}` } };
 
     const url = new URL(req.url);
     const endpoint = url.searchParams.get("endpoint");
 
-    // If endpoint=clientes, proxy to hub-clientes API
     if (endpoint === "clientes") {
       const idCurseduca = url.searchParams.get("id_curseduca");
       const page = url.searchParams.get("page") || "1";
@@ -43,9 +57,7 @@ Deno.serve(async (req) => {
         apiUrl = `https://us-central1-curseduca-inc-ia.cloudfunctions.net/hub-clientes?${params.toString()}`;
       }
 
-      const apiRes = await fetch(apiUrl, {
-        headers: { Authorization: `Basic ${basicAuth}` },
-      });
+      const apiRes = await fetchWithRetry(apiUrl, fetchOpts);
 
       if (!apiRes.ok) {
         const errText = await apiRes.text();
@@ -74,9 +86,7 @@ Deno.serve(async (req) => {
     if (csEmailSummary) {
       summaryUrl += `?cs_email_atual=${encodeURIComponent(csEmailSummary)}`;
     }
-    const apiRes = await fetch(summaryUrl, {
-      headers: { Authorization: `Basic ${basicAuth}` },
-    });
+    const apiRes = await fetchWithRetry(summaryUrl, fetchOpts);
 
     if (!apiRes.ok) {
       const errText = await apiRes.text();
