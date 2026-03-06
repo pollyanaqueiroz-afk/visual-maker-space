@@ -147,7 +147,7 @@ Deno.serve(async (req) => {
     if (req.method === "POST" && action === "delete-user") {
       const { user_id } = await req.json();
       if (!user_id) throw new Error("user_id is required");
-      if (user_id === caller.id) throw new Error("Cannot delete yourself");
+      if (user_id === callerId) throw new Error("Cannot delete yourself");
 
       const { error } = await supabaseAdmin.auth.admin.deleteUser(user_id);
       if (error) throw error;
