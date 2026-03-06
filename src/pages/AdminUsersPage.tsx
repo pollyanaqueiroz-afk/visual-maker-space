@@ -384,7 +384,28 @@ export default function AdminUsersPage() {
       {/* Users Table */}
       <Card>
         <CardContent className="p-0">
-          {loading ? (
+          {sessionExpired ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-4">
+              <div className="rounded-full bg-amber-500/10 p-4">
+                <AlertTriangle className="h-10 w-10 text-amber-500" />
+              </div>
+              <div className="text-center space-y-1">
+                <h3 className="text-lg font-semibold">Sessão expirada</h3>
+                <p className="text-sm text-muted-foreground max-w-md">
+                  Sua sessão de autenticação expirou. Faça login novamente para continuar gerenciando os usuários.
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={fetchUsers}>
+                  Tentar novamente
+                </Button>
+                <Button onClick={() => signOut()} className="gap-2">
+                  <LogIn className="h-4 w-4" />
+                  Fazer login novamente
+                </Button>
+              </div>
+            </div>
+          ) : loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-pulse text-muted-foreground">Carregando usuários...</div>
             </div>
