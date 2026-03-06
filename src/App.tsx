@@ -91,6 +91,7 @@ const App = () => (
               <Route path="bi" element={<PermissionGuard permission="dashboards.view"><BIDashboardPage /></PermissionGuard>} />
               <Route path="churn-upsell" element={<PermissionGuard permission="dashboards.view"><ChurnUpsellPage /></PermissionGuard>} />
               <Route path="auditoria" element={<PermissionGuard permission="admin.view"><AuditoriaPage /></PermissionGuard>} />
+              <Route path="pipeline" element={<PermissionGuard permission="admin.view"><PipelinePage /></PermissionGuard>} />
             </Route>
             {/* Legacy route redirect */}
             <Route path="/dashboard" element={<Navigate to="/hub/briefings" replace />} />

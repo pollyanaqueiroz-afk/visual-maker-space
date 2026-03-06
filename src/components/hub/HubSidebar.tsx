@@ -39,6 +39,7 @@ const csModules = [
 
 const auditoriaModules = [
   { title: 'Auditoria', url: '/hub/auditoria', icon: ClipboardCheck, permission: 'admin.view' },
+  { title: 'Pipeline', url: '/hub/pipeline', icon: Activity, permission: 'admin.view' },
 ];
 
 const adminModules = [
