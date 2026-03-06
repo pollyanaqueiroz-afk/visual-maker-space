@@ -39,9 +39,10 @@ function getRoleConfig(role: string) {
 }
 
 export default function AdminUsersPage() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const [search, setSearch] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteOpen, setInviteOpen] = useState(false);
