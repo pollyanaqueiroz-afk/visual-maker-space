@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { UserPlus, Trash2, Search, Users, ShieldCheck, Plus, Loader2 } from 'lucide-react';
+import { UserPlus, Trash2, Search, Users, ShieldCheck, Plus, Loader2, LogIn, AlertTriangle } from 'lucide-react';
 
 interface UserRow {
   id: string;
