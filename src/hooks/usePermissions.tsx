@@ -25,6 +25,7 @@ export const PERMISSION_MODULES = [
       { key: 'briefings.edit', label: 'Editar briefings' },
       { key: 'briefings.delete', label: 'Excluir briefings' },
       { key: 'briefings.assign', label: 'Atribuir briefings' },
+      { key: 'briefings.change_assignee', label: 'Editar responsável' },
     ],
   },
   {

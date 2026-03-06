@@ -93,6 +93,7 @@ export default function Dashboard() {
   const canCreate = hasPermission('briefings.create') || isGerenteImpl;
   const canEdit = hasPermission('briefings.edit') || isGerenteImpl;
   const canAssign = hasPermission('briefings.assign') || isGerenteImpl;
+  const canChangeAssignee = hasPermission('briefings.change_assignee') || isGerenteImpl;
   const [images, setImages] = useState<ImageWithRequest[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
   const [reviews, setReviews] = useState<ReviewRecord[]>([]);
@@ -658,7 +659,7 @@ export default function Dashboard() {
                                     </div>
                                   )}
                                 </div>
-                                {canAssign && (
+                                {canChangeAssignee && (
                                   <Popover>
                                     <PopoverTrigger asChild>
                                       <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" title="Trocar designer">
