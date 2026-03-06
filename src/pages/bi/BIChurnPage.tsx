@@ -37,6 +37,7 @@ interface ChurnDetalhe {
 
 const STATUS_LINE_COLORS: Record<string, string> = {
   ativo: '#22c55e', encerrado: '#ef4444', suspenso: '#f97316', sem_contrato: '#6b7280',
+  ACTIVE: '#22c55e', BLOCK: '#ef4444', SUSPENDED: '#f97316', NO_CONTRACT: '#6b7280',
 };
 
 export default function BIChurnPage({ csEmail }: { csEmail?: string }) {
