@@ -207,14 +207,14 @@ function UpsellOportunidadesTable({ csEmail }: { csEmail?: string }) {
 
   const usoPctBar = (pct: number | null) => {
     if (pct == null) return <span className="text-xs text-muted-foreground">—</span>;
-    const v = pct * 100;
-    const color = pct > 0.8 ? 'bg-destructive' : pct > 0.5 ? 'bg-orange-500' : 'bg-green-500';
+    // pct already comes as absolute percentage (86.72 = 86.72%)
+    const color = pct > 80 ? 'bg-destructive' : pct > 50 ? 'bg-orange-500' : 'bg-green-500';
     return (
       <div className="flex items-center gap-2">
         <div className="w-16 h-2 rounded-full bg-muted overflow-hidden">
-          <div className={cn('h-full rounded-full', color)} style={{ width: `${Math.min(v, 100)}%` }} />
+          <div className={cn('h-full rounded-full', color)} style={{ width: `${Math.min(pct, 100)}%` }} />
         </div>
-        <span className="text-xs">{v.toFixed(0)}%</span>
+        <span className="text-xs">{pct.toFixed(0)}%</span>
       </div>
     );
   };
