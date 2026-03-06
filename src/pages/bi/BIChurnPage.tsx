@@ -22,8 +22,8 @@ interface ChurnOverview {
 interface ChurnMotivo { motivo_cs: string; motivo_cliente: string; total: number; receita_perdida: number; }
 interface ChurnCohort {
   status: string; total: number;
-  media_m0: number; media_m1: number; media_m2: number; media_m3: number; media_m4: number;
-  media_var_m0_m1: number; media_var_m1_m2: number; media_taxa_retencao: number;
+  media_m0: number | null; media_m1: number | null; media_m2: number | null; media_m3: number | null; media_m4: number | null;
+  media_var_m0_m1: number | null; media_var_m1_m2: number | null; media_taxa_retencao: number | null;
 }
 interface ChurnDetalhe {
   id_curseduca: string; nome: string; contrato_status: string; plano: string; receita: number | null;
@@ -37,6 +37,7 @@ interface ChurnDetalhe {
 
 const STATUS_LINE_COLORS: Record<string, string> = {
   ativo: '#22c55e', encerrado: '#ef4444', suspenso: '#f97316', sem_contrato: '#6b7280',
+  ACTIVE: '#22c55e', BLOCK: '#ef4444', SUSPENDED: '#f97316', NO_CONTRACT: '#6b7280',
 };
 
 export default function BIChurnPage({ csEmail }: { csEmail?: string }) {
@@ -191,7 +192,10 @@ function ChurnCohortChart({ csEmail }: { csEmail?: string }) {
     return point;
   });
 
-  const retBadgeColor = (r: number) => r > 0.7 ? 'bg-green-500/10 text-green-600 border-green-500/30' : r > 0.4 ? 'bg-orange-500/10 text-orange-600 border-orange-500/30' : 'bg-destructive/10 text-destructive border-destructive/30';
+  const retBadgeColor = (r: number | null) => {
+    if (r == null) return 'bg-muted/50 text-muted-foreground border-muted';
+    return r > 0.7 ? 'bg-green-500/10 text-green-600 border-green-500/30' : r > 0.4 ? 'bg-orange-500/10 text-orange-600 border-orange-500/30' : 'bg-destructive/10 text-destructive border-destructive/30';
+  };
 
   return (
     <Card>
@@ -200,7 +204,7 @@ function ChurnCohortChart({ csEmail }: { csEmail?: string }) {
         <div className="flex flex-wrap gap-2 mt-2">
           {data.map(d => (
             <Badge key={d.status} variant="outline" className={cn('text-[10px]', retBadgeColor(d.media_taxa_retencao))}>
-              {d.status}: {formatPct(d.media_taxa_retencao, true)} retenção
+              {d.status}: {d.media_taxa_retencao != null ? `${(d.media_taxa_retencao * 100).toFixed(0)}% retenção` : 'N/A'}
             </Badge>
           ))}
         </div>

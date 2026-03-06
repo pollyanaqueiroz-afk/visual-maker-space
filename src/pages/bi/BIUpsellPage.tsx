@@ -42,7 +42,8 @@ export default function BIUpsellPage({ csEmail }: { csEmail?: string }) {
 
 // ── Gauge component ──
 function GaugeCard({ label, value }: { label: string; value: number }) {
-  const pct = Math.min(value * 100, 100);
+  // value already comes as absolute percentage (1.40 = 1.40%)
+  const pct = Math.min(value, 100);
   const color = pct > 80 ? '#ef4444' : pct > 50 ? '#f97316' : '#22c55e';
   const gaugeData = [{ value: pct, fill: color }];
 
@@ -56,7 +57,7 @@ function GaugeCard({ label, value }: { label: string; value: number }) {
             <RadialBar background dataKey="value" cornerRadius={6} />
           </RadialBarChart>
         </ResponsiveContainer>
-        <span className="text-2xl font-bold -mt-8" style={{ color }}>{pct.toFixed(0)}%</span>
+        <span className="text-2xl font-bold -mt-8" style={{ color }}>{value.toFixed(1)}%</span>
       </CardContent>
     </Card>
   );
@@ -109,10 +110,10 @@ function UpsellPorTipo({ csEmail }: { csEmail?: string }) {
 
   const usoBadge = (pct: number | null) => {
     if (pct == null) return <span className="text-xs text-muted-foreground">N/A</span>;
-    const v = pct * 100;
-    if (pct > 0.8) return <Badge variant="destructive" className="text-[10px]">Saturado ({v.toFixed(0)}%)</Badge>;
-    if (pct >= 0.5) return <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/30 text-[10px]" variant="outline">Alto uso ({v.toFixed(0)}%)</Badge>;
-    return <span className="text-sm">{v.toFixed(0)}%</span>;
+    // pct already comes as absolute percentage (196.61 = 196.61%)
+    if (pct > 80) return <Badge variant="destructive" className="text-[10px]">Saturado ({pct.toFixed(0)}%)</Badge>;
+    if (pct >= 50) return <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/30 text-[10px]" variant="outline">Alto uso ({pct.toFixed(0)}%)</Badge>;
+    return <span className="text-sm">{pct.toFixed(0)}%</span>;
   };
 
   return (
@@ -206,14 +207,14 @@ function UpsellOportunidadesTable({ csEmail }: { csEmail?: string }) {
 
   const usoPctBar = (pct: number | null) => {
     if (pct == null) return <span className="text-xs text-muted-foreground">—</span>;
-    const v = pct * 100;
-    const color = pct > 0.8 ? 'bg-destructive' : pct > 0.5 ? 'bg-orange-500' : 'bg-green-500';
+    // pct already comes as absolute percentage (86.72 = 86.72%)
+    const color = pct > 80 ? 'bg-destructive' : pct > 50 ? 'bg-orange-500' : 'bg-green-500';
     return (
       <div className="flex items-center gap-2">
         <div className="w-16 h-2 rounded-full bg-muted overflow-hidden">
-          <div className={cn('h-full rounded-full', color)} style={{ width: `${Math.min(v, 100)}%` }} />
+          <div className={cn('h-full rounded-full', color)} style={{ width: `${Math.min(pct, 100)}%` }} />
         </div>
-        <span className="text-xs">{v.toFixed(0)}%</span>
+        <span className="text-xs">{pct.toFixed(0)}%</span>
       </div>
     );
   };
