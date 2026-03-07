@@ -167,13 +167,35 @@ export default function ClienteHome() {
   return (
     <div className="space-y-6">
       {/* Greeting */}
-      <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-bold">{greeting()}! 👋</h1>
-        <p className="text-white/50 text-sm mt-1">
-          {pendingActions.length > 0
-            ? `Você tem ${pendingActions.length} pendência(s) para resolver`
-            : 'Você está em dia! Nenhuma pendência no momento 🎉'}
-        </p>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: 'easeOut' }} className="flex items-center gap-4">
+        <motion.img
+          src={greetingGif}
+          alt="Saudação"
+          className="h-16 w-16 rounded-2xl object-cover shadow-lg ring-2 ring-white/10"
+          initial={{ scale: 0, rotate: -15 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ delay: 0.2, type: 'spring', stiffness: 200, damping: 15 }}
+        />
+        <div>
+          <motion.h1
+            className="text-2xl font-bold"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+          >
+            {greetingText}! 👋
+          </motion.h1>
+          <motion.p
+            className="text-white/50 text-sm mt-1"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5, duration: 0.4 }}
+          >
+            {pendingActions.length > 0
+              ? `Você tem ${pendingActions.length} pendência(s) para resolver`
+              : 'Você está em dia! Nenhuma pendência no momento 🎉'}
+          </motion.p>
+        </div>
       </motion.div>
 
       {/* CTA Buttons */}
