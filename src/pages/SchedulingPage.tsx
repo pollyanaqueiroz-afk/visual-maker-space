@@ -18,8 +18,10 @@ import { ptBR } from 'date-fns/locale';
 import { Plus, Video, Clock, User, Trash2, Edit2, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Loader2, CheckCircle, FileText, Star, RefreshCw, AlertCircle, MessageSquare, Eye, TrendingUp, Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { usePermissions } from '@/hooks/usePermissions';
+
+type CalendarView = 'month' | 'week';
+
 
 interface Meeting {
   id: string;
