@@ -147,10 +147,14 @@ export default function ClienteHome() {
       : <Smartphone className="h-3 w-3" />;
   };
 
-  const greeting = () => {
+  const greetingData = () => {
     const h = new Date().getHours();
-    return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+    if (h < 12) return { text: 'Bom dia', gif: 'https://media.giphy.com/media/3oriO0OEd9QIDdllqo/giphy.gif' };
+    if (h < 18) return { text: 'Boa tarde', gif: 'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif' };
+    return { text: 'Boa noite', gif: 'https://media.giphy.com/media/3o7abAHdYvZdBNnGZq/giphy.gif' };
   };
+
+  const { text: greetingText, gif: greetingGif } = greetingData();
 
   if (isLoading) {
     return (
