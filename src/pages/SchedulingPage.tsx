@@ -11,13 +11,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
-import { format, isSameDay, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isBefore } from 'date-fns';
+import { format, isSameDay, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isBefore, addDays, startOfWeek, endOfWeek, addMonths, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, Video, Clock, User, Trash2, Edit2, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Loader2, CheckCircle, FileText, Star, RefreshCw, AlertCircle, MessageSquare } from 'lucide-react';
+import { Plus, Video, Clock, User, Trash2, Edit2, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Loader2, CheckCircle, FileText, Star, RefreshCw, AlertCircle, MessageSquare, Eye, TrendingUp, Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { motion, AnimatePresence } from 'framer-motion';
 import { usePermissions } from '@/hooks/usePermissions';
+
+type CalendarView = 'month' | 'week';
+
 
 interface Meeting {
   id: string;
@@ -627,68 +631,213 @@ export default function SchedulingPage() {
         </Dialog>
       </div>
 
-      {/* Calendar + List layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Calendar */}
-        <Card className="lg:col-span-1">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <CalendarDays className="h-4 w-4 text-primary" />
-              Calendário
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={(d) => d && setSelectedDate(d)}
-              month={calendarMonth}
-              onMonthChange={setCalendarMonth}
-              locale={ptBR}
-              className="p-0 pointer-events-auto"
-              modifiers={{
-                hasMeeting: daysWithMeetings,
-              }}
-              modifiersClassNames={{
-                hasMeeting: 'bg-primary/15 font-bold text-primary',
-              }}
-            />
-            <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-              <div className="w-3 h-3 rounded bg-primary/15" />
-              <span>Dias com reuniões</span>
-            </div>
+      {/* Quick Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: 'Hoje', value: meetings.filter(m => isSameDay(parseISO(m.meeting_date), new Date()) && m.status === 'scheduled').length, color: 'text-primary', bg: 'bg-primary/10' },
+          { label: 'Esta semana', value: meetings.filter(m => { const d = parseISO(m.meeting_date); return d >= startOfWeek(new Date(), { locale: ptBR }) && d <= endOfWeek(new Date(), { locale: ptBR }) && m.status === 'scheduled'; }).length, color: 'text-info', bg: 'bg-info/10' },
+          { label: 'Realizadas', value: meetings.filter(m => m.status === 'completed').length, color: 'text-success', bg: 'bg-success/10' },
+          { label: 'Pendentes', value: meetings.filter(m => m.status === 'scheduled').length, color: 'text-warning', bg: 'bg-warning/10' },
+        ].map((stat, i) => (
+          <motion.div key={stat.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+            <Card className="border-border/50">
+              <CardContent className="p-3 flex items-center gap-3">
+                <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center text-lg font-bold", stat.bg, stat.color)}>
+                  {stat.value}
+                </div>
+                <span className="text-xs font-medium text-muted-foreground">{stat.label}</span>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
 
-            {/* Available time slots */}
-            {selectedDate && (
-              <div className="mt-4 pt-4 border-t border-border">
-                <p className="text-xs font-semibold text-foreground mb-2">
-                  Horários disponíveis — {format(selectedDate, "dd/MM")}
-                </p>
-                {availableSlots.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">Nenhum horário disponível</p>
-                ) : (
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {availableSlots.map(slot => (
-                      <Button
-                        key={slot}
-                        variant="outline"
-                        size="sm"
-                        className="h-7 text-xs font-medium hover:bg-primary hover:text-primary-foreground transition-colors"
-                        onClick={() => handleSlotClick(slot)}
-                      >
-                        {slot}
-                      </Button>
-                    ))}
-                  </div>
-                )}
+      {/* Calendar + List layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Calendar Panel */}
+        <div className="lg:col-span-4 space-y-4">
+          <Card className="overflow-hidden border-border/60">
+            <CardHeader className="pb-0 pt-4 px-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <CalendarIcon className="h-4 w-4 text-primary" />
+                  Calendário
+                </CardTitle>
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCalendarMonth(subMonths(calendarMonth, 1))}>
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button variant="ghost" size="sm" className="h-7 text-xs px-2 font-medium" onClick={() => { setCalendarMonth(new Date()); setSelectedDate(new Date()); }}>
+                    Hoje
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCalendarMonth(addMonths(calendarMonth, 1))}>
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
+            </CardHeader>
+            <CardContent className="px-2 pb-3">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(d) => d && setSelectedDate(d)}
+                month={calendarMonth}
+                onMonthChange={setCalendarMonth}
+                locale={ptBR}
+                className="p-1 pointer-events-auto w-full"
+                classNames={{
+                  months: "flex flex-col w-full",
+                  month: "space-y-2 w-full",
+                  caption: "flex justify-center pt-1 relative items-center",
+                  caption_label: "text-sm font-semibold",
+                  nav: "hidden",
+                  table: "w-full border-collapse",
+                  head_row: "flex w-full",
+                  head_cell: "text-muted-foreground rounded-md flex-1 font-medium text-[0.7rem] uppercase tracking-wider",
+                  row: "flex w-full mt-1",
+                  cell: "flex-1 text-center text-sm p-0.5 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected])]:bg-accent/40 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                  day: "h-9 w-full rounded-lg font-normal aria-selected:opacity-100 hover:bg-accent/60 transition-colors relative",
+                  day_range_end: "day-range-end",
+                  day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground shadow-sm",
+                  day_today: "bg-accent text-accent-foreground font-bold ring-1 ring-primary/30",
+                  day_outside: "day-outside text-muted-foreground/40 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
+                  day_disabled: "text-muted-foreground opacity-50",
+                  day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
+                  day_hidden: "invisible",
+                }}
+                components={{
+                  DayContent: ({ date }) => {
+                    const dateStr = format(date, 'yyyy-MM-dd');
+                    const dayMeetings = meetingsByDate[dateStr] || [];
+                    const activeMeetings = dayMeetings.filter(m => m.status !== 'cancelled');
+                    const count = activeMeetings.length;
+                    return (
+                      <div className="relative flex flex-col items-center justify-center w-full">
+                        <span>{date.getDate()}</span>
+                        {count > 0 && (
+                          <div className="flex gap-0.5 mt-0.5">
+                            {count <= 3 ? (
+                              activeMeetings.slice(0, 3).map((m, i) => (
+                                <div key={i} className={cn("h-1 w-1 rounded-full", m.status === 'completed' ? 'bg-success' : 'bg-primary')} />
+                              ))
+                            ) : (
+                              <>
+                                <div className="h-1 w-1 rounded-full bg-primary" />
+                                <span className="text-[7px] font-bold text-primary leading-none">{count}</span>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  },
+                  IconLeft: () => <ChevronLeft className="h-4 w-4" />,
+                  IconRight: () => <ChevronRight className="h-4 w-4" />,
+                }}
+              />
+              <div className="mt-2 px-2 flex items-center gap-3 text-[10px] text-muted-foreground">
+                <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-primary" /> Agendada</div>
+                <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-success" /> Realizada</div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Time Slots Panel */}
+          <AnimatePresence mode="wait">
+            {selectedDate && (
+              <motion.div
+                key={format(selectedDate, 'yyyy-MM-dd')}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Card className="border-border/60">
+                  <CardHeader className="pb-2 pt-3 px-4">
+                    <CardTitle className="text-sm flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <Clock className="h-3.5 w-3.5 text-primary" />
+                        {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
+                      </span>
+                      <Badge variant="outline" className="text-[10px] font-normal">
+                        {availableSlots.length}/{ALL_SLOTS.length} livres
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-3 pb-3">
+                    <div className="space-y-0.5">
+                      <TooltipProvider delayDuration={200}>
+                        {ALL_SLOTS.map(slot => {
+                          const dateStr = format(selectedDate, 'yyyy-MM-dd');
+                          const dayMeetings = meetingsByDate[dateStr] || [];
+                          const meetingInSlot = dayMeetings.find(m => {
+                            if (m.status === 'cancelled') return false;
+                            const [h, min] = m.meeting_time.split(':').map(Number);
+                            const startMin = h * 60 + min;
+                            const endMin = startMin + m.duration_minutes;
+                            const [sh, sm] = slot.split(':').map(Number);
+                            const slotStart = sh * 60 + sm;
+                            return slotStart >= startMin && slotStart < endMin;
+                          });
+                          const isBusy = !!meetingInSlot;
+                          const isExactStart = meetingInSlot && meetingInSlot.meeting_time.slice(0, 5) === slot;
+
+                          if (isBusy && !isExactStart) {
+                            return (
+                              <div key={slot} className="flex items-center h-6 px-2 text-[10px] text-muted-foreground/40">
+                                <span className="w-10 text-right mr-2 tabular-nums">{slot}</span>
+                                <div className="flex-1 h-px bg-border/30" />
+                              </div>
+                            );
+                          }
+
+                          if (isBusy && isExactStart && meetingInSlot) {
+                            return (
+                              <Tooltip key={slot}>
+                                <TooltipTrigger asChild>
+                                  <div className={cn(
+                                    "flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-all",
+                                    meetingInSlot.status === 'completed' ? 'bg-success/8 hover:bg-success/15 border border-success/20' : 'bg-primary/8 hover:bg-primary/15 border border-primary/20'
+                                  )}>
+                                    <span className="w-10 text-right text-[10px] tabular-nums font-medium text-foreground/70 mr-1">{slot}</span>
+                                    <div className={cn("w-1 h-4 rounded-full shrink-0", meetingInSlot.status === 'completed' ? 'bg-success' : 'bg-primary')} />
+                                    <span className="text-xs font-medium text-foreground truncate flex-1">{meetingInSlot.title}</span>
+                                    <span className="text-[10px] text-muted-foreground shrink-0">{meetingInSlot.duration_minutes}min</span>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="right" className="text-xs">
+                                  <p className="font-semibold">{meetingInSlot.title}</p>
+                                  {meetingInSlot.client_name && <p className="text-muted-foreground">{meetingInSlot.client_name}</p>}
+                                  <p className="text-muted-foreground">{slot} — {meetingInSlot.duration_minutes}min</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            );
+                          }
+
+                          return (
+                            <div
+                              key={slot}
+                              className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-accent/40 cursor-pointer transition-all group"
+                              onClick={() => handleSlotClick(slot)}
+                            >
+                              <span className="w-10 text-right text-[10px] tabular-nums text-muted-foreground mr-1">{slot}</span>
+                              <div className="flex-1 h-px bg-border/40 group-hover:bg-primary/30 transition-colors" />
+                              <Plus className="h-3 w-3 text-transparent group-hover:text-primary transition-all" />
+                            </div>
+                          );
+                        })}
+                      </TooltipProvider>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
             )}
-          </CardContent>
-        </Card>
+          </AnimatePresence>
+        </div>
 
         {/* Meeting list */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
+        <div className="lg:col-span-8 space-y-4">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <h2 className="text-lg font-semibold text-foreground">
               {selectedDate
                 ? isToday(selectedDate)
@@ -698,9 +847,7 @@ export default function SchedulingPage() {
             </h2>
             <div className="flex items-center gap-2 flex-wrap">
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-[140px] h-8 text-xs">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
+                <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os status</SelectItem>
                   <SelectItem value="scheduled">Agendadas</SelectItem>
@@ -709,9 +856,7 @@ export default function SchedulingPage() {
                 </SelectContent>
               </Select>
               <Select value={filterReason} onValueChange={setFilterReason}>
-                <SelectTrigger className="w-[220px] h-8 text-xs">
-                  <SelectValue placeholder="Motivo" />
-                </SelectTrigger>
+                <SelectTrigger className="w-[220px] h-8 text-xs"><SelectValue placeholder="Motivo" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os motivos ({meetings.length})</SelectItem>
                   {MEETING_REASONS.map(r => (
@@ -719,214 +864,132 @@ export default function SchedulingPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <Button variant="outline" size="sm" onClick={() => handleOpenNew(selectedDate)}>
-                <Plus className="h-3 w-3 mr-1" /> Agendar
-              </Button>
+              {canCreate && (
+                <Button size="sm" onClick={() => handleOpenNew(selectedDate)} className="h-8 gap-1.5">
+                  <Plus className="h-3.5 w-3.5" /> Agendar
+                </Button>
+              )}
             </div>
           </div>
 
           {filteredMeetings.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <CalendarDays className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground">Nenhuma reunião para esta data</p>
-                <Button variant="outline" size="sm" className="mt-3" onClick={() => handleOpenNew(selectedDate)}>
-                  <Plus className="h-3 w-3 mr-1" /> Agendar reunião
-                </Button>
-              </CardContent>
-            </Card>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <Card className="border-dashed border-2 border-border/50">
+                <CardContent className="py-16 text-center">
+                  <div className="mx-auto mb-4 h-14 w-14 rounded-2xl bg-muted/60 flex items-center justify-center">
+                    <CalendarDays className="h-7 w-7 text-muted-foreground/60" />
+                  </div>
+                  <p className="text-muted-foreground font-medium">Nenhuma reunião para esta data</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">Clique em um horário livre no calendário ou use o botão abaixo</p>
+                  {canCreate && (
+                    <Button variant="outline" size="sm" className="mt-4 gap-1.5" onClick={() => handleOpenNew(selectedDate)}>
+                      <Plus className="h-3.5 w-3.5" /> Agendar reunião
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
           ) : (
             <div className="space-y-3">
-              {filteredMeetings.map(m => {
+              {filteredMeetings.map((m, i) => {
                 const config = STATUS_CONFIG[m.status] || STATUS_CONFIG.scheduled;
                 const isPast = isBefore(parseISO(m.meeting_date), new Date()) && m.status === 'scheduled';
                 const hasLoyalty = !!(m as any).loyalty_index;
                 const hasMinutes = !!(m as any).minutes_url;
                 const hasRecording = !!(m as any).recording_url;
                 return (
-                  <Card key={m.id} className={cn('transition-all hover:shadow-md', m.status === 'cancelled' && 'opacity-60')}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0 space-y-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="font-semibold text-foreground truncate">{m.title}</h3>
-                            <Badge className={cn('text-[10px] px-2 py-0', config.color)}>{config.label}</Badge>
-                            {isPast && <Badge variant="outline" className="text-[10px] text-warning border-warning/30">Atrasada</Badge>}
-                            {(m as any).meeting_reason && <Badge variant="outline" className="text-[10px]">{(m as any).meeting_reason}</Badge>}
-                          </div>
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <CalendarDays className="h-3 w-3" />
-                              {format(parseISO(m.meeting_date), "dd/MM/yyyy")}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {m.meeting_time.slice(0, 5)} · {m.duration_minutes}min
-                            </span>
-                            {m.client_name && (
-                              <span className="flex items-center gap-1">
-                                <User className="h-3 w-3" />
-                                {m.client_name}
-                              </span>
+                  <motion.div key={m.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+                    <Card className={cn(
+                      'transition-all hover:shadow-md border-l-[3px]',
+                      m.status === 'cancelled' && 'opacity-50 border-l-destructive/40',
+                      m.status === 'completed' && 'border-l-success',
+                      m.status === 'scheduled' && (isPast ? 'border-l-warning' : 'border-l-primary'),
+                    )}>
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="font-semibold text-foreground truncate">{m.title}</h3>
+                              <Badge className={cn('text-[10px] px-2 py-0', config.color)}>{config.label}</Badge>
+                              {isPast && <Badge variant="outline" className="text-[10px] text-warning border-warning/30">Atrasada</Badge>}
+                              {(m as any).meeting_reason && <Badge variant="outline" className="text-[10px]">{(m as any).meeting_reason}</Badge>}
+                            </div>
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1"><CalendarDays className="h-3 w-3" />{format(parseISO(m.meeting_date), "dd/MM/yyyy")}</span>
+                              <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{m.meeting_time.slice(0, 5)} · {m.duration_minutes}min</span>
+                              {m.client_name && <span className="flex items-center gap-1"><User className="h-3 w-3" />{m.client_name}</span>}
+                            </div>
+                            {m.client_email && emailStats[m.client_email.toLowerCase()] && (
+                              <div className="flex items-center gap-3 text-[10px] mt-1">
+                                <span className="text-muted-foreground">Reuniões com este cliente:</span>
+                                <span className="font-medium text-foreground">{emailStats[m.client_email.toLowerCase()].total} total</span>
+                                <span className="text-success">{emailStats[m.client_email.toLowerCase()].completed} realizadas</span>
+                                <span className="text-info">{emailStats[m.client_email.toLowerCase()].scheduled} agendadas</span>
+                                <span className="text-destructive">{emailStats[m.client_email.toLowerCase()].cancelled} canceladas</span>
+                              </div>
                             )}
-                          </div>
-                          {/* Email meeting stats */}
-                          {m.client_email && emailStats[m.client_email.toLowerCase()] && (
-                            <div className="flex items-center gap-3 text-[10px] mt-1">
-                              <span className="text-muted-foreground">
-                                Reuniões com este cliente:
-                              </span>
-                              <span className="font-medium text-foreground">{emailStats[m.client_email.toLowerCase()].total} total</span>
-                              <span className="text-success">{emailStats[m.client_email.toLowerCase()].completed} realizadas</span>
-                              <span className="text-info">{emailStats[m.client_email.toLowerCase()].scheduled} agendadas</span>
-                              <span className="text-destructive">{emailStats[m.client_email.toLowerCase()].cancelled} canceladas</span>
-                            </div>
-                          )}
-                          {m.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{m.description}</p>}
-                          {(m as any).reschedule_reason && (
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
-                              <RefreshCw className="h-3 w-3" />
-                              <span>Reagendado: {(m as any).reschedule_reason}</span>
-                            </div>
-                          )}
-
-                          {/* Completed meeting details section */}
-                          {m.status === 'completed' && (
-                            <div className="mt-2 pt-2 border-t border-border space-y-2">
-                              <div className="flex items-center gap-3 flex-wrap">
-                                {hasMinutes && (
-                                  <a href={(m as any).minutes_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors">
-                                    <FileText className="h-3.5 w-3.5" /> Ata da reunião
-                                  </a>
+                            {m.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{m.description}</p>}
+                            {(m as any).reschedule_reason && (
+                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                                <RefreshCw className="h-3 w-3" /><span>Reagendado: {(m as any).reschedule_reason}</span>
+                              </div>
+                            )}
+                            {m.status === 'completed' && (
+                              <div className="mt-2 pt-2 border-t border-border space-y-2">
+                                <div className="flex items-center gap-3 flex-wrap">
+                                  {hasMinutes && <a href={(m as any).minutes_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"><FileText className="h-3.5 w-3.5" /> Ata</a>}
+                                  {hasRecording && <a href={(m as any).recording_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"><Video className="h-3.5 w-3.5" /> Gravação</a>}
+                                  {!hasMinutes && !hasRecording && <span className="text-xs text-muted-foreground/60 italic">Sem ata ou gravação</span>}
+                                </div>
+                                {hasLoyalty ? (
+                                  <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-warning/10">
+                                      <Star className="h-3.5 w-3.5 text-warning" />
+                                      <span className="text-xs font-bold text-foreground">Fidelidade: {(m as any).loyalty_index}/4</span>
+                                    </div>
+                                    {(m as any).loyalty_reason && <span className="text-xs text-muted-foreground line-clamp-1">— {(m as any).loyalty_reason}</span>}
+                                    <Button variant="ghost" size="sm" className="h-6 text-[10px] text-muted-foreground hover:text-foreground px-2" onClick={() => handleOpenConfirm(m)}><Edit2 className="h-3 w-3 mr-1" /> Editar</Button>
+                                  </div>
+                                ) : (
+                                  <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs border-warning/40 text-warning hover:bg-warning/10 hover:text-warning" onClick={() => handleOpenConfirm(m)}><Star className="h-3.5 w-3.5" /> Preencher índice de fidelidade</Button>
                                 )}
-                                {hasRecording && (
-                                  <a href={(m as any).recording_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors">
-                                    <Video className="h-3.5 w-3.5" /> Gravação
-                                  </a>
-                                )}
-                                {!hasMinutes && !hasRecording && (
-                                  <span className="text-xs text-muted-foreground/60 italic">Sem ata ou gravação</span>
+                                {csatMap[m.id] && (
+                                  <div className="flex items-center gap-2">
+                                    {csatMap[m.id].responded ? (
+                                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-success/10"><MessageSquare className="h-3.5 w-3.5 text-success" /><span className="text-xs font-bold text-success">CSAT: {csatMap[m.id].score}/10</span></div>
+                                    ) : (
+                                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted"><MessageSquare className="h-3.5 w-3.5 text-muted-foreground" /><span className="text-xs text-muted-foreground">CSAT enviado · Aguardando resposta</span></div>
+                                    )}
+                                  </div>
                                 )}
                               </div>
-                              {hasLoyalty ? (
-                                <div className="flex items-center gap-3">
-                                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-warning/10">
-                                    <Star className="h-3.5 w-3.5 text-warning" />
-                                    <span className="text-xs font-bold text-foreground">Fidelidade: {(m as any).loyalty_index}/4</span>
-                                  </div>
-                                  {(m as any).loyalty_reason && (
-                                    <span className="text-xs text-muted-foreground line-clamp-1">— {(m as any).loyalty_reason}</span>
-                                  )}
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-6 text-[10px] text-muted-foreground hover:text-foreground px-2"
-                                    onClick={() => handleOpenConfirm(m)}
-                                  >
-                                    <Edit2 className="h-3 w-3 mr-1" /> Editar
-                                  </Button>
-                                </div>
-                              ) : (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-8 gap-1.5 text-xs border-warning/40 text-warning hover:bg-warning/10 hover:text-warning"
-                                  onClick={() => handleOpenConfirm(m)}
-                                >
-                                  <Star className="h-3.5 w-3.5" />
-                                  Preencher índice de fidelidade
-                                </Button>
-                              )}
-                              {/* CSAT indicator */}
-                              {csatMap[m.id] && (
-                                <div className="flex items-center gap-2">
-                                  {csatMap[m.id].responded ? (
-                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-success/10">
-                                      <MessageSquare className="h-3.5 w-3.5 text-success" />
-                                      <span className="text-xs font-bold text-success">CSAT: {csatMap[m.id].score}/10</span>
-                                    </div>
-                                  ) : (
-                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted">
-                                      <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
-                                      <span className="text-xs text-muted-foreground">CSAT enviado · Aguardando resposta</span>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          {/* Scheduled meeting: prominent confirm CTA */}
-                          {m.status === 'scheduled' && (
-                            <div className="mt-2 pt-2 border-t border-border">
-                              <Button
-                                size="sm"
-                                className="h-8 gap-1.5 text-xs bg-success/90 hover:bg-success text-white"
-                                onClick={() => handleOpenConfirm(m)}
-                              >
-                                <CheckCircle className="h-3.5 w-3.5" />
-                                Concluir reunião
-                              </Button>
-                            </div>
-                          )}
+                            )}
+                            {m.status === 'scheduled' && (
+                              <div className="mt-2 pt-2 border-t border-border">
+                                <Button size="sm" className="h-8 gap-1.5 text-xs bg-success/90 hover:bg-success text-white" onClick={() => handleOpenConfirm(m)}><CheckCircle className="h-3.5 w-3.5" /> Concluir reunião</Button>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            {m.meeting_url && <Button variant="ghost" size="icon" className="h-8 w-8" asChild><a href={m.meeting_url} target="_blank" rel="noopener noreferrer"><Video className="h-4 w-4 text-primary" /></a></Button>}
+                            {m.status === 'scheduled' && <Button variant="ghost" size="icon" className="h-8 w-8" asChild title="Adicionar ao Google Calendar"><a href={buildGoogleCalendarUrl(m)} target="_blank" rel="noopener noreferrer"><CalendarDays className="h-4 w-4 text-success" /></a></Button>}
+                            {m.status === 'scheduled' && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild><Button variant="ghost" size="sm" className="h-8 text-xs text-destructive hover:text-destructive">Cancelar</Button></AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader><AlertDialogTitle>Cancelar reunião?</AlertDialogTitle><AlertDialogDescription>Tem certeza que deseja cancelar <strong>{m.title}</strong>?</AlertDialogDescription></AlertDialogHeader>
+                                  <AlertDialogFooter><AlertDialogCancel>Voltar</AlertDialogCancel><AlertDialogAction onClick={() => handleStatusChange(m.id, 'cancelled')}>Confirmar cancelamento</AlertDialogAction></AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                            {(m.status === 'cancelled' || m.status === 'completed') && <Button variant="outline" size="sm" className="h-8 gap-1 text-xs" onClick={() => handleReschedule(m)}><RefreshCw className="h-3.5 w-3.5" /> Reagendar</Button>}
+                            {canEdit && <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(m)}><Edit2 className="h-3.5 w-3.5" /></Button>}
+                            {canDelete && <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(m.id)}><Trash2 className="h-3.5 w-3.5" /></Button>}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          {m.meeting_url && (
-                            <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                              <a href={m.meeting_url} target="_blank" rel="noopener noreferrer">
-                                <Video className="h-4 w-4 text-primary" />
-                              </a>
-                            </Button>
-                          )}
-                          {m.status === 'scheduled' && (
-                            <Button variant="ghost" size="icon" className="h-8 w-8" asChild title="Adicionar ao Google Calendar">
-                              <a href={buildGoogleCalendarUrl(m)} target="_blank" rel="noopener noreferrer">
-                                <CalendarDays className="h-4 w-4 text-success" />
-                              </a>
-                            </Button>
-                          )}
-                          {m.status === 'scheduled' && (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-8 text-xs text-destructive hover:text-destructive">Cancelar</Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Cancelar reunião?</AlertDialogTitle>
-                                  <AlertDialogDescription>Tem certeza que deseja cancelar <strong>{m.title}</strong>? Esta ação não pode ser desfeita.</AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Voltar</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleStatusChange(m.id, 'cancelled')}>Confirmar cancelamento</AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          )}
-                          {(m.status === 'cancelled' || m.status === 'completed') && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-8 gap-1 text-xs"
-                              onClick={() => handleReschedule(m)}
-                            >
-                              <RefreshCw className="h-3.5 w-3.5" />
-                              Reagendar
-                            </Button>
-                          )}
-                          {canEdit && (
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(m)}>
-                              <Edit2 className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
-                          {canDelete && (
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(m.id)}>
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 );
               })}
             </div>
