@@ -11,11 +11,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
-import { format, isSameDay, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isBefore } from 'date-fns';
+import { format, isSameDay, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isBefore, addDays, startOfWeek, endOfWeek, addMonths, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, Video, Clock, User, Trash2, Edit2, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Loader2, CheckCircle, FileText, Star, RefreshCw, AlertCircle, MessageSquare } from 'lucide-react';
+import { Plus, Video, Clock, User, Trash2, Edit2, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Loader2, CheckCircle, FileText, Star, RefreshCw, AlertCircle, MessageSquare, Eye, TrendingUp, Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { usePermissions } from '@/hooks/usePermissions';
 
