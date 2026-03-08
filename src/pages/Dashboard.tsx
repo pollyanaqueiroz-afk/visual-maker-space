@@ -630,6 +630,7 @@ export default function Dashboard() {
                      activeKPI === 'in_progress' ? 'Em Produção' :
                      activeKPI === 'review' ? 'Em Revisão' :
                      activeKPI === 'completed' ? 'Concluídas' :
+                     activeKPI === 'cancelled' ? 'Canceladas' :
                      'Clientes Abertos'}
                   </span>
                 </span>
