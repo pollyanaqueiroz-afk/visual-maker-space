@@ -170,13 +170,18 @@ export default function ClienteLogin() {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-white/70">Senha * (mín. 6 caracteres)</Label>
-                <Input
-                  type="password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
-                  placeholder="••••••••"
-                />
+                <div className="relative">
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/30 pr-10"
+                    placeholder="••••••••"
+                  />
+                  <button type="button" tabIndex={-1} onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors">
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
               <Button type="submit" className="w-full" disabled={loading || !email || !password || !nome || !plataformaUrl}>
                 {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
