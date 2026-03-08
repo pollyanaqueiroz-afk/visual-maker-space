@@ -136,6 +136,7 @@ export default function AplicativosPage() {
   const [pubUrlExpanded, setPubUrlExpanded] = useState<Record<string, boolean>>({});
   const [pubUrlSaving, setPubUrlSaving] = useState<Set<string>>(new Set());
   const [filterResponsavelTask, setFilterResponsavelTask] = useState('all');
+  const [periodView, setPeriodView] = useState<'week' | 'month'>('month');
 
   // Drag and drop states
   const [dragOverColumn, setDragOverColumn] = useState<number | null>(null);
