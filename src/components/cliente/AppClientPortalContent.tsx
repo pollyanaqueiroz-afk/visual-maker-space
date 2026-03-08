@@ -1347,9 +1347,9 @@ export default function AppClientPortalContent({ clienteId }: Props) {
 
               {/* Bifurcation connector — clean T-shape */}
               <div className="flex items-center shrink-0 self-center">
-                <div className="w-4 h-0.5 bg-white/20" />
-                <div className="relative">
-                  <div className="w-0.5 bg-white/20" style={{ height: '4.5rem' }} />
+                 <div className="w-6 h-0.5 bg-white/20" />
+                 <div className="relative">
+                   <div className="w-0.5 bg-white/20" style={{ height: '5.5rem' }} />
                   {/* Top branch */}
                   <div className="absolute top-0 left-0 w-4 h-0.5 bg-white/20" />
                   {/* Bottom branch */}
