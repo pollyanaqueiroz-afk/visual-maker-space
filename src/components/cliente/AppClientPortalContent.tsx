@@ -1187,7 +1187,6 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                     onClick={() => setSelectedTimelineFase(isSelected ? null : { fase: num, plataforma })}
                     className={`flex flex-col items-center cursor-pointer hover:scale-105 transition-all ${status === 'bloqueada' ? 'opacity-60' : ''} ${isSelected ? 'scale-110' : ''}`}
                   >
-                >
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
                     status === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50 text-green-400' :
                     status === 'em_andamento' ? 'bg-primary/30 ring-2 ring-primary text-primary animate-pulse' :
