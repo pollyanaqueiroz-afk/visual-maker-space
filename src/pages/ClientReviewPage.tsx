@@ -297,7 +297,9 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
   };
 
   const allDone = currentIndex >= images.length && images.length > 0;
-  const imageTypeLabel = currentImage ? (IMAGE_TYPE_LABELS[currentImage.image_type as ImageType] || currentImage.image_type) : '';
+  const imageTypeLabel = currentImage 
+    ? `${IMAGE_TYPE_LABELS[currentImage.image_type as ImageType] || currentImage.image_type}${currentImage.observations ? ' — ' + currentImage.observations : ''}`
+    : '';
 
   const handleDownloadZip = async () => {
     if (!platformUrls.length) return;
