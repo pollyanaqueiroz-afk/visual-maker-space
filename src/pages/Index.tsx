@@ -48,7 +48,7 @@ const Index = () => {
           Solicite artes, acompanhe entregas e gerencie seu aplicativo em um só lugar.
         </motion.p>
 
-        {/* Buttons */}
+        {/* Buttons — primary vs secondary hierarchy */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -58,7 +58,7 @@ const Index = () => {
           <Button
             asChild
             size="lg"
-            className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg shadow-emerald-500/25 border-0 px-8 h-12 text-base"
+            className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg shadow-emerald-500/25 border-0 px-8 h-12 text-base font-semibold"
           >
             <Link to="/cliente/login">
               <UserCircle className="h-5 w-5 mr-2" />
@@ -68,7 +68,8 @@ const Index = () => {
           <Button
             asChild
             size="lg"
-            className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg shadow-emerald-500/25 border-0 px-8 h-12 text-base"
+            variant="outline"
+            className="border-white/20 bg-white/5 backdrop-blur-sm text-white hover:bg-white/10 hover:border-white/30 px-8 h-12 text-base"
           >
             <Link to="/hub">
               <Lock className="h-5 w-5 mr-2" />
@@ -77,12 +78,23 @@ const Index = () => {
           </Button>
         </motion.div>
 
+        {/* Social proof */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.65 }}
+          className="flex items-center justify-center gap-8 pt-4"
+        >
+          <SocialStat icon={<Users className="h-4 w-4 text-emerald-400" />} value={1690} suffix="+" label="clientes" />
+          <SocialStat icon={<Palette className="h-4 w-4 text-emerald-400" />} value={312} suffix="+" label="artes entregues" />
+        </motion.div>
+
         {/* Decorative sparkle */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.7 }}
-          className="flex items-center justify-center gap-2 pt-4"
+          transition={{ delay: 0.8 }}
+          className="flex items-center justify-center gap-2 pt-2"
         >
           <Sparkles className="h-3 w-3 text-emerald-400/50" />
           <span className="text-white/30 text-xs tracking-widest uppercase">Design · Artes · Aplicativos</span>
