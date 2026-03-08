@@ -62,6 +62,7 @@ export default function MeetingsDashboard() {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [periodFilter, setPeriodFilter] = useState('current');
+  const [activeKPI, setActiveKPI] = useState<string | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -113,6 +114,50 @@ export default function MeetingsDashboard() {
     const uniqueClients = new Set(filtered.filter(m => m.client_email).map(m => m.client_email!.toLowerCase())).size;
     return { total, completed, scheduled, cancelled, avgLoyalty, totalMinutes, uniqueClients };
   }, [filtered]);
+
+  const toggleKPI = (kpi: string) => {
+    setActiveKPI(prev => prev === kpi ? null : kpi);
+  };
+
+  const kpiFilteredMeetings = useMemo(() => {
+    if (!activeKPI) return [];
+    switch (activeKPI) {
+      case 'total':
+        return filtered;
+      case 'completed':
+        return filtered.filter(m => m.status === 'completed');
+      case 'scheduled':
+        return filtered.filter(m => m.status === 'scheduled');
+      case 'cancelled':
+        return filtered.filter(m => m.status === 'cancelled');
+      case 'loyalty':
+        return filtered.filter(m => m.loyalty_index != null).sort((a, b) => (b.loyalty_index || 0) - (a.loyalty_index || 0));
+      case 'hours':
+        return filtered.filter(m => m.status === 'completed' && m.duration_minutes > 0).sort((a, b) => b.duration_minutes - a.duration_minutes);
+      case 'clients':
+        return filtered.filter(m => m.client_email);
+      default:
+        return [];
+    }
+  }, [activeKPI, filtered]);
+
+  const clientsGrouped = useMemo(() => {
+    if (activeKPI !== 'clients') return [];
+    const map: Record<string, { email: string; name: string; url: string; total: number; completed: number; scheduled: number; cancelled: number; meetings: Meeting[] }> = {};
+    for (const m of filtered) {
+      if (!m.client_email) continue;
+      const key = m.client_email.toLowerCase();
+      if (!map[key]) {
+        map[key] = { email: key, name: m.client_name || '', url: m.client_url || '', total: 0, completed: 0, scheduled: 0, cancelled: 0, meetings: [] };
+      }
+      map[key].total += 1;
+      if (m.status === 'completed') map[key].completed += 1;
+      else if (m.status === 'scheduled') map[key].scheduled += 1;
+      else if (m.status === 'cancelled') map[key].cancelled += 1;
+      map[key].meetings.push(m);
+    }
+    return Object.values(map).sort((a, b) => b.total - a.total);
+  }, [activeKPI, filtered]);
 
   const byReason = useMemo(() => {
     const map: Record<string, number> = {};
@@ -213,14 +258,169 @@ export default function MeetingsDashboard() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-        <KpiCard label="Total" value={stats.total} icon={CalendarDays} color="bg-primary/10 text-primary" />
-        <KpiCard label="Realizadas" value={stats.completed} icon={CheckCircle} color="bg-success/10 text-success" />
-        <KpiCard label="Agendadas" value={stats.scheduled} icon={Clock} color="bg-info/10 text-info" />
-        <KpiCard label="Canceladas" value={stats.cancelled} icon={XCircle} color="bg-destructive/10 text-destructive" />
-        <KpiCard label="Fidelidade" value={stats.avgLoyalty} icon={Star} color="bg-warning/10 text-warning" />
-        <KpiCard label="Horas" value={`${Math.round(stats.totalMinutes / 60)}h`} icon={TrendingUp} color="bg-primary/10 text-primary" />
-        <KpiCard label="Clientes" value={stats.uniqueClients} icon={Users} color="bg-accent text-accent-foreground" />
+        <KpiCard label="Total" value={stats.total} icon={CalendarDays} color="bg-primary/10 text-primary"
+          onClick={() => toggleKPI('total')} active={activeKPI === 'total'} />
+        <KpiCard label="Realizadas" value={stats.completed} icon={CheckCircle} color="bg-success/10 text-success"
+          onClick={() => toggleKPI('completed')} active={activeKPI === 'completed'} />
+        <KpiCard label="Agendadas" value={stats.scheduled} icon={Clock} color="bg-info/10 text-info"
+          onClick={() => toggleKPI('scheduled')} active={activeKPI === 'scheduled'} />
+        <KpiCard label="Canceladas" value={stats.cancelled} icon={XCircle} color="bg-destructive/10 text-destructive"
+          onClick={() => toggleKPI('cancelled')} active={activeKPI === 'cancelled'} />
+        <KpiCard label="Fidelidade" value={stats.avgLoyalty} icon={Star} color="bg-warning/10 text-warning"
+          onClick={() => toggleKPI('loyalty')} active={activeKPI === 'loyalty'} />
+        <KpiCard label="Horas" value={`${Math.round(stats.totalMinutes / 60)}h`} icon={TrendingUp} color="bg-primary/10 text-primary"
+          onClick={() => toggleKPI('hours')} active={activeKPI === 'hours'} />
+        <KpiCard label="Clientes" value={stats.uniqueClients} icon={Users} color="bg-accent text-accent-foreground"
+          onClick={() => toggleKPI('clients')} active={activeKPI === 'clients'} />
       </div>
+
+      {/* KPI Detail: Clients grouped */}
+      {activeKPI === 'clients' && clientsGrouped.length > 0 && (
+        <Card className="border-none shadow-[var(--shadow-kpi)] animate-in fade-in slide-in-from-top-2 duration-300">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <Users className="h-4 w-4 text-accent-foreground" /> Clientes únicos ({clientsGrouped.length})
+              </CardTitle>
+              <button onClick={() => setActiveKPI(null)} className="text-muted-foreground hover:text-foreground text-sm">✕</button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>URL</TableHead>
+                  <TableHead className="text-center">Total</TableHead>
+                  <TableHead className="text-center">Realizadas</TableHead>
+                  <TableHead className="text-center">Agendadas</TableHead>
+                  <TableHead className="text-center">Canceladas</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {clientsGrouped.map(c => (
+                  <TableRow key={c.email}>
+                    <TableCell>
+                      <div>
+                        <p className="text-sm font-medium">{c.name || c.email}</p>
+                        <p className="text-xs text-muted-foreground">{c.email}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {c.url ? (
+                        <a href={c.url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">{c.url}</a>
+                      ) : <span className="text-xs text-muted-foreground">—</span>}
+                    </TableCell>
+                    <TableCell className="text-center font-semibold">{c.total}</TableCell>
+                    <TableCell className="text-center"><Badge className="bg-success/20 text-success border-0 text-[10px]">{c.completed}</Badge></TableCell>
+                    <TableCell className="text-center"><Badge className="bg-info/20 text-info border-0 text-[10px]">{c.scheduled}</Badge></TableCell>
+                    <TableCell className="text-center"><Badge className="bg-destructive/20 text-destructive border-0 text-[10px]">{c.cancelled}</Badge></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* KPI Detail: Meeting list (non-clients) */}
+      {activeKPI && activeKPI !== 'clients' && kpiFilteredMeetings.length > 0 && (
+        <Card className="border-none shadow-[var(--shadow-kpi)] animate-in fade-in slide-in-from-top-2 duration-300">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                {activeKPI === 'total' && <><CalendarDays className="h-4 w-4 text-primary" /> Todas as reuniões ({kpiFilteredMeetings.length})</>}
+                {activeKPI === 'completed' && <><CheckCircle className="h-4 w-4 text-success" /> Reuniões realizadas ({kpiFilteredMeetings.length})</>}
+                {activeKPI === 'scheduled' && <><Clock className="h-4 w-4 text-info" /> Reuniões agendadas ({kpiFilteredMeetings.length})</>}
+                {activeKPI === 'cancelled' && <><XCircle className="h-4 w-4 text-destructive" /> Reuniões canceladas ({kpiFilteredMeetings.length})</>}
+                {activeKPI === 'loyalty' && <><Star className="h-4 w-4 text-warning" /> Reuniões com fidelidade ({kpiFilteredMeetings.length})</>}
+                {activeKPI === 'hours' && <><TrendingUp className="h-4 w-4 text-primary" /> Reuniões por duração ({kpiFilteredMeetings.length})</>}
+              </CardTitle>
+              <button onClick={() => setActiveKPI(null)} className="text-muted-foreground hover:text-foreground text-sm">✕</button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Horário</TableHead>
+                  <TableHead>Título</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Motivo</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  {(activeKPI === 'loyalty' || activeKPI === 'total') && <TableHead className="text-center">Fidelidade</TableHead>}
+                  {(activeKPI === 'hours' || activeKPI === 'total') && <TableHead className="text-center">Duração</TableHead>}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {kpiFilteredMeetings.map(m => (
+                  <TableRow key={m.id}>
+                    <TableCell className="text-sm font-medium">
+                      {format(parseISO(m.meeting_date), 'dd/MM/yyyy', { locale: ptBR })}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {m.meeting_time || '—'}
+                    </TableCell>
+                    <TableCell className="text-sm font-medium max-w-[200px] truncate" title={m.title}>
+                      {m.title || '—'}
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="text-sm">{m.client_name || '—'}</p>
+                        {m.client_url && (
+                          <a href={m.client_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
+                            {m.client_url}
+                          </a>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground max-w-[180px] truncate" title={m.meeting_reason || ''}>
+                      {m.meeting_reason || '—'}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge className={`border-0 text-[10px] ${
+                        m.status === 'completed' ? 'bg-success/20 text-success' :
+                        m.status === 'scheduled' ? 'bg-info/20 text-info' :
+                        'bg-destructive/20 text-destructive'
+                      }`}>
+                        {m.status === 'completed' ? 'Realizada' : m.status === 'scheduled' ? 'Agendada' : 'Cancelada'}
+                      </Badge>
+                    </TableCell>
+                    {(activeKPI === 'loyalty' || activeKPI === 'total') && (
+                      <TableCell className="text-center">
+                        {m.loyalty_index != null ? (
+                          <Badge variant="outline" className={`text-[10px] ${
+                            m.loyalty_index >= 3 ? 'border-success/30 text-success' :
+                            m.loyalty_index >= 2 ? 'border-warning/30 text-warning' :
+                            'border-destructive/30 text-destructive'
+                          }`}>
+                            <Star className="h-2.5 w-2.5 mr-0.5" /> {m.loyalty_index}
+                          </Badge>
+                        ) : <span className="text-xs text-muted-foreground">—</span>}
+                      </TableCell>
+                    )}
+                    {(activeKPI === 'hours' || activeKPI === 'total') && (
+                      <TableCell className="text-center">
+                        <span className="text-sm">{m.duration_minutes > 0 ? `${m.duration_minutes}min` : '—'}</span>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Empty state */}
+      {activeKPI && ((activeKPI === 'clients' && clientsGrouped.length === 0) || (activeKPI !== 'clients' && kpiFilteredMeetings.length === 0)) && (
+        <Card className="border-none shadow-[var(--shadow-kpi)]">
+          <CardContent className="py-8 text-center text-muted-foreground">
+            Nenhuma reunião encontrada para este filtro
+          </CardContent>
+        </Card>
+      )}
 
       {/* Charts Row */}
       <div className="grid md:grid-cols-2 gap-4">
