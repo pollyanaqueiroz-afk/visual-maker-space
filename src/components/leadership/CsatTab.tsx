@@ -62,8 +62,8 @@ export default function CsatTab({ profileMap }: CsatTabProps) {
   useEffect(() => {
     (async () => {
       const [csatRes, meetingsRes] = await Promise.all([
-        supabase.from('meeting_csat' as any).select('*').order('sent_at', { ascending: false }) as any,
-        supabase.from('meetings' as any).select('id, title, meeting_date, client_url, created_by') as any,
+        supabase.from('meeting_csat').select('*').order('sent_at', { ascending: false }),
+        supabase.from('meetings').select('id, title, meeting_date, client_url, created_by'),
       ]);
 
       if (!csatRes.error) setCsatData((csatRes.data || []) as CsatRow[]);
