@@ -794,13 +794,28 @@ export default function Dashboard() {
                                   ))}
                                 </SelectContent>
                               </Select>
-                              <AssignBriefingDialog
-                                imageId={img.id}
-                                currentEmail={img.assigned_email}
-                                currentDeadline={img.deadline}
-                                imageLabel={imageLabel(img)}
-                                onAssigned={fetchData}
-                              />
+                              {img.image_type === 'app_mockup' && !img.extra_info ? (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span>
+                                      <Button variant="outline" size="icon" className="h-8 w-8 opacity-50" disabled>
+                                        <Send className="h-4 w-4" />
+                                      </Button>
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Aguardando criação do Munin</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              ) : (
+                                <AssignBriefingDialog
+                                  imageId={img.id}
+                                  currentEmail={img.assigned_email}
+                                  currentDeadline={img.deadline}
+                                  imageLabel={imageLabel(img)}
+                                  onAssigned={fetchData}
+                                />
+                              )}
                               <BrandAssetsDialog platformUrl={img.platform_url} clientName={extractClientName(img.platform_url)} />
                               <ImageDetailDialog image={img} reviews={reviews.filter(r => r.briefing_image_id === img.id)} />
                             </div>
