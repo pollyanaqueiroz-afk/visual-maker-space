@@ -567,11 +567,24 @@ export default function SchedulingPage() {
     [meetings]
   );
 
-  // Meetings past their date still "scheduled" — need conclusion or rescheduling
-  const pendingConclusion = useMemo(() => {
+  // Meetings past their date still "scheduled" — split by days overdue
+  const { pendingConclusion, pendingReschedule } = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return meetings.filter(m => m.status === 'scheduled' && isBefore(parseISO(m.meeting_date), today));
+    const overdue = meetings.filter(m => m.status === 'scheduled' && isBefore(parseISO(m.meeting_date), today));
+    const conclude: Meeting[] = [];
+    const reschedule: Meeting[] = [];
+    const RESCHEDULE_THRESHOLD_DAYS = 7;
+    for (const m of overdue) {
+      const diffMs = today.getTime() - parseISO(m.meeting_date).getTime();
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      if (diffDays > RESCHEDULE_THRESHOLD_DAYS) {
+        reschedule.push(m);
+      } else {
+        conclude.push(m);
+      }
+    }
+    return { pendingConclusion: conclude, pendingReschedule: reschedule };
   }, [meetings]);
 
   // Month grid helpers
