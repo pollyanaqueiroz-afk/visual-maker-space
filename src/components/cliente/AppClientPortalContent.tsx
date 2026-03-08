@@ -1433,7 +1433,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             </motion.div>
           ))}
           {fases.filter((f: any) => f.status === 'concluida').length === 0 && (
-            <p className="text-sm text-white/30">Complete etapas para desbloquear conquistas!</p>
+            <p className="text-sm text-white/50">Complete etapas para desbloquear conquistas!</p>
           )}
         </div>
       </div>
