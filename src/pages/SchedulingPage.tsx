@@ -675,7 +675,7 @@ export default function SchedulingPage() {
       {/* Calendar + List layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Calendar Panel */}
-        <div className="lg:col-span-4 space-y-4">
+        <div className={cn("space-y-4", calendarView === 'week' ? 'lg:col-span-12' : 'lg:col-span-4')}>
           <Card className="overflow-hidden border-border/60">
             <CardHeader className="pb-0 pt-4 px-4">
               <div className="flex items-center justify-between">
