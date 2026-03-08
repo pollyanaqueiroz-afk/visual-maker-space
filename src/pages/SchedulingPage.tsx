@@ -1268,8 +1268,8 @@ export default function SchedulingPage() {
                             {m.status === 'completed' && (
                               <div className="mt-2 pt-2 border-t border-border space-y-2">
                                 <div className="flex items-center gap-3 flex-wrap">
-                                  {hasMinutes && <a href={(m as any).minutes_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"><FileText className="h-3.5 w-3.5" /> Ata</a>}
-                                  {hasRecording && <a href={(m as any).recording_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"><Video className="h-3.5 w-3.5" /> Gravação</a>}
+                                  {hasMinutes && <a href={m.minutes_url!} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"><FileText className="h-3.5 w-3.5" /> Ata</a>}
+                                  {hasRecording && <a href={m.recording_url!} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"><Video className="h-3.5 w-3.5" /> Gravação</a>}
                                   {!hasMinutes && !hasRecording && <span className="text-xs text-muted-foreground/60 italic">Sem ata ou gravação</span>}
                                 </div>
                                 {hasLoyalty ? (
