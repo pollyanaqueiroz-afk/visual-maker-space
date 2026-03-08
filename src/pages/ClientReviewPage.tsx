@@ -566,7 +566,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
               <p className="text-muted-foreground text-sm text-center py-4">Nenhuma arte encontrada</p>
             ) : (
               allImagesData.map((img) => {
-                const typeLabel = IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type;
+                const typeLabel = `${IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type}${img.observations ? ' — ' + img.observations : ''}`;
                 const statusMap: Record<string, { label: string; color: string }> = {
                   pending: { label: 'Aguardando', color: 'text-amber-500 border-amber-500/30' },
                   in_progress: { label: 'Em andamento', color: 'text-info border-info/30' },
