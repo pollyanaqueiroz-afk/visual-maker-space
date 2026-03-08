@@ -504,7 +504,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     if (totalPctMsg === 100) return '🎉 Seu app está 100% pronto!';
     if (clientPctMsg === 100 && totalPctMsg < 100) return 'Você concluiu tudo! 🎉 Nossa equipe está cuidando do restante.';
 
-    const clientPending = checklist.filter((i: any) => !i.feito && i.ator === 'cliente' && !isHiddenPrereq(i.texto) && i.tipo !== 'mooni');
+    const clientPending = checklist.filter((i: any) => !i.feito && i.ator === 'cliente' && i.tipo !== 'mooni');
     const currentFasePending = clientPending.filter(i => i.fase_numero === cliente?.fase_atual);
     if (currentFasePending.length > 0) return `Seu app está ${clientPctMsg}% pronto — faltam ${currentFasePending.length} tarefa(s) suas!`;
 
