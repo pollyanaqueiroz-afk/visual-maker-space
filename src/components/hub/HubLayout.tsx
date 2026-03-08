@@ -41,12 +41,12 @@ function NotificationBell() {
 
       if (destinatarios.length === 0) return [];
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase
         .from('app_notificacoes')
         .select('*')
         .in('destinatario', destinatarios)
-        .eq('canal', 'portal')
-        .eq('lida' as any, false)
+        .eq('canal', 'portal') as any)
+        .eq('lida', false)
         .order('agendado_para', { ascending: false })
         .limit(20);
       if (error) throw error;
