@@ -108,11 +108,11 @@ export const STATUS_LABELS: Record<RequestStatus, string> = {
 };
 
 export const STATUS_COLORS: Record<RequestStatus, string> = {
-  pending: 'bg-warning/20 text-warning',
-  in_progress: 'bg-info/20 text-info',
-  review: 'bg-primary/20 text-primary',
-  completed: 'bg-success/20 text-success',
-  cancelled: 'bg-destructive/20 text-destructive',
+  pending: 'bg-amber-500/15 text-amber-400 border border-amber-500/20',
+  in_progress: 'bg-blue-500/15 text-blue-400 border border-blue-500/20',
+  review: 'bg-violet-500/15 text-violet-400 border border-violet-500/20',
+  completed: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20',
+  cancelled: 'bg-red-500/15 text-red-400 border border-red-500/20',
 };
 
 export const IMAGE_TYPE_LABELS: Record<ImageType, string> = {
