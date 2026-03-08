@@ -758,9 +758,10 @@ export default function AplicativosPage() {
                           const isOverdue = !item.feito && daysSinceCreated > 2;
                           const isCompleting = completingIds.has(item.id);
                           const isDone = item.feito || isCompleting;
+                          const isPriority = item.texto?.startsWith('⚠️ PRIORIDADE');
 
                           return (
-                            <div key={item.id} className={`grid grid-cols-[32px_1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-3 items-center transition-opacity ${isCompleting ? 'opacity-50' : ''}`}>
+                            <div key={item.id} className={`grid grid-cols-[32px_1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-3 items-center transition-opacity ${isCompleting ? 'opacity-50' : ''} ${isPriority && !isDone ? 'bg-destructive/10 border-l-2 border-destructive' : ''}`}>
                               <Checkbox
                                 checked={isDone}
                                 disabled={isDone}
@@ -770,7 +771,12 @@ export default function AplicativosPage() {
                                 }}
                               />
                               <div className="min-w-0">
-                                <p className={`text-sm truncate ${isDone ? 'line-through text-muted-foreground' : ''}`}>{item.texto}</p>
+                                <div className="flex items-center gap-2">
+                                  <p className={`text-sm truncate ${isDone ? 'line-through text-muted-foreground' : ''}`}>{item.texto}</p>
+                                  {isPriority && !isDone && (
+                                    <Badge variant="destructive" className="text-[10px] shrink-0">PRIORIDADE</Badge>
+                                  )}
+                                </div>
                                 {item.descricao && (
                                   <p className="text-xs text-muted-foreground truncate mt-0.5">{item.descricao}</p>
                                 )}
