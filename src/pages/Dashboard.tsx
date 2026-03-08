@@ -115,6 +115,10 @@ export default function Dashboard() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activeKPI, setActiveKPI] = useState<string | null>(null);
   const [reviewSearch, setReviewSearch] = useState('');
+  const [artesPage, setArtesPage] = useState(1);
+  const ARTES_PER_PAGE = 25;
+  const [sortBy, setSortBy] = useState<string>('created_at');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
   const toggleKPI = (kpi: string) => {
     setActiveKPI(prev => {
@@ -324,7 +328,7 @@ export default function Dashboard() {
     return !img.image_text || !img.image_type;
   };
 
-  const filtered = images.filter(i => {
+  const filtered = useMemo(() => images.filter(i => {
     if (filterStatus === 'incomplete') {
       if (!isBriefingIncomplete(i)) return false;
     } else if (filterStatus !== 'all' && filterStatus !== 'revision') {
@@ -345,7 +349,59 @@ export default function Dashboard() {
       if (!clientName.includes(q) && !url.includes(q) && !requester.includes(q)) return false;
     }
     return true;
-  });
+  }), [images, filterStatus, filterType, filterClient, filterOverdue, searchQuery]);
+
+  const sorted = useMemo(() => {
+    return [...filtered].sort((a, b) => {
+      let valA: any = (a as any)[sortBy] || '';
+      let valB: any = (b as any)[sortBy] || '';
+      if (sortBy === 'created_at' || sortBy === 'deadline' || sortBy === 'received_at') {
+        valA = valA ? new Date(valA).getTime() : 0;
+        valB = valB ? new Date(valB).getTime() : 0;
+      }
+      if (valA < valB) return sortDir === 'asc' ? -1 : 1;
+      if (valA > valB) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [filtered, sortBy, sortDir]);
+
+  const artesTotalPages = Math.ceil(sorted.length / ARTES_PER_PAGE);
+  const paginatedImages = useMemo(() => {
+    const start = (artesPage - 1) * ARTES_PER_PAGE;
+    return sorted.slice(start, start + ARTES_PER_PAGE);
+  }, [sorted, artesPage]);
+
+  // Reset page when filters change
+  useEffect(() => { setArtesPage(1); }, [filterStatus, filterType, filterClient, searchQuery, filterOverdue]);
+
+  const handleSortToggle = (col: string) => {
+    if (sortBy === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortBy(col); setSortDir('desc'); }
+  };
+
+  const handleExportCSV = () => {
+    const headers = ['Data', 'Cliente', 'URL', 'Tipo', 'Produto', 'Status', 'Designer', 'Prazo', 'Refações'];
+    const rows = filtered.map(img => [
+      format(new Date(img.created_at), 'dd/MM/yyyy'),
+      img.requester_name,
+      img.platform_url,
+      IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type,
+      img.product_name || '',
+      STATUS_LABELS[img.status] || img.status,
+      img.assigned_email || '',
+      img.deadline ? format(new Date(img.deadline), 'dd/MM/yyyy') : '',
+      String(img.revision_count || 0),
+    ]);
+    const csv = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `artes-briefing-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('CSV exportado!');
+  };
 
   const uniqueClients = Array.from(new Set(images.map(i => i.platform_url))).sort();
 
@@ -618,7 +674,7 @@ export default function Dashboard() {
           </TabsList>
 
           <TabsContent value="kanban" className="space-y-6">
-            <BriefingKanban images={images} />
+            <BriefingKanban images={images} loading={loadingImages} />
           </TabsContent>
 
           <TabsContent value="artes" className="space-y-6">
@@ -819,6 +875,9 @@ export default function Dashboard() {
                 </label>
               </div>
               <span className="text-sm text-muted-foreground">{filtered.length} arte(s)</span>
+              <Button variant="outline" size="sm" className="h-9 text-xs gap-1" onClick={handleExportCSV}>
+                <FileSpreadsheet className="h-3.5 w-3.5" /> Exportar CSV
+              </Button>
               {selectedIds.size > 0 && (
                 <div className="flex items-center gap-3 ml-auto bg-primary/10 rounded-lg px-4 py-2">
                   <span className="text-sm font-medium">{selectedIds.size} selecionada(s)</span>
@@ -890,13 +949,25 @@ export default function Dashboard() {
                         />
                       </TableHead>
                       <TableHead>Pasta</TableHead>
-                      <TableHead>Tipo de Arte</TableHead>
-                      <TableHead>Cliente</TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => handleSortToggle('image_type')}>
+                        Tipo de Arte {sortBy === 'image_type' && (sortDir === 'asc' ? '↑' : '↓')}
+                      </TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => handleSortToggle('platform_url')}>
+                        Cliente {sortBy === 'platform_url' && (sortDir === 'asc' ? '↑' : '↓')}
+                      </TableHead>
                       <TableHead>Solicitante</TableHead>
-                      <TableHead>Responsável</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Refações</TableHead>
-                      <TableHead>Recebido em</TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => handleSortToggle('assigned_email')}>
+                        Responsável {sortBy === 'assigned_email' && (sortDir === 'asc' ? '↑' : '↓')}
+                      </TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => handleSortToggle('status')}>
+                        Status {sortBy === 'status' && (sortDir === 'asc' ? '↑' : '↓')}
+                      </TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => handleSortToggle('revision_count')}>
+                        Refações {sortBy === 'revision_count' && (sortDir === 'asc' ? '↑' : '↓')}
+                      </TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => handleSortToggle('received_at')}>
+                        Recebido em {sortBy === 'received_at' && (sortDir === 'asc' ? '↑' : '↓')}
+                      </TableHead>
                       <TableHead>Tempo em aberto</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                       <TableHead>Texto da Imagem</TableHead>
@@ -909,7 +980,7 @@ export default function Dashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filtered.map(img => {
+                    {paginatedImages.map(img => {
                       return (
                          <TableRow key={img.id} className={selectedIds.has(img.id) ? 'bg-primary/5' : ''}>
                           <TableCell>
@@ -1189,6 +1260,18 @@ export default function Dashboard() {
                   </TableBody>
                 </table>
                 </div>
+              {artesTotalPages > 1 && (
+                <div className="flex items-center justify-between px-4 py-3 border-t">
+                  <span className="text-xs text-muted-foreground">
+                    Mostrando {((artesPage - 1) * ARTES_PER_PAGE) + 1}–{Math.min(artesPage * ARTES_PER_PAGE, sorted.length)} de {sorted.length}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <Button variant="outline" size="sm" className="h-7 text-xs" disabled={artesPage === 1} onClick={() => setArtesPage(p => p - 1)}>Anterior</Button>
+                    <span className="text-xs text-muted-foreground px-2">{artesPage}/{artesTotalPages}</span>
+                    <Button variant="outline" size="sm" className="h-7 text-xs" disabled={artesPage === artesTotalPages} onClick={() => setArtesPage(p => p + 1)}>Próxima</Button>
+                  </div>
+                </div>
+              )}
               </Card>
             )}
 

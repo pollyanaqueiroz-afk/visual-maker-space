@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { RequestStatus, STATUS_LABELS, IMAGE_TYPE_LABELS, ImageType } from '@/types/briefing';
@@ -78,9 +79,10 @@ interface KanbanCard {
 
 interface BriefingKanbanProps {
   images: ImageWithRequest[];
+  loading?: boolean;
 }
 
-export default function BriefingKanban({ images }: BriefingKanbanProps) {
+export default function BriefingKanban({ images, loading = false }: BriefingKanbanProps) {
   const queryClient = useQueryClient();
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
   const [dropConfirmOpen, setDropConfirmOpen] = useState(false);
@@ -214,7 +216,20 @@ export default function BriefingKanban({ images }: BriefingKanbanProps) {
         ))}
       </div>
 
-      {/* Kanban board */}
+      {loading ? (
+        <div className="overflow-x-auto pb-4">
+          <div className="flex gap-4 min-w-[1100px]">
+            {KANBAN_COLUMNS.map(col => (
+              <div key={col.key} className={`flex-1 min-w-[220px] rounded-lg p-3 ${col.bg}`}>
+                <Skeleton className="h-5 w-24 mb-3" />
+                <div className="space-y-2">
+                  {[1, 2, 3].map(i => <Skeleton key={i} className="h-28 w-full rounded-lg" />)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
       <div className="overflow-x-auto pb-4">
         <div className="flex gap-4 min-w-[1100px]">
           {KANBAN_COLUMNS.map(col => (
@@ -303,6 +318,7 @@ export default function BriefingKanban({ images }: BriefingKanbanProps) {
           ))}
         </div>
       </div>
+      )}
 
       {/* Drop confirm dialog */}
       <AlertDialog open={dropConfirmOpen} onOpenChange={setDropConfirmOpen}>
