@@ -378,7 +378,20 @@ export default function SchedulingPage() {
       if (editingId) {
         const { error } = await supabase.from('meetings').update(payload).eq('id', editingId);
         if (error) throw error;
-        toast.success('Reunião atualizada!');
+
+        // Save reschedule history
+        if (isRescheduling && reschedulingOldData) {
+          await supabase.from('meeting_reschedules').insert({
+            meeting_id: editingId,
+            previous_date: reschedulingOldData.date,
+            previous_time: reschedulingOldData.time,
+            new_date: form.meeting_date,
+            new_time: form.meeting_time,
+            reason: form.reschedule_reason,
+          });
+        }
+
+        toast.success(isRescheduling ? 'Reunião reagendada!' : 'Reunião atualizada!');
       } else {
         const { error } = await supabase.from('meetings').insert(payload);
         if (error) throw error;
