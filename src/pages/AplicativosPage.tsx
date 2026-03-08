@@ -517,6 +517,18 @@ export default function AplicativosPage() {
         items: g.items.filter((item: any) => item.feito === feito),
       })).filter(g => g.items.length > 0);
     }
+    // Task-level responsável filter
+    if (filterResponsavelTask === 'unassigned') {
+      result = result.map(g => ({
+        ...g,
+        items: g.items.filter((item: any) => !item.responsavel),
+      })).filter(g => g.items.length > 0);
+    } else if (filterResponsavelTask !== 'all') {
+      result = result.map(g => ({
+        ...g,
+        items: g.items.filter((item: any) => item.responsavel === filterResponsavelTask),
+      })).filter(g => g.items.length > 0);
+    }
     return result;
   }, [internalPendencies, pendencyFilter, phaseFilter, statusFilter]);
 
