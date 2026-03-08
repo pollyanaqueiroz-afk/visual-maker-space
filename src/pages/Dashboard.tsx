@@ -128,6 +128,7 @@ export default function Dashboard() {
         case 'in_progress': setFilterStatus('in_progress'); break;
         case 'review': setFilterStatus('review'); break;
         case 'completed': setFilterStatus('completed'); break;
+        case 'cancelled': setFilterStatus('cancelled'); break;
         case 'clients': setFilterStatus('all'); break;
         case 'requests': setFilterStatus('all'); break;
       }
