@@ -87,6 +87,12 @@ interface ReviewRecord {
   created_at: string;
 }
 
+function imageLabel(img: { image_type: string; product_name?: string | null; observations?: string | null }): string {
+  const base = IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type;
+  const suffix = img.observations ? ` — ${img.observations}` : img.product_name ? ` — ${img.product_name}` : '';
+  return `${base}${suffix}`;
+}
+
 export default function Dashboard() {
   const { hasPermission, hasRole } = usePermissions();
   const isGerenteImpl = hasRole('gerente_implantacao');
