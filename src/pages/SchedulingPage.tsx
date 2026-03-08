@@ -817,18 +817,22 @@ export default function SchedulingPage() {
         {/* Calendar Panel */}
         <div className="space-y-4 lg:col-span-12">
           {/* Pending alerts above calendar */}
-          {pendingConclusion.length > 0 && (
+          {(pendingConclusion.length > 0 || pendingReschedule.length > 0) && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Pending Conclusion */}
+              {/* Pending Conclusion (≤7 days overdue) */}
+              {pendingConclusion.length > 0 && (
               <Card className="border-destructive/40 bg-destructive/5">
                 <CardHeader className="pb-2 pt-3 px-4">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2 text-destructive">
                     <CheckCircle className="h-4 w-4" />
                     {pendingConclusion.length} {pendingConclusion.length === 1 ? 'reunião' : 'reuniões'} pendente{pendingConclusion.length !== 1 ? 's' : ''} de conclusão
                   </CardTitle>
+                  <p className="text-[10px] text-muted-foreground">Até 7 dias de atraso</p>
                 </CardHeader>
                 <CardContent className="px-4 pb-3 space-y-1.5">
-                  {pendingConclusion.slice(0, 5).map(m => (
+                  {pendingConclusion.slice(0, 5).map(m => {
+                    const diffDays = Math.floor((new Date().setHours(0,0,0,0) - parseISO(m.meeting_date).getTime()) / 86400000);
+                    return (
                     <div
                       key={`conclude-${m.id}`}
                       className="flex items-center justify-between gap-2 p-2 rounded-lg bg-background border border-border/50 hover:border-destructive/40 transition-all cursor-pointer group"
@@ -838,6 +842,7 @@ export default function SchedulingPage() {
                         <p className="text-sm font-medium text-foreground truncate">{m.title}</p>
                         <p className="text-xs text-muted-foreground">
                           {format(parseISO(m.meeting_date), "dd/MM")} · {m.client_name || 'Sem cliente'}
+                          <span className="ml-1 text-destructive font-medium">({diffDays}d atraso)</span>
                         </p>
                       </div>
                       <Button
@@ -848,23 +853,29 @@ export default function SchedulingPage() {
                         Concluir
                       </Button>
                     </div>
-                  ))}
+                    );
+                  })}
                   {pendingConclusion.length > 5 && (
                     <p className="text-xs text-muted-foreground text-center pt-1">+{pendingConclusion.length - 5} mais</p>
                   )}
                 </CardContent>
               </Card>
+              )}
 
-              {/* Pending Rescheduling */}
+              {/* Pending Rescheduling (>7 days overdue) */}
+              {pendingReschedule.length > 0 && (
               <Card className="border-destructive/40 bg-destructive/5">
                 <CardHeader className="pb-2 pt-3 px-4">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2 text-destructive">
                     <RefreshCw className="h-4 w-4" />
-                    {pendingConclusion.length} {pendingConclusion.length === 1 ? 'reunião' : 'reuniões'} pendente{pendingConclusion.length !== 1 ? 's' : ''} de reagendamento
+                    {pendingReschedule.length} {pendingReschedule.length === 1 ? 'reunião' : 'reuniões'} pendente{pendingReschedule.length !== 1 ? 's' : ''} de reagendamento
                   </CardTitle>
+                  <p className="text-[10px] text-muted-foreground">Mais de 7 dias de atraso</p>
                 </CardHeader>
                 <CardContent className="px-4 pb-3 space-y-1.5">
-                  {pendingConclusion.slice(0, 5).map(m => (
+                  {pendingReschedule.slice(0, 5).map(m => {
+                    const diffDays = Math.floor((new Date().setHours(0,0,0,0) - parseISO(m.meeting_date).getTime()) / 86400000);
+                    return (
                     <div
                       key={`reschedule-${m.id}`}
                       className="flex items-center justify-between gap-2 p-2 rounded-lg bg-background border border-border/50 hover:border-destructive/40 transition-all cursor-pointer group"
@@ -874,6 +885,7 @@ export default function SchedulingPage() {
                         <p className="text-sm font-medium text-foreground truncate">{m.title}</p>
                         <p className="text-xs text-muted-foreground">
                           {format(parseISO(m.meeting_date), "dd/MM")} · {m.client_name || 'Sem cliente'}
+                          <span className="ml-1 text-destructive font-medium">({diffDays}d atraso)</span>
                         </p>
                       </div>
                       <Button
@@ -884,12 +896,14 @@ export default function SchedulingPage() {
                         Reagendar
                       </Button>
                     </div>
-                  ))}
-                  {pendingConclusion.length > 5 && (
-                    <p className="text-xs text-muted-foreground text-center pt-1">+{pendingConclusion.length - 5} mais</p>
+                    );
+                  })}
+                  {pendingReschedule.length > 5 && (
+                    <p className="text-xs text-muted-foreground text-center pt-1">+{pendingReschedule.length - 5} mais</p>
                   )}
                 </CardContent>
               </Card>
+              )}
             </div>
           )}
 
