@@ -1246,16 +1246,16 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                       {status === 'em_andamento' && (
                         <div className="absolute inset-0 rounded-full bg-blue-500/10" />
                       )}
-                      <div className={`relative w-14 h-14 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                        status === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50 text-green-400' :
-                        status === 'em_andamento' ? 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-xl shadow-blue-500/40 ring-2 ring-blue-500/50 text-white' :
-                        status === 'atrasada' ? 'bg-red-500/30 ring-2 ring-red-500/50 text-red-400' :
+                      <div className={`relative w-11 h-11 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                        status === 'concluida' ? 'bg-green-500/30 text-green-400' :
+                        status === 'em_andamento' ? 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-md shadow-blue-500/30 text-white' :
+                        status === 'atrasada' ? 'bg-red-500/30 text-red-400' :
                         'bg-white/10 text-white/50'
-                      } ${isSelected ? 'ring-2 ring-blue-500/50' : ''}`}>
-                        {status === 'concluida' ? <CheckCircle2 className="h-6 w-6" /> :
-                         status === 'atrasada' ? <AlertTriangle className="h-6 w-6" /> :
-                         status === 'em_andamento' ? <Loader2 className="h-6 w-6 text-white animate-spin" /> :
-                         <Lock className="h-5 w-5" />}
+                      } ${isSelected ? 'brightness-125' : ''}`}>
+                        {status === 'concluida' ? <CheckCircle2 className="h-5 w-5" /> :
+                         status === 'atrasada' ? <AlertTriangle className="h-5 w-5" /> :
+                         status === 'em_andamento' ? <Loader2 className="h-5 w-5 text-white animate-spin" /> :
+                         <Lock className="h-4 w-4" />}
                       </div>
                     </div>
                        <p className={`absolute -bottom-7 left-1/2 -translate-x-1/2 text-[10px] text-center leading-tight whitespace-nowrap font-medium ${
