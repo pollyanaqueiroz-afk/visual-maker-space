@@ -64,7 +64,7 @@ const STEP_BY_STEP: Record<string, string[]> = {
     '2. Vá em "Usuários e permissões" no menu lateral',
     '3. Clique em "Convidar novos usuários"',
     '4. Digite o e-mail: apps@membros.app.br',
-    '5. Marque a permissão "Admin" (acesso total)',
+    '5. Selecione o perfil "Administrador" (acesso total)',
     '6. Clique em "Enviar convite"',
   ],
   'Criei a conta no Apple Developer Program': [
