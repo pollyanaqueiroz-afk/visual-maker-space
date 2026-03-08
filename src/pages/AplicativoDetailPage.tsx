@@ -24,8 +24,10 @@ export default function AplicativoDetailPage() {
   const { clienteId } = useParams();
   const navigate = useNavigate();
   const { hasPermission, hasRole } = usePermissions();
+  const { user } = useAuth();
   const isGerenteImpl = hasRole('gerente_implantacao');
-  const canEdit = hasPermission('aplicativos.edit') || isGerenteImpl;
+  const canManage = hasRole('admin') || hasRole('gerente_implantacao') || hasRole('analista_implantacao');
+  const canEdit = hasPermission('aplicativos.edit') || isGerenteImpl || canManage;
   const queryClient = useQueryClient();
   const [selectedFase, setSelectedFase] = useState<number | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
