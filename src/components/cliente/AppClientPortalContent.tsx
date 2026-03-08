@@ -1095,54 +1095,6 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                   </div>
                 </div>
               )}
-              {/* Analyst items — informational, no interaction */}
-              {(() => {
-                const analistaItems = allFaseItems.filter((i: any) => i.ator === 'analista' && i.tipo !== 'mooni' && !isHiddenPrereq(i.texto));
-                if (analistaItems.length === 0) return null;
-                // For fase 3: check if form is complete to determine lock state
-                const formComplete = faseNum === 3 ? !!formulario?.preenchido_completo : true;
-                return analistaItems.map((item: any) => (
-                  <div key={item.id} className="p-3 rounded-lg bg-white/5">
-                    <div className="flex items-center gap-3">
-                      {item.feito ? (
-                        <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
-                      ) : formComplete ? (
-                        <Clock className="h-5 w-5 text-amber-400 shrink-0" />
-                      ) : (
-                        <Lock className="h-5 w-5 text-white/40 shrink-0" />
-                      )}
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className={`text-sm font-medium ${!formComplete ? 'text-white/50' : 'text-white'}`}>
-                            {item.texto}
-                          </p>
-                          {!item.feito && formComplete && (
-                            <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-400">
-                              ⏳ Em andamento
-                            </Badge>
-                          )}
-                          {item.feito && (
-                            <Badge variant="outline" className="text-[10px] border-green-500/30 text-green-400">
-                              ✅ Concluído
-                            </Badge>
-                          )}
-                        </div>
-                        {!formComplete && faseNum === 3 && (
-                          <p className="text-xs text-white/50 mt-0.5">Preencha o formulário acima para liberar esta etapa</p>
-                        )}
-                        {formComplete && !item.feito && (
-                          <p className="text-xs text-white/60 mt-0.5">Nossa equipe está construindo e submetendo seu app na loja</p>
-                        )}
-                        {item.feito && item.feito_em && (
-                          <p className="text-[10px] text-green-400/60 mt-0.5">
-                            Concluído em {format(new Date(item.feito_em), "dd/MM/yyyy 'às' HH:mm")}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ));
-              })()}
               {/* Store validation/approval cards for phases 2 and 4 */}
               {(faseNum === 2 || faseNum === 4) && (() => {
                 const plat = plataforma || (cliente.plataforma === 'apple' ? 'apple' : 'google');
