@@ -1260,6 +1260,18 @@ export default function Dashboard() {
                   </TableBody>
                 </table>
                 </div>
+              {artesTotalPages > 1 && (
+                <div className="flex items-center justify-between px-4 py-3 border-t">
+                  <span className="text-xs text-muted-foreground">
+                    Mostrando {((artesPage - 1) * ARTES_PER_PAGE) + 1}–{Math.min(artesPage * ARTES_PER_PAGE, sorted.length)} de {sorted.length}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <Button variant="outline" size="sm" className="h-7 text-xs" disabled={artesPage === 1} onClick={() => setArtesPage(p => p - 1)}>Anterior</Button>
+                    <span className="text-xs text-muted-foreground px-2">{artesPage}/{artesTotalPages}</span>
+                    <Button variant="outline" size="sm" className="h-7 text-xs" disabled={artesPage === artesTotalPages} onClick={() => setArtesPage(p => p + 1)}>Próxima</Button>
+                  </div>
+                </div>
+              )}
               </Card>
             )}
 
