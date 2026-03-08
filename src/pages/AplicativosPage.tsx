@@ -71,6 +71,7 @@ export default function AplicativosPage() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('kanban');
+  const [expandedKpi, setExpandedKpi] = useState<string | null>(null);
   const [pendencyFilter, setPendencyFilter] = useState('todos');
   const [phaseFilter, setPhaseFilter] = useState('todas');
   const [statusFilter, setStatusFilter] = useState('pendente');
