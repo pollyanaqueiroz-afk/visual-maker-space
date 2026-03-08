@@ -406,12 +406,20 @@ export default function ClienteHome() {
         </motion.div>
       </div>
 
-      {/* Pending actions */}
+      {/* Pending actions — strong highlight */}
       {hasRealPendencies ? (
-        <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-white/80 mb-3">
-            📋 Suas pendências ({allPendencies.length})
-          </h3>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="space-y-3"
+        >
+          <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
+            <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0 animate-pulse" />
+            <h3 className="text-sm font-bold text-amber-300">
+              🔔 Ações Pendentes ({allPendencies.length})
+            </h3>
+          </div>
           {allPendencies.map((item, i) => (
             <motion.div
               key={item.id}
@@ -420,7 +428,11 @@ export default function ClienteHome() {
               transition={{ delay: 0.05 * i }}
             >
               <div
-                className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/[0.08] cursor-pointer transition-colors"
+                className={`flex items-center gap-3 p-3 rounded-lg border-l-4 ${
+                  item.source === 'app'
+                    ? 'border-l-amber-500 bg-amber-500/5 border border-amber-500/20'
+                    : 'border-l-purple-500 bg-purple-500/5 border border-purple-500/20'
+                } hover:bg-white/[0.08] cursor-pointer transition-colors`}
                 onClick={() => {
                   if (item.source === 'app') navigate('/cliente/aplicativo');
                   else navigate('/cliente/artes');
@@ -448,7 +460,7 @@ export default function ClienteHome() {
               </div>
             </motion.div>
           ))}
-        </div>
+        </motion.div>
       ) : (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
           <Card className="bg-[#1E293B] border-white/10 border-dashed">
