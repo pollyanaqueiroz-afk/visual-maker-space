@@ -932,7 +932,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
                 <Palette className="h-10 w-10 text-muted-foreground" />
               </div>
               <h2 className={`text-xl font-bold ${textMain}`}>Nenhuma arte para validar</h2>
-              <p className="text-muted-foreground text-sm leading-relaxed">
+              <p className={`${textSub} text-sm leading-relaxed`}>
                 Não há artes aguardando sua aprovação no momento.<br/>Volte mais tarde ou solicite novas artes!
               </p>
               <div className="space-y-2 pt-2">
