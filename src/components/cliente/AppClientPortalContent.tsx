@@ -1433,11 +1433,9 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                   })()}
                 </div>
 
-                {/* Toggle — marginTop aligns center with circle center (64px circle → center at 32px, 24px button → 32-12=20) */}
                 <button
                   onClick={() => setFlowExpanded(!flowExpanded)}
                   className="flex items-center justify-center w-6 h-6 rounded-full bg-[#1E293B] border-2 border-white/30 hover:border-white/50 transition-all hover:scale-110 mx-1"
-                  style={{ marginTop: '20px' }}
                 >
                   {flowExpanded ? <Minus className="h-3 w-3 text-white/60" /> : <Plus className="h-3 w-3 text-white/60" />}
                 </button>
