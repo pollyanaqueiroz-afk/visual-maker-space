@@ -805,7 +805,12 @@ export default function SchedulingPage() {
                 <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center text-lg font-bold", stat.bg, stat.color)}>
                   {stat.value}
                 </div>
-                <span className="text-xs font-medium text-muted-foreground">{stat.label}</span>
+                <div className="flex flex-col">
+                  <span className="text-xs font-medium text-muted-foreground">{stat.label}</span>
+                  {(stat as any).sub && (
+                    <span className="text-[10px] text-muted-foreground/70">{(stat as any).sub}</span>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </motion.div>
