@@ -1258,7 +1258,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                          <Lock className="h-4 w-4" />}
                       </div>
                     </div>
-                       <p className={`absolute -bottom-7 left-1/2 -translate-x-1/2 text-[10px] text-center leading-tight whitespace-nowrap font-medium ${
+                       <p className={`absolute -bottom-8 left-1/2 -translate-x-1/2 text-[10px] text-center leading-tight w-[72px] font-medium ${
                           status === 'concluida' ? 'text-green-400 font-semibold' :
                           status === 'em_andamento' ? 'text-blue-400 font-semibold' :
                           status === 'atrasada' ? 'text-red-400 font-semibold' :
