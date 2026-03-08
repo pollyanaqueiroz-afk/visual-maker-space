@@ -409,7 +409,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
             onClick={() => setShowProductionDialog(true)}
-            className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-card/80 backdrop-blur-sm p-4 text-center shadow-sm hover:shadow-md transition-all cursor-pointer group"
+            className={`relative overflow-hidden rounded-2xl border border-amber-500/20 ${embedded ? 'bg-white/5' : 'bg-card/80'} backdrop-blur-sm p-4 text-center shadow-sm hover:shadow-md transition-all cursor-pointer group`}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent group-hover:from-amber-500/10 transition-colors" />
             <div className="relative">
