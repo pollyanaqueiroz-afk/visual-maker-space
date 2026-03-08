@@ -701,7 +701,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
         <div key={item.id} className="space-y-3 p-3 rounded-lg bg-white/5">
           <div className="flex items-start gap-3">
             <Star className="h-5 w-5 mt-0.5 text-yellow-400" />
-            <div className="flex-1"><p className="text-sm font-medium">{item.texto}</p></div>
+            <div className="flex-1"><p className="text-sm font-medium text-white">{item.texto}</p></div>
           </div>
           {pendingAssets.length > 0 ? (
             <div className="space-y-2 ml-8">
