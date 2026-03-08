@@ -21,7 +21,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
-import { format, differenceInHours, differenceInDays, addBusinessDays as fnsAddBusinessDays, subMonths, startOfMonth } from 'date-fns';
+import { format, differenceInHours, differenceInDays, addBusinessDays as fnsAddBusinessDays, subMonths, subWeeks, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ExternalLink } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -106,6 +106,9 @@ interface AppFase {
   sla_vencimento: string | null;
   porcentagem: number;
   status: string;
+  plataforma?: string;
+  data_inicio?: string | null;
+  data_conclusao?: string | null;
 }
 
 export default function AplicativosPage() {
@@ -133,6 +136,7 @@ export default function AplicativosPage() {
   const [pubUrlExpanded, setPubUrlExpanded] = useState<Record<string, boolean>>({});
   const [pubUrlSaving, setPubUrlSaving] = useState<Set<string>>(new Set());
   const [filterResponsavelTask, setFilterResponsavelTask] = useState('all');
+  const [periodView, setPeriodView] = useState<'week' | 'month'>('month');
 
   // Drag and drop states
   const [dragOverColumn, setDragOverColumn] = useState<number | null>(null);
@@ -227,9 +231,9 @@ export default function AplicativosPage() {
   const { data: fases = [] } = useQuery({
     queryKey: ['app-fases-all'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('app_fases').select('id, cliente_id, numero, sla_violado, sla_vencimento, porcentagem, status, plataforma');
+      const { data, error } = await supabase.from('app_fases').select('id, cliente_id, numero, sla_violado, sla_vencimento, porcentagem, status, plataforma, data_inicio, data_conclusao');
       if (error) throw error;
-      return data as (AppFase & { plataforma?: string })[];
+      return data as AppFase[];
     },
   });
 
@@ -1575,6 +1579,7 @@ export default function AplicativosPage() {
         {canManage && (
           <TabsContent value="produtividade" className="space-y-6 mt-4">
             {(() => {
+              const now = new Date();
               const doneItems = allChecklist.filter((i: any) => i.feito && i.feito_em);
               const onTime = doneItems.filter((i: any) => !i.sla_vencimento || new Date(i.feito_em) <= new Date(i.sla_vencimento)).length;
               const late = doneItems.filter((i: any) => i.sla_vencimento && new Date(i.feito_em) > new Date(i.sla_vencimento)).length;
@@ -1603,11 +1608,11 @@ export default function AplicativosPage() {
                 }
               });
 
-              // Monthly chart data (last 6 months)
+              // Monthly entregas chart (last 6 months)
               const monthlyData = Array.from({ length: 6 }, (_, idx) => {
-                const d = subMonths(new Date(), 5 - idx);
+                const d = subMonths(now, 5 - idx);
                 const monthStart = startOfMonth(d);
-                const nextMonth = startOfMonth(subMonths(new Date(), 4 - idx));
+                const nextMonth = startOfMonth(subMonths(now, 4 - idx));
                 const monthItems = doneItems.filter((i: any) => {
                   const fe = new Date(i.feito_em);
                   return fe >= monthStart && (idx < 5 ? fe < nextMonth : true);
@@ -1619,8 +1624,110 @@ export default function AplicativosPage() {
                 };
               });
 
+              // BLOCO 1: Solicitações criadas vs concluídas
+              const solicitoriesChartData = (() => {
+                if (periodView === 'month') {
+                  return Array.from({ length: 6 }, (_, i) => {
+                    const monthDate = subMonths(now, 5 - i);
+                    const mStart = startOfMonth(monthDate);
+                    const mEnd = endOfMonth(monthDate);
+                    const criadas = clientes.filter(c => { const d = new Date(c.data_criacao); return d >= mStart && d <= mEnd; }).length;
+                    const concluidas = clientes.filter(c => {
+                      if (c.status !== 'concluido') return false;
+                      const f6 = fases.filter(f => f.cliente_id === c.id && f.numero === 6 && f.status === 'concluida' && f.data_conclusao);
+                      const last = f6.sort((a, b) => new Date(b.data_conclusao!).getTime() - new Date(a.data_conclusao!).getTime())[0];
+                      if (!last) return false;
+                      const d = new Date(last.data_conclusao!);
+                      return d >= mStart && d <= mEnd;
+                    }).length;
+                    const canceladas = clientes.filter(c => {
+                      if (c.status !== 'cancelado' || !c.cancelado_em) return false;
+                      const d = new Date(c.cancelado_em);
+                      return d >= mStart && d <= mEnd;
+                    }).length;
+                    return { periodo: format(monthDate, 'MMM/yy', { locale: ptBR }), criadas, concluidas, canceladas };
+                  });
+                } else {
+                  return Array.from({ length: 8 }, (_, i) => {
+                    const weekDate = subWeeks(now, 7 - i);
+                    const wStart = startOfWeek(weekDate, { weekStartsOn: 1 });
+                    const wEnd = endOfWeek(weekDate, { weekStartsOn: 1 });
+                    const criadas = clientes.filter(c => { const d = new Date(c.data_criacao); return d >= wStart && d <= wEnd; }).length;
+                    const concluidas = clientes.filter(c => {
+                      if (c.status !== 'concluido') return false;
+                      const f6 = fases.filter(f => f.cliente_id === c.id && f.numero === 6 && f.status === 'concluida' && f.data_conclusao);
+                      const last = f6.sort((a, b) => new Date(b.data_conclusao!).getTime() - new Date(a.data_conclusao!).getTime())[0];
+                      if (!last) return false;
+                      const d = new Date(last.data_conclusao!);
+                      return d >= wStart && d <= wEnd;
+                    }).length;
+                    const canceladas = clientes.filter(c => {
+                      if (c.status !== 'cancelado' || !c.cancelado_em) return false;
+                      const d = new Date(c.cancelado_em);
+                      return d >= wStart && d <= wEnd;
+                    }).length;
+                    return { periodo: `${format(wStart, 'dd/MM')} — ${format(wEnd, 'dd/MM')}`, criadas, concluidas, canceladas };
+                  });
+                }
+              })();
+
+              // BLOCO 2: Tempo médio por plataforma
+              const tempoMedioPorPlataforma = (() => {
+                const result: Record<string, { totalDias: number; count: number; tempos: number[] }> = {
+                  google: { totalDias: 0, count: 0, tempos: [] },
+                  apple: { totalDias: 0, count: 0, tempos: [] },
+                };
+                clientes.filter(c => c.status === 'concluido').forEach(c => {
+                  const clienteFases = fases.filter(f => f.cliente_id === c.id);
+                  const dataCriacao = new Date(c.data_criacao);
+                  ['google', 'apple'].forEach(plat => {
+                    const fase6 = clienteFases.find(f => f.numero === 6 && f.plataforma === plat && f.status === 'concluida' && f.data_conclusao);
+                    if (fase6) {
+                      const dias = Math.round((new Date(fase6.data_conclusao!).getTime() - dataCriacao.getTime()) / (1000 * 60 * 60 * 24));
+                      result[plat].totalDias += dias;
+                      result[plat].count += 1;
+                      result[plat].tempos.push(dias);
+                    }
+                  });
+                });
+                const calc = (r: typeof result['google']) => ({
+                  media: r.count > 0 ? Math.round(r.totalDias / r.count) : 0,
+                  count: r.count,
+                  min: r.tempos.length > 0 ? Math.min(...r.tempos) : 0,
+                  max: r.tempos.length > 0 ? Math.max(...r.tempos) : 0,
+                });
+                return { google: calc(result.google), apple: calc(result.apple) };
+              })();
+
+              // BLOCO 3: Gargalos por etapa
+              const FASE_NAMES_SHORT = ['Pré-Req', 'Primeiros Passos', 'Validação Loja', 'Criação e Submissão', 'Aprovação Lojas', 'Teste do App', 'Publicação'];
+              const tempoMedioPorFase = (() => {
+                const result: Array<{ fase: string; google: number; apple: number; faseNum: number }> = [];
+                for (let faseNum = 0; faseNum <= 6; faseNum++) {
+                  const googleTempos: number[] = [];
+                  const appleTempos: number[] = [];
+                  fases
+                    .filter(f => f.numero === faseNum && f.status === 'concluida' && f.data_inicio && f.data_conclusao)
+                    .forEach(f => {
+                      const dias = Math.max(1, Math.round((new Date(f.data_conclusao!).getTime() - new Date(f.data_inicio!).getTime()) / (1000 * 60 * 60 * 24)));
+                      if (f.plataforma === 'google') googleTempos.push(dias);
+                      else if (f.plataforma === 'apple') appleTempos.push(dias);
+                      else { googleTempos.push(dias); appleTempos.push(dias); }
+                    });
+                  result.push({
+                    fase: FASE_NAMES_SHORT[faseNum], faseNum,
+                    google: googleTempos.length > 0 ? Math.round(googleTempos.reduce((a, b) => a + b, 0) / googleTempos.length) : 0,
+                    apple: appleTempos.length > 0 ? Math.round(appleTempos.reduce((a, b) => a + b, 0) / appleTempos.length) : 0,
+                  });
+                }
+                return result;
+              })();
+              const gargaloGoogle = tempoMedioPorFase.filter(f => f.google > 0).sort((a, b) => b.google - a.google)[0];
+              const gargaloApple = tempoMedioPorFase.filter(f => f.apple > 0).sort((a, b) => b.apple - a.apple)[0];
+
               return (
                 <>
+                  {/* KPIs */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <Card><CardContent className="pt-4 pb-3"><p className="text-xs text-muted-foreground">Total concluídas</p><p className="text-2xl font-bold">{totalDone}</p></CardContent></Card>
                     <Card><CardContent className="pt-4 pb-3"><p className="text-xs text-muted-foreground">No prazo</p><p className="text-2xl font-bold text-green-500">{onTime}</p></CardContent></Card>
@@ -1628,6 +1735,198 @@ export default function AplicativosPage() {
                     <Card><CardContent className="pt-4 pb-3"><p className="text-xs text-muted-foreground">SLA Compliance</p><p className={`text-2xl font-bold ${slaRate >= 80 ? 'text-green-500' : slaRate >= 60 ? 'text-amber-500' : 'text-destructive'}`}>{slaRate}%</p></CardContent></Card>
                   </div>
 
+                  {/* BLOCO 1: Solicitações criadas vs concluídas */}
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg flex items-center gap-2"><TrendingUp className="h-5 w-5" /> Solicitações de Aplicativo</CardTitle>
+                        <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
+                          <Button variant={periodView === 'week' ? 'default' : 'ghost'} size="sm" className="h-7 text-xs px-3" onClick={() => setPeriodView('week')}>Semanal</Button>
+                          <Button variant={periodView === 'month' ? 'default' : 'ghost'} size="sm" className="h-7 text-xs px-3" onClick={() => setPeriodView('month')}>Mensal</Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-4 gap-3 mb-4">
+                        <div className="text-center p-2 rounded-lg bg-muted/30">
+                          <p className="text-xl font-bold">{solicitoriesChartData.reduce((s, d) => s + d.criadas, 0)}</p>
+                          <p className="text-[10px] text-muted-foreground">Criadas</p>
+                        </div>
+                        <div className="text-center p-2 rounded-lg bg-green-500/10">
+                          <p className="text-xl font-bold text-green-500">{solicitoriesChartData.reduce((s, d) => s + d.concluidas, 0)}</p>
+                          <p className="text-[10px] text-muted-foreground">Concluídas</p>
+                        </div>
+                        <div className="text-center p-2 rounded-lg bg-destructive/10">
+                          <p className="text-xl font-bold text-destructive">{solicitoriesChartData.reduce((s, d) => s + d.canceladas, 0)}</p>
+                          <p className="text-[10px] text-muted-foreground">Canceladas</p>
+                        </div>
+                        <div className="text-center p-2 rounded-lg bg-primary/10">
+                          <p className="text-xl font-bold text-primary">{clientes.filter(c => c.status !== 'cancelado' && c.status !== 'concluido').length}</p>
+                          <p className="text-[10px] text-muted-foreground">Em andamento</p>
+                        </div>
+                      </div>
+                      <div className="h-[280px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={solicitoriesChartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                            <XAxis dataKey="periodo" tick={{ fontSize: 11 }} className="fill-muted-foreground" angle={periodView === 'week' ? -20 : 0} textAnchor={periodView === 'week' ? 'end' : 'middle'} height={periodView === 'week' ? 50 : 30} />
+                            <YAxis allowDecimals={false} tick={{ fontSize: 12 }} className="fill-muted-foreground" />
+                            <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }} />
+                            <Bar dataKey="criadas" name="Criadas" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="concluidas" name="Concluídas" fill="hsl(142 71% 45%)" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="canceladas" name="Canceladas" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div className="flex items-center justify-center gap-6 mt-3 pt-3 border-t border-border">
+                        <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-primary" /><span className="text-xs text-muted-foreground">Criadas</span></div>
+                        <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(142 71% 45%)' }} /><span className="text-xs text-muted-foreground">Concluídas</span></div>
+                        <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-destructive" /><span className="text-xs text-muted-foreground">Canceladas</span></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* BLOCO 2: Tempo médio total Google vs Apple */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card>
+                      <CardContent className="pt-5 pb-4">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center"><span className="text-2xl">🤖</span></div>
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">Google Play</p>
+                            <p className="text-3xl font-extrabold text-foreground leading-none">
+                              {tempoMedioPorPlataforma.google.media > 0 ? `${tempoMedioPorPlataforma.google.media} dias` : '—'}
+                            </p>
+                          </div>
+                        </div>
+                        {tempoMedioPorPlataforma.google.count > 0 ? (
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <span>Baseado em {tempoMedioPorPlataforma.google.count} app{tempoMedioPorPlataforma.google.count > 1 ? 's' : ''}</span>
+                            <span>Min: {tempoMedioPorPlataforma.google.min}d</span>
+                            <span>Máx: {tempoMedioPorPlataforma.google.max}d</span>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">Nenhum app concluído na Google Play ainda</p>
+                        )}
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-5 pb-4">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center"><span className="text-2xl">🍎</span></div>
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">Apple</p>
+                            <p className="text-3xl font-extrabold text-foreground leading-none">
+                              {tempoMedioPorPlataforma.apple.media > 0 ? `${tempoMedioPorPlataforma.apple.media} dias` : '—'}
+                            </p>
+                          </div>
+                        </div>
+                        {tempoMedioPorPlataforma.apple.count > 0 ? (
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <span>Baseado em {tempoMedioPorPlataforma.apple.count} app{tempoMedioPorPlataforma.apple.count > 1 ? 's' : ''}</span>
+                            <span>Min: {tempoMedioPorPlataforma.apple.min}d</span>
+                            <span>Máx: {tempoMedioPorPlataforma.apple.max}d</span>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">Nenhum app concluído na App Store ainda</p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* BLOCO 3: Gargalos por etapa */}
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-lg flex items-center gap-2"><Clock className="h-5 w-5" /> Tempo Médio por Etapa (dias)</CardTitle>
+                      <p className="text-xs text-muted-foreground">Identifica gargalos no processo — etapas que mais demoram para serem concluídas</p>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-wrap gap-3 mb-4">
+                        {gargaloGoogle && gargaloGoogle.google > 0 && (
+                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                            <span>🤖</span>
+                            <div>
+                              <p className="text-xs font-medium text-blue-400">Gargalo Google Play</p>
+                              <p className="text-[10px] text-blue-400/70">{gargaloGoogle.fase}: ~{gargaloGoogle.google} dias em média</p>
+                            </div>
+                          </div>
+                        )}
+                        {gargaloApple && gargaloApple.apple > 0 && (
+                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                            <span>🍎</span>
+                            <div>
+                              <p className="text-xs font-medium text-purple-400">Gargalo Apple</p>
+                              <p className="text-[10px] text-purple-400/70">{gargaloApple.fase}: ~{gargaloApple.apple} dias em média</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <div className="h-[300px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={tempoMedioPorFase} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                            <XAxis dataKey="fase" tick={{ fontSize: 10 }} className="fill-muted-foreground" interval={0} angle={-25} textAnchor="end" height={60} />
+                            <YAxis allowDecimals={false} tick={{ fontSize: 12 }} className="fill-muted-foreground" label={{ value: 'dias', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: 'hsl(var(--muted-foreground))' } }} />
+                            <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }} formatter={(value: number, name: string) => [`${value} dia${value !== 1 ? 's' : ''}`, name === 'google' ? '🤖 Google Play' : '🍎 Apple']} />
+                            <Bar dataKey="google" name="google" fill="hsl(217 91% 60%)" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="apple" name="apple" fill="hsl(270 70% 60%)" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div className="flex items-center justify-center gap-6 mt-3 pt-3 border-t border-border">
+                        <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(217 91% 60%)' }} /><span className="text-xs text-muted-foreground">🤖 Google Play</span></div>
+                        <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(270 70% 60%)' }} /><span className="text-xs text-muted-foreground">🍎 Apple</span></div>
+                      </div>
+                      <div className="mt-4 pt-3 border-t border-border">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Detalhamento</p>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="text-xs">Etapa</TableHead>
+                              <TableHead className="text-xs text-center">🤖 Google (dias)</TableHead>
+                              <TableHead className="text-xs text-center">🍎 Apple (dias)</TableHead>
+                              <TableHead className="text-xs text-center">Diferença</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {tempoMedioPorFase.map(f => {
+                              const diff = f.apple - f.google;
+                              const isGargalo = (gargaloGoogle?.faseNum === f.faseNum) || (gargaloApple?.faseNum === f.faseNum);
+                              return (
+                                <TableRow key={f.faseNum} className={isGargalo ? 'bg-amber-500/5' : ''}>
+                                  <TableCell className="text-sm font-medium">
+                                    {isGargalo && <AlertTriangle className="h-3 w-3 text-amber-500 inline mr-1" />}
+                                    {f.faseNum}. {f.fase}
+                                  </TableCell>
+                                  <TableCell className="text-center">
+                                    <span className={`text-sm ${f.google > 0 ? (f.google === gargaloGoogle?.google ? 'font-bold text-amber-500' : '') : 'text-muted-foreground'}`}>
+                                      {f.google > 0 ? f.google : '—'}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell className="text-center">
+                                    <span className={`text-sm ${f.apple > 0 ? (f.apple === gargaloApple?.apple ? 'font-bold text-amber-500' : '') : 'text-muted-foreground'}`}>
+                                      {f.apple > 0 ? f.apple : '—'}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell className="text-center">
+                                    {f.google > 0 && f.apple > 0 ? (
+                                      <Badge variant="outline" className={`text-[10px] ${Math.abs(diff) <= 1 ? 'text-muted-foreground border-muted' : diff > 0 ? 'text-purple-400 border-purple-400/30' : 'text-blue-400 border-blue-400/30'}`}>
+                                        {diff === 0 ? '=' : diff > 0 ? `Apple +${diff}d` : `Google +${Math.abs(diff)}d`}
+                                      </Badge>
+                                    ) : (
+                                      <span className="text-xs text-muted-foreground">—</span>
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Per-person table */}
                   <Card>
                     <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Users className="h-5 w-5" /> Desempenho por Responsável</CardTitle></CardHeader>
                     <CardContent>
@@ -1662,6 +1961,7 @@ export default function AplicativosPage() {
                     </CardContent>
                   </Card>
 
+                  {/* Monthly entregas chart */}
                   <Card>
                     <CardHeader><CardTitle className="text-lg flex items-center gap-2"><BarChart3 className="h-5 w-5" /> Entregas por Mês</CardTitle></CardHeader>
                     <CardContent>
