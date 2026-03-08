@@ -1378,9 +1378,9 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                  </div>
                </div>
                <p className={`text-lg font-bold mt-1 ${clientPendingBar > 0 ? 'text-red-400' : 'text-green-400'}`}>
-                 {clientPendingBar > 0
-                   ? `${clientPendingBar} tarefa${clientPendingBar > 1 ? 's' : ''} pendente${clientPendingBar > 1 ? 's' : ''}`
-                   : 'Todas as suas tarefas concluídas ✅'}
+                  {clientPendingBar > 0
+                    ? `${clientPendingBar} Tarefa${clientPendingBar > 1 ? 's' : ''} Pendente${clientPendingBar > 1 ? 's' : ''}`
+                    : 'Todas as suas Tarefas concluídas ✅'}
                </p>
             </div>
           </div>
