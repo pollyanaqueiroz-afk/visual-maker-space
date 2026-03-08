@@ -711,7 +711,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                     {asset.url ? (
                       <img src={asset.url} alt={asset.nome_arquivo} className="w-16 h-16 object-cover rounded-lg border border-white/10" />
                     ) : (
-                      <div className="w-16 h-16 rounded-lg bg-white/10 flex items-center justify-center"><ImageIcon className="h-6 w-6 text-white/30" /></div>
+                      <div className="w-16 h-16 rounded-lg bg-white/10 flex items-center justify-center"><ImageIcon className="h-6 w-6 text-white/50" /></div>
                     )}
                     <div className="flex-1 min-w-0"><p className="text-sm font-medium truncate">{asset.nome_arquivo || asset.tipo}</p></div>
                   </div>
