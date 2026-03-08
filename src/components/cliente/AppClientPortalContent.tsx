@@ -667,8 +667,8 @@ export default function AppClientPortalContent({ clienteId }: Props) {
               }}
               className="mt-0.5 border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500" />
             <div className="flex-1">
-              <p className="text-sm font-medium">{item.texto}</p>
-              {item.descricao && <p className="text-xs text-white/50 mt-1">{item.descricao}</p>}
+              <p className="text-sm font-medium text-white">{item.texto}</p>
+              {item.descricao && <p className="text-xs text-white/60 mt-1">{item.descricao}</p>}
               {renderStepGuide(item.texto, item.id)}
               {confirmingItemId === item.id && (
                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="mt-3 overflow-hidden">
