@@ -353,7 +353,7 @@ export default function SchedulingPage() {
         if (error) throw error;
         toast.success('Reunião atualizada!');
       } else {
-        const { error } = await (supabase.from('meetings' as any).insert(payload) as any);
+        const { error } = await supabase.from('meetings').insert(payload);
         if (error) throw error;
 
         // Send invite email if checkbox is checked and client email exists
