@@ -432,6 +432,20 @@ export default function AplicativosPage() {
     return result;
   };
 
+  // Toast alert for overdue deadlines
+  useEffect(() => {
+    if (!allChecklist.length) return;
+    const alertas = allChecklist.filter((i: any) => i.tipo === 'alerta_prazo' && !i.feito);
+    if (alertas.length > 0) {
+      const clienteIds = [...new Set(alertas.map((a: any) => a.cliente_id))];
+      const clienteNomes = clienteIds.map(id => clientes.find(c => c.id === id)?.nome).filter(Boolean);
+      toast.error(
+        `🚨 ${alertas.length} prazo${alertas.length > 1 ? 's' : ''} excedido${alertas.length > 1 ? 's' : ''} — ${clienteNomes.join(', ')}`,
+        { duration: 8000, id: 'prazo-alertas' }
+      );
+    }
+  }, [allChecklist, clientes]);
+
   const handlePubUrlConfirm = async (item: any, clienteId: string) => {
     const urlInput = pubUrlInputs[item.id]?.trim();
     if (!urlInput) { toast.error('Informe a URL da loja'); return; }
