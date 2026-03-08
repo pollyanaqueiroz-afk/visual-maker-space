@@ -1441,7 +1441,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
       {/* Support */}
       <Card className="bg-[#1E293B] border-white/10 p-6">
         <h2 className="text-lg font-semibold mb-3">💬 Suporte</h2>
-        <div className="space-y-2 text-sm text-white/60">
+        <div className="space-y-2 text-sm text-white/70">
           {cliente.responsavel_nome && <p>Seu responsável: <span className="text-white">{cliente.responsavel_nome}</span></p>}
           {cliente.whatsapp && (
             <a href={`https://wa.me/${cliente.whatsapp}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-green-400 hover:text-green-300">
