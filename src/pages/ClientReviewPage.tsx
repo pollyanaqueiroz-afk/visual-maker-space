@@ -216,11 +216,16 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
       // Brand asset archiving is now handled server-side in the delivery-data edge function
 
       confetti({
-        particleCount: 100,
-        spread: 80,
-        origin: { y: 0.65 },
+        particleCount: 150,
+        spread: 100,
+        origin: { y: 0.6 },
         colors: ['#22c55e', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6'],
       });
+      // Side bursts
+      setTimeout(() => {
+        confetti({ particleCount: 50, angle: 60, spread: 50, origin: { x: 0, y: 0.7 } });
+        confetti({ particleCount: 50, angle: 120, spread: 50, origin: { x: 1, y: 0.7 } });
+      }, 200);
 
       toast.success('Arte aprovada! 🎉');
       setCompletedCount(c => c + 1);
