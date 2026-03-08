@@ -1262,65 +1262,47 @@ export default function AppClientPortalContent({ clienteId }: Props) {
   // ── Main render ──
   return (
     <div className="space-y-6">
-      {/* Hero message */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-lg font-bold">Olá, {cliente.nome?.split(' ')[0]}! 👋</h1>
-        <p className="text-white/60 text-sm mt-0.5">{getDynamicMessage()}</p>
-        {cliente.data_criacao && (
-          <p className="text-[11px] text-primary/80 mt-1.5 flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            Processo iniciado em <span className="font-semibold text-primary">{format(new Date(cliente.data_criacao), 'dd/MM/yyyy')}</span>
-          </p>
-        )}
-      </motion.div>
-
-      {/* CNPJ alert */}
-      {prereqs?.cnpj_bloqueado && (
-        <Card className="bg-red-500/10 border-red-500/30 p-4 text-red-400">
-          <p className="font-semibold">⚠️ CNPJ MEI não aceito pela Apple</p>
-          <p className="text-sm mt-1 text-red-400/70">Entre em contato com a equipe.</p>
-        </Card>
-      )}
-
-      {/* Overall progress — dual bars */}
+      {/* Hero + Progress side by side */}
       {(() => {
         const clientItemsBar = checklist.filter((i: any) => i.ator === 'cliente' && i.obrigatorio);
         const clientDoneBar = clientItemsBar.filter((i: any) => i.feito).length;
         const clientPctBar = clientItemsBar.length > 0 ? Math.round((clientDoneBar / clientItemsBar.length) * 100) : 0;
         const totalPctBar = cliente.porcentagem_geral || 0;
         return (
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-white/50">Suas tarefas</span>
-                <span className="font-bold text-white flex items-center gap-1">
-                  {clientPctBar}%{clientPctBar === 100 && ' ✅'}
-                </span>
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-6">
+            {/* Left: greeting */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex-1 min-w-0">
+              <h1 className="text-lg font-bold">Olá, {cliente?.nome?.split(' ')[0] || 'Cliente'}! 👋</h1>
+              <p className="text-white/60 text-sm mt-0.5">{getDynamicMessage()}</p>
+              {cliente.data_criacao && (
+                <p className="text-[11px] text-primary/80 mt-1.5 flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  Processo iniciado em <span className="font-semibold text-primary">{format(new Date(cliente.data_criacao), 'dd/MM/yyyy')}</span>
+                </p>
+              )}
+            </motion.div>
+            {/* Right: progress bars */}
+            <div className="shrink-0 w-full md:w-64 space-y-2">
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-white/60">Suas tarefas</span>
+                  <span className="font-bold text-white">{clientPctBar}%{clientPctBar === 100 && ' ✅'}</span>
+                </div>
+                <div className="relative h-2 rounded-full bg-white/10 overflow-hidden">
+                  <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
+                    style={{ width: `${clientPctBar}%`, background: clientPctBar === 100 ? 'linear-gradient(90deg, hsl(142 71% 45%), hsl(142 71% 55%))' : 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))' }} />
+                </div>
               </div>
-              <div className="relative h-2 rounded-full bg-white/10 overflow-hidden">
-                <div
-                  className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
-                  style={{
-                    width: `${clientPctBar}%`,
-                    background: clientPctBar === 100
-                      ? 'linear-gradient(90deg, hsl(142 71% 45%), hsl(142 71% 55%))'
-                      : 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))',
-                  }}
-                />
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-white/40">Progresso total</span>
+                  <span className="font-medium text-white/60">{totalPctBar}%</span>
+                </div>
+                <div className="relative h-1.5 rounded-full bg-white/5 overflow-hidden">
+                  <div className="absolute inset-y-0 left-0 rounded-full bg-white/20 transition-all duration-500" style={{ width: `${totalPctBar}%` }} />
+                </div>
+                <p className="text-[10px] text-white/30 mt-0.5">Inclui etapas da equipe Curseduca</p>
               </div>
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-white/30">Progresso total do projeto</span>
-                <span className="font-medium text-white/50">{totalPctBar}%</span>
-              </div>
-              <div className="relative h-1.5 rounded-full bg-white/5 overflow-hidden">
-                <div
-                  className="absolute inset-y-0 left-0 rounded-full bg-white/20 transition-all duration-500"
-                  style={{ width: `${totalPctBar}%` }}
-                />
-              </div>
-              <p className="text-[10px] text-white/25">Inclui etapas da equipe Curseduca</p>
             </div>
           </div>
         );
