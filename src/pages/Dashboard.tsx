@@ -656,6 +656,20 @@ export default function Dashboard() {
               variant="outline"
               size="sm"
               className="flex items-center gap-2 justify-start text-xs h-8"
+              onClick={async () => {
+                toast.info('Gerando relatório semanal...');
+                const { data, error } = await supabase.functions.invoke('weekly-team-report');
+                if (error) { toast.error('Erro: ' + error.message); return; }
+                toast.success(`Relatório enviado! ${data?.completed || 0} concluídas, ${data?.overdue || 0} atrasadas, SLA ${data?.sla || 0}%`);
+              }}
+            >
+              <BarChart3 className="h-3.5 w-3.5" />
+              Relatório Semanal
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2 justify-start text-xs h-8"
               onClick={() => {
                 navigator.clipboard.writeText(`${window.location.origin}/designer`);
                 toast.success('Link do painel do designer copiado!');
