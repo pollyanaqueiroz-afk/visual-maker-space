@@ -390,7 +390,7 @@ export default function Dashboard() {
         {/* Stats + Links */}
         <div className="flex gap-4 items-start">
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 flex-1">
-            <Card>
+            <Card className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'total' ? 'ring-2 ring-primary' : ''}`} onClick={() => toggleKPI('total')}>
               <CardContent className="pt-3 pb-3 px-3">
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <ImageIcon className="h-3.5 w-3.5 text-muted-foreground" />
@@ -399,7 +399,7 @@ export default function Dashboard() {
                 <p className="text-2xl font-bold">{totalImages}</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'requests' ? 'ring-2 ring-primary' : ''}`} onClick={() => toggleKPI('requests')}>
               <CardContent className="pt-3 pb-3 px-3">
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <FileText className="h-3.5 w-3.5 text-muted-foreground" />
@@ -408,7 +408,7 @@ export default function Dashboard() {
                 <p className="text-2xl font-bold">{requests.length}</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'pending' ? 'ring-2 ring-warning' : ''}`} onClick={() => toggleKPI('pending')}>
               <CardContent className="pt-3 pb-3 px-3">
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <Clock className="h-3.5 w-3.5 text-warning" />
@@ -417,7 +417,7 @@ export default function Dashboard() {
                 <p className="text-2xl font-bold text-warning">{pendingImages}</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'in_progress' ? 'ring-2 ring-info' : ''}`} onClick={() => toggleKPI('in_progress')}>
               <CardContent className="pt-3 pb-3 px-3">
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <Loader2 className="h-3.5 w-3.5 text-info" />
@@ -426,7 +426,7 @@ export default function Dashboard() {
                 <p className="text-2xl font-bold text-info">{inProgressImages}</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'review' ? 'ring-2 ring-primary' : ''}`} onClick={() => toggleKPI('review')}>
               <CardContent className="pt-3 pb-3 px-3">
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <Eye className="h-3.5 w-3.5 text-primary" />
@@ -435,7 +435,7 @@ export default function Dashboard() {
                 <p className="text-2xl font-bold text-primary">{reviewImages}</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'completed' ? 'ring-2 ring-primary' : ''}`} onClick={() => toggleKPI('completed')}>
               <CardContent className="pt-3 pb-3 px-3">
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <CheckCircle className="h-3.5 w-3.5 text-primary" />
@@ -444,7 +444,7 @@ export default function Dashboard() {
                 <p className="text-2xl font-bold text-primary">{completedImages}</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'clients' ? 'ring-2 ring-primary' : ''}`} onClick={() => toggleKPI('clients')}>
               <CardContent className="pt-3 pb-3 px-3">
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <Users className="h-3.5 w-3.5 text-muted-foreground" />
