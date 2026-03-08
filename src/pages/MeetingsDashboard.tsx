@@ -67,11 +67,11 @@ export default function MeetingsDashboard() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data, error } = await (supabase
-        .from('meetings' as any)
+      const { data, error } = await supabase
+        .from('meetings')
         .select('id, title, meeting_date, meeting_time, status, client_email, client_name, client_url, meeting_reason, loyalty_index, loyalty_reason, duration_minutes, created_by')
         .eq('created_by', user.id)
-        .order('meeting_date', { ascending: false }) as any);
+        .order('meeting_date', { ascending: false });
       if (error) {
         console.error(error);
         toast.error('Erro ao carregar dados');
