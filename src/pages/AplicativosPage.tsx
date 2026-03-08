@@ -302,11 +302,22 @@ export default function AplicativosPage() {
       return { clienteId, cliente, items };
     }).filter(g => {
       if (!g.cliente) return false;
-      // Filter out items from phases the client has already passed (backfilled items), but keep Mooni tasks
-      g.items = g.items.filter((item: any) => item.fase_numero >= g.cliente!.fase_atual || item.tipo === 'mooni' || item.texto === 'Criar Mooni');
+      // Filter out items from phases the client has already passed (backfilled items), but keep Mooni tasks and alerts
+      g.items = g.items.filter((item: any) => item.fase_numero >= g.cliente!.fase_atual || item.tipo === 'mooni' || item.texto === 'Criar Mooni' || item.tipo === 'alerta_prazo');
+      // Sort alerta_prazo items first within each group
+      g.items.sort((a: any, b: any) => {
+        if (a.tipo === 'alerta_prazo' && b.tipo !== 'alerta_prazo') return -1;
+        if (a.tipo !== 'alerta_prazo' && b.tipo === 'alerta_prazo') return 1;
+        return 0;
+      });
       return g.items.length > 0;
     })
       .sort((a, b) => {
+        // Groups with alerts come first
+        const aAlert = a.items.some((i: any) => i.tipo === 'alerta_prazo' && !i.feito);
+        const bAlert = b.items.some((i: any) => i.tipo === 'alerta_prazo' && !i.feito);
+        if (aAlert && !bAlert) return -1;
+        if (!aAlert && bAlert) return 1;
         const aPriority = a.items.some((i: any) => i.texto?.startsWith('⚠️ PRIORIDADE'));
         const bPriority = b.items.some((i: any) => i.texto?.startsWith('⚠️ PRIORIDADE'));
         if (aPriority && !bPriority) return -1;
