@@ -276,6 +276,22 @@ export default function AplicativosPage() {
     ? Math.round(clientes.filter(c => c.fase_atual < 6).reduce((sum, c) => sum + c.porcentagem_geral, 0) / totalAbertos)
     : 0;
 
+  // KPI detail lists
+  const kpiClientLists = useMemo(() => {
+    const abertos = clientes.filter(c => c.fase_atual < 6);
+    const atrasadosList = clientes.filter(c => c.status === 'atrasado');
+    const etapasAtrasadasList = (() => {
+      const fasesAtrasadasData = fases.filter(f => f.sla_violado || f.status === 'atrasada');
+      return fasesAtrasadasData.map(f => {
+        const c = clientes.find(cl => cl.id === f.cliente_id);
+        return c ? { ...c, faseAtrasada: f.numero, plataformaFase: (f as any).plataforma } : null;
+      }).filter(Boolean) as (AppCliente & { faseAtrasada: number; plataformaFase?: string })[];
+    })();
+    const publicados = clientes.filter(c => c.fase_atual >= 6);
+    const progressoList = clientes.filter(c => c.fase_atual < 6).sort((a, b) => b.porcentagem_geral - a.porcentagem_geral);
+    return { abertos, atrasadosList, etapasAtrasadasList, publicados, progressoList };
+  }, [clientes, fases]);
+
   const columns = useMemo(() => {
     const cols: Record<number, AppCliente[]> = {};
     for (let i = 0; i <= 6; i++) cols[i] = [];
