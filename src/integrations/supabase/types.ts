@@ -214,6 +214,8 @@ export type Database = {
           telefone: string | null
           ultima_acao_cliente: string | null
           updated_at: string | null
+          url_loja_apple: string | null
+          url_loja_google: string | null
           whatsapp: string | null
         }
         Insert: {
@@ -235,6 +237,8 @@ export type Database = {
           telefone?: string | null
           ultima_acao_cliente?: string | null
           updated_at?: string | null
+          url_loja_apple?: string | null
+          url_loja_google?: string | null
           whatsapp?: string | null
         }
         Update: {
@@ -256,6 +260,8 @@ export type Database = {
           telefone?: string | null
           ultima_acao_cliente?: string | null
           updated_at?: string | null
+          url_loja_apple?: string | null
+          url_loja_google?: string | null
           whatsapp?: string | null
         }
         Relationships: []

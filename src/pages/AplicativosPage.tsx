@@ -19,8 +19,9 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { format, differenceInHours, differenceInDays } from 'date-fns';
+import { format, differenceInHours, differenceInDays, addBusinessDays as fnsAddBusinessDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { ExternalLink } from 'lucide-react';
 
 const FASE_NAMES = [
   'Pré-Requisitos',
@@ -80,6 +81,9 @@ export default function AplicativosPage() {
   const [mooniClientEmpresa, setMooniClientEmpresa] = useState('');
   const [mooniText, setMooniText] = useState('');
   const [mooniSaving, setMooniSaving] = useState(false);
+  const [pubUrlInputs, setPubUrlInputs] = useState<Record<string, string>>({});
+  const [pubUrlExpanded, setPubUrlExpanded] = useState<Record<string, boolean>>({});
+  const [pubUrlSaving, setPubUrlSaving] = useState<Set<string>>(new Set());
 
   // Drag and drop states
   const [dragOverColumn, setDragOverColumn] = useState<number | null>(null);
@@ -131,7 +135,7 @@ export default function AplicativosPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('app_checklist_items')
-        .select('id, cliente_id, fase_numero, texto, descricao, ator, tipo, feito, feito_em, feito_por, created_at')
+        .select('id, cliente_id, fase_numero, texto, descricao, ator, tipo, feito, feito_em, feito_por, created_at, plataforma')
         .neq('ator', 'cliente')
         .order('fase_numero')
         .order('created_at');
@@ -404,6 +408,50 @@ export default function AplicativosPage() {
     if (ator === 'analista') return { text: 'Analista', color: 'bg-amber-500/10 text-amber-500 border-amber-500/20' };
     if (ator === 'designer') return { text: 'Designer', color: 'bg-purple-500/10 text-purple-500 border-purple-500/20' };
     return { text: ator, color: 'bg-muted text-muted-foreground border-border' };
+  };
+
+  const addBusinessDays = (date: Date, days: number) => {
+    let count = 0;
+    const result = new Date(date);
+    while (count < days) {
+      result.setDate(result.getDate() + 1);
+      const dow = result.getDay();
+      if (dow !== 0 && dow !== 6) count++;
+    }
+    return result;
+  };
+
+  const handlePubUrlConfirm = async (item: any, clienteId: string) => {
+    const urlInput = pubUrlInputs[item.id]?.trim();
+    if (!urlInput) { toast.error('Informe a URL da loja'); return; }
+    setPubUrlSaving(prev => new Set(prev).add(item.id));
+    try {
+      const urlField = item.plataforma === 'google' ? 'url_loja_google' : 'url_loja_apple';
+      await supabase.from('app_clientes').update({ [urlField]: urlInput } as any).eq('id', clienteId);
+      await supabase.from('app_checklist_items').update({
+        feito: true, feito_em: new Date().toISOString(), feito_por: user?.email || 'equipe_interna',
+      }).eq('id', item.id);
+      await supabase.functions.invoke('notify-app-client', {
+        body: { tipo: 'app_publicado', cliente_id: clienteId, plataforma: item.plataforma, url_loja: urlInput },
+      });
+      await supabase.from('app_notificacoes').insert({
+        cliente_id: clienteId, tipo: 'app_publicado', canal: 'email', destinatario: 'cliente',
+        titulo: item.plataforma === 'google' ? '🎉 Seu app está na Google Play!' : '🎉 Seu app está na App Store!',
+        mensagem: `Seu aplicativo foi publicado! Acesse: ${urlInput}`,
+        agendado_para: new Date().toISOString(),
+      });
+      queryClient.invalidateQueries({ queryKey: ['app-checklist-full'] });
+      queryClient.invalidateQueries({ queryKey: ['app-checklist-counts'] });
+      queryClient.invalidateQueries({ queryKey: ['app-fases-all'] });
+      queryClient.invalidateQueries({ queryKey: ['app-clientes'] });
+      setPubUrlExpanded(prev => ({ ...prev, [item.id]: false }));
+      setPubUrlInputs(prev => ({ ...prev, [item.id]: '' }));
+      toast.success('✅ Publicação confirmada e cliente notificado!');
+    } catch (e: any) {
+      toast.error(e.message || 'Erro ao confirmar publicação');
+    } finally {
+      setPubUrlSaving(prev => { const s = new Set(prev); s.delete(item.id); return s; });
+    }
   };
   const handleConfirmDrop = async () => {
     if (!pendingDrop) return;
@@ -907,6 +955,67 @@ export default function AplicativosPage() {
                           const isDone = item.feito || isCompleting;
                           const isPriority = item.texto?.startsWith('⚠️ PRIORIDADE');
                           const isMooni = item.tipo === 'mooni' || item.texto === 'Criar Mooni';
+                          const isPubUrl = item.tipo === 'publicacao_url';
+
+                          // Special rendering for publicacao_url
+                          if (isPubUrl) {
+                            const fase6 = fases.find(f => f.cliente_id === clienteId && f.numero === 6 && (f as any).plataforma === item.plataforma);
+                            const startDate = (fase6 as any)?.data_inicio ? new Date((fase6 as any).data_inicio) : new Date(item.created_at);
+                            const deadline = addBusinessDays(startDate, 1);
+                            const pubOverdue = !item.feito && new Date() > deadline;
+                            const daysOver = pubOverdue ? differenceInDays(new Date(), deadline) : 0;
+                            const isExpanded = pubUrlExpanded[item.id];
+                            const isSaving = pubUrlSaving.has(item.id);
+
+                            return (
+                              <div key={item.id} className="px-4 py-3">
+                                <div className={`p-4 rounded-lg border ${pubOverdue ? 'bg-destructive/10 border-destructive/30' : isDone ? 'bg-green-500/10 border-green-500/30' : 'bg-blue-500/10 border-blue-500/30'}`}>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-2">
+                                      {item.plataforma === 'google' ? <span>🤖</span> : <span>🍎</span>}
+                                      <span className="text-sm font-medium">{item.texto}</span>
+                                      <Badge variant="outline" className="text-[10px] w-fit">Fase 6</Badge>
+                                    </div>
+                                    {isDone ? (
+                                      <Badge className="text-[10px] bg-green-500/10 text-green-500 border border-green-500/20">✅ Concluído</Badge>
+                                    ) : pubOverdue ? (
+                                      <Badge variant="destructive" className="text-[10px]">🚨 Atrasado ({daysOver} dia{daysOver > 1 ? 's' : ''})</Badge>
+                                    ) : (
+                                      <Badge variant="outline" className="text-[10px] border-blue-500/30 text-blue-500">Prazo: {format(deadline, 'dd/MM/yyyy')}</Badge>
+                                    )}
+                                  </div>
+                                  {pubOverdue && !isDone && (
+                                    <p className="text-xs text-destructive mb-2">⚠️ Deveria ter sido concluído até {format(deadline, 'dd/MM/yyyy')}. Por favor, confirme a publicação o mais rápido possível.</p>
+                                  )}
+                                  {isDone && item.feito_em && (
+                                    <p className="text-[10px] text-green-500/70 mt-1">Concluído em {format(new Date(item.feito_em), "dd/MM/yy 'às' HH:mm")}</p>
+                                  )}
+                                  {!isDone && !isExpanded && (
+                                    <Button size="sm" className="mt-2" onClick={() => setPubUrlExpanded(prev => ({ ...prev, [item.id]: true }))}>
+                                      <ExternalLink className="h-3 w-3 mr-1" /> Confirmar Publicação
+                                    </Button>
+                                  )}
+                                  {!isDone && isExpanded && (
+                                    <div className="mt-3 space-y-2">
+                                      <Label className="text-xs">URL do app na {item.plataforma === 'google' ? 'Google Play Store' : 'App Store'} *</Label>
+                                      <Input
+                                        placeholder={item.plataforma === 'google' ? 'https://play.google.com/store/apps/details?id=...' : 'https://apps.apple.com/app/...'}
+                                        value={pubUrlInputs[item.id] || ''}
+                                        onChange={e => setPubUrlInputs(prev => ({ ...prev, [item.id]: e.target.value }))}
+                                      />
+                                      <div className="flex gap-2">
+                                        <Button size="sm" className="flex-1" disabled={!pubUrlInputs[item.id]?.trim() || isSaving}
+                                          onClick={() => handlePubUrlConfirm(item, clienteId)}>
+                                          {isSaving ? 'Confirmando...' : '✅ Confirmar e Notificar Cliente'}
+                                        </Button>
+                                        <Button size="sm" variant="ghost" onClick={() => setPubUrlExpanded(prev => ({ ...prev, [item.id]: false }))}>Cancelar</Button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          }
 
                           return (
                             <div key={item.id} className={`grid grid-cols-[32px_1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-3 items-center transition-opacity ${isCompleting ? 'opacity-50' : ''} ${isMooni && !isDone ? 'bg-blue-500/10 border-l-2 border-blue-500' : isPriority && !isDone ? 'bg-destructive/10 border-l-2 border-destructive' : ''}`}>
