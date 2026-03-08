@@ -60,6 +60,13 @@ function getBrazilianHolidays(year: number): Record<string, string> {
 }
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useAuth } from '@/hooks/useAuth';
+
+interface TeamMember {
+  id: string;
+  email: string;
+  display_name: string;
+}
 
 type CalendarView = 'month' | 'week';
 
@@ -146,7 +153,10 @@ const emptyForm = {
   };
 
 export default function SchedulingPage() {
-  const { hasPermission } = usePermissions();
+  const { hasPermission, hasRole } = usePermissions();
+  const { user } = useAuth();
+  const isManager = hasRole('admin') || hasRole('gerente_cs');
+
   const canCreate = hasPermission('agendamento.create');
   const canEdit = hasPermission('agendamento.edit');
   const canDelete = hasPermission('agendamento.delete');
@@ -174,6 +184,8 @@ export default function SchedulingPage() {
   });
   const [confirmSubmitting, setConfirmSubmitting] = useState(false);
   const [csatMap, setCsatMap] = useState<Record<string, { score: number | null; responded: boolean }>>({});
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [filterCs, setFilterCs] = useState<string>('all');
 
   const fetchMeetings = async () => {
     const { data, error } = await (supabase
@@ -203,6 +215,44 @@ export default function SchedulingPage() {
   };
 
   useEffect(() => { fetchMeetings(); fetchCsatData(); }, []);
+
+  // Fetch team members for managers
+  useEffect(() => {
+    if (!isManager) return;
+    const fetchTeam = async () => {
+      try {
+        const session = (await supabase.auth.getSession()).data.session;
+        if (!session) return;
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-users?action=list`,
+          {
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            },
+          }
+        );
+        if (response.ok) {
+          const result = await response.json();
+          const users = result.users || result;
+          if (Array.isArray(users)) {
+            setTeamMembers(
+              users
+                .filter((u: any) => u.email?.endsWith('@curseduca.com'))
+                .map((u: any) => ({
+                  id: u.id,
+                  email: u.email || '',
+                  display_name: u.display_name || u.email || u.id,
+                }))
+            );
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching team members', e);
+      }
+    };
+    fetchTeam();
+  }, [isManager]);
 
   // Compute per-email meeting stats
   const emailStats = useMemo(() => {
@@ -442,12 +492,16 @@ export default function SchedulingPage() {
   // Calendar helpers
   const meetingsByDate = useMemo(() => {
     const map: Record<string, Meeting[]> = {};
-    meetings.forEach(m => {
+    let filtered = meetings;
+    if (filterCs !== 'all') {
+      filtered = filtered.filter(m => m.created_by === filterCs);
+    }
+    filtered.forEach(m => {
       if (!map[m.meeting_date]) map[m.meeting_date] = [];
       map[m.meeting_date].push(m);
     });
     return map;
-  }, [meetings]);
+  }, [meetings, filterCs]);
 
   const filteredMeetings = useMemo(() => {
     let list = meetings;
@@ -763,15 +817,49 @@ export default function SchedulingPage() {
                           ))}
                         </SelectContent>
                       </Select>
+                      {isManager && teamMembers.length > 0 && (
+                        <Select value={filterCs} onValueChange={setFilterCs}>
+                          <SelectTrigger className="h-7 w-[180px] text-xs">
+                            <User className="h-3 w-3 mr-1 shrink-0" />
+                            <SelectValue placeholder="Todos os CSs" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todos os CSs</SelectItem>
+                            {teamMembers.map(tm => (
+                              <SelectItem key={tm.id} value={tm.id}>
+                                {tm.display_name || tm.email}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCalendarMonth(subMonths(calendarMonth, 1))}><ChevronLeft className="h-3.5 w-3.5" /></Button>
                       <Button variant="ghost" size="sm" className="h-7 text-xs px-2 font-medium" onClick={() => { setCalendarMonth(new Date()); setSelectedDate(new Date()); }}>Hoje</Button>
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCalendarMonth(addMonths(calendarMonth, 1))}><ChevronRight className="h-3.5 w-3.5" /></Button>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setWeekStart(subWeeks(weekStart, 1))}><ChevronLeft className="h-3.5 w-3.5" /></Button>
-                      <Button variant="ghost" size="sm" className="h-7 text-xs px-2 font-medium" onClick={() => { setWeekStart(startOfWeek(new Date(), { locale: ptBR })); setSelectedDate(new Date()); }}>Hoje</Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setWeekStart(addWeeks(weekStart, 1))}><ChevronRight className="h-3.5 w-3.5" /></Button>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {isManager && teamMembers.length > 0 && (
+                        <Select value={filterCs} onValueChange={setFilterCs}>
+                          <SelectTrigger className="h-7 w-[180px] text-xs">
+                            <User className="h-3 w-3 mr-1 shrink-0" />
+                            <SelectValue placeholder="Todos os CSs" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todos os CSs</SelectItem>
+                            {teamMembers.map(tm => (
+                              <SelectItem key={tm.id} value={tm.id}>
+                                {tm.display_name || tm.email}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setWeekStart(subWeeks(weekStart, 1))}><ChevronLeft className="h-3.5 w-3.5" /></Button>
+                        <Button variant="ghost" size="sm" className="h-7 text-xs px-2 font-medium" onClick={() => { setWeekStart(startOfWeek(new Date(), { locale: ptBR })); setSelectedDate(new Date()); }}>Hoje</Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setWeekStart(addWeeks(weekStart, 1))}><ChevronRight className="h-3.5 w-3.5" /></Button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -888,6 +976,12 @@ export default function SchedulingPage() {
                 <div className="mt-2">
                   <div className="text-sm font-medium text-center text-muted-foreground mb-3">
                     {format(weekDays[0], "dd MMM", { locale: ptBR })} — {format(weekDays[6], "dd MMM yyyy", { locale: ptBR })}
+                    {filterCs !== 'all' && (
+                      <Badge variant="secondary" className="ml-2 text-[10px]">
+                        <User className="h-2.5 w-2.5 mr-1" />
+                        {teamMembers.find(t => t.id === filterCs)?.display_name || 'CS'}
+                      </Badge>
+                    )}
                   </div>
                   <div className="overflow-x-auto">
                     <div className="min-w-[700px]">
