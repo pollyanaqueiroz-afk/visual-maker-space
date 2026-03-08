@@ -68,9 +68,10 @@ serve(async (req) => {
     const request = image.briefing_requests;
     const imageTypeLabel = IMAGE_TYPE_LABELS[image.image_type] || image.image_type;
     const productLabel = image.product_name ? ` — ${image.product_name}` : "";
+    const appBaseUrl = app_url || Deno.env.get("APP_URL") || "https://app.curseduca.com";
     const reviewUrl = request.review_token
-      ? `${app_url || 'https://visual-maker-space.lovable.app'}/client-review?token=${request.review_token}`
-      : `${app_url || 'https://visual-maker-space.lovable.app'}/client-review?email=${encodeURIComponent(request.requester_email)}`;
+      ? `${appBaseUrl}/client-review?token=${request.review_token}`
+      : `${appBaseUrl}/client-review?email=${encodeURIComponent(request.requester_email)}`;
 
     const html = `
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;padding:0;background:#ffffff;">
@@ -150,7 +151,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Curseduca Design <onboarding@resend.dev>",
+        from: Deno.env.get("FROM_EMAIL") || "Curseduca <noreply@curseduca.com>",
         to: [request.requester_email],
         subject: `🎨 Sua arte está pronta para aprovação: ${imageTypeLabel}${productLabel}`,
         html,

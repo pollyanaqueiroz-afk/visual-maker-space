@@ -293,7 +293,19 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
           if (mockupErr) console.error('Erro ao criar mockup:', mockupErr);
         }
       } catch (err: any) {
+        // Cleanup request
         await supabase.from('briefing_requests').delete().eq('id', requestId);
+        // Cleanup brand file from storage if uploaded
+        if (brandFileUrl) {
+          try {
+            const path = brandFileUrl.split('/briefing-uploads/')[1];
+            if (path) {
+              await supabase.storage.from('briefing-uploads').remove([decodeURIComponent(path)]);
+            }
+          } catch (cleanupErr) {
+            console.error('Failed to cleanup brand file:', cleanupErr);
+          }
+        }
         throw err;
       }
 

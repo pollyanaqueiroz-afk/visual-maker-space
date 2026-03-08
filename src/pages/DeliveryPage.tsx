@@ -73,6 +73,12 @@ export default function DeliveryPage() {
       return;
     }
 
+    // Validate email matches assigned designer
+    if (image.assigned_email && email.toLowerCase() !== image.assigned_email.toLowerCase()) {
+      toast.error(`Este briefing foi atribuído para ${image.assigned_email}. Use o email correto para entregar.`);
+      return;
+    }
+
     setSubmitting(true);
     try {
       // Upload file
@@ -235,7 +241,12 @@ export default function DeliveryPage() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="designer@email.com"
+                readOnly={!!image?.assigned_email}
+                className={image?.assigned_email ? 'bg-muted' : ''}
               />
+              {image?.assigned_email && (
+                <p className="text-xs text-muted-foreground">Email vinculado ao briefing — não pode ser alterado</p>
+              )}
             </div>
 
             <div className="space-y-2">

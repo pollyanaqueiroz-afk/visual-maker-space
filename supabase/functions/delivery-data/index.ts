@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
               };
               const arteName = imageTypeLabel[imgData.image_type] || imgData.image_type;
               const arteDetail = imgData.observations || imgData.product_name || "";
-              const baseUrl = Deno.env.get("APP_URL") || "https://visual-maker-space.lovable.app";
+              const baseUrl = Deno.env.get("APP_URL") || "https://app.curseduca.com";
               const reviewUrl = reviewToken
                 ? `${baseUrl}/client-review?token=${reviewToken}`
                 : `${baseUrl}/client-review?email=${encodeURIComponent(requesterEmail)}`;
@@ -243,13 +243,18 @@ Deno.serve(async (req) => {
               .limit(1);
 
             if (deliveries && deliveries.length > 0) {
-              await supabase.from("brand_assets").insert({
-                file_url: deliveries[0].file_url,
-                platform_url: platformUrl,
-                briefing_image_id: image_id,
-                source: "approved_delivery",
-                file_name: `${imgData.image_type}${imgData.product_name ? ` — ${imgData.product_name}` : ""}`,
-              });
+              try {
+                await supabase.from("brand_assets").insert({
+                  file_url: deliveries[0].file_url,
+                  platform_url: platformUrl,
+                  briefing_image_id: image_id,
+                  source: "approved_delivery",
+                  file_name: `${imgData.image_type}${imgData.product_name ? ` — ${imgData.product_name}` : ""}`,
+                });
+              } catch (assetErr) {
+                // Ignore duplicate - idempotent operation
+                console.log("Brand asset already exists or insert failed:", assetErr);
+              }
             }
           }
         }

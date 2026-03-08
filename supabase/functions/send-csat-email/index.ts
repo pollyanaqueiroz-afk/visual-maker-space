@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
 
     const baseUrl = Deno.env.get("SUPABASE_URL")!.replace(".supabase.co", "").includes("localhost")
       ? "http://localhost:5173"
-      : req.headers.get("origin") || "https://visual-maker-space.lovable.app";
+      : req.headers.get("origin") || Deno.env.get("APP_URL") || "https://app.curseduca.com";
 
     const csatUrl = `${baseUrl}/csat/${csatEntry.token}`;
 

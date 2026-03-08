@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { RequestStatus, STATUS_LABELS, STATUS_COLORS, IMAGE_TYPE_LABELS, ImageType } from '@/types/briefing';
@@ -104,10 +105,7 @@ export default function Dashboard() {
   const canEdit = hasPermission('briefings.edit') || isGerenteImpl || canManage;
   const canAssign = hasPermission('briefings.assign') || isGerenteImpl || canManage;
   const canChangeAssignee = hasPermission('briefings.change_assignee') || isGerenteImpl || canManage;
-  const [images, setImages] = useState<ImageWithRequest[]>([]);
-  const [requests, setRequests] = useState<any[]>([]);
-  const [reviews, setReviews] = useState<ReviewRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
   const [filterClient, setFilterClient] = useState<string>('all');
@@ -121,40 +119,59 @@ export default function Dashboard() {
   const tableScrollRef = useRef<HTMLDivElement>(null);
   const topScrollInnerRef = useRef<HTMLDivElement>(null);
 
-  const fetchData = async () => {
-    const [imgRes, reqRes, revRes] = await Promise.all([
-      supabase
+  const { data: images = [], isLoading: loadingImages } = useQuery({
+    queryKey: ['briefing-images'],
+    queryFn: async () => {
+      const { data, error } = await supabase
         .from('briefing_images')
         .select('*, briefing_requests!inner(requester_name, requester_email, platform_url, received_at, submitted_by)')
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('briefing_requests')
-        .select('id, platform_url, status, created_at, received_at')
-        .order('created_at', { ascending: false }),
-      (supabase.from('briefing_reviews' as any).select('*').order('created_at', { ascending: false }) as any),
-    ]);
-
-    if (imgRes.error) {
-      console.error(imgRes.error);
-      toast.error('Erro ao carregar dados');
-    } else {
-      const mapped = (imgRes.data || []).map((img: any) => ({
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []).map((img: any) => ({
         ...img,
         requester_name: img.briefing_requests?.requester_name || '',
         requester_email: img.briefing_requests?.requester_email || '',
         platform_url: img.briefing_requests?.platform_url || '',
         received_at: img.briefing_requests?.received_at || img.created_at,
         submitted_by: img.briefing_requests?.submitted_by || null,
-      }));
-      setImages(mapped);
-    }
+      })) as ImageWithRequest[];
+    },
+    staleTime: 30_000,
+  });
 
-    setRequests(reqRes.data || []);
-    setReviews((revRes.data || []) as ReviewRecord[]);
-    setLoading(false);
+  const { data: requests = [] } = useQuery({
+    queryKey: ['briefing-requests'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('briefing_requests')
+        .select('id, platform_url, status, created_at, received_at')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 30_000,
+  });
+
+  const { data: reviews = [] } = useQuery({
+    queryKey: ['briefing-reviews'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('briefing_reviews')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []) as ReviewRecord[];
+    },
+    staleTime: 30_000,
+  });
+
+  const loading = loadingImages;
+
+  const refreshAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['briefing-images'] });
+    queryClient.invalidateQueries({ queryKey: ['briefing-requests'] });
+    queryClient.invalidateQueries({ queryKey: ['briefing-reviews'] });
   };
-
-  useEffect(() => { fetchData(); }, []);
 
   const [downloadingReport, setDownloadingReport] = useState(false);
 
@@ -223,7 +240,7 @@ export default function Dashboard() {
       toast.error('Erro ao atualizar status');
     } else {
       toast.success('Status atualizado');
-      fetchData();
+      refreshAll();
     }
   };
 
@@ -235,7 +252,7 @@ export default function Dashboard() {
     // Audit
     await (supabase.from('briefing_reviews' as any).insert({ briefing_image_id: id, action: 'deleted', reviewed_by: user?.email || 'admin', reviewer_comments: `Arte excluída por ${user?.email}` }) as any);
     toast.success('Arte excluída');
-    fetchData();
+    refreshAll();
   };
 
   const revertApproval = async (id: string, targetStatus: RequestStatus) => {
@@ -244,7 +261,7 @@ export default function Dashboard() {
     if (error) { toast.error('Erro ao reverter'); return; }
     await (supabase.from('briefing_reviews' as any).insert({ briefing_image_id: id, action: `reverted_to_${targetStatus}`, reviewed_by: user?.email || 'admin', reviewer_comments: `Status revertido para ${STATUS_LABELS[targetStatus]} por ${user?.email}` }) as any);
     toast.success(`Status revertido para ${STATUS_LABELS[targetStatus]}`);
-    fetchData();
+    refreshAll();
   };
 
   const handleBulkStatusChange = async (status: RequestStatus) => {
@@ -258,7 +275,7 @@ export default function Dashboard() {
     } else {
       toast.success(`${ids.length} arte(s) atualizada(s) para "${STATUS_LABELS[status]}"`);
       setSelectedIds(new Set());
-      fetchData();
+      refreshAll();
     }
   };
 
@@ -285,7 +302,10 @@ export default function Dashboard() {
     } else if (filterStatus !== 'all' && filterStatus !== 'revision') {
       if (i.status !== filterStatus) return false;
     }
-    if (filterStatus === 'revision' && i.revision_count === 0) return false;
+    if (filterStatus === 'revision') {
+      if (i.revision_count === 0) return false;
+      if (i.status === 'completed' || i.status === 'cancelled') return false;
+    }
     if (filterType !== 'all' && i.image_type !== filterType) return false;
     if (filterClient !== 'all' && i.platform_url !== filterClient) return false;
     if (filterOverdue && !isOverdue(i)) return false;
@@ -478,8 +498,8 @@ export default function Dashboard() {
           <TabsContent value="artes" className="space-y-6">
             {/* Filters */}
             <div className="flex flex-wrap items-center gap-4">
-              {canCreate && <ImportBriefingDialog onImported={fetchData} />}
-              {canCreate && <BulkPhotoUploadDialog onUploaded={fetchData} />}
+              {canCreate && <ImportBriefingDialog onImported={refreshAll} />}
+              {canCreate && <BulkPhotoUploadDialog onUploaded={refreshAll} />}
               <div className="relative w-56">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -699,7 +719,7 @@ export default function Dashboard() {
                                       <ChangeDesignerForm
                                         imageId={img.id}
                                         currentEmail={img.assigned_email}
-                                        onChanged={fetchData}
+                                        onChanged={refreshAll}
                                       />
                                     </PopoverContent>
                                   </Popover>
@@ -719,7 +739,7 @@ export default function Dashboard() {
                                       <ChangeDesignerForm
                                         imageId={img.id}
                                         currentEmail=""
-                                        onChanged={fetchData}
+                                        onChanged={refreshAll}
                                       />
                                     </PopoverContent>
                                   </Popover>
@@ -787,7 +807,7 @@ export default function Dashboard() {
                                       toast.error('Erro ao atualizar data');
                                     } else {
                                       toast.success('Data de recebimento atualizada');
-                                      fetchData();
+                                      refreshAll();
                                     }
                                   }}
                                   disabled={(date) => date > new Date()}
@@ -806,7 +826,7 @@ export default function Dashboard() {
                           <TableCell className="text-right">
                             <div className="flex items-center gap-2 justify-end">
                               {img.status === 'review' && (
-                                <ReviewActionDialog image={img} onReviewed={fetchData} />
+                                <ReviewActionDialog image={img} onReviewed={refreshAll} />
                               )}
                               <Select value={img.status} onValueChange={v => updateImageStatus(img.id, v as RequestStatus)}>
                                 <SelectTrigger className="w-36 h-8 text-xs">
@@ -843,7 +863,7 @@ export default function Dashboard() {
                                   currentEmail={img.assigned_email}
                                   currentDeadline={img.deadline}
                                   imageLabel={imageLabel(img)}
-                                  onAssigned={fetchData}
+                                  onAssigned={refreshAll}
                                 />
                               )}
                               <BrandAssetsDialog platformUrl={img.platform_url} clientName={extractClientName(img.platform_url)} />
@@ -915,7 +935,7 @@ export default function Dashboard() {
               open={bulkAssignOpen}
               onOpenChange={setBulkAssignOpen}
               imageIds={Array.from(selectedIds)}
-              onAssigned={() => { setSelectedIds(new Set()); fetchData(); }}
+              onAssigned={() => { setSelectedIds(new Set()); refreshAll(); }}
             />
           </TabsContent>
 
