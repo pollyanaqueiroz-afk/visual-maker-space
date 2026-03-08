@@ -1163,6 +1163,41 @@ export default function AplicativosPage() {
                     </div>
                   </div>
                 ))}
+                {/* Cancelled column */}
+                <div className="w-[280px] shrink-0">
+                  <div className="flex items-center justify-between mb-2 px-1">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-destructive/40" />
+                      <span className="text-xs font-semibold text-destructive/60 uppercase tracking-wide">Cancelados</span>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] text-destructive/40 border-destructive/15">{cancelledClientes.length}</Badge>
+                  </div>
+                  <div className="space-y-2 min-h-[200px] rounded-lg p-2 bg-destructive/5">
+                    {cancelledClientes.map(c => (
+                      <Card
+                        key={c.id}
+                        className="p-3 border-destructive/15 bg-destructive/5 cursor-pointer opacity-60 hover:opacity-80 transition-opacity"
+                        onClick={() => navigate(`/hub/aplicativos/${c.id}`)}
+                      >
+                        <p className="text-sm font-medium text-muted-foreground line-through">{c.nome}</p>
+                        <p className="text-xs text-muted-foreground/60">{c.empresa}</p>
+                        {c.motivo_cancelamento && (
+                          <p className="text-[10px] text-muted-foreground/50 mt-1 truncate" title={c.motivo_cancelamento}>
+                            {c.motivo_cancelamento}
+                          </p>
+                        )}
+                        {c.cancelado_em && (
+                          <p className="text-[10px] text-muted-foreground/40 mt-0.5">
+                            Cancelado em {format(new Date(c.cancelado_em), 'dd/MM/yyyy')}
+                          </p>
+                        )}
+                      </Card>
+                    ))}
+                    {cancelledClientes.length === 0 && (
+                      <div className="text-xs text-muted-foreground/30 text-center py-8">Nenhum cancelamento</div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           )}
