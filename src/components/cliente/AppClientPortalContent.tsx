@@ -1168,7 +1168,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
         <span className="text-xs font-bold shrink-0 mr-2">
           {emoji} <span className={plataforma === 'google' ? 'text-blue-400' : 'text-purple-400'}>{plataforma === 'google' ? 'Google Play' : 'Apple'}</span>
         </span>
-        <div className="relative flex items-center flex-1 min-w-0">
+        <div className="relative flex items-center flex-1 min-w-0 py-1">
           {/* Connecting line */}
           <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-1 bg-white/15 rounded-full" />
           {/* Progress line */}
@@ -1177,16 +1177,16 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             const progressWidth = trackFases.length > 1 ? `${(completedCount / (trackFases.length - 1)) * 100}%` : '0%';
             return <div className="absolute top-1/2 -translate-y-1/2 left-0 h-1 bg-green-500 rounded-full transition-all duration-500" style={{ width: progressWidth }} />;
           })()}
-          <div className="relative flex justify-between w-full">
+          <div className="relative flex w-full">
             {trackFases.map(({ num, fase }) => {
               const status = fase?.status || 'bloqueada';
               const isSelected = selectedTimelineFase?.fase === num && selectedTimelineFase?.plataforma === plataforma;
               return (
-                <button
-                  key={num}
-                  onClick={() => setSelectedTimelineFase(isSelected ? null : { fase: num, plataforma })}
-                  className={`relative z-10 flex flex-col items-center cursor-pointer hover:scale-105 transition-all ${status === 'bloqueada' ? 'opacity-60' : ''} ${isSelected ? 'scale-110' : ''}`}
-                >
+                <div key={num} className="flex-1 flex flex-col items-center relative z-10">
+                  <button
+                    onClick={() => setSelectedTimelineFase(isSelected ? null : { fase: num, plataforma })}
+                    className={`flex flex-col items-center cursor-pointer hover:scale-105 transition-all ${status === 'bloqueada' ? 'opacity-60' : ''} ${isSelected ? 'scale-110' : ''}`}
+                  >
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
                     status === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50 text-green-400' :
                     status === 'em_andamento' ? 'bg-primary/30 ring-2 ring-primary text-primary animate-pulse' :
@@ -1203,7 +1203,8 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                     status === 'em_andamento' ? 'text-primary font-semibold' :
                     'text-white/30'
                   }`}>{FASE_NAMES[num]}</p>
-                </button>
+                  </button>
+                </div>
               );
             })}
           </div>
@@ -1329,8 +1330,8 @@ export default function AppClientPortalContent({ clienteId }: Props) {
       {isParallelFlow ? (
         /* ── Parallel: fase 0 left, bifurcation to two horizontal tracks ── */
         <div className="space-y-4">
-          <div className="overflow-x-auto">
-            <div className="flex items-center gap-0" style={{ minWidth: '520px' }}>
+          <div>
+            <div className="flex items-center gap-0 w-full py-3">
               {/* Fase 0 on the left, centered vertically between tracks */}
               <div className="flex flex-col items-center shrink-0 self-center">
                 <button onClick={() => setSelectedTimelineFase(
