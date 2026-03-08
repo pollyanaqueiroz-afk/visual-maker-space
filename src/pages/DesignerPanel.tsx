@@ -167,6 +167,12 @@ export default function DesignerPanel() {
                                   <div>
                                     <p className="font-medium">{IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type}</p>
                                     {img.product_name && <p className="text-xs text-muted-foreground">{img.product_name}</p>}
+                                    {(img as any).extra_info && (
+                                      <div className="mt-1 p-2 rounded bg-blue-500/10 border border-blue-500/20">
+                                        <p className="text-[10px] font-semibold text-blue-400 mb-0.5">📋 Informações do Munin:</p>
+                                        <p className="text-xs text-muted-foreground whitespace-pre-wrap">{(img as any).extra_info}</p>
+                                      </div>
+                                    )}
                                   </div>
                                 </TableCell>
                                 <TableCell>
