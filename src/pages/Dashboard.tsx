@@ -1088,8 +1088,7 @@ function ReviewActionDialog({ image, onReviewed }: { image: ImageWithRequest; on
         <div className="space-y-4">
           <div className="text-sm">
             <span className="text-muted-foreground">Arte:</span>{' '}
-            <span className="font-medium">{IMAGE_TYPE_LABELS[image.image_type as ImageType] || image.image_type}</span>
-            {image.product_name && <span className="text-muted-foreground"> — {image.product_name}</span>}
+            <span className="font-medium">{imageLabel(image)}</span>
           </div>
           <div className="space-y-2">
             <Label>Comentários (opcional)</Label>
