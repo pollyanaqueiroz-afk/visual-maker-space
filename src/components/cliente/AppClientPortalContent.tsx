@@ -948,8 +948,8 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           {/* Estimate */}
           {showEstimate && fase.duracao_dias_estimada && (
             <div className="rounded-lg bg-white/5 border border-white/5 p-3 flex items-center gap-2">
-              <Clock className="h-4 w-4 text-white/30" />
-              <p className="text-xs text-white/50">
+              <Clock className="h-4 w-4 text-white/50" />
+              <p className="text-xs text-white/60">
                 Previsão: ~{fase.duracao_dias_estimada} dias úteis
                 {fase.data_inicio && (
                   <span className="text-white/30"> (até {format(addBusinessDays(new Date(fase.data_inicio), fase.duracao_dias_estimada), 'dd/MM/yyyy')})</span>
