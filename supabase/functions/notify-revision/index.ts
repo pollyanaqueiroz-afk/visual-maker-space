@@ -74,7 +74,7 @@ serve(async (req) => {
     const imageTypeLabel = IMAGE_TYPE_LABELS[image.image_type] || image.image_type;
     const productLabel = image.product_name ? ` — ${image.product_name}` : "";
     const revisionNumber = image.revision_count || 1;
-    const baseUrl = app_url || "https://id-preview--47593e69-3789-4cdb-b901-66106c2c2f6d.lovable.app";
+    const baseUrl = app_url || Deno.env.get("APP_URL") || "https://app.curseduca.com";
     const deliveryLink = image.delivery_token ? `${baseUrl}/delivery/${image.delivery_token}` : `${baseUrl}/designer`;
 
     const html = `
