@@ -983,24 +983,63 @@ export default function AppClientPortalContent({ clienteId }: Props) {
       );
     }
 
-    // Default: check type with confirmation
+    // Default: check type with confirmation and data viewing/editing
+    const canEdit = cliente?.fase_atual === item.fase_numero;
+    const isViewingThis = viewingItemId === item.id;
+    const isEditingThis = editingItemId === item.id;
+
     return (
       <div key={item.id} className="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
         <div className="flex items-start gap-3">
           <Checkbox
             checked={item.feito}
+            disabled={!canEdit && item.feito}
             onCheckedChange={(checked) => {
               if (checked) {
                 setConfirmingItemId(item.id);
-              } else {
+              } else if (canEdit) {
                 toggleCheck.mutate({ id: item.id, feito: false, texto: item.texto, fase_numero: item.fase_numero });
               }
             }}
             className="mt-0.5 border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
           />
           <div className="flex-1">
-            <p className="text-sm font-medium">{item.texto}</p>
+            <div className="flex items-center justify-between">
+              <p className={`text-sm font-medium ${item.feito ? 'text-green-400' : ''}`}>{item.texto}</p>
+              {item.feito && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 text-xs text-white/50 hover:text-white"
+                  onClick={() => {
+                    if (isViewingThis) {
+                      setViewingItemId(null);
+                      setEditingItemId(null);
+                    } else {
+                      setViewingItemId(item.id);
+                      setItemDataInput(item.dados_preenchidos || '');
+                    }
+                  }}
+                >
+                  <Eye className="h-3 w-3 mr-1" />
+                  {isViewingThis ? 'Fechar' : 'Ver detalhes'}
+                </Button>
+              )}
+            </div>
             {item.descricao && <p className="text-xs text-white/50 mt-1">{item.descricao}</p>}
+            
+            {/* Show completion date */}
+            {item.feito && item.feito_em && (
+              <p className="text-[10px] text-green-400/70 mt-1">
+                ✅ Concluído em {format(new Date(item.feito_em), "dd/MM/yyyy 'às' HH:mm")}
+                {item.updated_at && item.updated_at !== item.feito_em && (
+                  <span className="ml-2 text-white/40">
+                    · Última alteração: {format(new Date(item.updated_at), "dd/MM/yyyy 'às' HH:mm")}
+                  </span>
+                )}
+              </p>
+            )}
+
             {renderSteps(item.texto, item.id)}
 
             {item.texto === ADMIN_APPLE_TEXT && (
@@ -1010,21 +1049,120 @@ export default function AppClientPortalContent({ clienteId }: Props) {
               </div>
             )}
 
+            {/* View/Edit data panel for completed items */}
+            {isViewingThis && item.feito && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                className="mt-3 overflow-hidden"
+              >
+                <div className="rounded-lg bg-white/5 border border-white/10 p-3 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-medium text-white/70">Dados preenchidos:</p>
+                    {canEdit && !isEditingThis && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 text-xs"
+                        onClick={() => {
+                          setEditingItemId(item.id);
+                          setItemDataInput(item.dados_preenchidos || '');
+                        }}
+                      >
+                        ✏️ Editar
+                      </Button>
+                    )}
+                  </div>
+                  
+                  {isEditingThis ? (
+                    <div className="space-y-2">
+                      <Textarea
+                        placeholder="Adicione informações ou observações sobre esta etapa..."
+                        className="bg-white/5 border-white/10 text-white text-sm min-h-[80px]"
+                        value={itemDataInput}
+                        onChange={e => setItemDataInput(e.target.value)}
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          className="flex-1"
+                          disabled={saveItemData.isPending}
+                          onClick={() => saveItemData.mutate({
+                            itemId: item.id,
+                            dados: itemDataInput,
+                            dadosAnteriores: item.dados_preenchidos,
+                          })}
+                        >
+                          {saveItemData.isPending ? 'Salvando...' : 'Salvar'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-white/60"
+                          onClick={() => {
+                            setEditingItemId(null);
+                            setItemDataInput(item.dados_preenchidos || '');
+                          }}
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-white/80">
+                      {item.dados_preenchidos ? (
+                        <p className="whitespace-pre-wrap">{item.dados_preenchidos}</p>
+                      ) : (
+                        <p className="text-white/40 italic">Nenhum dado adicional registrado.</p>
+                      )}
+                    </div>
+                  )}
+                  
+                  {!canEdit && (
+                    <p className="text-[10px] text-amber-400/70 flex items-center gap-1">
+                      <Lock className="h-3 w-3" />
+                      Etapa de fase anterior — somente visualização
+                    </p>
+                  )}
+                </div>
+              </motion.div>
+            )}
+
             {confirmingItemId === item.id && (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
                 className="mt-3 overflow-hidden"
               >
-                <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3 space-y-2">
+                <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3 space-y-3">
                   <p className="text-xs text-amber-300 font-medium">Tem certeza que concluiu esta etapa?</p>
+                  
+                  {/* Input for data when confirming */}
+                  <div className="space-y-1">
+                    <Label className="text-[10px] text-white/60">Dados ou observações (opcional):</Label>
+                    <Textarea
+                      placeholder="Ex: número do pedido, conta criada, link, etc..."
+                      className="bg-white/5 border-white/10 text-white text-sm min-h-[60px]"
+                      value={itemDataInput}
+                      onChange={e => setItemDataInput(e.target.value)}
+                    />
+                  </div>
+                  
                   <div className="flex gap-2">
                     <Button
                       size="sm"
                       className="flex-1"
-                      onClick={() => {
+                      onClick={async () => {
+                        // Save data if provided
+                        if (itemDataInput.trim()) {
+                          await supabase.from('app_checklist_items').update({
+                            dados_preenchidos: itemDataInput.trim(),
+                            updated_at: new Date().toISOString(),
+                          }).eq('id', item.id);
+                        }
                         toggleCheck.mutate({ id: item.id, feito: true, texto: item.texto, fase_numero: item.fase_numero });
                         setConfirmingItemId(null);
+                        setItemDataInput('');
                       }}
                     >
                       Sim, concluí
@@ -1033,7 +1171,10 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                       size="sm"
                       variant="ghost"
                       className="text-white/60"
-                      onClick={() => setConfirmingItemId(null)}
+                      onClick={() => {
+                        setConfirmingItemId(null);
+                        setItemDataInput('');
+                      }}
                     >
                       Não
                     </Button>
