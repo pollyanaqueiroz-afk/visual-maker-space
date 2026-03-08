@@ -12,6 +12,7 @@ const ROLES = [
   { value: 'admin', label: 'Admin' },
   { value: 'gerente_cs', label: 'Gerente CS' },
   { value: 'gerente_implantacao', label: 'Gerente Impl.' },
+  { value: 'analista_implantacao', label: 'Analista Impl.' },
   { value: 'cs', label: 'CS' },
   { value: 'implantacao', label: 'Implantação' },
   { value: 'designer', label: 'Designer' },

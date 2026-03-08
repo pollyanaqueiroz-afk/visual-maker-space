@@ -97,11 +97,13 @@ function imageLabel(img: { image_type: string; product_name?: string | null; obs
 
 export default function Dashboard() {
   const { hasPermission, hasRole } = usePermissions();
+  const { user } = useAuth();
   const isGerenteImpl = hasRole('gerente_implantacao');
-  const canCreate = hasPermission('briefings.create') || isGerenteImpl;
-  const canEdit = hasPermission('briefings.edit') || isGerenteImpl;
-  const canAssign = hasPermission('briefings.assign') || isGerenteImpl;
-  const canChangeAssignee = hasPermission('briefings.change_assignee') || isGerenteImpl;
+  const canManage = hasRole('admin') || hasRole('gerente_implantacao') || hasRole('analista_implantacao');
+  const canCreate = hasPermission('briefings.create') || isGerenteImpl || canManage;
+  const canEdit = hasPermission('briefings.edit') || isGerenteImpl || canManage;
+  const canAssign = hasPermission('briefings.assign') || isGerenteImpl || canManage;
+  const canChangeAssignee = hasPermission('briefings.change_assignee') || isGerenteImpl || canManage;
   const [images, setImages] = useState<ImageWithRequest[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
   const [reviews, setReviews] = useState<ReviewRecord[]>([]);
