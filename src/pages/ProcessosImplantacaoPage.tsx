@@ -63,6 +63,7 @@ export default function ProcessosImplantacaoPage() {
       if (error) throw error;
       return data || [];
     },
+    staleTime: 120_000,
   });
 
   const { data: appClientes = [] } = useQuery({
