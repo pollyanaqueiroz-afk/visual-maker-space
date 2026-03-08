@@ -60,6 +60,13 @@ function getBrazilianHolidays(year: number): Record<string, string> {
 }
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useAuth } from '@/hooks/useAuth';
+
+interface TeamMember {
+  id: string;
+  email: string;
+  display_name: string;
+}
 
 type CalendarView = 'month' | 'week';
 
