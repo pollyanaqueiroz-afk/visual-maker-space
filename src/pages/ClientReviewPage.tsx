@@ -1002,7 +1002,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
             transition={{ duration: 0.35, ease: 'easeOut' }}
             className="w-full max-w-lg"
           >
-            <div className="relative bg-card border border-border rounded-3xl shadow-2xl overflow-hidden">
+            <div className={`relative ${cardBgSolid} border rounded-3xl shadow-2xl overflow-hidden`}>
               {/* Top accent */}
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary/60 to-primary z-10" />
 
