@@ -1400,48 +1400,50 @@ export default function AppClientPortalContent({ clienteId }: Props) {
         /* ── Parallel: fase 0 left, bifurcation to two horizontal tracks ── */
          <div className="space-y-4">
           <div>
-            <div className="grid grid-cols-[auto_auto_1fr] items-center gap-0 w-full py-3">
-              {/* Fase 0 on the left — centered vertically */}
-              <div className="flex flex-col items-center shrink-0">
-                {(() => {
-                  const f0 = fases.find((f: any) => f.numero === 0);
-                  const s = f0?.status || 'bloqueada';
-                  const isActive = s === 'em_andamento';
-                  const isF0Selected = selectedTimelineFase?.fase === 0 && !selectedTimelineFase?.plataforma;
-                  return (
-                    <>
-                      <button onClick={() => setSelectedTimelineFase(isF0Selected ? null : { fase: 0 })} className="relative">
-                        {isActive && (
-                          <div className="absolute inset-0 rounded-full bg-blue-500/20 animate-pulse" />
-                        )}
-                        <div className={`relative flex items-center justify-center w-16 h-16 rounded-full transition-all ${
-                          s === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50' :
-                          isActive ? 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/30 ring-2 ring-blue-400/40' :
-                          s === 'atrasada' ? 'bg-red-500/30 ring-2 ring-red-500/50' :
-                          'bg-white/10'
-                        } ${isF0Selected ? 'ring-2 ring-blue-500/50' : ''}`}>
-                          {s === 'concluida' ? <CheckCircle2 className="h-7 w-7 text-green-400" /> :
-                           s === 'bloqueada' ? <Lock className="h-6 w-6 text-white/50" /> :
-                           s === 'atrasada' ? <AlertTriangle className="h-6 w-6 text-red-400" /> :
-                           <Loader2 className="h-7 w-7 text-white animate-spin" />}
-                        </div>
-                      </button>
-                      <p className={`text-xs mt-1.5 text-center leading-tight max-w-[80px] font-medium ${
-                        s === 'concluida' ? 'text-green-400 font-semibold' :
-                        isActive ? 'text-blue-400 font-semibold' :
-                        s === 'atrasada' ? 'text-red-400 font-semibold' :
-                        'text-white/35'
-                      }`}>Pré-<br/>Requisitos</p>
-                    </>
-                  );
-                })()}
-              </div>
+            <div className="flex items-start gap-0 w-full py-3">
+              {/* Fase 0 + Toggle — aligned to circle center */}
+              <div className="shrink-0 flex items-start gap-0">
+                {/* Fase 0 */}
+                <div className="flex flex-col items-center">
+                  {(() => {
+                    const f0 = fases.find((f: any) => f.numero === 0);
+                    const s = f0?.status || 'bloqueada';
+                    const isActive = s === 'em_andamento';
+                    const isF0Selected = selectedTimelineFase?.fase === 0 && !selectedTimelineFase?.plataforma;
+                    return (
+                      <>
+                        <button onClick={() => setSelectedTimelineFase(isF0Selected ? null : { fase: 0 })} className="relative">
+                          {isActive && (
+                            <div className="absolute inset-1 rounded-full bg-blue-500/20 animate-pulse" />
+                          )}
+                          <div className={`relative flex items-center justify-center w-16 h-16 rounded-full transition-all ${
+                            s === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50' :
+                            isActive ? 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/30 ring-2 ring-blue-400/40' :
+                            s === 'atrasada' ? 'bg-red-500/30 ring-2 ring-red-500/50' :
+                            'bg-white/10'
+                          } ${isF0Selected ? 'ring-2 ring-blue-500/50' : ''}`}>
+                            {s === 'concluida' ? <CheckCircle2 className="h-7 w-7 text-green-400" /> :
+                             s === 'bloqueada' ? <Lock className="h-6 w-6 text-white/50" /> :
+                             s === 'atrasada' ? <AlertTriangle className="h-6 w-6 text-red-400" /> :
+                             <Loader2 className="h-7 w-7 text-white animate-spin" />}
+                          </div>
+                        </button>
+                        <p className={`text-xs mt-1.5 text-center leading-tight max-w-[80px] font-medium ${
+                          s === 'concluida' ? 'text-green-400 font-semibold' :
+                          isActive ? 'text-blue-400 font-semibold' :
+                          s === 'atrasada' ? 'text-red-400 font-semibold' :
+                          'text-white/35'
+                        }`}>Pré-<br/>Requisitos</p>
+                      </>
+                    );
+                  })()}
+                </div>
 
-              {/* Toggle button — grid items-center keeps it centered */}
-              <div className="flex items-center justify-center mx-1">
+                {/* Toggle — marginTop aligns center with circle center (64px circle → center at 32px, 24px button → 32-12=20) */}
                 <button
                   onClick={() => setFlowExpanded(!flowExpanded)}
-                  className="flex items-center justify-center w-6 h-6 rounded-full bg-[#1E293B] border-2 border-white/30 hover:border-white/50 transition-all hover:scale-110"
+                  className="flex items-center justify-center w-6 h-6 rounded-full bg-[#1E293B] border-2 border-white/30 hover:border-white/50 transition-all hover:scale-110 mx-1"
+                  style={{ marginTop: '20px' }}
                 >
                   {flowExpanded ? <Minus className="h-3 w-3 text-white/60" /> : <Plus className="h-3 w-3 text-white/60" />}
                 </button>
