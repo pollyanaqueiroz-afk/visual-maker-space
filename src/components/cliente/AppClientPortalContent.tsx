@@ -544,10 +544,9 @@ export default function AppClientPortalContent({ clienteId }: Props) {
       <button
         key={`${faseNum}-${plataforma || 'shared'}`}
         onClick={() => {
-          if (status === 'bloqueada') return;
           setSelectedTimelineFase(isSelected ? null : { fase: faseNum, plataforma });
         }}
-        className={`relative flex flex-col items-center shrink-0 transition-all ${status === 'bloqueada' ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:scale-105'} ${isSelected ? 'scale-110' : ''}`}
+        className={`relative flex flex-col items-center shrink-0 transition-all cursor-pointer hover:scale-105 ${status === 'bloqueada' ? 'opacity-60' : ''} ${isSelected ? 'scale-110' : ''}`}
       >
         <div className="relative">
           {/* Progress ring */}
@@ -955,12 +954,40 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             </div>
           )}
 
-          {/* Items */}
-          {items.length > 0 ? (
+          {/* Future stage message */}
+          {fase.status === 'bloqueada' && (
+            <div className="text-center py-6 space-y-3 rounded-xl bg-white/5 border border-white/5">
+              <div className="relative mx-auto w-16 h-16">
+                <div className="relative flex items-center justify-center w-full h-full">
+                  <Lock className="h-8 w-8 text-white/20" />
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-white/60">Etapa futura</p>
+                <p className="text-xs text-white/40 mt-1">Você será notificado quando chegar aqui.</p>
+              </div>
+              {items.length > 0 && (
+                <div className="space-y-2 mt-4 opacity-50">
+                  {items.map(item => (
+                    <div key={item.id} className="p-3 rounded-lg bg-white/5 flex items-start gap-3">
+                      <Lock className="h-4 w-4 text-white/20 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-sm text-white/50">{item.texto}</p>
+                        {item.descricao && <p className="text-xs text-white/30 mt-0.5">{item.descricao}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Items (active/completed phases) */}
+          {fase.status !== 'bloqueada' && items.length > 0 ? (
             <div className="space-y-2">
               {items.map(item => renderClientItem(item))}
             </div>
-          ) : clientItemsDone && hasInternalPending ? (
+          ) : fase.status !== 'bloqueada' && clientItemsDone && hasInternalPending ? (
             <div className="text-center py-6 space-y-3 rounded-xl bg-white/5 border border-white/5">
               <div className="relative mx-auto w-16 h-16">
                 <div className="absolute inset-0 rounded-full bg-primary/10 animate-pulse" />
