@@ -1267,14 +1267,14 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-6">
             {/* Left: greeting */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex-1 min-w-0">
-              <h1 className="text-lg font-bold">Olá, {cliente?.nome?.split(' ')[0] || 'Cliente'}! 👋</h1>
-              <p className="text-white/70 text-sm mt-0.5">{getDynamicMessage()}</p>
-              {cliente.data_criacao && (
-                <p className="text-[11px] text-primary/80 mt-1.5 flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  Processo iniciado em <span className="font-semibold text-primary">{format(new Date(cliente.data_criacao), 'dd/MM/yyyy')}</span>
-                </p>
-              )}
+               <h1 className="text-xl font-bold text-white">Olá, {cliente?.nome?.split(' ')[0] || 'Cliente'}! 👋</h1>
+               <p className="text-white/80 text-base mt-1">{getDynamicMessage()}</p>
+               {cliente.data_criacao && (
+                 <p className="text-xs text-primary mt-2 flex items-center gap-1.5">
+                   <Clock className="h-3.5 w-3.5" />
+                   Processo iniciado em <span className="font-semibold text-primary">{format(new Date(cliente.data_criacao), 'dd/MM/yyyy')}</span>
+                 </p>
+               )}
             </motion.div>
             {/* Right: progress bars */}
             <div className="shrink-0 w-full md:w-64 space-y-2">
