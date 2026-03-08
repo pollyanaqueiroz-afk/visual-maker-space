@@ -19,8 +19,9 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { format, differenceInHours, differenceInDays } from 'date-fns';
+import { format, differenceInHours, differenceInDays, addBusinessDays as fnsAddBusinessDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { ExternalLink } from 'lucide-react';
 
 const FASE_NAMES = [
   'Pré-Requisitos',
