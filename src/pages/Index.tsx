@@ -106,7 +106,7 @@ const Index = () => {
 };
 
 function SocialStat({ icon, value, suffix, label }: { icon: React.ReactNode; value: number; suffix: string; label: string }) {
-  const display = useCountUp(value, { duration: 1200, separator: '.' });
+  const display = useCountUp({ end: value, duration: 1200, separator: '.' });
   return (
     <div className="flex items-center gap-2 text-white/70">
       {icon}
