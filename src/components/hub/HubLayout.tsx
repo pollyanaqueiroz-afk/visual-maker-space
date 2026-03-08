@@ -57,7 +57,7 @@ function NotificationBell() {
   });
 
   const markAsRead = async (id: string) => {
-    await supabase.from('app_notificacoes').update({ lida: true } as any).eq('id', id);
+    await (supabase.from('app_notificacoes').update({ lida: true } as any) as any).eq('id', id);
     queryClient.invalidateQueries({ queryKey: ['hub-notifications'] });
   };
 
