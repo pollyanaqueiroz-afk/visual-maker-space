@@ -547,7 +547,17 @@ export default function AplicativosPage() {
     return Array.from(names).sort();
   }, [internalPendencies]);
 
-  const totalInternalPending = useMemo(() => {
+  const uniqueTaskResponsaveis = useMemo(() => {
+    const names = new Set<string>();
+    internalPendencies.forEach(g => g.items.forEach((item: any) => { if (item.responsavel) names.add(item.responsavel); }));
+    return Array.from(names).sort();
+  }, [internalPendencies]);
+
+  const unassignedTaskCount = useMemo(() => {
+    return internalPendencies.reduce((sum, g) => sum + g.items.filter((i: any) => !i.responsavel && !i.feito).length, 0);
+  }, [internalPendencies]);
+
+
     return internalPendencies.reduce((sum, g) => sum + g.items.filter((i: any) => !i.feito).length, 0);
   }, [internalPendencies]);
 
