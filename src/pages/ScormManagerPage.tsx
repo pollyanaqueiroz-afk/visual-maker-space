@@ -96,6 +96,7 @@ export default function ScormManagerPage() {
       setOpen(false);
       setTitle('');
       setDescription('');
+      setPlatformUrl('');
       setFile(null);
     } catch (err: any) {
       toast.error(err.message);
