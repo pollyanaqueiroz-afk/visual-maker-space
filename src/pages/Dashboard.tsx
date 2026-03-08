@@ -275,7 +275,7 @@ export default function Dashboard() {
     } else {
       toast.success(`${ids.length} arte(s) atualizada(s) para "${STATUS_LABELS[status]}"`);
       setSelectedIds(new Set());
-      fetchData();
+      refreshAll();
     }
   };
 
