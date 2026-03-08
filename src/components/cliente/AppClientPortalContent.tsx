@@ -127,6 +127,17 @@ export default function AppClientPortalContent({ clienteId }: Props) {
   const [showMockupForm, setShowMockupForm] = useState(false);
   const [mockupObservations, setMockupObservations] = useState('');
   const [confirmingItemId, setConfirmingItemId] = useState<string | null>(null);
+  // New mockup modal state
+  const [showMockupModal, setShowMockupModal] = useState(false);
+  const [mockupStep, setMockupStep] = useState(1);
+  const [iconOption, setIconOption] = useState<'yes' | 'no' | ''>('');
+  const [iconLogoFile, setIconLogoFile] = useState<File | null>(null);
+  const [iconDescription, setIconDescription] = useState('');
+  const [wantThumb, setWantThumb] = useState(true);
+  const [wantScreenshotsTablet, setWantScreenshotsTablet] = useState(true);
+  const [wantScreenshotsCelular, setWantScreenshotsCelular] = useState(true);
+  const [mockupSubmitting, setMockupSubmitting] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   const CNPJ_TEXT = 'Confirmei que meu CNPJ é ME ou LTDA';
   const EMAIL_CORP_TEXT = 'Tenho um e-mail corporativo';
