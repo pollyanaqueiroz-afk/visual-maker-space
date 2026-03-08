@@ -221,20 +221,13 @@ export default function SchedulingPage() {
     if (!isManager) return;
     const fetchTeam = async () => {
       try {
-        const { data } = await supabase.functions.invoke('manage-users', {
-          body: {},
-          headers: {},
-        });
-        // manage-users returns list via GET with action=list
-        const res = await supabase.functions.invoke('manage-users', {
-          method: 'GET',
-        });
-        // Try fetching via URL params
+        const session = (await supabase.auth.getSession()).data.session;
+        if (!session) return;
         const response = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-users?action=list`,
           {
             headers: {
-              Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+              Authorization: `Bearer ${session.access_token}`,
               apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
             },
           }
