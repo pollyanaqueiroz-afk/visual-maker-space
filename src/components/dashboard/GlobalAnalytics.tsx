@@ -22,6 +22,8 @@ interface AnalyticsImage {
   price_per_art: number | null;
   image_type: string;
   assigned_email: string | null;
+  platform_url?: string;
+  requester_name?: string;
 }
 
 interface DeliveryRecord {
