@@ -2,13 +2,13 @@ import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { Smartphone, Plus, Bell, AlertTriangle, Apple, Bot, Clock, CheckCircle, Users, TrendingUp, ClipboardList, Filter, FileText, ChevronRight, Info } from 'lucide-react';
+import { Smartphone, Plus, Bell, AlertTriangle, Apple, Bot, Clock, CheckCircle, Users, TrendingUp, ClipboardList, Filter, FileText, ChevronRight, Info, UserPlus, UserPen, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/hooks/useAuth';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -18,10 +18,53 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
-import { format, differenceInHours, differenceInDays, addBusinessDays as fnsAddBusinessDays } from 'date-fns';
+import { format, differenceInHours, differenceInDays, addBusinessDays as fnsAddBusinessDays, subMonths, startOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ExternalLink } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+// ResponsavelPicker component
+function ResponsavelPicker({ currentValue, onSelect }: { currentValue: string; onSelect: (nome: string) => void }) {
+  const [input, setInput] = useState(currentValue);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from('app_checklist_items')
+      .select('responsavel')
+      .not('responsavel', 'is', null)
+      .then(({ data }) => {
+        const nomes = [...new Set((data || []).map((d: any) => d.responsavel).filter(Boolean))] as string[];
+        setSuggestions(nomes.sort());
+      });
+  }, []);
+
+  const filtered = suggestions.filter(s =>
+    !input || s.toLowerCase().includes(input.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-2">
+      <Label className="text-xs">Responsável</Label>
+      <Input placeholder="Nome ou email" value={input} onChange={e => setInput(e.target.value)} className="h-8 text-sm" />
+      {filtered.length > 0 && (
+        <div className="space-y-1 max-h-32 overflow-y-auto">
+          {filtered.map(nome => (
+            <button key={nome} onClick={() => onSelect(nome)} className="w-full text-left px-2 py-1 text-sm rounded hover:bg-muted/50">
+              {nome}
+            </button>
+          ))}
+        </div>
+      )}
+      <Button size="sm" className="w-full" disabled={!input.trim()} onClick={() => onSelect(input.trim())}>
+        Atribuir
+      </Button>
+    </div>
+  );
+}
 
 const FASE_NAMES = [
   'Pré-Requisitos',
