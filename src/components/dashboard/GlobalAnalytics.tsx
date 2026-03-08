@@ -76,7 +76,11 @@ export default function GlobalAnalytics() {
           .order('created_at', { ascending: true }),
       ]);
 
-      setImages((imgResult.data || []) as AnalyticsImage[]);
+      setImages((imgResult.data || []).map((img: any) => ({
+        ...img,
+        platform_url: img.briefing_requests?.platform_url || '',
+        requester_name: img.briefing_requests?.requester_name || '',
+      })) as AnalyticsImage[]);
       setDeliveries((delResult.data || []) as DeliveryRecord[]);
       setReviews((revResult.data || []) as ReviewRecord[]);
     } catch (err) {
