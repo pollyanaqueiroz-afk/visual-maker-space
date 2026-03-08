@@ -165,27 +165,8 @@ export function HubSidebar() {
         </SidebarGroup>
         )}
 
-        {/* Processos de Implantação */}
-        {hasVisibleItems(processosModules) && (
-        <SidebarGroup>
-          <Collapsible defaultOpen={isInGroup(processosModules)}>
-            <CollapsibleTrigger className="w-full">
-              <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground transition-colors">
-                <span className="flex items-center gap-2">
-                  <Package className="h-3.5 w-3.5" />
-                  {!collapsed && 'Processos'}
-                </span>
-                {!collapsed && <ChevronDown className="h-3.5 w-3.5 transition-transform [[data-state=open]_&]:rotate-180" />}
-              </SidebarGroupLabel>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                {renderItems(processosModules)}
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </SidebarGroup>
-        )}
+
+
 
         {/* Auditoria Group */}
         {hasVisibleItems(auditoriaModules) && (
