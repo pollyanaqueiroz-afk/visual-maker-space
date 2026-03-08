@@ -1039,7 +1039,7 @@ function ReviewActionDialog({ image, onReviewed }: { image: ImageWithRequest; on
             await (supabase.from('brand_assets' as any).insert({
               platform_url: image.platform_url,
               file_url: d.file_url,
-              file_name: `Entrega — ${IMAGE_TYPE_LABELS[image.image_type as ImageType] || image.image_type}`,
+              file_name: `Entrega — ${imageLabel(image)}`,
               uploaded_by: d.delivered_by_email,
               source: 'delivery',
               briefing_image_id: image.id,
