@@ -43,7 +43,7 @@ export default function ClienteApp() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-5xl mx-auto">
       <AppClientPortalContent clienteId={cliente.id} />
     </div>
   );
