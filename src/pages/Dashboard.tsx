@@ -261,7 +261,7 @@ export default function Dashboard() {
     if (error) { toast.error('Erro ao reverter'); return; }
     await (supabase.from('briefing_reviews' as any).insert({ briefing_image_id: id, action: `reverted_to_${targetStatus}`, reviewed_by: user?.email || 'admin', reviewer_comments: `Status revertido para ${STATUS_LABELS[targetStatus]} por ${user?.email}` }) as any);
     toast.success(`Status revertido para ${STATUS_LABELS[targetStatus]}`);
-    fetchData();
+    refreshAll();
   };
 
   const handleBulkStatusChange = async (status: RequestStatus) => {
