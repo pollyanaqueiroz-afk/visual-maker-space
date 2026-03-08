@@ -184,6 +184,8 @@ export default function SchedulingPage() {
   });
   const [confirmSubmitting, setConfirmSubmitting] = useState(false);
   const [csatMap, setCsatMap] = useState<Record<string, { score: number | null; responded: boolean }>>({});
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [filterCs, setFilterCs] = useState<string>('all');
 
   const fetchMeetings = async () => {
     const { data, error } = await (supabase
