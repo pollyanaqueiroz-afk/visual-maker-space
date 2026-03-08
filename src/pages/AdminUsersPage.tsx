@@ -291,8 +291,11 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Card>
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <Card
+          className={cn("cursor-pointer transition-all hover:shadow-md", !filterRole ? 'ring-2 ring-primary' : '')}
+          onClick={() => { setFilterRole(null); setSelectedIds(new Set()); }}
+        >
           <CardContent className="flex items-center gap-3 p-4">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
               <Users className="h-4 w-4 text-primary" />
@@ -306,8 +309,13 @@ export default function AdminUsersPage() {
         {['admin', 'cs', 'designer', 'implantacao'].map(role => {
           const cfg = getRoleConfig(role);
           const count = users.filter(u => u.roles.includes(role)).length;
+          const isActive = filterRole === role;
           return (
-            <Card key={role}>
+            <Card
+              key={role}
+              className={cn("cursor-pointer transition-all hover:shadow-md", isActive ? 'ring-2 ring-primary' : '')}
+              onClick={() => { setFilterRole(isActive ? null : role); setSelectedIds(new Set()); }}
+            >
               <CardContent className="flex items-center gap-3 p-4">
                 <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${cfg.color.split(' ')[0]}`}>
                   <ShieldCheck className={`h-4 w-4 ${cfg.color.split(' ')[1]}`} />
