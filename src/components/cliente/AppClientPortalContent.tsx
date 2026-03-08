@@ -1122,7 +1122,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                         </p>
                       )}
                     </div>
-                    <p className="text-[10px] text-white/30 text-center mt-2">{footerText}</p>
+                    <p className="text-[10px] text-white/50 text-center mt-2">{footerText}</p>
                   </div>
                 );
               })()}
