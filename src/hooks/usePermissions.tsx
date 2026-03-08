@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useRef, ReactNode, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -117,7 +117,11 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const refreshIdRef = useRef(0);
+
   const refresh = useCallback(async () => {
+    const currentId = ++refreshIdRef.current;
+
     if (!user) {
       setPermissions(new Set());
       setUserRoles([]);
@@ -125,12 +129,13 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-
     // Get user roles
     const { data: roles } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id);
+
+    if (currentId !== refreshIdRef.current) return; // stale
 
     if (!roles || roles.length === 0) {
       setPermissions(new Set());
@@ -147,6 +152,8 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
       .from('role_permissions' as any)
       .select('permission')
       .in('role', userRolesList) as any);
+
+    if (currentId !== refreshIdRef.current) return; // stale
 
     const permSet = new Set<string>(
       (perms || []).map((p: any) => p.permission)
