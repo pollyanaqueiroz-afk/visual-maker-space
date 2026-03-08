@@ -176,7 +176,7 @@ serve(async (req) => {
       .eq("id", image_id);
 
     // Replace delivery link placeholder
-    const baseUrl = app_url || "https://id-preview--47593e69-3789-4cdb-b901-66106c2c2f6d.lovable.app";
+    const baseUrl = app_url || Deno.env.get("APP_URL") || "https://app.curseduca.com";
     const finalHtml = html
       .replace("DELIVERY_LINK_PLACEHOLDER", `${baseUrl}/delivery/${deliveryToken}`)
       .replace("DESIGNER_PANEL_PLACEHOLDER", `${baseUrl}/designer`);
