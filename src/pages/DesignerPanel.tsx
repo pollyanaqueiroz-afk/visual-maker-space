@@ -166,6 +166,7 @@ export default function DesignerPanel() {
                               <TableHead>Cliente</TableHead>
                               <TableHead>Prazo</TableHead>
                               <TableHead>Status</TableHead>
+                              <TableHead>Briefing</TableHead>
                               <TableHead className="text-right">Ação</TableHead>
                             </TableRow>
                           </TableHeader>
