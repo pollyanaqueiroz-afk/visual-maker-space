@@ -37,6 +37,10 @@ const csModules = [
   { title: 'Churn & Upsell', url: '/hub/churn-upsell', icon: TrendingDown, permission: 'dashboards.view' },
 ];
 
+const processosModules = [
+  { title: 'Processos de Implantação', url: '/hub/processos-implantacao', icon: Package, permission: 'carteira.view' },
+];
+
 const auditoriaModules = [
   { title: 'Auditoria', url: '/hub/auditoria', icon: ClipboardCheck, permission: 'admin.view' },
   { title: 'Pipeline', url: '/hub/pipeline', icon: Activity, permission: 'admin.view' },
@@ -159,6 +163,28 @@ export function HubSidebar() {
             <CollapsibleContent>
               <SidebarGroupContent>
                 {renderItems(csModules)}
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
+        )}
+
+        {/* Processos de Implantação */}
+        {hasVisibleItems(processosModules) && (
+        <SidebarGroup>
+          <Collapsible defaultOpen={isInGroup(processosModules)}>
+            <CollapsibleTrigger className="w-full">
+              <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground transition-colors">
+                <span className="flex items-center gap-2">
+                  <Package className="h-3.5 w-3.5" />
+                  {!collapsed && 'Processos'}
+                </span>
+                {!collapsed && <ChevronDown className="h-3.5 w-3.5 transition-transform [[data-state=open]_&]:rotate-180" />}
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                {renderItems(processosModules)}
               </SidebarGroupContent>
             </CollapsibleContent>
           </Collapsible>
