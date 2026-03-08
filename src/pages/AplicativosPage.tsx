@@ -893,28 +893,28 @@ export default function AplicativosPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Munin Dialog */}
-      <Dialog open={muninDialogOpen} onOpenChange={setMuninDialogOpen}>
+      {/* Mooni Dialog */}
+      <Dialog open={mooniDialogOpen} onOpenChange={setMooniDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Criar Munin — {muninClientName}</DialogTitle>
+            <DialogTitle>Criar Mooni — {mooniClientName}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label className="text-sm font-medium">Informações do Munin</Label>
+              <Label className="text-sm font-medium">Informações do Mooni</Label>
               <Textarea
                 className="mt-2 min-h-[200px]"
-                placeholder="Insira aqui todas as informações do Munin necessárias para o designer: paleta de cores, estilo visual, referências, especificações técnicas, links relevantes..."
-                value={muninText}
-                onChange={(e) => setMuninText(e.target.value)}
+                placeholder="Insira aqui todas as informações do Mooni necessárias para o designer: paleta de cores, estilo visual, referências, especificações técnicas, links relevantes..."
+                value={mooniText}
+                onChange={(e) => setMooniText(e.target.value)}
               />
             </div>
             <Button
               className="w-full"
-              disabled={!muninText.trim() || muninSaving}
-              onClick={handleMuninSave}
+              disabled={!mooniText.trim() || mooniSaving}
+              onClick={handleMooniSave}
             >
-              {muninSaving ? <Clock className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
+              {mooniSaving ? <Clock className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
               Salvar e concluir
             </Button>
           </div>
