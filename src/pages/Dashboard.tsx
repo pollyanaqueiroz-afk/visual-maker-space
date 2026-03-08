@@ -467,7 +467,7 @@ export default function Dashboard() {
       <div className="p-6 space-y-8 max-w-[1800px] mx-auto">
         {/* Stats + Links */}
         <div className="flex gap-4 items-start">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 flex-1">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 flex-1">
             <Card className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'total' ? 'ring-2 ring-primary' : ''}`} onClick={() => toggleKPI('total')}>
               <CardContent className="pt-3 pb-3 px-3">
                 <div className="flex items-center gap-1.5 mb-0.5">
