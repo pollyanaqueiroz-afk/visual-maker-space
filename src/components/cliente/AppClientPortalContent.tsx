@@ -1379,7 +1379,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                    <div className="absolute inset-y-0 left-0 rounded-full bg-white/25 transition-all duration-500" style={{ width: `${totalPctBar}%` }} />
                  </div>
                </div>
-               <p className="text-[11px] text-white/40">
+               <p className={`text-lg font-bold mt-1 ${clientPendingBar > 0 ? 'text-red-400' : 'text-green-400'}`}>
                  {clientPendingBar > 0
                    ? `${clientPendingBar} tarefa${clientPendingBar > 1 ? 's' : ''} pendente${clientPendingBar > 1 ? 's' : ''}`
                    : 'Todas as suas tarefas concluídas ✅'}
