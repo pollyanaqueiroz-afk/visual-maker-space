@@ -64,6 +64,7 @@ interface ImageWithRequest {
   professional_photo_url: string | null;
   orientation: string | null;
   observations: string | null;
+  extra_info: string | null;
   status: RequestStatus;
   sort_order: number;
   created_at: string;

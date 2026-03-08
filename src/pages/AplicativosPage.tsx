@@ -892,6 +892,34 @@ export default function AplicativosPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Munin Dialog */}
+      <Dialog open={muninDialogOpen} onOpenChange={setMuninDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Criar Munin — {muninClientName}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-sm font-medium">Informações do Munin</Label>
+              <Textarea
+                className="mt-2 min-h-[200px]"
+                placeholder="Insira aqui todas as informações do Munin necessárias para o designer: paleta de cores, estilo visual, referências, especificações técnicas, links relevantes..."
+                value={muninText}
+                onChange={(e) => setMuninText(e.target.value)}
+              />
+            </div>
+            <Button
+              className="w-full"
+              disabled={!muninText.trim() || muninSaving}
+              onClick={handleMuninSave}
+            >
+              {muninSaving ? <Clock className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
+              Salvar e concluir
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
