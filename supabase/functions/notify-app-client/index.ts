@@ -24,6 +24,62 @@ serve(async (req) => {
       body = null;
     }
 
+    // Handle prazo_loja_excedido email
+    if (body?.tipo === 'prazo_loja_excedido') {
+      const resendKey = Deno.env.get("RESEND_API_KEY");
+      if (resendKey) {
+        // Fetch analysts and managers
+        const { data: userRoles } = await supabase
+          .from('user_roles')
+          .select('user_id, role')
+          .in('role', ['analista_implantacao', 'gerente_implantacao', 'admin']);
+
+        const userIds = [...new Set((userRoles || []).map((r: any) => r.user_id))];
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('email')
+          .in('user_id', userIds);
+
+        const emails = (profiles || []).map((p: any) => p.email).filter(Boolean);
+        const titulo = body.titulo || '🚨 Prazo Excedido';
+        const mensagem = body.mensagem || '';
+
+        for (const email of emails) {
+          try {
+            await fetch("https://api.resend.com/emails", {
+              method: "POST",
+              headers: { "Authorization": `Bearer ${resendKey}`, "Content-Type": "application/json" },
+              body: JSON.stringify({
+                from: "Curseduca Apps <apps@membros.app.br>",
+                to: [email],
+                subject: titulo,
+                html: `
+                  <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+                    <div style="background: #DC2626; padding: 20px; border-radius: 12px 12px 0 0; text-align: center;">
+                      <h2 style="color: white; margin: 0;">🚨 Prazo Excedido</h2>
+                    </div>
+                    <div style="background: #1E293B; padding: 24px; border-radius: 0 0 12px 12px; color: #94a3b8;">
+                      <p style="font-size: 15px; line-height: 1.6;">${mensagem}</p>
+                      <p style="margin-top: 16px; font-size: 13px; color: #64748b;">
+                        Acesse a Gestão de Aplicativos para verificar e tomar as devidas providências.
+                      </p>
+                    </div>
+                  </div>
+                `,
+              }),
+            });
+          } catch (emailErr) {
+            console.error("Email send failed (non-blocking):", emailErr);
+          }
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ ok: true, tipo: 'prazo_loja_excedido' }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Handle app_publicado email
     if (body?.tipo === 'app_publicado') {
       const { cliente_id, plataforma, url_loja } = body;

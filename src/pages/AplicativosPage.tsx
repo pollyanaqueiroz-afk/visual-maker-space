@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -302,11 +302,22 @@ export default function AplicativosPage() {
       return { clienteId, cliente, items };
     }).filter(g => {
       if (!g.cliente) return false;
-      // Filter out items from phases the client has already passed (backfilled items), but keep Mooni tasks
-      g.items = g.items.filter((item: any) => item.fase_numero >= g.cliente!.fase_atual || item.tipo === 'mooni' || item.texto === 'Criar Mooni');
+      // Filter out items from phases the client has already passed (backfilled items), but keep Mooni tasks and alerts
+      g.items = g.items.filter((item: any) => item.fase_numero >= g.cliente!.fase_atual || item.tipo === 'mooni' || item.texto === 'Criar Mooni' || item.tipo === 'alerta_prazo');
+      // Sort alerta_prazo items first within each group
+      g.items.sort((a: any, b: any) => {
+        if (a.tipo === 'alerta_prazo' && b.tipo !== 'alerta_prazo') return -1;
+        if (a.tipo !== 'alerta_prazo' && b.tipo === 'alerta_prazo') return 1;
+        return 0;
+      });
       return g.items.length > 0;
     })
       .sort((a, b) => {
+        // Groups with alerts come first
+        const aAlert = a.items.some((i: any) => i.tipo === 'alerta_prazo' && !i.feito);
+        const bAlert = b.items.some((i: any) => i.tipo === 'alerta_prazo' && !i.feito);
+        if (aAlert && !bAlert) return -1;
+        if (!aAlert && bAlert) return 1;
         const aPriority = a.items.some((i: any) => i.texto?.startsWith('⚠️ PRIORIDADE'));
         const bPriority = b.items.some((i: any) => i.texto?.startsWith('⚠️ PRIORIDADE'));
         if (aPriority && !bPriority) return -1;
@@ -420,6 +431,20 @@ export default function AplicativosPage() {
     }
     return result;
   };
+
+  // Toast alert for overdue deadlines
+  useEffect(() => {
+    if (!allChecklist.length) return;
+    const alertas = allChecklist.filter((i: any) => i.tipo === 'alerta_prazo' && !i.feito);
+    if (alertas.length > 0) {
+      const clienteIds = [...new Set(alertas.map((a: any) => a.cliente_id))];
+      const clienteNomes = clienteIds.map(id => clientes.find(c => c.id === id)?.nome).filter(Boolean);
+      toast.error(
+        `🚨 ${alertas.length} prazo${alertas.length > 1 ? 's' : ''} excedido${alertas.length > 1 ? 's' : ''} — ${clienteNomes.join(', ')}`,
+        { duration: 8000, id: 'prazo-alertas' }
+      );
+    }
+  }, [allChecklist, clientes]);
 
   const handlePubUrlConfirm = async (item: any, clienteId: string) => {
     const urlInput = pubUrlInputs[item.id]?.trim();
@@ -956,6 +981,42 @@ export default function AplicativosPage() {
                           const isPriority = item.texto?.startsWith('⚠️ PRIORIDADE');
                           const isMooni = item.tipo === 'mooni' || item.texto === 'Criar Mooni';
                           const isPubUrl = item.tipo === 'publicacao_url';
+
+                          // Special rendering for alerta_prazo
+                          if (item.tipo === 'alerta_prazo') {
+                            return (
+                              <div key={item.id} className={`grid grid-cols-[32px_1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-3 items-center ${isDone ? 'opacity-60' : 'bg-destructive/5 border-l-4 border-destructive'}`}>
+                                <AlertTriangle className={`h-4 w-4 ${isDone ? 'text-muted-foreground' : 'text-destructive'}`} />
+                                <div className="min-w-0">
+                                  <p className={`text-sm font-semibold ${isDone ? 'line-through text-muted-foreground' : 'text-destructive'}`}>{item.texto}</p>
+                                  <p className={`text-xs mt-0.5 ${isDone ? 'text-muted-foreground' : 'text-destructive/60'}`}>{item.descricao}</p>
+                                  {isDone && item.feito_em && (
+                                    <p className="text-[10px] text-green-500/70 mt-0.5">Resolvido em {format(new Date(item.feito_em), "dd/MM/yy 'às' HH:mm")}</p>
+                                  )}
+                                  {!isDone && (
+                                    <Checkbox
+                                      checked={false}
+                                      className="mt-2 border-destructive/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                                      onCheckedChange={(checked) => {
+                                        if (checked) completeTask.mutate(item.id);
+                                      }}
+                                    />
+                                  )}
+                                </div>
+                                <Badge variant="outline" className={`text-[10px] w-fit ${ator.color}`}>{ator.text}</Badge>
+                                <span className="text-xs text-muted-foreground">{dataEntrada ? format(dataEntrada, 'dd/MM/yy') : '—'}</span>
+                                <span className="text-xs text-muted-foreground">{format(createdAt, 'dd/MM/yy')}</span>
+                                <div>
+                                  {isDone ? (
+                                    <Badge className="text-[10px] bg-green-500/10 text-green-500 border border-green-500/20">✅ Resolvido</Badge>
+                                  ) : (
+                                    <Badge variant="destructive" className="text-[10px]">URGENTE</Badge>
+                                  )}
+                                </div>
+                                <Badge variant="outline" className="text-[10px] w-fit">Fase {item.fase_numero}</Badge>
+                              </div>
+                            );
+                          }
 
                           // Special rendering for publicacao_url
                           if (isPubUrl) {

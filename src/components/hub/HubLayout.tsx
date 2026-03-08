@@ -1,8 +1,13 @@
 import { ReactNode } from 'react';
 import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { HubSidebar } from './HubSidebar';
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
 
 function SidebarToggleButton() {
   const { state, toggleSidebar } = useSidebar();
@@ -19,6 +24,81 @@ function SidebarToggleButton() {
   );
 }
 
+function NotificationBell() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const { data: notifications = [] } = useQuery({
+    queryKey: ['hub-notifications', user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data: roles } = await supabase.from('user_roles').select('role').eq('user_id', user!.id);
+      const userRoles = (roles || []).map((r: any) => r.role);
+
+      const destinatarios: string[] = [];
+      if (userRoles.includes('analista_implantacao') || userRoles.includes('admin') || userRoles.includes('implantacao')) destinatarios.push('analista');
+      if (userRoles.includes('gerente_implantacao') || userRoles.includes('admin')) destinatarios.push('gerente');
+
+      if (destinatarios.length === 0) return [];
+
+      const { data, error } = await (supabase
+        .from('app_notificacoes')
+        .select('*')
+        .in('destinatario', destinatarios)
+        .eq('canal', 'portal') as any)
+        .eq('lida', false)
+        .order('agendado_para', { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+
+  const markAsRead = async (id: string) => {
+    await (supabase.from('app_notificacoes').update({ lida: true } as any) as any).eq('id', id);
+    queryClient.invalidateQueries({ queryKey: ['hub-notifications'] });
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button className="relative h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer">
+          <Bell className="h-4 w-4" />
+          {notifications.length > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground px-1">
+              {notifications.length}
+            </span>
+          )}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-0" align="end">
+        <div className="p-3 border-b border-border">
+          <h3 className="text-sm font-semibold">Notificações</h3>
+        </div>
+        <div className="max-h-80 overflow-y-auto">
+          {notifications.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">Nenhuma notificação</p>
+          ) : notifications.map((n: any) => (
+            <div
+              key={n.id}
+              className="p-3 border-b border-border/50 hover:bg-muted/30 cursor-pointer"
+              onClick={() => markAsRead(n.id)}
+            >
+              <p className="text-sm font-medium">{n.titulo}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{n.mensagem}</p>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                {n.agendado_para ? format(new Date(n.agendado_para), "dd/MM 'às' HH:mm") : ''}
+              </p>
+            </div>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 interface Props {
   children: ReactNode;
 }
@@ -29,8 +109,10 @@ export default function HubLayout({ children }: Props) {
       <div className="min-h-screen flex w-full">
         <HubSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-12 flex items-center border-b border-border/40 px-4">
+          <header className="h-12 flex items-center border-b border-border/40 px-4 gap-2">
             <SidebarToggleButton />
+            <div className="flex-1" />
+            <NotificationBell />
           </header>
           <main className="flex-1 p-6 min-w-0">
             {children}

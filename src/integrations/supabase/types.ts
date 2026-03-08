@@ -430,6 +430,7 @@ export type Database = {
           enviado_em: string | null
           erro: string | null
           id: string
+          lida: boolean | null
           mensagem: string
           tipo: string
           titulo: string
@@ -444,6 +445,7 @@ export type Database = {
           enviado_em?: string | null
           erro?: string | null
           id?: string
+          lida?: boolean | null
           mensagem: string
           tipo: string
           titulo: string
@@ -458,6 +460,7 @@ export type Database = {
           enviado_em?: string | null
           erro?: string | null
           id?: string
+          lida?: boolean | null
           mensagem?: string
           tipo?: string
           titulo?: string
@@ -1514,6 +1517,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      verificar_prazos_lojas: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role:
