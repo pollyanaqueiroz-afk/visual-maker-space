@@ -226,6 +226,17 @@ Deno.serve(async (req) => {
 
       if (error) throw error;
 
+      // Insert review record if reviewed_by is provided
+      if (reviewed_by) {
+        const reviewAction = status === "completed" ? "approved" : status === "in_progress" ? "revision_requested" : status;
+        await supabase.from("briefing_reviews").insert({
+          briefing_image_id: image_id,
+          action: reviewAction,
+          reviewed_by,
+          reviewer_comments: reviewer_comments || null,
+        });
+      }
+
       // Archive approved delivery as brand asset
       if (status === "completed") {
         const { data: imgData } = await supabase
