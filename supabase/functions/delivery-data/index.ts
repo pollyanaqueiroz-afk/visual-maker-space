@@ -22,6 +22,8 @@ Deno.serve(async (req) => {
     const comments = typeof body.comments === "string" ? body.comments.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "").slice(0, 2000) : "";
     const delivered_by_email = typeof body.delivered_by_email === "string" ? body.delivered_by_email.replace(/<[^>]*>/g, "").trim().slice(0, 255) : "";
     const revision_count = typeof body.revision_count === "number" && body.revision_count >= 0 && body.revision_count <= 100 ? body.revision_count : undefined;
+    const reviewed_by = typeof body.reviewed_by === "string" ? body.reviewed_by.replace(/<[^>]*>/g, "").trim().slice(0, 255) : "";
+    const reviewer_comments = typeof body.reviewer_comments === "string" ? body.reviewer_comments.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "").slice(0, 2000) : "";
 
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     const validStatuses = ["pending", "in_progress", "review", "completed", "cancelled"];
@@ -49,7 +51,7 @@ Deno.serve(async (req) => {
 
       const { data, error } = await supabase
         .from("briefing_images")
-        .select("id, image_type, product_name, image_text, deadline, assigned_email, status, observations, orientation, briefing_requests!inner(requester_name, platform_url)")
+        .select("id, image_type, product_name, image_text, deadline, assigned_email, status, observations, orientation, font_suggestion, element_suggestion, professional_photo_url, extra_info, briefing_requests!inner(requester_name, platform_url)")
         .eq("delivery_token", token)
         .single();
 
@@ -223,6 +225,17 @@ Deno.serve(async (req) => {
         .eq("id", image_id);
 
       if (error) throw error;
+
+      // Insert review record if reviewed_by is provided
+      if (reviewed_by) {
+        const reviewAction = status === "completed" ? "approved" : status === "in_progress" ? "revision_requested" : status;
+        await supabase.from("briefing_reviews").insert({
+          briefing_image_id: image_id,
+          action: reviewAction,
+          reviewed_by,
+          reviewer_comments: reviewer_comments || null,
+        });
+      }
 
       // Archive approved delivery as brand asset
       if (status === "completed") {

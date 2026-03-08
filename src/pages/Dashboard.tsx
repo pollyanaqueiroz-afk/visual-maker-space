@@ -1507,51 +1507,22 @@ function ReviewActionDialog({ image, onReviewed }: { image: ImageWithRequest; on
   const handleReview = async (action: 'approved' | 'revision_requested') => {
     setSubmitting(true);
     try {
-      // Insert review record
-      const { error: revErr } = await (supabase.from('briefing_reviews' as any).insert({
-        briefing_image_id: image.id,
-        action,
-        reviewer_comments: comments || null,
-        reviewed_by: user?.email || 'admin',
-      }) as any);
-
-      if (revErr) throw revErr;
-
-      // Update image status and revision count
       const newStatus = action === 'approved' ? 'completed' : 'in_progress';
-      const updatePayload: any = { status: newStatus };
-      if (action === 'revision_requested') {
-        updatePayload.revision_count = (image.revision_count || 0) + 1;
-      }
-      const { error: updErr } = await supabase
-        .from('briefing_images')
-        .update(updatePayload)
-        .eq('id', image.id);
+      
+      // Usar edge function para atualizar status (ela cuida de brand_assets e review server-side)
+      const { error: statusErr } = await supabase.functions.invoke('delivery-data', {
+        body: {
+          action: 'update_status',
+          image_id: image.id,
+          status: newStatus,
+          revision_count: action === 'revision_requested' ? (image.revision_count || 0) + 1 : undefined,
+          reviewed_by: user?.email || 'admin',
+          reviewer_comments: comments || null,
+        },
+      });
+      if (statusErr) throw statusErr;
 
-      if (updErr) throw updErr;
-
-      // On approval, save deliveries to brand assets
-      if (action === 'approved') {
-        const { data: deliveries } = await (supabase
-          .from('briefing_deliveries' as any)
-          .select('file_url, delivered_by_email')
-          .eq('briefing_image_id', image.id) as any);
-
-        if (deliveries && deliveries.length > 0) {
-          for (const d of deliveries) {
-            await (supabase.from('brand_assets' as any).insert({
-              platform_url: image.platform_url,
-              file_url: d.file_url,
-              file_name: `Entrega — ${imageLabel(image)}`,
-              uploaded_by: d.delivered_by_email,
-              source: 'delivery',
-              briefing_image_id: image.id,
-            }) as any);
-          }
-        }
-      }
-
-      // Send revision notification email to designer
+      // Notificar designer na refação
       if (action === 'revision_requested' && image.assigned_email) {
         supabase.functions.invoke('notify-revision', {
           body: {
@@ -1560,9 +1531,7 @@ function ReviewActionDialog({ image, onReviewed }: { image: ImageWithRequest; on
             reviewed_by: user?.email || 'admin',
             app_url: window.location.origin,
           },
-        }).then(({ error }) => {
-          if (error) console.error('Failed to send revision email:', error);
-        });
+        }).catch(err => console.error('Notify error:', err));
       }
 
       toast.success(action === 'approved' ? 'Arte aprovada!' : 'Refação solicitada — designer será notificado.');
@@ -1571,7 +1540,7 @@ function ReviewActionDialog({ image, onReviewed }: { image: ImageWithRequest; on
       onReviewed();
     } catch (err: any) {
       console.error(err);
-      toast.error('Erro ao registrar revisão');
+      toast.error('Erro: ' + (err.message || 'Tente novamente'));
     } finally {
       setSubmitting(false);
     }
