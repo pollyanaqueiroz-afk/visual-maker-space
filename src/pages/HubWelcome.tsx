@@ -59,6 +59,7 @@ export default function HubWelcome() {
   const [selectedPending, setSelectedPending] = useState<PendingItem | null>(null);
   const [pendingDialogOpen, setPendingDialogOpen] = useState(false);
   const [pendingRefresh, setPendingRefresh] = useState(0);
+  const [summaryStats, setSummaryStats] = useState({ pendingArts: 0, overdueArts: 0, todayMeetings: 0 });
 
   useEffect(() => {
     if (!user) return;
