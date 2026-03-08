@@ -1319,7 +1319,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 <button onClick={() => setSelectedTimelineFase(
                   selectedTimelineFase?.fase === 0 && !selectedTimelineFase?.plataforma ? null : { fase: 0 }
                 )}>
-                  <div className={`relative flex items-center justify-center w-12 h-12 rounded-full transition-colors ${
+                  <div className={`relative flex items-center justify-center w-14 h-14 rounded-full transition-colors ${
                     (() => {
                       const f0 = fases.find((f: any) => f.numero === 0);
                       const s = f0?.status || 'bloqueada';
@@ -1332,14 +1332,14 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                     {(() => {
                       const f0 = fases.find((f: any) => f.numero === 0);
                       const s = f0?.status || 'bloqueada';
-                      return s === 'concluida' ? <CheckCircle2 className="h-5 w-5 text-green-400" /> :
-                        s === 'bloqueada' ? <Lock className="h-4 w-4 text-white/30" /> :
-                        s === 'atrasada' ? <AlertTriangle className="h-4 w-4 text-red-400" /> :
+                      return s === 'concluida' ? <CheckCircle2 className="h-6 w-6 text-green-400" /> :
+                        s === 'bloqueada' ? <Lock className="h-5 w-5 text-white/30" /> :
+                        s === 'atrasada' ? <AlertTriangle className="h-5 w-5 text-red-400" /> :
                         <span className="text-sm font-bold text-primary">0</span>;
                     })()}
                   </div>
                 </button>
-                <p className={`text-[9px] mt-1 text-center leading-tight max-w-[60px] ${
+                <p className={`text-[10px] mt-1 text-center leading-tight max-w-[60px] ${
                   (() => {
                     const f0 = fases.find((f: any) => f.numero === 0);
                     const s = f0?.status || 'bloqueada';
