@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
     const [reviewResult, pendingResult, completedResult, totalResult, prodResult, allResult] = await Promise.all([
       supabase
         .from("briefing_images")
-        .select("id, image_type, product_name, revision_count, request_id, briefing_requests!inner(requester_name, platform_url)")
+        .select("id, image_type, product_name, observations, revision_count, request_id, assigned_email, briefing_requests!inner(requester_name, platform_url)")
         .in("request_id", requestIds)
         .eq("status", "review")
         .order("created_at", { ascending: true }),
@@ -110,13 +110,13 @@ Deno.serve(async (req) => {
         .in("request_id", requestIds),
       supabase
         .from("briefing_images")
-        .select("id, image_type, product_name, deadline, status")
+        .select("id, image_type, product_name, observations, deadline, status, assigned_email")
         .in("request_id", requestIds)
         .in("status", ["pending", "in_progress"])
         .order("deadline", { ascending: true, nullsFirst: false }),
       supabase
         .from("briefing_images")
-        .select("id, image_type, product_name, deadline, status, image_text, observations, font_suggestion, element_suggestion, orientation, revision_count, created_at")
+        .select("id, image_type, product_name, deadline, status, image_text, observations, font_suggestion, element_suggestion, orientation, revision_count, created_at, assigned_email")
         .in("request_id", requestIds)
         .order("created_at", { ascending: false }),
     ]);
