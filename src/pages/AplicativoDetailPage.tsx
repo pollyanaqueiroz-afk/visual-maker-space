@@ -35,6 +35,12 @@ export default function AplicativoDetailPage() {
   const [newMessage, setNewMessage] = useState('');
   const [validationDialogOpen, setValidationDialogOpen] = useState(false);
   const [validationItemId, setValidationItemId] = useState<string | null>(null);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState('');
+  const [editingDesc, setEditingDesc] = useState('');
+  const [editingClient, setEditingClient] = useState(false);
+  const [clientForm, setClientForm] = useState({ nome: '', email: '', empresa: '', plataforma: '', responsavel_nome: '', prazo_estimado: '' });
+  const [manualFase, setManualFase] = useState<string>('');
 
   const { data: cliente } = useQuery({
     queryKey: ['app-cliente', clienteId],
