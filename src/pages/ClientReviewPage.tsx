@@ -25,6 +25,7 @@ interface ReviewableImage {
   id: string;
   image_type: string;
   product_name: string | null;
+  observations: string | null;
   assigned_email: string | null;
   revision_count: number;
   request_id: string;
@@ -41,9 +42,10 @@ interface ReviewableImage {
 
 interface ClientReviewPageProps {
   injectedEmail?: string;
+  embedded?: boolean;
 }
 
-export default function ClientReviewPage({ injectedEmail }: ClientReviewPageProps = {}) {
+export default function ClientReviewPage({ injectedEmail, embedded = false }: ClientReviewPageProps = {}) {
   const navigate = useNavigate();
   const [email, setEmail] = useState(injectedEmail || '');
   const [authenticated, setAuthenticated] = useState(!!injectedEmail);
@@ -295,7 +297,9 @@ export default function ClientReviewPage({ injectedEmail }: ClientReviewPageProp
   };
 
   const allDone = currentIndex >= images.length && images.length > 0;
-  const imageTypeLabel = currentImage ? (IMAGE_TYPE_LABELS[currentImage.image_type as ImageType] || currentImage.image_type) : '';
+  const imageTypeLabel = currentImage 
+    ? `${IMAGE_TYPE_LABELS[currentImage.image_type as ImageType] || currentImage.image_type}${currentImage.observations ? ' — ' + currentImage.observations : ''}`
+    : '';
 
   const handleDownloadZip = async () => {
     if (!platformUrls.length) return;
@@ -351,6 +355,11 @@ export default function ClientReviewPage({ injectedEmail }: ClientReviewPageProp
     }
   };
 
+  const cardBg = embedded ? 'bg-white/5 border-white/10' : 'bg-card/80 border-border';
+  const cardBgSolid = embedded ? 'bg-[#1E293B] border-white/10' : 'bg-card border-border';
+  const textMain = embedded ? 'text-white' : 'text-foreground';
+  const textSub = embedded ? 'text-white/50' : 'text-muted-foreground';
+
   const StatsBar = () => (
     <div className="px-4 mb-8">
       {/* Stats grid */}
@@ -361,15 +370,15 @@ export default function ClientReviewPage({ injectedEmail }: ClientReviewPageProp
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 }}
             onClick={() => setShowAllImagesDialog(true)}
-            className="relative overflow-hidden rounded-2xl border border-border bg-card/80 backdrop-blur-sm p-4 text-center shadow-sm hover:shadow-md transition-all cursor-pointer group"
+            className={`relative overflow-hidden rounded-2xl ${cardBg} backdrop-blur-sm p-4 text-center shadow-sm hover:shadow-md transition-all cursor-pointer group`}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent group-hover:from-primary/10 transition-colors" />
             <div className="relative">
               <div className="mx-auto w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
                 <ImageIcon className="h-5 w-5 text-primary" />
               </div>
-              <p className="text-2xl font-extrabold text-foreground">{totalImages}</p>
-              <p className="text-[11px] text-muted-foreground font-medium flex items-center justify-center gap-1">
+              <p className={`text-2xl font-extrabold ${textMain}`}>{totalImages}</p>
+              <p className={`text-[11px] ${textSub} font-medium flex items-center justify-center gap-1`}>
                 Solicitadas <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
               </p>
             </div>
@@ -381,15 +390,15 @@ export default function ClientReviewPage({ injectedEmail }: ClientReviewPageProp
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="relative overflow-hidden rounded-2xl border border-border bg-card/80 backdrop-blur-sm p-4 text-center shadow-sm"
+            className={`relative overflow-hidden rounded-2xl ${cardBg} backdrop-blur-sm p-4 text-center shadow-sm`}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-muted/5 to-transparent" />
             <div className="relative">
               <div className="mx-auto w-10 h-10 rounded-xl bg-muted flex items-center justify-center mb-2">
-                <Clock className="h-5 w-5 text-muted-foreground" />
+                <Clock className={`h-5 w-5 ${textSub}`} />
               </div>
-              <p className="text-2xl font-extrabold text-foreground">{requestedCount}</p>
-              <p className="text-[11px] text-muted-foreground font-medium">Solicitado</p>
+              <p className={`text-2xl font-extrabold ${textMain}`}>{requestedCount}</p>
+              <p className={`text-[11px] ${textSub} font-medium`}>Solicitado</p>
             </div>
           </motion.div>
         )}
@@ -400,7 +409,7 @@ export default function ClientReviewPage({ injectedEmail }: ClientReviewPageProp
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
             onClick={() => setShowProductionDialog(true)}
-            className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-card/80 backdrop-blur-sm p-4 text-center shadow-sm hover:shadow-md transition-all cursor-pointer group"
+            className={`relative overflow-hidden rounded-2xl border border-amber-500/20 ${embedded ? 'bg-white/5' : 'bg-card/80'} backdrop-blur-sm p-4 text-center shadow-sm hover:shadow-md transition-all cursor-pointer group`}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent group-hover:from-amber-500/10 transition-colors" />
             <div className="relative">
@@ -408,7 +417,7 @@ export default function ClientReviewPage({ injectedEmail }: ClientReviewPageProp
                 <Clock className="h-5 w-5 text-amber-500" />
               </div>
               <p className="text-2xl font-extrabold text-amber-500">{pendingCount}</p>
-              <p className="text-[11px] text-muted-foreground font-medium flex items-center justify-center gap-1">
+              <p className={`text-[11px] ${textSub} font-medium flex items-center justify-center gap-1`}>
                 Em produção <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
               </p>
             </div>
@@ -420,7 +429,7 @@ export default function ClientReviewPage({ injectedEmail }: ClientReviewPageProp
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
-            className="relative overflow-hidden rounded-2xl border border-primary/20 bg-card/80 backdrop-blur-sm p-4 text-center shadow-sm"
+            className={`relative overflow-hidden rounded-2xl border border-primary/20 ${embedded ? 'bg-white/5' : 'bg-card/80'} backdrop-blur-sm p-4 text-center shadow-sm`}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
             <div className="relative">
@@ -428,7 +437,7 @@ export default function ClientReviewPage({ injectedEmail }: ClientReviewPageProp
                 <Eye className="h-5 w-5 text-primary" />
               </div>
               <p className="text-2xl font-extrabold text-primary">{images.length}</p>
-              <p className="text-[11px] text-muted-foreground font-medium">Para aprovar</p>
+              <p className={`text-[11px] ${textSub} font-medium`}>Para aprovar</p>
             </div>
           </motion.div>
         )}
@@ -438,7 +447,7 @@ export default function ClientReviewPage({ injectedEmail }: ClientReviewPageProp
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="relative overflow-hidden rounded-2xl border border-primary/20 bg-card/80 backdrop-blur-sm p-4 text-center shadow-sm"
+            className={`relative overflow-hidden rounded-2xl border border-primary/20 ${embedded ? 'bg-white/5' : 'bg-card/80'} backdrop-blur-sm p-4 text-center shadow-sm`}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
             <div className="relative">
@@ -446,7 +455,7 @@ export default function ClientReviewPage({ injectedEmail }: ClientReviewPageProp
                 <CheckCircle className="h-5 w-5 text-primary" />
               </div>
               <p className="text-2xl font-extrabold text-primary">{totalApproved}</p>
-              <p className="text-[11px] text-muted-foreground font-medium">Aprovadas</p>
+              <p className={`text-[11px] ${textSub} font-medium`}>Aprovadas</p>
             </div>
           </motion.div>
         )}
@@ -464,7 +473,7 @@ export default function ClientReviewPage({ injectedEmail }: ClientReviewPageProp
             variant="outline"
             size="sm"
             onClick={() => navigate(`/assets/${encodeURIComponent(platformUrls[0])}`)}
-            className="rounded-full gap-2 h-9 px-4 bg-card/60 backdrop-blur-sm border-border hover:bg-card"
+            className={`rounded-full gap-2 h-9 px-4 ${embedded ? 'bg-white/5 border-white/10 text-white hover:bg-white/10' : 'bg-card/60 backdrop-blur-sm border-border hover:bg-card'}`}
           >
             <FolderOpen className="h-4 w-4" />
             Minha Pasta
@@ -477,7 +486,7 @@ export default function ClientReviewPage({ injectedEmail }: ClientReviewPageProp
             size="sm"
             onClick={handleDownloadZip}
             disabled={downloadingZip}
-            className="rounded-full gap-2 h-9 px-4 bg-card/60 backdrop-blur-sm border-border hover:bg-card"
+            className={`rounded-full gap-2 h-9 px-4 ${embedded ? 'bg-white/5 border-white/10 text-white hover:bg-white/10' : 'bg-card/60 backdrop-blur-sm border-border hover:bg-card'}`}
           >
             {downloadingZip ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -504,7 +513,7 @@ export default function ClientReviewPage({ injectedEmail }: ClientReviewPageProp
               <p className="text-muted-foreground text-sm text-center py-4">Nenhuma arte em produção</p>
             ) : (
               productionImages.map((img) => {
-                const typeLabel = IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type;
+                const typeLabel = `${IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type}${(img as any).observations ? ' — ' + (img as any).observations : ''}`;
                 const isLate = img.deadline && new Date(img.deadline) < new Date();
                 return (
                   <div
@@ -562,7 +571,7 @@ export default function ClientReviewPage({ injectedEmail }: ClientReviewPageProp
               <p className="text-muted-foreground text-sm text-center py-4">Nenhuma arte encontrada</p>
             ) : (
               allImagesData.map((img) => {
-                const typeLabel = IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type;
+                const typeLabel = `${IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type}${img.observations ? ' — ' + img.observations : ''}`;
                 const statusMap: Record<string, { label: string; color: string }> = {
                   pending: { label: 'Aguardando', color: 'text-amber-500 border-amber-500/30' },
                   in_progress: { label: 'Em andamento', color: 'text-info border-info/30' },
@@ -681,62 +690,81 @@ export default function ClientReviewPage({ injectedEmail }: ClientReviewPageProp
     </div>
   );
 
-  const PageWrapper = ({ children, headerTitle, headerSubtitle, showStats = false }: { children: React.ReactNode; headerTitle: string; headerSubtitle?: string; showStats?: boolean }) => (
-    <div className="min-h-screen bg-background">
-      {/* Hero header with enhanced gradient */}
-      <div className="relative w-full overflow-hidden" style={{ minHeight: '200px' }}>
-        <img
-          src="/images/bg-curseduca.png"
-          alt="Curseduca"
-          className="absolute inset-0 w-full h-full object-cover scale-105"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-background" />
-        {/* Decorative blur orbs */}
-        <div className="absolute top-8 left-1/4 w-48 h-48 bg-primary/20 rounded-full blur-[80px]" />
-        <div className="absolute bottom-4 right-1/4 w-32 h-32 bg-primary/15 rounded-full blur-[60px]" />
+  const PageWrapper = ({ children, headerTitle, headerSubtitle, showStats = false }: { children: React.ReactNode; headerTitle: string; headerSubtitle?: string; showStats?: boolean }) => {
+    if (embedded) {
+      return (
+        <div className="space-y-6">
+          {showStats && <StatsBar />}
+          {showStats && <ReviewHistory email={email} visible={showHistory} onToggle={() => setShowHistory(v => !v)} />}
+          {children}
+        </div>
+      );
+    }
 
-        <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 py-10 min-h-[200px]">
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full px-5 py-2 mb-4 shadow-lg"
-          >
-            <Sparkles className="h-4 w-4 text-primary-foreground" />
-            <span className="text-primary-foreground/90 text-sm font-semibold tracking-wide">Validação de Artes</span>
-          </motion.div>
-          <motion.h1
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-3xl sm:text-4xl font-extrabold text-primary-foreground drop-shadow-xl"
-            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-          >
-            {headerTitle}
-          </motion.h1>
-          {headerSubtitle && (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="text-primary-foreground/70 mt-3 text-sm sm:text-base max-w-xl"
+    return (
+      <div className="min-h-screen bg-background">
+        {/* Hero header with enhanced gradient */}
+        <div className="relative w-full overflow-hidden" style={{ minHeight: '200px' }}>
+          <img
+            src="/images/bg-curseduca.png"
+            alt="Curseduca"
+            className="absolute inset-0 w-full h-full object-cover scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-background" />
+          {/* Decorative blur orbs */}
+          <div className="absolute top-8 left-1/4 w-48 h-48 bg-primary/20 rounded-full blur-[80px]" />
+          <div className="absolute bottom-4 right-1/4 w-32 h-32 bg-primary/15 rounded-full blur-[60px]" />
+
+          <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 py-10 min-h-[200px]">
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full px-5 py-2 mb-4 shadow-lg"
             >
-              {headerSubtitle}
-            </motion.p>
-          )}
+              <Sparkles className="h-4 w-4 text-primary-foreground" />
+              <span className="text-primary-foreground/90 text-sm font-semibold tracking-wide">Validação de Artes</span>
+            </motion.div>
+            <motion.h1
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="text-3xl sm:text-4xl font-extrabold text-primary-foreground drop-shadow-xl"
+              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+            >
+              {headerTitle}
+            </motion.h1>
+            {headerSubtitle && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="text-primary-foreground/70 mt-3 text-sm sm:text-base max-w-xl"
+              >
+                {headerSubtitle}
+              </motion.p>
+            )}
+          </div>
+        </div>
+
+        {/* Content area */}
+        <div className="relative z-10 -mt-8">
+          {showStats && <StatsBar />}
+          {showStats && <ReviewHistory email={email} visible={showHistory} onToggle={() => setShowHistory(v => !v)} />}
+          {children}
         </div>
       </div>
-
-      {/* Content area */}
-      <div className="relative z-10 -mt-8">
-        {showStats && <StatsBar />}
-        {showStats && <ReviewHistory email={email} visible={showHistory} onToggle={() => setShowHistory(v => !v)} />}
-        {children}
-      </div>
-    </div>
-  );
+    );
+  };
 
   if (!authenticated) {
+    if (embedded) {
+      return (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-6 w-6 animate-spin text-white/50" />
+        </div>
+      );
+    }
     return (
       <PageWrapper
         headerTitle="Validação de Artes"

@@ -1,5 +1,7 @@
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Home, Palette, Smartphone, LogOut, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -15,6 +17,25 @@ export default function ClienteHubLayout() {
   const { user, loading, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+
+  const { data: pendingArtsCount = 0 } = useQuery({
+    queryKey: ['cliente-pending-arts', user?.email],
+    enabled: !!user?.email,
+    queryFn: async () => {
+      const { data: requests } = await supabase
+        .from('briefing_requests')
+        .select('id')
+        .eq('requester_email', user!.email!);
+      if (!requests?.length) return 0;
+      const { count } = await supabase
+        .from('briefing_images')
+        .select('id', { count: 'exact', head: true })
+        .in('request_id', requests.map(r => r.id))
+        .eq('status', 'review');
+      return count || 0;
+    },
+    staleTime: 30_000,
+  });
 
   if (loading) {
     return (
@@ -59,13 +80,20 @@ export default function ClienteHubLayout() {
               key={item.path}
               onClick={() => navigate(item.path)}
               className={cn(
-                'flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors',
+                'relative flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors',
                 isActive(item.path)
                   ? 'text-primary'
                   : 'text-white/40 hover:text-white/70'
               )}
             >
-              <item.icon className="h-5 w-5" />
+              <div className="relative">
+                <item.icon className="h-5 w-5" />
+                {item.path === '/cliente/artes' && pendingArtsCount > 0 && (
+                  <span className="absolute -top-2 -right-3 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white px-1">
+                    {pendingArtsCount}
+                  </span>
+                )}
+              </div>
               <span className="text-[10px] font-medium">{item.label}</span>
             </button>
           ))}
