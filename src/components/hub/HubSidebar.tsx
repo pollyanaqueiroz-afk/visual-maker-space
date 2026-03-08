@@ -59,11 +59,11 @@ export function HubSidebar() {
   const isInGroup = (items: typeof implantacaoModules) =>
     items.some(i => location.pathname.startsWith(i.url));
 
-  const hasVisibleItems = (items: typeof implantacaoModules) =>
-    items.some(i => hasPermission(i.permission));
+  const hasVisibleItems = (items: typeof csModules) =>
+    items.some(i => i.permission === null || hasPermission(i.permission));
 
-  const renderItems = (items: typeof implantacaoModules) => {
-    const visible = items.filter(i => hasPermission(i.permission));
+  const renderItems = (items: typeof csModules) => {
+    const visible = items.filter(i => i.permission === null ? !hasRole('cliente') : hasPermission(i.permission));
     if (visible.length === 0) return null;
     return (
       <SidebarMenu>
