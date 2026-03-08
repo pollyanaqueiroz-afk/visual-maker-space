@@ -202,22 +202,29 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     },
   });
 
-  // Query mockup briefing requests linked to this client's platform URL
-  const { data: mockupRequest } = useQuery({
-    queryKey: ['portal-mockup-request', clienteId],
+  // Query ALL mockup briefing requests linked to this client's platform URL
+  const { data: mockupRequests = [] } = useQuery({
+    queryKey: ['portal-mockup-requests', clienteId],
     enabled: !!cliente,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('briefing_requests')
-        .select('*, briefing_images(*)')
+        .select('*, briefing_images(*, briefing_deliveries(*))')
         .eq('platform_url', cliente!.empresa)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .order('created_at', { ascending: false });
       if (error) throw error;
-      return data;
+      return (data || []).filter((r: any) =>
+        r.briefing_images?.some((img: any) => img.image_type === 'app_mockup')
+      );
     },
   });
+
+  // Backward compat: single mockupRequest for virtual timeline item
+  const mockupRequest = mockupRequests.length > 0 ? mockupRequests[0] : null;
+
+  // Review state for mockup approval
+  const [reviewingImageId, setReviewingImageId] = useState<string | null>(null);
+  const [reviewComment, setReviewComment] = useState('');
 
   const [formData, setFormData] = useState({ nome_app: '', descricao_curta: '', descricao_longa: '', url_privacidade: '', url_termos: '' });
 
