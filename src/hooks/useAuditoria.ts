@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 const BASE_URL = 'https://us-central1-curseduca-inc-ia.cloudfunctions.net/hub-auditoria';
-const AUTH_HEADER = 'Basic ' + btoa('curseduca:visao360@curseduca2026!');
+const AUTH_HEADER = import.meta.env.VITE_HUB_API_AUTH || '';
 
 export interface AuditoriaResumo {
   total_plataformas: number;
