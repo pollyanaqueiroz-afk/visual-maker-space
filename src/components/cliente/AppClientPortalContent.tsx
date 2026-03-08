@@ -1408,7 +1408,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                       <>
                         <button onClick={() => setSelectedTimelineFase(isF0Selected ? null : { fase: 0 })} className="relative">
                           {isActive && (
-                            <div className="absolute inset-1 rounded-full bg-blue-500/20 animate-pulse" />
+                            <div className="absolute inset-0 rounded-full bg-blue-500/10" />
                           )}
                           <div className={`relative flex items-center justify-center w-16 h-16 rounded-full transition-all ${
                             s === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50' :
