@@ -56,6 +56,23 @@ function NotificationBell() {
     refetchInterval: 60_000,
   });
 
+  const { data: slaAlerts = 0 } = useQuery({
+    queryKey: ['sla-alerts-count'],
+    queryFn: async () => {
+      const now = new Date().toISOString();
+      const { count } = await supabase
+        .from('briefing_images')
+        .select('id', { count: 'exact', head: true })
+        .in('status', ['pending', 'in_progress'])
+        .lt('deadline', now);
+      return count || 0;
+    },
+    staleTime: 60_000,
+    refetchInterval: 300_000,
+  });
+
+  const totalBadge = notifications.length + slaAlerts;
+
   const markAsRead = async (id: string) => {
     await (supabase.from('app_notificacoes').update({ lida: true } as any) as any).eq('id', id);
     queryClient.invalidateQueries({ queryKey: ['hub-notifications'] });
@@ -66,9 +83,9 @@ function NotificationBell() {
       <PopoverTrigger asChild>
         <button className="relative h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer">
           <Bell className="h-4 w-4" />
-          {notifications.length > 0 && (
+          {totalBadge > 0 && (
             <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground px-1">
-              {notifications.length}
+              {totalBadge > 9 ? '9+' : totalBadge}
             </span>
           )}
         </button>
@@ -76,9 +93,12 @@ function NotificationBell() {
       <PopoverContent className="w-80 p-0" align="end">
         <div className="p-3 border-b border-border">
           <h3 className="text-sm font-semibold">Notificações</h3>
+          {slaAlerts > 0 && (
+            <p className="text-[10px] text-destructive mt-0.5">⚠️ {slaAlerts} arte(s) com prazo vencido</p>
+          )}
         </div>
         <div className="max-h-80 overflow-y-auto">
-          {notifications.length === 0 ? (
+          {notifications.length === 0 && slaAlerts === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-6">Nenhuma notificação</p>
           ) : notifications.map((n: any) => (
             <div
