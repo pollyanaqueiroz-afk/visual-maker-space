@@ -1051,14 +1051,16 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           <span className="text-sm font-bold text-white/80">{label}</span>
         </div>
         {/* Horizontal circles with connecting line */}
-        <div className="relative flex items-start justify-between overflow-x-auto pb-2 gap-2 min-w-0">
-          {/* Connecting line */}
-          <div className="absolute top-[22px] left-[22px] right-[22px] h-[2px] bg-white/10" />
-          {trackFases.map(({ num, fase }) => (
-            <div key={num} className="relative z-10 flex-1 min-w-[72px] flex justify-center">
-              {renderCircle(num, fase, plataforma)}
-            </div>
-          ))}
+        <div className="overflow-x-auto">
+          <div className="relative flex items-start justify-between pb-2 gap-0" style={{ minWidth: '460px' }}>
+            {/* Connecting line */}
+            <div className="absolute top-[22px] left-[36px] right-[36px] h-[2px] bg-white/10" />
+            {trackFases.map(({ num, fase }) => (
+              <div key={num} className="relative z-10 flex-1 flex justify-center">
+                {renderCircle(num, fase, plataforma)}
+              </div>
+            ))}
+          </div>
         </div>
         {/* Expanded content for selected fase in this track */}
         <AnimatePresence>
