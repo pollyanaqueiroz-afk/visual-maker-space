@@ -720,7 +720,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                         size="sm"
                         className="flex-1 bg-green-600 hover:bg-green-700"
                         onClick={() => {
-                          toggleCheck.mutate({ id: item.id, feito: true, texto: item.texto });
+                          toggleCheck.mutate({ id: item.id, feito: true, texto: item.texto, fase_numero: item.fase_numero });
                           setConfirmingItemId(null);
                           toast.success('🎉 App aprovado para publicação!');
                         }}
