@@ -463,6 +463,24 @@ export default function SchedulingPage() {
     [meetings]
   );
 
+  // Week view helpers
+  const weekDays = useMemo(() => {
+    return eachDayOfInterval({ start: weekStart, end: addDays(weekStart, 6) });
+  }, [weekStart]);
+
+  const WEEK_HOURS = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00'];
+
+  const getMeetingsForDayAndHour = (day: Date, hour: string) => {
+    const dateStr = format(day, 'yyyy-MM-dd');
+    const dayMeetings = meetingsByDate[dateStr] || [];
+    const [hh] = hour.split(':').map(Number);
+    return dayMeetings.filter(m => {
+      if (m.status === 'cancelled') return false;
+      const [mh] = m.meeting_time.split(':').map(Number);
+      return mh === hh;
+    });
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
