@@ -328,7 +328,7 @@ export default function Dashboard() {
     return !img.image_text || !img.image_type;
   };
 
-  const filtered = images.filter(i => {
+  const filtered = useMemo(() => images.filter(i => {
     if (filterStatus === 'incomplete') {
       if (!isBriefingIncomplete(i)) return false;
     } else if (filterStatus !== 'all' && filterStatus !== 'revision') {
@@ -349,7 +349,59 @@ export default function Dashboard() {
       if (!clientName.includes(q) && !url.includes(q) && !requester.includes(q)) return false;
     }
     return true;
-  });
+  }), [images, filterStatus, filterType, filterClient, filterOverdue, searchQuery]);
+
+  const sorted = useMemo(() => {
+    return [...filtered].sort((a, b) => {
+      let valA: any = (a as any)[sortBy] || '';
+      let valB: any = (b as any)[sortBy] || '';
+      if (sortBy === 'created_at' || sortBy === 'deadline' || sortBy === 'received_at') {
+        valA = valA ? new Date(valA).getTime() : 0;
+        valB = valB ? new Date(valB).getTime() : 0;
+      }
+      if (valA < valB) return sortDir === 'asc' ? -1 : 1;
+      if (valA > valB) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [filtered, sortBy, sortDir]);
+
+  const artesTotalPages = Math.ceil(sorted.length / ARTES_PER_PAGE);
+  const paginatedImages = useMemo(() => {
+    const start = (artesPage - 1) * ARTES_PER_PAGE;
+    return sorted.slice(start, start + ARTES_PER_PAGE);
+  }, [sorted, artesPage]);
+
+  // Reset page when filters change
+  useEffect(() => { setArtesPage(1); }, [filterStatus, filterType, filterClient, searchQuery, filterOverdue]);
+
+  const handleSortToggle = (col: string) => {
+    if (sortBy === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortBy(col); setSortDir('desc'); }
+  };
+
+  const handleExportCSV = () => {
+    const headers = ['Data', 'Cliente', 'URL', 'Tipo', 'Produto', 'Status', 'Designer', 'Prazo', 'Refações'];
+    const rows = filtered.map(img => [
+      format(new Date(img.created_at), 'dd/MM/yyyy'),
+      img.requester_name,
+      img.platform_url,
+      IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type,
+      img.product_name || '',
+      STATUS_LABELS[img.status] || img.status,
+      img.assigned_email || '',
+      img.deadline ? format(new Date(img.deadline), 'dd/MM/yyyy') : '',
+      String(img.revision_count || 0),
+    ]);
+    const csv = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `artes-briefing-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('CSV exportado!');
+  };
 
   const uniqueClients = Array.from(new Set(images.map(i => i.platform_url))).sort();
 
