@@ -952,7 +952,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
               <p className="text-xs text-white/60">
                 Previsão: ~{fase.duracao_dias_estimada} dias úteis
                 {fase.data_inicio && (
-                  <span className="text-white/30"> (até {format(addBusinessDays(new Date(fase.data_inicio), fase.duracao_dias_estimada), 'dd/MM/yyyy')})</span>
+                  <span className="text-white/50"> (até {format(addBusinessDays(new Date(fase.data_inicio), fase.duracao_dias_estimada), 'dd/MM/yyyy')})</span>
                 )}
               </p>
             </div>
