@@ -355,6 +355,11 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
     }
   };
 
+  const cardBg = embedded ? 'bg-white/5 border-white/10' : 'bg-card/80 border-border';
+  const cardBgSolid = embedded ? 'bg-[#1E293B] border-white/10' : 'bg-card border-border';
+  const textMain = embedded ? 'text-white' : 'text-foreground';
+  const textSub = embedded ? 'text-white/50' : 'text-muted-foreground';
+
   const StatsBar = () => (
     <div className="px-4 mb-8">
       {/* Stats grid */}
