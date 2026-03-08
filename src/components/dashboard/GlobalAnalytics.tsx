@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, PieChart, Pie, Cell } from 'recharts';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format, startOfMonth, startOfWeek, startOfDay, subMonths, isAfter } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -21,6 +22,8 @@ interface AnalyticsImage {
   price_per_art: number | null;
   image_type: string;
   assigned_email: string | null;
+  platform_url?: string;
+  requester_name?: string;
 }
 
 interface DeliveryRecord {
@@ -61,7 +64,7 @@ export default function GlobalAnalytics() {
       const [imgResult, delResult, revResult] = await Promise.all([
         supabase
           .from('briefing_images')
-          .select('id, status, deadline, created_at, revision_count, price_per_art, image_type, assigned_email')
+          .select('id, status, deadline, created_at, revision_count, price_per_art, image_type, assigned_email, briefing_requests!inner(platform_url, requester_name)')
           .order('created_at', { ascending: true }),
         supabase
           .from('briefing_deliveries')
@@ -73,7 +76,11 @@ export default function GlobalAnalytics() {
           .order('created_at', { ascending: true }),
       ]);
 
-      setImages((imgResult.data || []) as AnalyticsImage[]);
+      setImages((imgResult.data || []).map((img: any) => ({
+        ...img,
+        platform_url: img.briefing_requests?.platform_url || '',
+        requester_name: img.briefing_requests?.requester_name || '',
+      })) as AnalyticsImage[]);
       setDeliveries((delResult.data || []) as DeliveryRecord[]);
       setReviews((revResult.data || []) as ReviewRecord[]);
     } catch (err) {
@@ -459,6 +466,16 @@ export default function GlobalAnalytics() {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Tempo médio de conclusão por tipo */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="col-span-full">
+        <AvgTimeByTypeCard completedImages={completedImages} reviews={reviews} />
+      </motion.div>
+
+      {/* Top clientes com mais refações */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }} className="col-span-full">
+        <TopRefactionClientsCard images={images} />
+      </motion.div>
     </div>
   );
 }
@@ -484,5 +501,165 @@ function StatCard({ icon, iconBg, value, label, delay }: {
         </CardContent>
       </Card>
     </motion.div>
+  );
+}
+
+const TYPE_SHORT_LABELS: Record<string, string> = {
+  login: 'Login', banner_vitrine: 'Banner', product_cover: 'Capa',
+  trail_banner: 'Trilha', challenge_banner: 'Desafio',
+  community_banner: 'Comunidade', app_mockup: 'Mockup',
+};
+
+function AvgTimeByTypeCard({ completedImages, reviews }: { completedImages: AnalyticsImage[]; reviews: ReviewRecord[] }) {
+  const avgTimeByType = (() => {
+    const map: Record<string, { totalDays: number; count: number }> = {};
+    completedImages.forEach(img => {
+      const type = img.image_type;
+      if (!map[type]) map[type] = { totalDays: 0, count: 0 };
+      const created = new Date(img.created_at).getTime();
+      const approvalReview = reviews.find(r => r.briefing_image_id === img.id && r.action === 'approved');
+      const completedDate = approvalReview ? new Date(approvalReview.created_at).getTime() : created;
+      const days = Math.max(1, Math.round((completedDate - created) / (1000 * 60 * 60 * 24)));
+      map[type].totalDays += days;
+      map[type].count += 1;
+    });
+    return Object.entries(map)
+      .map(([type, data]) => ({
+        type: TYPE_SHORT_LABELS[type] || type,
+        fullType: type,
+        avgDays: Math.round(data.totalDays / data.count),
+        count: data.count,
+      }))
+      .sort((a, b) => b.avgDays - a.avgDays);
+  })();
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <Clock className="h-4 w-4 text-primary" />
+          Tempo Médio de Conclusão por Tipo de Arte (dias)
+        </CardTitle>
+        <p className="text-xs text-muted-foreground">Quanto tempo cada tipo de arte leva do pedido até a aprovação</p>
+      </CardHeader>
+      <CardContent>
+        {avgTimeByType.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-8">Nenhuma arte concluída ainda</p>
+        ) : (
+          <>
+            <ResponsiveContainer width="100%" height={Math.max(180, avgTimeByType.length * 45)}>
+              <BarChart data={avgTimeByType} layout="vertical" margin={{ left: 10, right: 30 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
+                <YAxis type="category" dataKey="type" width={90} tick={{ fontSize: 12 }} />
+                <Tooltip
+                  contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: 12 }}
+                  formatter={(value: number) => [`${value} dias`, 'Tempo médio']}
+                />
+                <Bar dataKey="avgDays" radius={[0, 6, 6, 0]}>
+                  {avgTimeByType.map((entry, i) => (
+                    <Cell key={i} fill={entry.avgDays > 10 ? 'hsl(var(--destructive))' : entry.avgDays > 5 ? 'hsl(30 90% 50%)' : 'hsl(var(--primary))'} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
+              {avgTimeByType.map(t => (
+                <div key={t.fullType} className="text-center p-2 rounded-lg bg-muted/30">
+                  <p className={`text-lg font-bold ${t.avgDays > 10 ? 'text-destructive' : t.avgDays > 5 ? 'text-amber-500' : 'text-primary'}`}>
+                    {t.avgDays}d
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">{t.type} ({t.count})</p>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function TopRefactionClientsCard({ images }: { images: AnalyticsImage[] }) {
+  const topRefactionClients = (() => {
+    const map: Record<string, { url: string; name: string; totalRefactions: number; artCount: number; completedCount: number }> = {};
+    images.forEach(img => {
+      const url = img.platform_url || '';
+      const name = img.requester_name || url;
+      if (!map[url]) map[url] = { url, name, totalRefactions: 0, artCount: 0, completedCount: 0 };
+      map[url].artCount += 1;
+      map[url].totalRefactions += img.revision_count || 0;
+      if (img.status === 'completed') map[url].completedCount += 1;
+    });
+    return Object.values(map)
+      .filter(c => c.totalRefactions > 0)
+      .map(c => ({
+        ...c,
+        avgRefactions: c.artCount > 0 ? (c.totalRefactions / c.artCount).toFixed(1) : '0',
+        refactionRate: c.artCount > 0 ? Math.round((c.totalRefactions / c.artCount) * 100) : 0,
+      }))
+      .sort((a, b) => b.totalRefactions - a.totalRefactions)
+      .slice(0, 10);
+  })();
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <RefreshCw className="h-4 w-4 text-amber-500" />
+          Top Clientes com Mais Refações
+        </CardTitle>
+        <p className="text-xs text-muted-foreground">Clientes que mais solicitam ajustes nas artes</p>
+      </CardHeader>
+      <CardContent>
+        {topRefactionClients.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-8">Nenhuma refação registrada</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Cliente</TableHead>
+                <TableHead className="text-center">Artes</TableHead>
+                <TableHead className="text-center">Refações</TableHead>
+                <TableHead className="text-center">Média/arte</TableHead>
+                <TableHead className="text-center">Concluídas</TableHead>
+                <TableHead>Taxa de refação</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {topRefactionClients.map(c => (
+                <TableRow key={c.url}>
+                  <TableCell>
+                    <div>
+                      <p className="text-sm font-medium">{c.name}</p>
+                      <p className="text-xs text-muted-foreground truncate max-w-[180px]">{c.url}</p>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-center text-sm">{c.artCount}</TableCell>
+                  <TableCell className="text-center">
+                    <Badge variant="outline" className={`text-xs ${c.totalRefactions > 5 ? 'border-destructive/30 text-destructive' : 'border-amber-500/30 text-amber-500'}`}>
+                      {c.totalRefactions}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-center text-sm">{c.avgRefactions}</TableCell>
+                  <TableCell className="text-center text-sm text-muted-foreground">{c.completedCount}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden max-w-[100px]">
+                        <div
+                          className={`h-full rounded-full ${c.refactionRate > 100 ? 'bg-destructive' : c.refactionRate > 50 ? 'bg-amber-500' : 'bg-primary'}`}
+                          style={{ width: `${Math.min(c.refactionRate, 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-muted-foreground">{c.refactionRate}%</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
   );
 }
