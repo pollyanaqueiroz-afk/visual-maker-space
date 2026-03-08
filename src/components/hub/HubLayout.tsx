@@ -36,7 +36,7 @@ function NotificationBell() {
       const userRoles = (roles || []).map((r: any) => r.role);
 
       const destinatarios: string[] = [];
-      if (userRoles.includes('analista_implantacao') || userRoles.includes('admin')) destinatarios.push('analista');
+      if (userRoles.includes('analista_implantacao') || userRoles.includes('admin') || userRoles.includes('implantacao')) destinatarios.push('analista');
       if (userRoles.includes('gerente_implantacao') || userRoles.includes('admin')) destinatarios.push('gerente');
 
       if (destinatarios.length === 0) return [];
