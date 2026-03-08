@@ -1122,14 +1122,49 @@ export default function AppClientPortalContent({ clienteId }: Props) {
         </Card>
       )}
 
-      {/* Overall progress */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-xs text-white/50">
-          <span>Progresso geral</span>
-          <span className="font-bold text-white">{cliente.porcentagem_geral}%</span>
-        </div>
-        <Progress value={cliente.porcentagem_geral || 0} className="h-2" />
-      </div>
+      {/* Overall progress — dual bars */}
+      {(() => {
+        const clientItemsBar = checklist.filter((i: any) => i.ator === 'cliente' && i.obrigatorio);
+        const clientDoneBar = clientItemsBar.filter((i: any) => i.feito).length;
+        const clientPctBar = clientItemsBar.length > 0 ? Math.round((clientDoneBar / clientItemsBar.length) * 100) : 0;
+        const totalPctBar = cliente.porcentagem_geral || 0;
+        return (
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-white/50">Suas tarefas</span>
+                <span className="font-bold text-white flex items-center gap-1">
+                  {clientPctBar}%{clientPctBar === 100 && ' ✅'}
+                </span>
+              </div>
+              <div className="relative h-2 rounded-full bg-white/10 overflow-hidden">
+                <div
+                  className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
+                  style={{
+                    width: `${clientPctBar}%`,
+                    background: clientPctBar === 100
+                      ? 'linear-gradient(90deg, hsl(142 71% 45%), hsl(142 71% 55%))'
+                      : 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))',
+                  }}
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-white/30">Progresso total do projeto</span>
+                <span className="font-medium text-white/50">{totalPctBar}%</span>
+              </div>
+              <div className="relative h-1.5 rounded-full bg-white/5 overflow-hidden">
+                <div
+                  className="absolute inset-y-0 left-0 rounded-full bg-white/20 transition-all duration-500"
+                  style={{ width: `${totalPctBar}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-white/25">Inclui etapas da equipe Curseduca</p>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* TIMELINE */}
       {isParallelFlow ? (
