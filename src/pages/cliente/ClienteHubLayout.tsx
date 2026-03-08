@@ -20,6 +20,64 @@ export default function ClienteHubLayout() {
   const { user, loading, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const IMAGE_TYPE_LABELS: Record<string, string> = {
+    login: 'Área de Login', banner_vitrine: 'Banner Vitrine', product_cover: 'Capa de Produto',
+    trail_banner: 'Banner de Trilha', challenge_banner: 'Banner de Desafio',
+    community_banner: 'Banner de Comunidade', app_mockup: 'Mockup do Aplicativo',
+  };
+
+  const { data: notifications = [] } = useQuery({
+    queryKey: ['cliente-notifications', user?.email],
+    enabled: !!user?.email,
+    queryFn: async () => {
+      const { data: reviewArts } = await supabase
+        .from('briefing_images')
+        .select('id, image_type, product_name, created_at, briefing_requests!inner(requester_email)')
+        .eq('briefing_requests.requester_email', user!.email!)
+        .eq('status', 'review');
+
+      const { data: appNotifs } = await supabase
+        .from('app_notificacoes')
+        .select('id, titulo, mensagem, created_at, lida')
+        .eq('destinatario', user!.email!)
+        .eq('lida', false)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      const items: Array<{ id: string; type: 'review' | 'app'; title: string; description: string; date: string; link: string; notifId?: string }> = [
+        ...(reviewArts || []).map(a => ({
+          id: `art-${a.id}`,
+          type: 'review' as const,
+          title: 'Arte pronta para aprovação',
+          description: `${IMAGE_TYPE_LABELS[a.image_type] || a.image_type}${a.product_name ? ` — ${a.product_name}` : ''}`,
+          date: a.created_at,
+          link: '/cliente/artes',
+        })),
+        ...(appNotifs || []).map(n => ({
+          id: `notif-${n.id}`,
+          type: 'app' as const,
+          title: n.titulo,
+          description: n.mensagem,
+          date: n.created_at,
+          link: '/cliente/aplicativo',
+          notifId: n.id,
+        })),
+      ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      return items;
+    },
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+
+  const unreadCount = notifications.length;
+
+  const markAppNotifRead = async (notifId: string) => {
+    await supabase.from('app_notificacoes').update({ lida: true }).eq('id', notifId);
+    queryClient.invalidateQueries({ queryKey: ['cliente-notifications'] });
+  };
 
   const { data: pendingArtsCount = 0 } = useQuery({
     queryKey: ['cliente-pending-arts', user?.email],
