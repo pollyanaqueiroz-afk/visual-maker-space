@@ -1259,12 +1259,24 @@ export default function AplicativosPage() {
                 <SelectItem value="concluido">✅ Concluído</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={filterResponsavelTask} onValueChange={setFilterResponsavelTask}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Responsável tarefa" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos responsáveis</SelectItem>
+                <SelectItem value="unassigned">⚠️ Sem responsável</SelectItem>
+                {uniqueTaskResponsaveis.map(nome => (
+                  <SelectItem key={nome} value={nome}>{nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {(() => {
-              const activeFilterCount = [pendencyFilter, phaseFilter, statusFilter].filter(f => f !== 'todos' && f !== 'todas' && f !== 'pendente').length;
+              const activeFilterCount = [pendencyFilter, phaseFilter, statusFilter, filterResponsavelTask].filter(f => f !== 'todos' && f !== 'todas' && f !== 'pendente' && f !== 'all').length;
               return activeFilterCount > 0 ? (
                 <>
                   <Badge variant="secondary" className="text-xs">{activeFilterCount} filtro{activeFilterCount > 1 ? 's' : ''}</Badge>
-                  <Button variant="ghost" size="sm" onClick={() => { setPendencyFilter('todos'); setPhaseFilter('todas'); setStatusFilter('pendente'); }} className="text-xs">
+                  <Button variant="ghost" size="sm" onClick={() => { setPendencyFilter('todos'); setPhaseFilter('todas'); setStatusFilter('pendente'); setFilterResponsavelTask('all'); }} className="text-xs">
                     Limpar filtros
                   </Button>
                 </>
