@@ -51,8 +51,8 @@ export default function ClientCsatSection({ clientUrl, clientEmail, clientEmail2
       }
 
       const [csatRes, meetingsRes] = await Promise.all([
-        supabase.from('meeting_csat' as any).select('*').in('client_email', emails).order('sent_at', { ascending: false }) as any,
-        supabase.from('meetings' as any).select('id, title, meeting_date').or(`client_url.eq.${clientUrl}${emails.map(e => `,client_email.eq.${e}`).join('')}`) as any,
+        supabase.from('meeting_csat').select('*').in('client_email', emails).order('sent_at', { ascending: false }),
+        supabase.from('meetings').select('id, title, meeting_date').or(`client_url.eq.${clientUrl}${emails.map(e => `,client_email.eq.${e}`).join('')}`),
       ]);
 
       if (!csatRes.error) setCsatData((csatRes.data || []) as CsatRow[]);
