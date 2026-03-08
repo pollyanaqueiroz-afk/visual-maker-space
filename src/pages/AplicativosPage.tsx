@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { Smartphone, Plus, Bell, AlertTriangle, Apple, Bot, Clock, CheckCircle, Users, TrendingUp, ClipboardList, Filter, FileText, ChevronRight } from 'lucide-react';
+import { Smartphone, Plus, Bell, AlertTriangle, Apple, Bot, Clock, CheckCircle, Users, TrendingUp, ClipboardList, Filter, FileText, ChevronRight, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -103,6 +103,70 @@ export default function AplicativosPage() {
     nome: '', url_cliente: '', email: '', whatsapp: '', plataforma: 'ambos', responsavel_nome: '',
   });
 
+  // Smart URL matching state
+  const [matchedClient, setMatchedClient] = useState<{ source: string; nome: string; email: string; id?: string } | null>(null);
+  const [existingAppCliente, setExistingAppCliente] = useState(false);
+
+  useEffect(() => {
+    const url = form.url_cliente.trim();
+    if (!url || url.length < 3) {
+      setMatchedClient(null);
+      setExistingAppCliente(false);
+      return;
+    }
+    const timeout = setTimeout(async () => {
+      // 1. Check app_clientes
+      const { data: appCl } = await supabase
+        .from('app_clientes')
+        .select('id, nome')
+        .eq('empresa', url)
+        .maybeSingle();
+      if (appCl) {
+        setExistingAppCliente(true);
+        setMatchedClient({ source: 'app_clientes', nome: appCl.nome, email: '', id: appCl.id });
+        return;
+      }
+      setExistingAppCliente(false);
+
+      // 2. Check clients (carteira)
+      const { data: carteiraCl } = await supabase
+        .from('clients')
+        .select('id, client_name, email_do_cliente, client_url')
+        .eq('client_url', url)
+        .maybeSingle();
+      if (carteiraCl) {
+        setMatchedClient({ source: 'clients', nome: carteiraCl.client_name || '', email: carteiraCl.email_do_cliente || '' });
+        setForm(p => ({
+          ...p,
+          nome: p.nome || carteiraCl.client_name || '',
+          email: p.email || carteiraCl.email_do_cliente || '',
+        }));
+        return;
+      }
+
+      // 3. Check briefing_requests
+      const { data: briefingCl } = await supabase
+        .from('briefing_requests')
+        .select('requester_name, requester_email, platform_url')
+        .eq('platform_url', url)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (briefingCl) {
+        setMatchedClient({ source: 'briefing_requests', nome: briefingCl.requester_name, email: briefingCl.requester_email });
+        setForm(p => ({
+          ...p,
+          nome: p.nome || briefingCl.requester_name,
+          email: p.email || briefingCl.requester_email,
+        }));
+        return;
+      }
+
+      setMatchedClient(null);
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [form.url_cliente]);
+
   const { data: clientes = [], isLoading } = useQuery({
     queryKey: ['app-clientes'],
     queryFn: async () => {
@@ -182,6 +246,8 @@ export default function AplicativosPage() {
       queryClient.invalidateQueries({ queryKey: ['app-checklist-full'] });
       setDialogOpen(false);
       setForm({ nome: '', url_cliente: '', email: '', whatsapp: '', plataforma: 'ambos', responsavel_nome: '' });
+      setMatchedClient(null);
+      setExistingAppCliente(false);
       if (result?.linked) {
         toast.success(`Cliente "${result.name}" já existia — responsável vinculado com sucesso!`);
       } else {
@@ -604,6 +670,39 @@ export default function AplicativosPage() {
                     <Input value={form.url_cliente} onChange={e => setForm(p => ({ ...p, url_cliente: e.target.value }))} placeholder="exemplo.curseduca.com" />
                   </div>
                 </div>
+
+                {/* Smart URL match feedback */}
+                {existingAppCliente && matchedClient && (
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                    <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-amber-500">Cliente já cadastrado</p>
+                      <p className="text-xs text-amber-400/70">"{matchedClient.nome}" já está na gestão de aplicativos.</p>
+                    </div>
+                    <Button variant="ghost" size="sm" className="text-xs text-amber-500 shrink-0" onClick={() => { setDialogOpen(false); navigate(`/hub/aplicativos/${matchedClient.id}`); }}>
+                      Ver detalhe
+                    </Button>
+                  </div>
+                )}
+                {!existingAppCliente && matchedClient?.source === 'clients' && (
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-green-500">Cliente encontrado na carteira</p>
+                      <p className="text-xs text-green-400/70">Dados auto-preenchidos: {matchedClient.nome} ({matchedClient.email})</p>
+                    </div>
+                  </div>
+                )}
+                {!existingAppCliente && matchedClient?.source === 'briefing_requests' && (
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                    <Info className="h-4 w-4 text-blue-500 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-blue-500">Cliente encontrado em solicitações de design</p>
+                      <p className="text-xs text-blue-400/70">Dados auto-preenchidos: {matchedClient.nome} ({matchedClient.email})</p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label>E-mail *</Label>
@@ -637,7 +736,7 @@ export default function AplicativosPage() {
                   </Button>
                   <Button
                     className="flex-1"
-                    disabled={!form.nome || !form.url_cliente || !form.email || createMutation.isPending}
+                    disabled={!form.nome || !form.url_cliente || !form.email || createMutation.isPending || existingAppCliente}
                     onClick={() => createMutation.mutate()}
                   >
                     {createMutation.isPending ? 'Criando...' : 'Criar cliente'}

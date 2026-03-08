@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,10 +11,12 @@ import {
   ChevronRight, Loader2, Sparkles, PlusCircle,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 
 export default function ClienteHome() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const clientEmail = user?.email || '';
 
   // Fetch artes data (for status cards)
@@ -137,6 +139,43 @@ export default function ClienteHome() {
     },
   });
 
+  // Check if client has briefing_requests but no app_clientes
+  const { data: hasBriefingRequest } = useQuery({
+    queryKey: ['cliente-briefing-check', clientEmail],
+    enabled: !!clientEmail && !appCliente,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('briefing_requests')
+        .select('requester_name, requester_email, platform_url')
+        .eq('requester_email', clientEmail)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  // Auto-create app_clientes from briefing data
+  const createAppFromBriefing = useMutation({
+    mutationFn: async () => {
+      if (!hasBriefingRequest) throw new Error('Nenhuma solicitação encontrada');
+      const { error } = await supabase.from('app_clientes').insert({
+        nome: hasBriefingRequest.requester_name,
+        empresa: hasBriefingRequest.platform_url,
+        email: hasBriefingRequest.requester_email,
+        plataforma: 'ambos',
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cliente-app'] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-briefing-check'] });
+      toast.success('Projeto de aplicativo criado com sucesso! 🎉');
+      navigate('/cliente/aplicativo');
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const isLoading = loadingArtes || loadingApp || loadingChecklist;
 
   // Combine all real pendencies
@@ -212,8 +251,15 @@ export default function ClienteHome() {
         </button>
 
         <button
-          onClick={() => !appCliente && navigate('/cliente/solicitar-app')}
-          disabled={!!appCliente}
+          onClick={() => {
+            if (appCliente) return;
+            if (hasBriefingRequest) {
+              createAppFromBriefing.mutate();
+            } else {
+              navigate('/cliente/solicitar-app');
+            }
+          }}
+          disabled={!!appCliente || createAppFromBriefing.isPending}
           className={cn(
             "flex items-center gap-3 rounded-xl p-4 text-white shadow-lg transition-all",
             appCliente
@@ -225,8 +271,12 @@ export default function ClienteHome() {
             <Smartphone className="h-5 w-5" />
           </div>
           <div className="flex-1 text-left min-w-0">
-            <p className="font-semibold text-sm">{appCliente ? 'App solicitado' : 'Solicitar App'}</p>
-            <p className="text-white/70 text-[10px]">{appCliente ? 'Já em andamento' : 'Crie seu aplicativo'}</p>
+            <p className="font-semibold text-sm">
+              {appCliente ? 'App solicitado' : createAppFromBriefing.isPending ? 'Criando...' : 'Solicitar App'}
+            </p>
+            <p className="text-white/70 text-[10px]">
+              {appCliente ? 'Já em andamento' : hasBriefingRequest ? 'Criar a partir do briefing' : 'Crie seu aplicativo'}
+            </p>
           </div>
         </button>
       </motion.div>
