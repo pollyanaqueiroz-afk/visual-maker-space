@@ -86,6 +86,7 @@ export default function ImportBriefingDialog({ onImported }: Props) {
     images: { image_type: string; product_name: string | null; image_text: string | null }[];
   } | null>(null);
   const [receivedAt, setReceivedAt] = useState<Date>(new Date());
+  const [parsingMessage, setParsingMessage] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
   const reset = () => {
