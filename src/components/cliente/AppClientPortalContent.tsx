@@ -1051,7 +1051,12 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                     <div key={item.id} className="p-3 rounded-lg bg-white/5 flex items-start gap-3">
                       <Lock className="h-4 w-4 text-white/30 mt-0.5 shrink-0" />
                       <div>
-                        <p className="text-sm text-white/50">{item.texto}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm text-white/50">{item.texto}</p>
+                          {item.ator !== 'cliente' && (
+                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-white/10 text-white/30">Equipe Curseduca</Badge>
+                          )}
+                        </div>
                         {item.descricao && <p className="text-xs text-white/[0.35] mt-0.5">{item.descricao}</p>}
                       </div>
                     </div>
