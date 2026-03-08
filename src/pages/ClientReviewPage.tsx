@@ -980,7 +980,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
                 transition={{ duration: 0.4, ease: 'easeOut' }}
               />
             </div>
-            <span className="text-sm text-muted-foreground font-medium">
+            <span className={`text-sm ${textSub} font-medium`}>
               {images.length}
             </span>
           </div>
