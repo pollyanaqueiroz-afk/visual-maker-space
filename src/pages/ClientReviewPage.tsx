@@ -867,7 +867,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
                 <CheckCircle className="h-12 w-12 text-primary" />
               </motion.div>
               <div>
-                <h2 className="text-2xl font-bold text-foreground">Parabéns!</h2>
+                <h2 className={`text-2xl font-bold ${textMain}`}>Parabéns!</h2>
                 <p className="text-muted-foreground mt-2">
                   Você revisou <span className="font-bold text-primary">{completedCount}</span> arte(s).
                   <br />Sua opinião é muito importante para nós!
