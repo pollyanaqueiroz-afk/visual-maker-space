@@ -87,6 +87,12 @@ interface ReviewRecord {
   created_at: string;
 }
 
+function imageLabel(img: { image_type: string; product_name?: string | null; observations?: string | null }): string {
+  const base = IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type;
+  const suffix = img.observations ? ` — ${img.observations}` : img.product_name ? ` — ${img.product_name}` : '';
+  return `${base}${suffix}`;
+}
+
 export default function Dashboard() {
   const { hasPermission, hasRole } = usePermissions();
   const isGerenteImpl = hasRole('gerente_implantacao');
@@ -305,7 +311,7 @@ export default function Dashboard() {
     if (!acc[r.briefing_image_id]) {
       acc[r.briefing_image_id] = {
         count: 0,
-        label: img ? `${IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type}${img.product_name ? ` — ${img.product_name}` : ''}` : r.briefing_image_id,
+        label: img ? imageLabel(img) : r.briefing_image_id,
         designer: img?.assigned_email || 'Desconhecido',
       };
     }
@@ -625,11 +631,8 @@ export default function Dashboard() {
                               <FileImage className="h-4 w-4 text-primary" />
                               <div>
                                 <span className="font-medium text-sm">
-                                  {IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type}
+                                  {imageLabel(img)}
                                 </span>
-                                {img.product_name && (
-                                  <p className="text-xs text-muted-foreground">{img.product_name}</p>
-                                )}
                               </div>
                             </div>
                           </TableCell>
@@ -793,7 +796,7 @@ export default function Dashboard() {
                                 imageId={img.id}
                                 currentEmail={img.assigned_email}
                                 currentDeadline={img.deadline}
-                                imageLabel={`${IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type}${img.product_name ? ` — ${img.product_name}` : ''}`}
+                                imageLabel={imageLabel(img)}
                                 onAssigned={fetchData}
                               />
                               <BrandAssetsDialog platformUrl={img.platform_url} clientName={extractClientName(img.platform_url)} />
@@ -964,7 +967,7 @@ export default function Dashboard() {
                           <TableRow key={rev.id}>
                             <TableCell className="text-sm">{new Date(rev.created_at).toLocaleDateString('pt-BR')}</TableCell>
                             <TableCell className="text-sm">
-                              {img ? `${IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type}${img.product_name ? ` — ${img.product_name}` : ''}` : rev.briefing_image_id.slice(0, 8)}
+                              {img ? imageLabel(img) : rev.briefing_image_id.slice(0, 8)}
                             </TableCell>
                             <TableCell>
                               <Badge className={rev.action === 'approved' ? 'bg-primary/20 text-primary border-0' : 'bg-destructive/20 text-destructive border-0'}>
@@ -1036,7 +1039,7 @@ function ReviewActionDialog({ image, onReviewed }: { image: ImageWithRequest; on
             await (supabase.from('brand_assets' as any).insert({
               platform_url: image.platform_url,
               file_url: d.file_url,
-              file_name: `Entrega — ${IMAGE_TYPE_LABELS[image.image_type as ImageType] || image.image_type}`,
+              file_name: `Entrega — ${imageLabel(image)}`,
               uploaded_by: d.delivered_by_email,
               source: 'delivery',
               briefing_image_id: image.id,
@@ -1085,8 +1088,7 @@ function ReviewActionDialog({ image, onReviewed }: { image: ImageWithRequest; on
         <div className="space-y-4">
           <div className="text-sm">
             <span className="text-muted-foreground">Arte:</span>{' '}
-            <span className="font-medium">{IMAGE_TYPE_LABELS[image.image_type as ImageType] || image.image_type}</span>
-            {image.product_name && <span className="text-muted-foreground"> — {image.product_name}</span>}
+            <span className="font-medium">{imageLabel(image)}</span>
           </div>
           <div className="space-y-2">
             <Label>Comentários (opcional)</Label>
@@ -1151,8 +1153,7 @@ function ImageDetailDialog({ image, reviews }: { image: ImageWithRequest; review
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileImage className="h-5 w-5 text-primary" />
-            {IMAGE_TYPE_LABELS[image.image_type as ImageType] || image.image_type}
-            {image.product_name && <span className="text-muted-foreground font-normal">— {image.product_name}</span>}
+            {imageLabel(image)}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">

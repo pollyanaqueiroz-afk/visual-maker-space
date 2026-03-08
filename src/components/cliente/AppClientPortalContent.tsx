@@ -202,22 +202,29 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     },
   });
 
-  // Query mockup briefing requests linked to this client's platform URL
-  const { data: mockupRequest } = useQuery({
-    queryKey: ['portal-mockup-request', clienteId],
+  // Query ALL mockup briefing requests linked to this client's platform URL
+  const { data: mockupRequests = [] } = useQuery({
+    queryKey: ['portal-mockup-requests', clienteId],
     enabled: !!cliente,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('briefing_requests')
-        .select('*, briefing_images(*)')
+        .select('*, briefing_images(*, briefing_deliveries(*))')
         .eq('platform_url', cliente!.empresa)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .order('created_at', { ascending: false });
       if (error) throw error;
-      return data;
+      return (data || []).filter((r: any) =>
+        r.briefing_images?.some((img: any) => img.image_type === 'app_mockup')
+      );
     },
   });
+
+  // Backward compat: single mockupRequest for virtual timeline item
+  const mockupRequest = mockupRequests.length > 0 ? mockupRequests[0] : null;
+
+  // Review state for mockup approval
+  const [reviewingImageId, setReviewingImageId] = useState<string | null>(null);
+  const [reviewComment, setReviewComment] = useState('');
 
   const [formData, setFormData] = useState({ nome_app: '', descricao_curta: '', descricao_longa: '', url_privacidade: '', url_termos: '' });
 
@@ -368,7 +375,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['portal-mockup-request'] });
+      queryClient.invalidateQueries({ queryKey: ['portal-mockup-requests'] });
       setShowMockupModal(false);
       resetMockupForm();
       toast.success('🎨 Solicitação enviada com sucesso!');
@@ -1625,64 +1632,144 @@ export default function AppClientPortalContent({ clienteId }: Props) {
       )}
 
       {/* Parallel Assets & Mockup Section */}
-      {mockupRequest && (
+      {mockupRequests.length > 0 && (
         <Card className="bg-[#1E293B] border-white/10 p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Palette className="h-5 w-5 text-primary" /> Assets e Mockup
-            </h2>
-            <Badge variant="outline" className={`text-xs ${
-              mockupRequest.status === 'completed' ? 'border-green-500/30 text-green-400' :
-              mockupRequest.status === 'review' ? 'border-amber-500/30 text-amber-400' :
-              'border-primary/30 text-primary'
-            }`}>
-              {mockupRequest.status === 'completed' ? '✅ Concluído' :
-               mockupRequest.status === 'review' ? '👁️ Em revisão' :
-               mockupRequest.status === 'in_progress' ? '🎨 Em produção' :
-               '⏳ Aguardando início'}
-            </Badge>
-          </div>
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <Palette className="h-5 w-5 text-primary" /> Validação de Design
+          </h2>
 
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-xs text-white/50">
-              <Clock className="h-3.5 w-3.5" />
-              <span>Solicitado em {format(new Date(mockupRequest.created_at), 'dd/MM/yyyy HH:mm')}</span>
-            </div>
-            {mockupRequest.briefing_images && mockupRequest.briefing_images.length > 0 && (
-              <div className="space-y-2">
-                {(mockupRequest.briefing_images as any[]).map((img: any) => (
-                  <div key={img.id} className="rounded-lg bg-white/5 border border-white/10 p-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <ImageIcon className="h-4 w-4 text-white/40" />
-                        <span className="text-sm">{img.image_type === 'app_mockup' ? 'Mockup do App' : img.image_type}</span>
+          <div className="space-y-3">
+            {mockupRequests.flatMap((req: any) =>
+              (req.briefing_images || [])
+                .filter((img: any) => img.image_type === 'app_mockup')
+                .map((img: any) => {
+                  const deliveries = img.briefing_deliveries || [];
+                  const latestDelivery = deliveries.length > 0 ? deliveries[deliveries.length - 1] : null;
+                  const assetName = img.observations || 'Mockup do App';
+
+                  return (
+                    <div key={img.id} className="rounded-lg bg-white/5 border border-white/10 p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <ImageIcon className="h-4 w-4 text-white/40" />
+                          <span className="text-sm font-medium">{assetName}</span>
+                        </div>
+                        <Badge variant="outline" className={`text-[10px] ${
+                          img.status === 'completed' ? 'border-green-500/30 text-green-400' :
+                          img.status === 'review' ? 'border-amber-500/30 text-amber-400' :
+                          img.status === 'in_progress' ? 'border-blue-500/30 text-blue-400' :
+                          'border-white/10 text-white/40'
+                        }`}>
+                          {img.status === 'completed' ? '✅ Concluído' :
+                           img.status === 'review' ? '👁️ Aguardando aprovação' :
+                           img.status === 'in_progress' ? '🎨 Em produção' :
+                           '⏳ Pendente'}
+                        </Badge>
                       </div>
-                      <Badge variant="outline" className={`text-[10px] ${
-                        img.status === 'completed' ? 'border-green-500/30 text-green-400' :
-                        img.status === 'review' ? 'border-amber-500/30 text-amber-400' :
-                        img.status === 'in_progress' ? 'border-blue-500/30 text-blue-400' :
-                        'border-white/10 text-white/40'
-                      }`}>
-                        {img.status === 'completed' ? 'Concluído' :
-                         img.status === 'review' ? 'Aguardando aprovação' :
-                         img.status === 'in_progress' ? 'Em produção' :
-                         'Pendente'}
-                      </Badge>
+
+                      {/* Show delivery preview when in review */}
+                      {img.status === 'review' && latestDelivery && (
+                        <div className="space-y-3">
+                          <div className="rounded-lg overflow-hidden border border-white/10">
+                            <img
+                              src={latestDelivery.file_url}
+                              alt={assetName}
+                              className="w-full max-h-[200px] object-contain bg-black/30"
+                            />
+                          </div>
+
+                          {reviewingImageId === img.id ? (
+                            <div className="space-y-2">
+                              <Label className="text-xs text-white/60">Descreva o ajuste necessário *</Label>
+                              <Textarea
+                                value={reviewComment}
+                                onChange={(e) => setReviewComment(e.target.value)}
+                                placeholder="Ex: A cor de fundo precisa ser mais escura..."
+                                className="bg-white/5 border-white/10 text-white min-h-[60px]"
+                              />
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  className="flex-1"
+                                  disabled={!reviewComment.trim()}
+                                  onClick={async () => {
+                                    try {
+                                      await supabase.functions.invoke('delivery-data', {
+                                        body: { action: 'update_status', image_id: img.id, status: 'in_progress', revision_count: (img.revision_count || 0) + 1 },
+                                      });
+                                      await supabase.from('briefing_reviews').insert({
+                                        briefing_image_id: img.id,
+                                        action: 'revision_requested',
+                                        reviewed_by: cliente!.email,
+                                        reviewer_comments: reviewComment,
+                                      });
+                                      queryClient.invalidateQueries({ queryKey: ['portal-mockup-requests'] });
+                                      setReviewingImageId(null);
+                                      setReviewComment('');
+                                      toast.success('Ajuste solicitado!');
+                                    } catch (e: any) { toast.error(e.message); }
+                                  }}
+                                >
+                                  Enviar ajuste
+                                </Button>
+                                <Button size="sm" variant="ghost" onClick={() => { setReviewingImageId(null); setReviewComment(''); }}>
+                                  Cancelar
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                className="flex-1 bg-green-600 hover:bg-green-700"
+                                onClick={async () => {
+                                  try {
+                                    await supabase.functions.invoke('delivery-data', {
+                                      body: { action: 'update_status', image_id: img.id, status: 'completed' },
+                                    });
+                                    await supabase.from('briefing_reviews').insert({
+                                      briefing_image_id: img.id,
+                                      action: 'approved',
+                                      reviewed_by: cliente!.email,
+                                      reviewer_comments: null,
+                                    });
+                                    queryClient.invalidateQueries({ queryKey: ['portal-mockup-requests'] });
+                                    toast.success('Arte aprovada! ✅');
+                                  } catch (e: any) { toast.error(e.message); }
+                                }}
+                              >
+                                ✅ Aprovar
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="flex-1 border-white/20"
+                                onClick={() => setReviewingImageId(img.id)}
+                              >
+                                💬 Solicitar ajuste
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {img.status === 'completed' && latestDelivery && (
+                        <div className="rounded-lg overflow-hidden border border-green-500/20">
+                          <img
+                            src={latestDelivery.file_url}
+                            alt={assetName}
+                            className="w-full max-h-[150px] object-contain bg-black/30 opacity-80"
+                          />
+                        </div>
+                      )}
                     </div>
-                    {img.status === 'review' && (
-                      <div className="mt-2 rounded bg-amber-500/10 border border-amber-500/20 p-2">
-                        <p className="text-xs text-amber-300 flex items-center gap-1">
-                          <Eye className="h-3.5 w-3.5" /> Você tem uma pendência de aprovação neste item
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+                  );
+                })
             )}
           </div>
 
-          {/* Show pending asset approvals */}
+          {/* Show pending asset approvals (app_assets) */}
           {pendingAssets.length > 0 && (
             <div className="space-y-2 border-t border-white/10 pt-3">
               <p className="text-sm font-medium text-amber-400">📋 Pendências de aprovação</p>
