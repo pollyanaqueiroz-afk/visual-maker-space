@@ -932,7 +932,7 @@ export default function Dashboard() {
               open={bulkAssignOpen}
               onOpenChange={setBulkAssignOpen}
               imageIds={Array.from(selectedIds)}
-              onAssigned={() => { setSelectedIds(new Set()); fetchData(); }}
+              onAssigned={() => { setSelectedIds(new Set()); refreshAll(); }}
             />
           </TabsContent>
 
