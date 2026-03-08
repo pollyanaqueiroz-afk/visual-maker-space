@@ -1153,7 +1153,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                           className="w-full flex items-center gap-2 text-xs py-1.5 hover:bg-white/5 rounded px-1 -mx-1 transition-colors"
                           onClick={() => {
                             if (item.id === 'mockup-virtual' && !item.feito) {
-                              navigate('/cliente/solicitar?mockup=1');
+                              setShowMockupModal(true);
                             } else if (item.feito && filledValue) {
                               setExpandedTimelineItem(isExpanded ? null : item.id);
                             }
