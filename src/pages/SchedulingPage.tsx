@@ -300,10 +300,10 @@ export default function SchedulingPage() {
       meeting_url: m.meeting_url || '',
       client_name: m.client_name || '',
       client_email: m.client_email || '',
-      client_url: (m as any).client_url || '',
+      client_url: m.client_url || '',
       participants: (m.participants || []).join(', '),
       notes: m.notes || '',
-      meeting_reason: (m as any).meeting_reason || '',
+      meeting_reason: m.meeting_reason || '',
       reschedule_reason: '',
     });
     setDialogOpen(true);
