@@ -94,8 +94,9 @@ export default function ProcessosImplantacaoPage() {
       // Aplicativo
       const appCliente = appClientes.find(a => a.empresa === url);
 
-      // SCORM — not linked per client currently
-      const hasScorm = false;
+      // SCORM
+      const clientScormPackages = scormPackages.filter((pkg: any) => pkg.platform_url === url);
+      const hasScorm = clientScormPackages.length > 0;
 
       // Status geral
       let overallStatus = 'sem_processos';

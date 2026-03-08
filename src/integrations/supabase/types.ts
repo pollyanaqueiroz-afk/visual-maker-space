@@ -1453,6 +1453,7 @@ export type Database = {
       }
       scorm_packages: {
         Row: {
+          client_name: string | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -1460,11 +1461,13 @@ export type Database = {
           file_count: number
           file_size_bytes: number
           id: string
+          platform_url: string | null
           storage_path: string
           title: string
           updated_at: string
         }
         Insert: {
+          client_name?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -1472,11 +1475,13 @@ export type Database = {
           file_count?: number
           file_size_bytes?: number
           id?: string
+          platform_url?: string | null
           storage_path: string
           title: string
           updated_at?: string
         }
         Update: {
+          client_name?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -1484,6 +1489,7 @@ export type Database = {
           file_count?: number
           file_size_bytes?: number
           id?: string
+          platform_url?: string | null
           storage_path?: string
           title?: string
           updated_at?: string

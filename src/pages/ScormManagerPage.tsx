@@ -153,6 +153,11 @@ export default function ScormManagerPage() {
             </DialogHeader>
             <div className="space-y-4">
               <div>
+                <Label>Cliente (opcional)</Label>
+                <Input value={platformUrl} onChange={e => setPlatformUrl(e.target.value)} placeholder="URL da plataforma do cliente" />
+                <p className="text-[10px] text-muted-foreground mt-0.5">Ex: cliente.curseduca.pro</p>
+              </div>
+              <div>
                 <Label>Título *</Label>
                 <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Nome do conteúdo" />
               </div>

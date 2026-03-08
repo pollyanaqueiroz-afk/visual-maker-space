@@ -164,6 +164,7 @@ Deno.serve(async (req) => {
         file_count: fileCount,
         file_size_bytes: totalSize,
         created_by: user.id,
+        platform_url: platformUrl,
       })
       .select()
       .single();
