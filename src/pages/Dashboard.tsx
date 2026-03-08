@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
-import { Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle, CalendarIcon, AlertCircle, Link2, FolderOpen, FileText, Palette, UserCheck, FileSpreadsheet, Search, UserPen, X, LayoutGrid } from 'lucide-react';
+import { Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle, CalendarIcon, AlertCircle, Link2, FolderOpen, FileText, Palette, UserCheck, FileSpreadsheet, Search, UserPen, X, LayoutGrid, XCircle, Smartphone } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -128,6 +128,7 @@ export default function Dashboard() {
         case 'in_progress': setFilterStatus('in_progress'); break;
         case 'review': setFilterStatus('review'); break;
         case 'completed': setFilterStatus('completed'); break;
+        case 'cancelled': setFilterStatus('cancelled'); break;
         case 'clients': setFilterStatus('all'); break;
         case 'requests': setFilterStatus('all'); break;
       }
@@ -137,6 +138,11 @@ export default function Dashboard() {
   const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
   const [mooniBlockDialogOpen, setMooniBlockDialogOpen] = useState(false);
   const [mooniBlockClientName, setMooniBlockClientName] = useState('');
+  const [mockupSolicitationOpen, setMockupSolicitationOpen] = useState(false);
+  const [mockupClientUrl, setMockupClientUrl] = useState('');
+  const [mockupClientSuggestions, setMockupClientSuggestions] = useState<string[]>([]);
+  const [mockupObservations, setMockupObservations] = useState('');
+  const [mockupSubmitting, setMockupSubmitting] = useState(false);
   const topScrollRef = useRef<HTMLDivElement>(null);
   const tableScrollRef = useRef<HTMLDivElement>(null);
   const topScrollInnerRef = useRef<HTMLDivElement>(null);
@@ -348,11 +354,58 @@ export default function Dashboard() {
   const inProgressImages = images.filter(i => i.status === 'in_progress').length;
   const completedImages = images.filter(i => i.status === 'completed').length;
   const reviewImages = images.filter(i => i.status === 'review').length;
+  const cancelledImages = images.filter(i => i.status === 'cancelled').length;
   const overdueImages = images.filter(i => isOverdue(i)).length;
   const incompleteImages = images.filter(i => isBriefingIncomplete(i)).length;
   const openClients = new Set(
     images.filter(i => i.status !== 'completed' && i.status !== 'cancelled').map(i => i.platform_url)
   ).size;
+
+  const allClientUrls = useMemo(() => {
+    const urls = new Set<string>();
+    images.forEach(i => urls.add(i.platform_url));
+    return Array.from(urls).sort();
+  }, [images]);
+
+  const handleMockupSolicitation = async () => {
+    if (!mockupClientUrl.trim()) {
+      toast.error('Informe a URL da plataforma do cliente');
+      return;
+    }
+    setMockupSubmitting(true);
+    try {
+      const { data: request, error: reqError } = await supabase.from('briefing_requests').insert({
+        requester_name: user?.email || 'Equipe Interna',
+        requester_email: user?.email || 'interno@curseduca.com',
+        platform_url: mockupClientUrl.trim(),
+        has_trail: false,
+        has_challenge: false,
+        has_community: false,
+        received_at: new Date().toISOString(),
+        submitted_by: user?.email || null,
+      }).select('id').single();
+      if (reqError) throw reqError;
+      const { error: imgError } = await supabase.from('briefing_images').insert({
+        request_id: request.id,
+        image_type: 'app_mockup' as any,
+        sort_order: 0,
+        observations: mockupObservations.trim() || 'Mockup do aplicativo — solicitação interna',
+        status: 'pending' as any,
+      });
+      if (imgError) throw imgError;
+      toast.success('Mockup solicitado! Aparecerá no Kanban como pendente.');
+      setMockupSolicitationOpen(false);
+      setMockupClientUrl('');
+      setMockupObservations('');
+      queryClient.invalidateQueries({ queryKey: ['briefing-images'] });
+      queryClient.invalidateQueries({ queryKey: ['briefing-requests'] });
+    } catch (err: any) {
+      console.error('Erro ao solicitar mockup:', err);
+      toast.error('Erro ao criar solicitação: ' + err.message);
+    } finally {
+      setMockupSubmitting(false);
+    }
+  };
 
   const extractClientName = (url: string) => {
     try {
@@ -414,7 +467,7 @@ export default function Dashboard() {
       <div className="p-6 space-y-8 max-w-[1800px] mx-auto">
         {/* Stats + Links */}
         <div className="flex gap-4 items-start">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 flex-1">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 flex-1">
             <Card className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'total' ? 'ring-2 ring-primary' : ''}`} onClick={() => toggleKPI('total')}>
               <CardContent className="pt-3 pb-3 px-3">
                 <div className="flex items-center gap-1.5 mb-0.5">
@@ -469,6 +522,15 @@ export default function Dashboard() {
                 <p className="text-2xl font-bold text-primary">{completedImages}</p>
               </CardContent>
             </Card>
+            <Card className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'cancelled' ? 'ring-2 ring-destructive' : ''}`} onClick={() => toggleKPI('cancelled')}>
+              <CardContent className="pt-3 pb-3 px-3">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <XCircle className="h-3.5 w-3.5 text-destructive" />
+                  <p className="text-xs text-muted-foreground">Canceladas</p>
+                </div>
+                <p className="text-2xl font-bold text-destructive">{cancelledImages}</p>
+              </CardContent>
+            </Card>
             <Card className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'clients' ? 'ring-2 ring-primary' : ''}`} onClick={() => toggleKPI('clients')}>
               <CardContent className="pt-3 pb-3 px-3">
                 <div className="flex items-center gap-1.5 mb-0.5">
@@ -491,6 +553,15 @@ export default function Dashboard() {
             >
               <FileText className="h-3.5 w-3.5" />
               Link Formulário
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="flex items-center gap-2 justify-start text-xs h-8"
+              onClick={() => setMockupSolicitationOpen(true)}
+            >
+              <Smartphone className="h-3.5 w-3.5" />
+              Solicitar Mockup
             </Button>
             <Button
               variant="outline"
@@ -559,6 +630,7 @@ export default function Dashboard() {
                      activeKPI === 'in_progress' ? 'Em Produção' :
                      activeKPI === 'review' ? 'Em Revisão' :
                      activeKPI === 'completed' ? 'Concluídas' :
+                     activeKPI === 'cancelled' ? 'Canceladas' :
                      'Clientes Abertos'}
                   </span>
                 </span>
@@ -1327,6 +1399,92 @@ export default function Dashboard() {
                 </Button>
                 <Button className="flex-1" asChild>
                   <a href="/hub/aplicativos">Ir para Aplicativos</a>
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Mockup Solicitation Dialog */}
+        <Dialog open={mockupSolicitationOpen} onOpenChange={setMockupSolicitationOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Smartphone className="h-5 w-5 text-primary" />
+                Solicitar Mockup de Aplicativo
+              </DialogTitle>
+              <p className="text-sm text-muted-foreground">
+                Crie uma solicitação de mockup vinculada a um cliente. A arte seguirá o fluxo normal de produção e validação.
+              </p>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="relative">
+                <Label className="text-sm">URL da plataforma do cliente *</Label>
+                <Input
+                  placeholder="https://cliente.curseduca.pro"
+                  value={mockupClientUrl}
+                  onChange={(e) => {
+                    setMockupClientUrl(e.target.value);
+                    const q = e.target.value.toLowerCase();
+                    if (q.length >= 2) {
+                      setMockupClientSuggestions(allClientUrls.filter(u => u.toLowerCase().includes(q)).slice(0, 5));
+                    } else {
+                      setMockupClientSuggestions([]);
+                    }
+                  }}
+                />
+                {mockupClientSuggestions.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 border rounded-md bg-popover shadow-md">
+                    {mockupClientSuggestions.map(url => (
+                      <button
+                        key={url}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-accent truncate"
+                        onClick={() => {
+                          setMockupClientUrl(url);
+                          setMockupClientSuggestions([]);
+                        }}
+                      >
+                        {url}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  A solicitação ficará vinculada a esta URL.
+                </p>
+              </div>
+
+              <div>
+                <Label className="text-sm">Observações para o designer</Label>
+                <Textarea
+                  placeholder="Cores, estilo visual, referências..."
+                  value={mockupObservations}
+                  onChange={(e) => setMockupObservations(e.target.value)}
+                  className="min-h-[80px]"
+                />
+              </div>
+
+              <div className="rounded-lg bg-muted/50 p-3 space-y-1">
+                <p className="text-xs font-semibold text-foreground">O que acontece ao solicitar:</p>
+                <ul className="text-xs text-muted-foreground space-y-0.5">
+                  <li>• Um briefing será criado com tipo "Mockup do Aplicativo"</li>
+                  <li>• Aparecerá na tabela de artes e no Kanban como "Pendente"</li>
+                  <li>• Pode ser alocado para um designer normalmente</li>
+                  <li>• O cliente poderá validar a arte pelo fluxo padrão</li>
+                </ul>
+              </div>
+
+              <div className="flex gap-3 justify-end pt-2">
+                <Button variant="outline" onClick={() => { setMockupSolicitationOpen(false); setMockupClientUrl(''); setMockupObservations(''); }}>
+                  Cancelar
+                </Button>
+                <Button
+                  disabled={mockupSubmitting || !mockupClientUrl.trim()}
+                  onClick={handleMockupSolicitation}
+                  className="gap-2"
+                >
+                  {mockupSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Smartphone className="h-4 w-4" />}
+                  Criar Solicitação
                 </Button>
               </div>
             </div>
