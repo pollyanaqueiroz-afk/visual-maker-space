@@ -581,7 +581,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             {status === 'concluida' ? (
               <CheckCircle2 className="h-5 w-5 text-green-400" />
             ) : status === 'bloqueada' ? (
-              <Lock className="h-4 w-4 text-white/20" />
+              <Lock className="h-4 w-4 text-white/40" />
             ) : status === 'atrasada' ? (
               <AlertTriangle className="h-4 w-4 text-red-400" />
             ) : (
