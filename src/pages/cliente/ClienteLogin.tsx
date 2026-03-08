@@ -16,6 +16,7 @@ export default function ClienteLogin() {
   const [nome, setNome] = useState('');
   const [plataformaUrl, setPlataformaUrl] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
