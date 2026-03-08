@@ -1422,12 +1422,12 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                              <Loader2 className="h-7 w-7 text-white animate-spin" />}
                           </div>
                         </button>
-                        <p className={`text-xs mt-1.5 text-center leading-tight max-w-[80px] font-medium ${
+                        <p className={`absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs text-center leading-tight whitespace-nowrap font-medium ${
                           s === 'concluida' ? 'text-green-400 font-semibold' :
                           isActive ? 'text-blue-400 font-semibold' :
                           s === 'atrasada' ? 'text-red-400 font-semibold' :
                           'text-white/35'
-                        }`}>Pré-<br/>Requisitos</p>
+                        }`}>Pré-Requisitos</p>
                       </>
                     );
                   })()}
