@@ -139,6 +139,43 @@ export default function ClienteHome() {
     },
   });
 
+  // Check if client has briefing_requests but no app_clientes
+  const { data: hasBriefingRequest } = useQuery({
+    queryKey: ['cliente-briefing-check', clientEmail],
+    enabled: !!clientEmail && !appCliente,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('briefing_requests')
+        .select('requester_name, requester_email, platform_url')
+        .eq('requester_email', clientEmail)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  // Auto-create app_clientes from briefing data
+  const createAppFromBriefing = useMutation({
+    mutationFn: async () => {
+      if (!hasBriefingRequest) throw new Error('Nenhuma solicitação encontrada');
+      const { error } = await supabase.from('app_clientes').insert({
+        nome: hasBriefingRequest.requester_name,
+        empresa: hasBriefingRequest.platform_url,
+        email: hasBriefingRequest.requester_email,
+        plataforma: 'ambos',
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cliente-app'] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-briefing-check'] });
+      toast.success('Projeto de aplicativo criado com sucesso! 🎉');
+      navigate('/cliente/aplicativo');
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const isLoading = loadingArtes || loadingApp || loadingChecklist;
 
   // Combine all real pendencies
