@@ -515,7 +515,7 @@ export default function SchedulingPage() {
   const filteredMeetings = useMemo(() => {
     let list = meetings;
     if (filterStatus !== 'all') list = list.filter(m => m.status === filterStatus);
-    if (filterReason !== 'all') list = list.filter(m => (m as any).meeting_reason === filterReason);
+    if (filterReason !== 'all') list = list.filter(m => m.meeting_reason === filterReason);
     if (selectedDate) list = list.filter(m => isSameDay(parseISO(m.meeting_date), selectedDate));
     return list;
   }, [meetings, filterStatus, filterReason, selectedDate]);
