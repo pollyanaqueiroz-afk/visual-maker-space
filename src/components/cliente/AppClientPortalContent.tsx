@@ -950,6 +950,34 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             </div>
           )}
 
+          {/* Future stage message */}
+          {fase.status === 'bloqueada' && (
+            <div className="text-center py-6 space-y-3 rounded-xl bg-white/5 border border-white/5">
+              <div className="relative mx-auto w-16 h-16">
+                <div className="relative flex items-center justify-center w-full h-full">
+                  <Lock className="h-8 w-8 text-white/20" />
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-white/60">Etapa futura</p>
+                <p className="text-xs text-white/40 mt-1">Você será notificado quando chegar aqui.</p>
+              </div>
+              {items.length > 0 && (
+                <div className="space-y-2 mt-4 opacity-50">
+                  {items.map(item => (
+                    <div key={item.id} className="p-3 rounded-lg bg-white/5 flex items-start gap-3">
+                      <Lock className="h-4 w-4 text-white/20 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-sm text-white/50">{item.texto}</p>
+                        {item.descricao && <p className="text-xs text-white/30 mt-0.5">{item.descricao}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Items (active/completed phases) */}
           {fase.status !== 'bloqueada' && (items.length > 0 || faseNum === 0) ? (
             <div className="space-y-2">
