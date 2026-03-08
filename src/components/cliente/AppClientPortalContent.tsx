@@ -915,6 +915,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                           toggleCheck.mutate({ id: item.id, feito: true });
                           setSiteOption(null); setSiteInput(''); setSitePromptId(null);
                           toast.success(siteOption === 'curseduca' ? 'Autorização registrada! ✅' : 'Site confirmado! ✅');
+                          confetti({ particleCount: 25, spread: 40, origin: { y: 0.7 }, colors: ['#22c55e', '#10b981'] });
                         }}>
                         Confirmar
                       </Button>
