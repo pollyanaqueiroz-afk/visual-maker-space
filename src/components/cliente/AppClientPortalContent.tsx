@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   CheckCircle2, Circle, MessageSquare, Star, Lock, AlertTriangle,
   ExternalLink, Upload, Image as ImageIcon, Loader2, ChevronDown, ChevronUp,
-  Palette, Clock, Eye, Rocket,
+  Palette, Clock, Eye, Rocket, Plus, Minus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
