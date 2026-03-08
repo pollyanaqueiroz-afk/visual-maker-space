@@ -492,7 +492,7 @@ export default function SchedulingPage() {
   const reasonCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const m of meetings) {
-      const r = (m as any).meeting_reason;
+      const r = m.meeting_reason;
       if (r) counts[r] = (counts[r] || 0) + 1;
     }
     return counts;
