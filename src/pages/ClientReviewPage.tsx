@@ -856,7 +856,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
             transition={{ duration: 0.5, type: 'spring' }}
             className="w-full max-w-md"
           >
-            <div className="relative overflow-hidden bg-card border border-border rounded-3xl shadow-2xl p-8 text-center space-y-6">
+            <div className={`relative overflow-hidden ${cardBgSolid} border rounded-3xl shadow-2xl p-8 text-center space-y-6`}>
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary/60 to-primary rounded-t-3xl" />
               <motion.div
                 initial={{ scale: 0 }}
@@ -867,8 +867,8 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
                 <CheckCircle className="h-12 w-12 text-primary" />
               </motion.div>
               <div>
-                <h2 className="text-2xl font-bold text-foreground">Parabéns!</h2>
-                <p className="text-muted-foreground mt-2">
+                <h2 className={`text-2xl font-bold ${textMain}`}>Parabéns!</h2>
+                <p className={`${textSub} mt-2`}>
                   Você revisou <span className="font-bold text-primary">{completedCount}</span> arte(s).
                   <br />Sua opinião é muito importante para nós!
                 </p>
@@ -926,13 +926,13 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
             animate={{ opacity: 1, y: 0 }}
             className="w-full max-w-md"
           >
-            <div className="relative overflow-hidden bg-card border border-border rounded-3xl shadow-2xl p-8 text-center space-y-5">
+            <div className={`relative overflow-hidden ${cardBgSolid} border rounded-3xl shadow-2xl p-8 text-center space-y-5`}>
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-muted-foreground/20 via-muted-foreground/10 to-muted-foreground/20 rounded-t-3xl" />
               <div className="mx-auto w-20 h-20 rounded-full bg-muted flex items-center justify-center">
                 <Palette className="h-10 w-10 text-muted-foreground" />
               </div>
-              <h2 className="text-xl font-bold text-foreground">Nenhuma arte para validar</h2>
-              <p className="text-muted-foreground text-sm leading-relaxed">
+              <h2 className={`text-xl font-bold ${textMain}`}>Nenhuma arte para validar</h2>
+              <p className={`${textSub} text-sm leading-relaxed`}>
                 Não há artes aguardando sua aprovação no momento.<br/>Volte mais tarde ou solicite novas artes!
               </p>
               <div className="space-y-2 pt-2">
@@ -968,8 +968,8 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
           animate={{ opacity: 1, y: 0 }}
           className="mb-6 text-center"
         >
-          <div className="inline-flex items-center gap-3 bg-card/80 backdrop-blur-sm border border-border rounded-full px-5 py-2.5 shadow-sm">
-            <span className="text-sm font-semibold text-foreground">
+          <div className={`inline-flex items-center gap-3 ${cardBg} backdrop-blur-sm border rounded-full px-5 py-2.5 shadow-sm`}>
+            <span className={`text-sm font-semibold ${textMain}`}>
               {currentIndex + 1}
             </span>
             <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
@@ -980,7 +980,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
                 transition={{ duration: 0.4, ease: 'easeOut' }}
               />
             </div>
-            <span className="text-sm text-muted-foreground font-medium">
+            <span className={`text-sm ${textSub} font-medium`}>
               {images.length}
             </span>
           </div>
@@ -1002,7 +1002,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
             transition={{ duration: 0.35, ease: 'easeOut' }}
             className="w-full max-w-lg"
           >
-            <div className="relative bg-card border border-border rounded-3xl shadow-2xl overflow-hidden">
+            <div className={`relative ${cardBgSolid} border rounded-3xl shadow-2xl overflow-hidden`}>
               {/* Top accent */}
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary/60 to-primary z-10" />
 
@@ -1043,10 +1043,10 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
 
               <div className="p-6 space-y-4">
                 <div>
-                  <h2 className="text-xl font-bold text-foreground">
+                  <h2 className={`text-xl font-bold ${textMain}`}>
                     {currentImage.product_name || imageTypeLabel}
                   </h2>
-                  <p className="text-sm text-muted-foreground">{imageTypeLabel}</p>
+                  <p className={`text-sm ${textSub}`}>{imageTypeLabel}</p>
                   {currentImage.revision_count > 0 && (
                     <Badge variant="outline" className="mt-2 text-destructive border-destructive/30 bg-destructive/5">
                       ⚠️ Refação {currentImage.revision_count}
@@ -1057,7 +1057,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
                 {currentImage.delivery?.comments && (
                   <div className="bg-muted/40 rounded-2xl p-4 border border-border/50">
                     <p className="text-[11px] text-muted-foreground font-bold mb-1.5 uppercase tracking-widest">💬 Designer</p>
-                    <p className="text-sm text-foreground leading-relaxed">{currentImage.delivery.comments}</p>
+                    <p className={`text-sm ${textMain} leading-relaxed`}>{currentImage.delivery.comments}</p>
                   </div>
                 )}
 
@@ -1124,7 +1124,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
               >
                 <X className="h-7 w-7 text-destructive" />
               </motion.button>
-              <span className="text-[11px] font-medium text-muted-foreground">Reprovar</span>
+              <span className={`text-[11px] font-medium ${textSub}`}>Reprovar</span>
             </div>
 
             {/* Approve */}
@@ -1138,7 +1138,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
               >
                 <Heart className="h-10 w-10 text-primary fill-primary" />
               </motion.button>
-              <span className="text-[11px] font-medium text-muted-foreground">Aprovar</span>
+              <span className={`text-[11px] font-medium ${textSub}`}>Aprovar</span>
             </div>
           </motion.div>
         )}
