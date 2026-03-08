@@ -1223,7 +1223,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           <span className="text-base">{emoji}</span>
           <span className="text-white text-sm font-bold">{plataforma === 'google' ? 'Google Play' : 'Apple'}</span>
         </div>
-        <div className="relative flex items-center flex-1 min-w-0 py-2">
+        <div className="relative flex items-center flex-1 min-w-0 pt-2 pb-10">
           {/* Connecting line */}
           <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-1.5 bg-white/15 rounded-full" />
           {/* Progress line */}
