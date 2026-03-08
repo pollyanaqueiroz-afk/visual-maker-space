@@ -968,7 +968,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
           animate={{ opacity: 1, y: 0 }}
           className="mb-6 text-center"
         >
-          <div className="inline-flex items-center gap-3 bg-card/80 backdrop-blur-sm border border-border rounded-full px-5 py-2.5 shadow-sm">
+          <div className={`inline-flex items-center gap-3 ${cardBg} backdrop-blur-sm border rounded-full px-5 py-2.5 shadow-sm`}>
             <span className="text-sm font-semibold text-foreground">
               {currentIndex + 1}
             </span>
