@@ -125,6 +125,7 @@ export type Database = {
           id: string
           obrigatorio: boolean | null
           ordem: number | null
+          plataforma: string
           texto: string
           tipo: string | null
           updated_at: string | null
@@ -149,6 +150,7 @@ export type Database = {
           id?: string
           obrigatorio?: boolean | null
           ordem?: number | null
+          plataforma?: string
           texto: string
           tipo?: string | null
           updated_at?: string | null
@@ -173,6 +175,7 @@ export type Database = {
           id?: string
           obrigatorio?: boolean | null
           ordem?: number | null
+          plataforma?: string
           texto?: string
           tipo?: string | null
           updated_at?: string | null
