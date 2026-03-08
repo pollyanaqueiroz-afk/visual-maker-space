@@ -1218,7 +1218,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     }));
 
     return (
-      <div className="flex items-center gap-0">
+      <div className="flex items-center gap-0 pb-8">
         <div className="shrink-0 w-36 flex items-center justify-end pr-3 gap-1.5">
           <span className="text-base">{emoji}</span>
           <span className="text-white text-sm font-bold">{plataforma === 'google' ? 'Google Play' : 'Apple'}</span>
@@ -1240,11 +1240,11 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 <div key={num} className="flex-1 flex flex-col items-center relative z-10">
                   <button
                     onClick={() => setSelectedTimelineFase(isSelected ? null : { fase: num, plataforma })}
-                    className={`flex flex-col items-center cursor-pointer hover:scale-105 transition-all ${status === 'bloqueada' ? 'opacity-60' : ''} ${isSelected ? 'scale-110' : ''}`}
+                    className={`relative flex flex-col items-center cursor-pointer hover:scale-105 transition-all ${status === 'bloqueada' ? 'opacity-60' : ''} ${isSelected ? 'scale-110' : ''}`}
                   >
                     <div className="relative">
                       {status === 'em_andamento' && (
-                        <div className="absolute inset-1 rounded-full bg-blue-500/20 animate-pulse" />
+                        <div className="absolute inset-0 rounded-full bg-blue-500/10" />
                       )}
                       <div className={`relative w-14 h-14 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                         status === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50 text-green-400' :
@@ -1258,7 +1258,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                          <Lock className="h-5 w-5" />}
                       </div>
                     </div>
-                       <p className={`text-xs mt-2 text-center leading-tight max-w-[90px] font-medium ${
+                       <p className={`absolute -bottom-7 left-1/2 -translate-x-1/2 text-[10px] text-center leading-tight whitespace-nowrap font-medium ${
                           status === 'concluida' ? 'text-green-400 font-semibold' :
                           status === 'em_andamento' ? 'text-blue-400 font-semibold' :
                           status === 'atrasada' ? 'text-red-400 font-semibold' :
@@ -1394,11 +1394,11 @@ export default function AppClientPortalContent({ clienteId }: Props) {
         /* ── Parallel: fase 0 left, bifurcation to two horizontal tracks ── */
          <div className="space-y-4">
           <div>
-            <div className="flex items-start gap-0 w-full py-3">
+            <div className="flex items-center gap-0 w-full py-3 pb-10">
               {/* Fase 0 + Toggle — aligned to circle center */}
-              <div className="shrink-0 flex items-start gap-0">
+              <div className="shrink-0 flex items-center gap-0">
                 {/* Fase 0 */}
-                <div className="flex flex-col items-center">
+                <div className="flex flex-col items-center relative">
                   {(() => {
                     const f0 = fases.find((f: any) => f.numero === 0);
                     const s = f0?.status || 'bloqueada';
@@ -1408,7 +1408,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                       <>
                         <button onClick={() => setSelectedTimelineFase(isF0Selected ? null : { fase: 0 })} className="relative">
                           {isActive && (
-                            <div className="absolute inset-1 rounded-full bg-blue-500/20 animate-pulse" />
+                            <div className="absolute inset-0 rounded-full bg-blue-500/10" />
                           )}
                           <div className={`relative flex items-center justify-center w-16 h-16 rounded-full transition-all ${
                             s === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50' :
@@ -1422,22 +1422,20 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                              <Loader2 className="h-7 w-7 text-white animate-spin" />}
                           </div>
                         </button>
-                        <p className={`text-xs mt-1.5 text-center leading-tight max-w-[80px] font-medium ${
+                        <p className={`absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs text-center leading-tight whitespace-nowrap font-medium ${
                           s === 'concluida' ? 'text-green-400 font-semibold' :
                           isActive ? 'text-blue-400 font-semibold' :
                           s === 'atrasada' ? 'text-red-400 font-semibold' :
                           'text-white/35'
-                        }`}>Pré-<br/>Requisitos</p>
+                        }`}>Pré-Requisitos</p>
                       </>
                     );
                   })()}
                 </div>
 
-                {/* Toggle — marginTop aligns center with circle center (64px circle → center at 32px, 24px button → 32-12=20) */}
                 <button
                   onClick={() => setFlowExpanded(!flowExpanded)}
                   className="flex items-center justify-center w-6 h-6 rounded-full bg-[#1E293B] border-2 border-white/30 hover:border-white/50 transition-all hover:scale-110 mx-1"
-                  style={{ marginTop: '20px' }}
                 >
                   {flowExpanded ? <Minus className="h-3 w-3 text-white/60" /> : <Plus className="h-3 w-3 text-white/60" />}
                 </button>
