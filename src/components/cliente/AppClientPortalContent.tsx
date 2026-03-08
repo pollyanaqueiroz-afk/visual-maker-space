@@ -1170,7 +1170,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           {(() => {
             const completedCount = trackFases.filter(({ fase }) => fase?.status === 'concluida').length;
             const progressWidth = trackFases.length > 1 ? `${(completedCount / (trackFases.length - 1)) * 100}%` : '0%';
-            return <div className="absolute top-1/2 -translate-y-1/2 left-0 h-1 bg-green-500 rounded-full transition-all duration-500" style={{ width: progressWidth }} />;
+            return <div className="absolute top-1/2 -translate-y-1/2 left-0 h-1.5 bg-green-500 rounded-full transition-all duration-500" style={{ width: progressWidth }} />;
           })()}
           <div className="relative flex w-full">
             {trackFases.map(({ num, fase }) => {
