@@ -1528,7 +1528,121 @@ export default function AplicativosPage() {
             </div>
           )}
         </TabsContent>
-      </Tabs>
+
+        {/* Produtividade Tab */}
+        {canManage && (
+          <TabsContent value="produtividade" className="space-y-6 mt-4">
+            {(() => {
+              const doneItems = allChecklist.filter((i: any) => i.feito && i.feito_em);
+              const onTime = doneItems.filter((i: any) => !i.sla_vencimento || new Date(i.feito_em) <= new Date(i.sla_vencimento)).length;
+              const late = doneItems.filter((i: any) => i.sla_vencimento && new Date(i.feito_em) > new Date(i.sla_vencimento)).length;
+              const totalDone = doneItems.length;
+              const slaRate = totalDone > 0 ? Math.round((onTime / totalDone) * 100) : 100;
+
+              // Per-person stats
+              const perPerson: Record<string, { done: number; onTime: number; late: number; slaRate: number; pending: number; avgHours: string }> = {};
+              allChecklist.forEach((item: any) => {
+                const nome = item.responsavel || 'Sem responsável';
+                if (!perPerson[nome]) perPerson[nome] = { done: 0, onTime: 0, late: 0, slaRate: 0, pending: 0, avgHours: '0' };
+                if (item.feito) {
+                  perPerson[nome].done++;
+                  if (!item.sla_vencimento || new Date(item.feito_em) <= new Date(item.sla_vencimento)) perPerson[nome].onTime++;
+                  else perPerson[nome].late++;
+                } else {
+                  perPerson[nome].pending++;
+                }
+              });
+              Object.entries(perPerson).forEach(([nome, stats]) => {
+                stats.slaRate = stats.done > 0 ? Math.round((stats.onTime / stats.done) * 100) : 100;
+                const personItems = allChecklist.filter((i: any) => (i.responsavel || 'Sem responsável') === nome && i.feito && i.feito_em && i.created_at);
+                if (personItems.length > 0) {
+                  const totalH = personItems.reduce((sum: number, i: any) => sum + (new Date(i.feito_em).getTime() - new Date(i.created_at).getTime()) / 3600000, 0);
+                  stats.avgHours = (totalH / personItems.length).toFixed(1);
+                }
+              });
+
+              // Monthly chart data (last 6 months)
+              const monthlyData = Array.from({ length: 6 }, (_, idx) => {
+                const d = subMonths(new Date(), 5 - idx);
+                const monthStart = startOfMonth(d);
+                const nextMonth = startOfMonth(subMonths(new Date(), 4 - idx));
+                const monthItems = doneItems.filter((i: any) => {
+                  const fe = new Date(i.feito_em);
+                  return fe >= monthStart && (idx < 5 ? fe < nextMonth : true);
+                });
+                return {
+                  month: format(monthStart, 'MMM/yy', { locale: ptBR }),
+                  noPrazo: monthItems.filter((i: any) => !i.sla_vencimento || new Date(i.feito_em) <= new Date(i.sla_vencimento)).length,
+                  atrasadas: monthItems.filter((i: any) => i.sla_vencimento && new Date(i.feito_em) > new Date(i.sla_vencimento)).length,
+                };
+              });
+
+              return (
+                <>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <Card><CardContent className="pt-4 pb-3"><p className="text-xs text-muted-foreground">Total concluídas</p><p className="text-2xl font-bold">{totalDone}</p></CardContent></Card>
+                    <Card><CardContent className="pt-4 pb-3"><p className="text-xs text-muted-foreground">No prazo</p><p className="text-2xl font-bold text-green-500">{onTime}</p></CardContent></Card>
+                    <Card><CardContent className="pt-4 pb-3"><p className="text-xs text-muted-foreground">Fora do prazo</p><p className="text-2xl font-bold text-destructive">{late}</p></CardContent></Card>
+                    <Card><CardContent className="pt-4 pb-3"><p className="text-xs text-muted-foreground">SLA Compliance</p><p className={`text-2xl font-bold ${slaRate >= 80 ? 'text-green-500' : slaRate >= 60 ? 'text-amber-500' : 'text-destructive'}`}>{slaRate}%</p></CardContent></Card>
+                  </div>
+
+                  <Card>
+                    <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Users className="h-5 w-5" /> Desempenho por Responsável</CardTitle></CardHeader>
+                    <CardContent>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Responsável</TableHead>
+                            <TableHead className="text-center">Concluídas</TableHead>
+                            <TableHead className="text-center">No prazo</TableHead>
+                            <TableHead className="text-center">Atrasadas</TableHead>
+                            <TableHead className="text-center">SLA %</TableHead>
+                            <TableHead className="text-center">Pendentes</TableHead>
+                            <TableHead className="text-center">Tempo médio</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {Object.entries(perPerson).sort(([,a], [,b]) => b.done - a.done).map(([nome, stats]) => (
+                            <TableRow key={nome}>
+                              <TableCell className="font-medium">{nome}</TableCell>
+                              <TableCell className="text-center">{stats.done}</TableCell>
+                              <TableCell className="text-center text-green-500">{stats.onTime}</TableCell>
+                              <TableCell className="text-center text-destructive">{stats.late}</TableCell>
+                              <TableCell className="text-center">
+                                <Badge variant="outline" className={`text-xs ${stats.slaRate >= 80 ? 'border-green-500/30 text-green-500' : stats.slaRate >= 60 ? 'border-amber-500/30 text-amber-500' : 'border-destructive/30 text-destructive'}`}>{stats.slaRate}%</Badge>
+                              </TableCell>
+                              <TableCell className="text-center">{stats.pending}</TableCell>
+                              <TableCell className="text-center text-muted-foreground text-xs">{stats.avgHours}h</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader><CardTitle className="text-lg flex items-center gap-2"><BarChart3 className="h-5 w-5" /> Entregas por Mês</CardTitle></CardHeader>
+                    <CardContent>
+                      <div className="h-[250px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={monthlyData}>
+                            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                            <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                            <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                            <Tooltip />
+                            <Bar dataKey="noPrazo" name="No prazo" fill="hsl(var(--primary))" stackId="stack" radius={[0, 0, 0, 0]} />
+                            <Bar dataKey="atrasadas" name="Atrasadas" fill="hsl(var(--destructive))" stackId="stack" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
+              );
+            })()}
+          </TabsContent>
+        )}
+
 
       {/* Mooni Dialog */}
       <Dialog open={mooniDialogOpen} onOpenChange={setMooniDialogOpen}>
