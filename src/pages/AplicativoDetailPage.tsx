@@ -470,6 +470,29 @@ export default function AplicativoDetailPage() {
         </div>
       </div>
 
+      {/* Cancelled banner */}
+      {cliente.status === 'cancelado' && (
+        <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-4 flex items-start gap-3">
+          <XCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-destructive">Fluxo cancelado</p>
+            {(cliente as any).motivo_cancelamento && (
+              <p className="text-xs text-muted-foreground mt-0.5">Motivo: {(cliente as any).motivo_cancelamento}</p>
+            )}
+            {(cliente as any).cancelado_em && (
+              <p className="text-[10px] text-muted-foreground/50 mt-1">
+                Cancelado por {(cliente as any).cancelado_por} em {format(new Date((cliente as any).cancelado_em), "dd/MM/yyyy 'às' HH:mm")}
+              </p>
+            )}
+          </div>
+          {canManage && (
+            <Button variant="outline" size="sm" className="shrink-0" onClick={handleReactivate}>
+              Reativar
+            </Button>
+          )}
+        </div>
+      )}
+
       {/* Admin: Edit client data */}
       {canManage && (
         <Card className="p-4">
@@ -516,8 +539,78 @@ export default function AplicativoDetailPage() {
               Aplicar
             </Button>
           </div>
+
+          {/* Danger Zone */}
+          {cliente.status !== 'cancelado' && (
+            <div className="mt-8 pt-6 border-t border-destructive/20">
+              <h3 className="text-sm font-semibold text-destructive mb-3 flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" />
+                Zona de Perigo
+              </h3>
+              <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">Cancelar fluxo de aplicativo</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    O cliente será notificado e poderá solicitar novamente no futuro
+                  </p>
+                </div>
+                <Button variant="destructive" size="sm" onClick={() => setCancelDialogOpen(true)}>
+                  Cancelar fluxo
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
       )}
+
+      {/* Cancel Dialog */}
+      <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Cancelar fluxo de aplicativo
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  Tem certeza que deseja cancelar o fluxo de
+                  <span className="font-semibold text-foreground"> {cliente?.nome}</span> ({cliente?.empresa})?
+                </p>
+                <div className="text-sm space-y-1">
+                  <p className="font-medium text-destructive/80">Esta ação irá:</p>
+                  <p className="text-muted-foreground">• Mover o cliente para "Cancelados" no Kanban</p>
+                  <p className="text-muted-foreground">• Informar o cliente no portal que o fluxo foi cancelado</p>
+                  <p className="text-muted-foreground">• Permitir ao cliente solicitar novamente no futuro</p>
+                  <p className="text-muted-foreground">• Manter todo o histórico para auditoria</p>
+                </div>
+                <div className="space-y-2 pt-2">
+                  <Label className="text-sm font-medium">Motivo do cancelamento *</Label>
+                  <Textarea
+                    placeholder="Descreva o motivo do cancelamento..."
+                    value={cancelMotivo}
+                    onChange={e => setCancelMotivo(e.target.value)}
+                    className="min-h-[80px]"
+                  />
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelling} onClick={() => setCancelMotivo('')}>
+              Manter ativo
+            </AlertDialogCancel>
+            <Button
+              variant="destructive"
+              disabled={cancelling || !cancelMotivo.trim()}
+              onClick={handleCancelFluxo}
+            >
+              {cancelling ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Confirmar cancelamento
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Timeline */}
       <div className="space-y-2">
