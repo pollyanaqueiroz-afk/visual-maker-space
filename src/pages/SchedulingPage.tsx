@@ -117,6 +117,8 @@ export default function SchedulingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
+  const [calendarView, setCalendarView] = useState<CalendarView>('month');
+  const [weekStart, setWeekStart] = useState<Date>(startOfWeek(new Date(), { locale: ptBR }));
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterReason, setFilterReason] = useState<string>('all');
   const [sendInvite, setSendInvite] = useState(true);
