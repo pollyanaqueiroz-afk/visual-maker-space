@@ -932,7 +932,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
               )}
             </div>
             <div className="flex items-center gap-2">
-              <Badge className={`text-[10px] ${
+              <Badge className={`text-xs ${
                 fase.status === 'concluida' ? 'bg-green-500/20 text-green-400' :
                 fase.status === 'atrasada' ? 'bg-red-500/20 text-red-400' :
                 'bg-primary/20 text-primary'
