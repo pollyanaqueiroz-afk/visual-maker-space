@@ -561,7 +561,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
         <div className="relative">
           {/* Active glow effects */}
           {isActive && (
-            <div className="absolute inset-0 rounded-full bg-blue-500/20 animate-pulse" />
+            <div className="absolute inset-1 rounded-full bg-blue-500/20 animate-pulse" />
           )}
           {/* Progress ring */}
           {isActive && (
