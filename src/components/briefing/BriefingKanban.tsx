@@ -216,7 +216,20 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
         ))}
       </div>
 
-      {/* Kanban board */}
+      {loading ? (
+        <div className="overflow-x-auto pb-4">
+          <div className="flex gap-4 min-w-[1100px]">
+            {KANBAN_COLUMNS.map(col => (
+              <div key={col.key} className={`flex-1 min-w-[220px] rounded-lg p-3 ${col.bg}`}>
+                <Skeleton className="h-5 w-24 mb-3" />
+                <div className="space-y-2">
+                  {[1, 2, 3].map(i => <Skeleton key={i} className="h-28 w-full rounded-lg" />)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
       <div className="overflow-x-auto pb-4">
         <div className="flex gap-4 min-w-[1100px]">
           {KANBAN_COLUMNS.map(col => (
