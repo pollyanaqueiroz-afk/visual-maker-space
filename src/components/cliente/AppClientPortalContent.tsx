@@ -1232,7 +1232,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             const progressWidth = trackFases.length > 1 ? `${(completedCount / (trackFases.length - 1)) * 100}%` : '0%';
             return <div className="absolute top-1/2 -translate-y-1/2 left-0 h-1.5 bg-green-500 rounded-full transition-all duration-500" style={{ width: progressWidth }} />;
           })()}
-          <div className="relative flex w-full">
+          <div className="relative flex w-full px-4">
             {trackFases.map(({ num, fase }) => {
               const status = fase?.status || 'bloqueada';
               const isSelected = selectedTimelineFase?.fase === num && selectedTimelineFase?.plataforma === plataforma;
