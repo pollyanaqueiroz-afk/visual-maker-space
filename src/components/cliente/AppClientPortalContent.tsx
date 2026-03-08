@@ -998,7 +998,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                       <Circle className="h-5 w-5 text-white/50 mt-0.5 shrink-0" />
                     )}
                     <div className="flex-1">
-                      <p className={`text-sm font-medium ${mockupRequest ? 'text-green-400' : ''}`}>
+                      <p className={`text-sm font-medium ${mockupRequest ? 'text-green-400' : 'text-white'}`}>
                         {mockupRequest ? 'Mockup solicitado!' : 'Solicitar Mockup do Aplicativo'}
                       </p>
                       {mockupRequest && (
