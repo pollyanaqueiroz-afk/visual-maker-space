@@ -1160,8 +1160,8 @@ export default function AppClientPortalContent({ clienteId }: Props) {
 
     return (
       <div className="flex items-center gap-0">
-         <span className={`text-sm font-bold shrink-0 w-32 text-right pr-3 text-white`}>
-           {emoji} {plataforma === 'google' ? 'Google Play' : 'Apple'}
+          <span className={`text-base font-bold shrink-0 w-36 text-right pr-3 text-white`}>
+            {emoji} {plataforma === 'google' ? 'Google Play' : 'Apple'}
         </span>
         <div className="relative flex items-center flex-1 min-w-0 py-1">
           {/* Connecting line */}
