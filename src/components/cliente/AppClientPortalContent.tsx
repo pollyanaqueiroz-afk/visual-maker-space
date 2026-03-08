@@ -563,7 +563,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     );
   }
 
-  // ── Timeline circle renderer (linear layout) ──
+  // ── Timeline circle renderer (linear layout) — animated SVG ring ──
   const renderCircle = (faseNum: number, fase: any, plataforma?: string) => {
     const status = fase?.status || 'bloqueada';
     const pct = fase?.porcentagem || 0;
@@ -581,23 +581,38 @@ export default function AppClientPortalContent({ clienteId }: Props) {
       status === 'atrasada' ? 'text-red-400 font-semibold' : 'text-white/35';
 
     return (
-      <button
+      <motion.button
         key={`${faseNum}-${plataforma || 'shared'}`}
         onClick={() => setSelectedTimelineFase(isSelected ? null : { fase: faseNum, plataforma })}
-        className={`relative flex flex-col items-center shrink-0 transition-all cursor-pointer hover:scale-105 ${status === 'bloqueada' ? 'opacity-50' : ''} ${isSelected ? 'scale-110' : ''}`}
+        initial={{ opacity: 0, scale: 0.7 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: faseNum * 0.08, type: 'spring', stiffness: 180, damping: 14 }}
+        whileHover={{ scale: 1.12 }}
+        whileTap={{ scale: 0.95 }}
+        className={`relative flex flex-col items-center shrink-0 transition-all cursor-pointer ${status === 'bloqueada' ? 'opacity-50' : ''} ${isSelected ? 'scale-110' : ''}`}
       >
         <div className="relative">
           {/* Active glow effects */}
           {isActive && (
-            <div className="absolute inset-1 rounded-full bg-blue-500/20 animate-pulse" />
+            <motion.div
+              className="absolute inset-1 rounded-full bg-blue-500/20"
+              animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            />
           )}
-          {/* Progress ring */}
+          {/* Animated Progress ring */}
           {isActive && (
             <svg width={size} height={size} className="absolute -inset-0">
               <circle cx={size/2} cy={size/2} r={radius} fill="none" stroke="hsl(var(--primary) / 0.15)" strokeWidth={strokeWidth} />
-              <circle cx={size/2} cy={size/2} r={radius} fill="none" stroke="hsl(var(--primary))" strokeWidth={strokeWidth}
-                strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round"
-                transform={`rotate(-90 ${size/2} ${size/2})`} className="transition-all duration-500" />
+              <motion.circle
+                cx={size/2} cy={size/2} r={radius} fill="none" stroke="hsl(var(--primary))" strokeWidth={strokeWidth}
+                strokeLinecap="round"
+                transform={`rotate(-90 ${size/2} ${size/2})`}
+                initial={{ strokeDashoffset: circumference }}
+                animate={{ strokeDashoffset: offset }}
+                transition={{ duration: 1.2, ease: 'easeOut', delay: faseNum * 0.08 + 0.3 }}
+                strokeDasharray={circumference}
+              />
             </svg>
           )}
           {/* Circle */}
@@ -624,7 +639,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
         <span className={`mt-1.5 text-[11px] leading-tight text-center w-[76px] font-medium ${statusColor}`}>
           {FASE_NAMES[faseNum]}
         </span>
-      </button>
+      </motion.button>
     );
   };
 
