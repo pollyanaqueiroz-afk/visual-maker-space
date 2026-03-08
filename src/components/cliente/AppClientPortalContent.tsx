@@ -127,6 +127,10 @@ export default function AppClientPortalContent({ clienteId }: Props) {
   const [showMockupForm, setShowMockupForm] = useState(false);
   const [mockupObservations, setMockupObservations] = useState('');
   const [confirmingItemId, setConfirmingItemId] = useState<string | null>(null);
+  // State for viewing/editing completed item data
+  const [viewingItemId, setViewingItemId] = useState<string | null>(null);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [itemDataInput, setItemDataInput] = useState('');
   // New mockup modal state
   const [showMockupModal, setShowMockupModal] = useState(false);
   const [mockupStep, setMockupStep] = useState(1);
