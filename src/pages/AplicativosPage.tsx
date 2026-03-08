@@ -668,6 +668,39 @@ export default function AplicativosPage() {
                     <Input value={form.url_cliente} onChange={e => setForm(p => ({ ...p, url_cliente: e.target.value }))} placeholder="exemplo.curseduca.com" />
                   </div>
                 </div>
+
+                {/* Smart URL match feedback */}
+                {existingAppCliente && matchedClient && (
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                    <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-amber-500">Cliente já cadastrado</p>
+                      <p className="text-xs text-amber-400/70">"{matchedClient.nome}" já está na gestão de aplicativos.</p>
+                    </div>
+                    <Button variant="ghost" size="sm" className="text-xs text-amber-500 shrink-0" onClick={() => { setDialogOpen(false); navigate(`/hub/aplicativos/${matchedClient.id}`); }}>
+                      Ver detalhe
+                    </Button>
+                  </div>
+                )}
+                {!existingAppCliente && matchedClient?.source === 'clients' && (
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-green-500">Cliente encontrado na carteira</p>
+                      <p className="text-xs text-green-400/70">Dados auto-preenchidos: {matchedClient.nome} ({matchedClient.email})</p>
+                    </div>
+                  </div>
+                )}
+                {!existingAppCliente && matchedClient?.source === 'briefing_requests' && (
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                    <Info className="h-4 w-4 text-blue-500 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-blue-500">Cliente encontrado em solicitações de design</p>
+                      <p className="text-xs text-blue-400/70">Dados auto-preenchidos: {matchedClient.nome} ({matchedClient.email})</p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label>E-mail *</Label>
@@ -701,7 +734,7 @@ export default function AplicativosPage() {
                   </Button>
                   <Button
                     className="flex-1"
-                    disabled={!form.nome || !form.url_cliente || !form.email || createMutation.isPending}
+                    disabled={!form.nome || !form.url_cliente || !form.email || createMutation.isPending || existingAppCliente}
                     onClick={() => createMutation.mutate()}
                   >
                     {createMutation.isPending ? 'Criando...' : 'Criar cliente'}
