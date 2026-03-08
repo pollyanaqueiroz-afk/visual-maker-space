@@ -919,6 +919,44 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     );
   };
 
+  // ── Render internal (analyst/designer) item — read-only ──
+  const renderInternalItem = (item: any, faseNum: number) => {
+    const formComplete = faseNum === 3 ? !!formulario?.preenchido_completo : true;
+    return (
+      <div key={item.id} className="p-3 rounded-lg bg-white/5 border border-white/[0.08]">
+        <div className="flex items-center gap-3">
+          {item.feito ? (
+            <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
+          ) : formComplete ? (
+            <Clock className="h-5 w-5 text-amber-400 shrink-0 animate-pulse" />
+          ) : (
+            <Lock className="h-5 w-5 text-white/40 shrink-0" />
+          )}
+          <div className="flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className={`text-sm font-medium ${!formComplete ? 'text-white/50' : 'text-white/90'}`}>{item.texto}</p>
+              <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-white/15 text-white/40">
+                Equipe Curseduca
+              </Badge>
+              {item.feito ? (
+                <Badge variant="outline" className="text-[9px] border-green-500/30 text-green-400">✅ Concluído</Badge>
+              ) : formComplete ? (
+                <Badge variant="outline" className="text-[9px] border-amber-500/30 text-amber-400">⏳ Em andamento</Badge>
+              ) : null}
+            </div>
+            {item.descricao && <p className="text-xs text-white/50 mt-0.5">{item.descricao}</p>}
+            {!formComplete && faseNum === 3 && (
+              <p className="text-xs text-white/50 mt-0.5">Preencha o formulário acima para liberar esta etapa</p>
+            )}
+            {item.feito && item.feito_em && (
+              <p className="text-[10px] text-green-400/60 mt-0.5">Concluído em {format(new Date(item.feito_em), "dd/MM/yyyy 'às' HH:mm")}</p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // ── Expanded fase content ──
   const renderExpandedFase = (faseNum: number, plataforma?: string) => {
     const fase = plataforma ? fases.find((f: any) => f.numero === faseNum && f.plataforma === plataforma) : fases.find((f: any) => f.numero === faseNum);
