@@ -918,7 +918,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
               {plataforma === 'google' && <span>🤖</span>}
               {plataforma === 'apple' && <span>🍎</span>}
               {!plataforma && <span>📋</span>}
-              <h3 className="text-sm font-bold">{FASE_NAMES[faseNum]}</h3>
+              <h3 className="text-sm font-bold">{faseNum > 0 ? `${faseNum}. ` : ''}{FASE_NAMES[faseNum]}</h3>
               {plataforma && (
                 <Badge variant="outline" className="text-[10px]">
                   {plataforma === 'google' ? 'Google Play' : 'Apple'}
