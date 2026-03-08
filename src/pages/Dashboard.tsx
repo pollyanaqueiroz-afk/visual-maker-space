@@ -529,8 +529,11 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <Tabs defaultValue="artes" className="space-y-6">
+        <Tabs defaultValue="kanban" className="space-y-6">
           <TabsList>
+            <TabsTrigger value="kanban" className="flex items-center gap-2">
+              <LayoutGrid className="h-4 w-4" /> Kanban
+            </TabsTrigger>
             <TabsTrigger value="artes">Artes</TabsTrigger>
             <TabsTrigger value="revisoes" className="flex items-center gap-2">
               <RefreshCw className="h-4 w-4" /> Refações
@@ -539,6 +542,10 @@ export default function Dashboard() {
               <BarChart3 className="h-4 w-4" /> Analytics
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="kanban" className="space-y-6">
+            <BriefingKanban images={images} />
+          </TabsContent>
 
           <TabsContent value="artes" className="space-y-6">
             {/* Active KPI indicator */}
