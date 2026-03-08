@@ -117,14 +117,70 @@ export default function ClienteHubLayout() {
       <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0F172A]/95 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto px-4 flex items-center justify-between h-14">
           <span className="text-sm font-bold tracking-tight">Portal do Cliente</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={async () => { await signOut(); navigate('/cliente/login'); }}
-            className="text-white/50 hover:text-white hover:bg-white/10"
-          >
-            <LogOut className="h-4 w-4 mr-1" /> Sair
-          </Button>
+          <div className="flex items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="relative p-2 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-colors">
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 h-4 min-w-[16px] px-0.5 bg-destructive text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-0 bg-[#1E293B] border-white/10" align="end" sideOffset={8}>
+                <div className="px-4 py-3 border-b border-white/10">
+                  <p className="text-sm font-semibold text-white">Notificações</p>
+                </div>
+                <div className="max-h-72 overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <p className="text-sm text-white/40 text-center py-6">Nenhuma notificação</p>
+                  ) : (
+                    notifications.map(n => (
+                      <div
+                        key={n.id}
+                        className="flex items-start gap-3 px-4 py-3 hover:bg-white/5 cursor-pointer transition-colors border-b border-white/5 last:border-0"
+                        onClick={() => {
+                          if (n.notifId) markAppNotifRead(n.notifId);
+                          navigate(n.link);
+                        }}
+                      >
+                        <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full mt-0.5 ${n.type === 'review' ? 'bg-amber-500/10' : 'bg-blue-500/10'}`}>
+                          {n.type === 'review' ? <Eye className="h-3.5 w-3.5 text-amber-400" /> : <Smartphone className="h-3.5 w-3.5 text-blue-400" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-white">{n.title}</p>
+                          <p className="text-[11px] text-white/50 truncate">{n.description}</p>
+                          <p className="text-[10px] text-white/30 mt-0.5">
+                            {formatDistanceToNow(new Date(n.date), { addSuffix: true, locale: ptBR })}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+                {notifications.length > 0 && (
+                  <div className="px-4 py-2 border-t border-white/10">
+                    <button
+                      className="text-xs text-primary hover:underline w-full text-center"
+                      onClick={() => navigate('/cliente/artes')}
+                    >
+                      Ver todas as artes
+                    </button>
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={async () => { await signOut(); navigate('/cliente/login'); }}
+              className="text-white/50 hover:text-white hover:bg-white/10"
+            >
+              <LogOut className="h-4 w-4 mr-1" /> Sair
+            </Button>
+          </div>
         </div>
       </header>
 
