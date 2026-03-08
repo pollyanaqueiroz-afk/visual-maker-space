@@ -220,7 +220,7 @@ export default function ClientDetailSheet({ idCurseduca, open, onOpenChange }: P
         if (section.title === 'Identificação') return true;
         return section.fields.some(f => {
           const v = data[f.key];
-          return v != null && v !== '' && v !== 0 || v === 0;
+          return v != null && v !== '';
         });
       })
     : SECTIONS;
