@@ -868,7 +868,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
               </motion.div>
               <div>
                 <h2 className={`text-2xl font-bold ${textMain}`}>Parabéns!</h2>
-                <p className="text-muted-foreground mt-2">
+                <p className={`${textSub} mt-2`}>
                   Você revisou <span className="font-bold text-primary">{completedCount}</span> arte(s).
                   <br />Sua opinião é muito importante para nós!
                 </p>
