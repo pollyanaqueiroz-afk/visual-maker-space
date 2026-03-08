@@ -17,6 +17,7 @@ import CursEducaLayout from '@/components/CursEducaLayout';
 import DesignerFeedback from '@/components/designer/DesignerFeedback';
 import DesignerAnalytics from '@/components/designer/DesignerAnalytics';
 import { useCountUp } from '@/hooks/useCountUp';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 interface DesignerImage {
   id: string;
@@ -148,9 +149,12 @@ export default function DesignerPanel() {
             <TabsContent value="artes" className="mt-4">
               {images.length === 0 ? (
                 <Card>
-                  <CardContent className="pt-6 text-center">
-                    <FileImage className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                    <p className="text-muted-foreground">Nenhuma arte encontrada para este email.</p>
+                  <CardContent className="pt-6">
+                    <EmptyState
+                      icon={FileImage}
+                      title="Nenhuma arte encontrada"
+                      description="Não encontramos artes atribuídas para este email."
+                    />
                   </CardContent>
                 </Card>
               ) : (
@@ -278,49 +282,69 @@ export default function DesignerPanel() {
                       </Table>
                     </div>
 
-                    {/* Mobile cards with stagger */}
-                    <div className="md:hidden space-y-3 p-4">
+                    {/* Mobile stacked cards */}
+                    <div className="md:hidden divide-y divide-border">
                       {filtered.map((img, idx) => (
                         <motion.div
                           key={img.id}
                           initial={{ opacity: 0, y: 12 }}
                           animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.05, duration: 0.3 }}
+                          transition={{ delay: idx * 0.04, duration: 0.3 }}
+                          className={`p-4 space-y-3 ${isOverdue(img.deadline) && img.status !== 'completed' ? 'bg-destructive/5' : ''}`}
                         >
-                          <Card className={`border ${isOverdue(img.deadline) && img.status !== 'completed' ? 'animate-sla-pulse border-destructive/30' : ''}`}>
-                            <CardContent className="p-4 space-y-3">
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <p className="font-medium">{IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type}</p>
-                                  {img.product_name && <p className="text-xs text-muted-foreground">{img.product_name}</p>}
-                                  {img.extra_info && (
-                                    <div className="mt-1 p-2 rounded bg-blue-500/10 border border-blue-500/20">
-                                      <p className="text-[10px] font-semibold text-blue-400 mb-0.5">📋 Informações do Mooni:</p>
-                                      <p className="text-xs text-muted-foreground whitespace-pre-wrap">{img.extra_info}</p>
-                                    </div>
-                                  )}
-                                </div>
-                                {getStatusBadge(img)}
-                              </div>
-                              <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">{img.briefing_requests.requester_name}</span>
-                                {img.deadline && <CountdownBadge deadline={img.deadline} status={img.status} />}
-                              </div>
-                              {(img.image_text || img.observations || img.font_suggestion || img.element_suggestion) && (
-                                <div className="space-y-1 p-2 rounded-lg bg-muted/30 border border-border">
-                                  {img.image_text && <p className="text-xs text-muted-foreground"><span className="font-medium">Texto:</span> {img.image_text}</p>}
-                                  {img.font_suggestion && <p className="text-xs text-muted-foreground"><span className="font-medium">Fonte:</span> {img.font_suggestion}</p>}
-                                  {img.element_suggestion && <p className="text-xs text-muted-foreground"><span className="font-medium">Elemento:</span> {img.element_suggestion}</p>}
-                                  {img.observations && <p className="text-xs text-muted-foreground"><span className="font-medium">Obs:</span> {img.observations}</p>}
-                                </div>
-                              )}
-                              {img.delivery_token && (
-                                <Button size="sm" className="w-full" variant="outline" asChild>
-                                  <Link to={`/delivery/${img.delivery_token}`}>Entregar Arte</Link>
+                          <div className="flex justify-between items-start gap-2">
+                            <div className="min-w-0 flex-1">
+                              <p className="font-semibold text-sm truncate">{IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type}</p>
+                              <p className="text-xs text-muted-foreground">{img.briefing_requests.requester_name}</p>
+                              {img.product_name && <p className="text-xs text-muted-foreground/70 truncate">{img.product_name}</p>}
+                            </div>
+                            <div className="flex flex-col items-end gap-1 shrink-0">
+                              {getStatusBadge(img)}
+                              {img.deadline && <CountdownBadge deadline={img.deadline} status={img.status} />}
+                            </div>
+                          </div>
+                          {img.extra_info && (
+                            <div className="p-2 rounded bg-blue-500/10 border border-blue-500/20">
+                              <p className="text-[10px] font-semibold text-blue-400 mb-0.5">📋 Mooni:</p>
+                              <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-3">{img.extra_info}</p>
+                            </div>
+                          )}
+                          {(img.image_text || img.observations) && (
+                            <div className="space-y-1 p-2 rounded-lg bg-muted/30 border border-border">
+                              {img.image_text && <p className="text-xs text-muted-foreground line-clamp-2"><span className="font-medium">Texto:</span> {img.image_text}</p>}
+                              {img.observations && <p className="text-xs text-muted-foreground line-clamp-2"><span className="font-medium">Obs:</span> {img.observations}</p>}
+                            </div>
+                          )}
+                          <div className="flex gap-2">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="ghost" size="sm" className="flex-1 h-8 text-xs gap-1">
+                                  <Eye className="h-3 w-3" /> Briefing
                                 </Button>
-                              )}
-                            </CardContent>
-                          </Card>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-md">
+                                <DialogHeader>
+                                  <DialogTitle className="flex items-center gap-2 text-base">
+                                    <FileImage className="h-4 w-4" />
+                                    {IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type}
+                                  </DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-3 text-sm">
+                                  {img.image_text && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Texto</p><p>{img.image_text}</p></div>}
+                                  {img.font_suggestion && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Fonte</p><p>{img.font_suggestion}</p></div>}
+                                  {img.element_suggestion && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Elemento</p><p>{img.element_suggestion}</p></div>}
+                                  {img.orientation && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Orientação</p><p>{img.orientation}</p></div>}
+                                  {img.observations && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Observações</p><p>{img.observations}</p></div>}
+                                  {img.extra_info && <div><p className="text-xs font-semibold text-muted-foreground mb-1">📋 Mooni</p><p className="whitespace-pre-wrap">{img.extra_info}</p></div>}
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                            {img.delivery_token && (
+                              <Button size="sm" className="flex-1 h-8 text-xs" variant="outline" asChild>
+                                <Link to={`/delivery/${img.delivery_token}`}>Entregar</Link>
+                              </Button>
+                            )}
+                          </div>
                         </motion.div>
                       ))}
                     </div>

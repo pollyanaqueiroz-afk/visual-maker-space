@@ -247,9 +247,17 @@ export default function DeliveryPage() {
                   onDragLeave={() => setDragOver(false)}
                   onDrop={handleDrop}
                 >
-                  {file ? (
-                    <div>
-                      <FileImage className="h-8 w-8 text-primary mx-auto mb-2" />
+                {file ? (
+                    <div className="space-y-2">
+                      {file.type.startsWith('image/') ? (
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt="Preview"
+                          className="max-h-48 mx-auto rounded-lg object-contain border border-border"
+                        />
+                      ) : (
+                        <FileImage className="h-8 w-8 text-primary mx-auto" />
+                      )}
                       <p className="text-sm font-medium">{file.name}</p>
                       <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                     </div>

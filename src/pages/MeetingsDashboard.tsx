@@ -431,11 +431,18 @@ export default function MeetingsDashboard() {
           <CardContent>
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
-                <Pie data={byStatus} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={85} strokeWidth={2} stroke="hsl(var(--card))">
+                <Pie data={byStatus} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={55} outerRadius={85} strokeWidth={2} stroke="hsl(var(--card))" label={false}>
                   {byStatus.map((_, i) => (
                     <Cell key={i} fill={PIE_COLORS[i]} />
                   ))}
                 </Pie>
+                {/* Central label */}
+                <text x="50%" y="46%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground text-2xl font-bold">
+                  {stats.total}
+                </text>
+                <text x="50%" y="58%" textAnchor="middle" dominantBaseline="middle" className="fill-muted-foreground text-[11px]">
+                  reuniões
+                </text>
                 <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
                 <Tooltip contentStyle={{ borderRadius: 8, border: 'none', boxShadow: 'var(--shadow-elevated)' }} />
               </PieChart>
