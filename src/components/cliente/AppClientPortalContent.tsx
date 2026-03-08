@@ -1085,37 +1085,52 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     );
   };
 
-  // ── Track timeline renderer ──
-  const renderTrack = (plataforma: string, label: string, emoji: string, colorClass: string) => {
+  // ── Inline track row for parallel layout (no expanded content) ──
+  const renderParallelTrackRow = (plataforma: string, emoji: string) => {
     const trackFases = [1, 2, 3, 4, 5, 6].map(num => ({
       num,
       fase: fases.find((f: any) => f.numero === num && f.plataforma === plataforma),
     }));
 
     return (
-      <div className={`rounded-xl border ${colorClass} p-4 space-y-3 flex-1 min-w-0`}>
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-lg">{emoji}</span>
-          <span className="text-sm font-bold text-white/80">{label}</span>
-        </div>
-        {/* Horizontal circles with connecting line */}
-        <div className="overflow-x-auto">
-          <div className="relative flex items-start justify-between pb-2 gap-0" style={{ minWidth: '460px' }}>
-            {/* Connecting line */}
-            <div className="absolute top-[22px] left-[36px] right-[36px] h-[2px] bg-white/10" />
-            {trackFases.map(({ num, fase }) => (
-              <div key={num} className="relative z-10 flex-1 flex justify-center">
-                {renderCircle(num, fase, plataforma)}
-              </div>
-            ))}
+      <div className="flex items-center gap-0">
+        <span className="text-[10px] font-semibold shrink-0 mr-2">{emoji}</span>
+        <div className="relative flex items-center flex-1 min-w-0">
+          {/* Connecting line */}
+          <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-0.5 bg-white/10" />
+          {/* Progress line */}
+          {(() => {
+            const completedCount = trackFases.filter(({ fase }) => fase?.status === 'concluida').length;
+            const progressWidth = trackFases.length > 1 ? `${(completedCount / (trackFases.length - 1)) * 100}%` : '0%';
+            return <div className="absolute top-1/2 -translate-y-1/2 left-0 h-0.5 bg-green-500 transition-all duration-500" style={{ width: progressWidth }} />;
+          })()}
+          <div className="relative flex justify-between w-full">
+            {trackFases.map(({ num, fase }) => {
+              const status = fase?.status || 'bloqueada';
+              const isSelected = selectedTimelineFase?.fase === num && selectedTimelineFase?.plataforma === plataforma;
+              return (
+                <button
+                  key={num}
+                  onClick={() => setSelectedTimelineFase(isSelected ? null : { fase: num, plataforma })}
+                  className={`relative z-10 flex flex-col items-center cursor-pointer hover:scale-105 transition-all ${status === 'bloqueada' ? 'opacity-60' : ''} ${isSelected ? 'scale-110' : ''}`}
+                >
+                  <div className={`w-8 h-8 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-[10px] font-bold border-2 transition-all ${
+                    status === 'concluida' ? 'bg-green-500/20 border-green-500 text-green-400' :
+                    status === 'em_andamento' ? 'bg-[#1E293B] border-primary text-primary ring-2 ring-primary/40' :
+                    status === 'atrasada' ? 'bg-red-500/10 border-red-500 text-red-400' :
+                    'bg-white/5 border-white/10 text-white/20'
+                  } ${isSelected ? 'ring-2 ring-primary/50' : ''}`}>
+                    {status === 'concluida' ? <CheckCircle2 className="h-3.5 w-3.5" /> :
+                     status === 'atrasada' ? <AlertTriangle className="h-3.5 w-3.5" /> :
+                     status === 'em_andamento' ? <Star className="h-3.5 w-3.5" /> :
+                     <Lock className="h-3 w-3" />}
+                  </div>
+                  <p className="text-[8px] mt-1 text-center leading-tight max-w-[55px] text-white/40">{FASE_NAMES[num]}</p>
+                </button>
+              );
+            })}
           </div>
         </div>
-        {/* Expanded content for selected fase in this track */}
-        <AnimatePresence>
-          {selectedTimelineFase?.plataforma === plataforma && selectedTimelineFase.fase >= 1 && (
-            renderExpandedFase(selectedTimelineFase.fase, plataforma)
-          )}
-        </AnimatePresence>
       </div>
     );
   };
