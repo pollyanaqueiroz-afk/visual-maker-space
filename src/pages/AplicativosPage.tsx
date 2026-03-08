@@ -331,6 +331,26 @@ export default function AplicativosPage() {
     },
   });
 
+  const updateResponsavel = async (itemId: string, nome: string, clienteId?: string, faseNumero?: number) => {
+    await (supabase.from('app_checklist_items').update({
+      responsavel: nome,
+      sla_vencimento: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    } as any) as any).eq('id', itemId);
+
+    if (clienteId) {
+      await supabase.from('app_conversas').insert({
+        cliente_id: clienteId,
+        fase_numero: faseNumero || 0,
+        autor: user?.email || 'Sistema',
+        tipo: 'sistema',
+        mensagem: `Tarefa atribuída a ${nome} por ${user?.email}`,
+      });
+    }
+
+    queryClient.invalidateQueries({ queryKey: ['app-checklist-full'] });
+    toast.success(`Atribuído a ${nome}`);
+  };
+
   const handleMooniSave = async () => {
     if (!mooniText.trim() || !mooniItemId) return;
     setMooniSaving(true);
