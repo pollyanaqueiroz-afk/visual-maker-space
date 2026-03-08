@@ -8,7 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { useNavigate } from 'react-router-dom';
 import {
   CheckCircle, AlertTriangle, Palette, Smartphone, Eye, Upload, FileText,
-  ChevronRight, Loader2, Sparkles, PlusCircle,
+  ChevronRight, Loader2, Sparkles, PlusCircle, XCircle,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
