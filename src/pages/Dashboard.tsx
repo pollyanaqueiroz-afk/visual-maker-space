@@ -967,7 +967,7 @@ export default function Dashboard() {
                           <TableRow key={rev.id}>
                             <TableCell className="text-sm">{new Date(rev.created_at).toLocaleDateString('pt-BR')}</TableCell>
                             <TableCell className="text-sm">
-                              {img ? `${IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type}${img.product_name ? ` — ${img.product_name}` : ''}` : rev.briefing_image_id.slice(0, 8)}
+                              {img ? imageLabel(img) : rev.briefing_image_id.slice(0, 8)}
                             </TableCell>
                             <TableCell>
                               <Badge className={rev.action === 'approved' ? 'bg-primary/20 text-primary border-0' : 'bg-destructive/20 text-destructive border-0'}>
