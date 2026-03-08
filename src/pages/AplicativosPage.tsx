@@ -1210,7 +1210,20 @@ export default function AplicativosPage() {
             </Card>
           </div>
 
-          {/* Filter bar */}
+          {/* Unassigned alert */}
+          {unassignedTaskCount > 0 && (
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive/20 shrink-0">
+                <AlertTriangle className="h-4 w-4 text-destructive" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-destructive">{unassignedTaskCount} tarefa{unassignedTaskCount > 1 ? 's' : ''} sem responsável atribuído</p>
+                <p className="text-xs text-destructive/60">Atribua um responsável para garantir rastreabilidade e SLA</p>
+              </div>
+              <Button variant="destructive" size="sm" onClick={() => setFilterResponsavelTask('unassigned')}>Ver tarefas</Button>
+            </div>
+          )}
+
           <div className="flex items-center gap-3">
             <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
             <Select value={pendencyFilter} onValueChange={setPendencyFilter}>
