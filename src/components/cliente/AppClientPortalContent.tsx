@@ -914,25 +914,33 @@ export default function AppClientPortalContent({ clienteId }: Props) {
         <div className="mt-4 rounded-xl bg-[#1E293B] border border-white/10 p-4 space-y-4">
           {/* Header */}
           <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-bold">
-                {plataforma === 'google' && '🤖 '}{plataforma === 'apple' && '🍎 '}
-                {FASE_NAMES[faseNum]}
-              </h3>
+            <div className="flex items-center gap-2">
+              {plataforma === 'google' && <span>🤖</span>}
+              {plataforma === 'apple' && <span>🍎</span>}
+              {!plataforma && <span>📋</span>}
+              <h3 className="text-sm font-bold">{FASE_NAMES[faseNum]}</h3>
+              {plataforma && (
+                <Badge variant="outline" className="text-[10px]">
+                  {plataforma === 'google' ? 'Google Play' : 'Apple'}
+                </Badge>
+              )}
               {fase.data_inicio && (
-                <p className="text-[10px] text-white/40 mt-0.5">
+                <span className="text-[10px] text-white/40">
                   Iniciada em {format(new Date(fase.data_inicio), 'dd/MM/yyyy')}
                   {fase.data_conclusao && ` · Concluída em ${format(new Date(fase.data_conclusao), 'dd/MM/yyyy')}`}
-                </p>
+                </span>
               )}
             </div>
-            <Badge className={`text-[10px] ${
-              fase.status === 'concluida' ? 'bg-green-500/20 text-green-400' :
-              fase.status === 'atrasada' ? 'bg-red-500/20 text-red-400' :
-              'bg-primary/20 text-primary'
-            } border-0`}>
-              {progress}%
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge className={`text-[10px] ${
+                fase.status === 'concluida' ? 'bg-green-500/20 text-green-400' :
+                fase.status === 'atrasada' ? 'bg-red-500/20 text-red-400' :
+                'bg-primary/20 text-primary'
+              } border-0`}>
+                {progress}%
+              </Badge>
+              <button onClick={() => setSelectedTimelineFase(null)} className="text-white/40 hover:text-white text-xs ml-1">✕</button>
+            </div>
           </div>
 
           <Progress value={progress} className="h-1.5" />
