@@ -375,7 +375,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['portal-mockup-request'] });
+      queryClient.invalidateQueries({ queryKey: ['portal-mockup-requests'] });
       setShowMockupModal(false);
       resetMockupForm();
       toast.success('🎨 Solicitação enviada com sucesso!');
