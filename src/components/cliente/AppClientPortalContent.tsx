@@ -1334,15 +1334,15 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                     })()}
                   </div>
                 </button>
-                 <p className={`text-[10px] mt-1 text-center leading-tight max-w-[60px] font-medium ${
-                   (() => {
-                     const f0 = fases.find((f: any) => f.numero === 0);
-                     const s = f0?.status || 'bloqueada';
-                     return s === 'concluida' ? 'text-green-400' :
-                       s === 'em_andamento' ? 'text-white font-semibold' :
-                       'text-white/80';
-                   })()
-                 }`}>Pré-<br/>Requisitos</p>
+                  <p className={`text-xs mt-1.5 text-center leading-tight max-w-[80px] font-medium ${
+                    (() => {
+                      const f0 = fases.find((f: any) => f.numero === 0);
+                      const s = f0?.status || 'bloqueada';
+                      return s === 'concluida' ? 'text-green-400' :
+                        s === 'em_andamento' ? 'text-white font-semibold' :
+                        'text-white/80';
+                    })()
+                  }`}>Pré-<br/>Requisitos</p>
               </div>
 
               {/* Bifurcation connector — clean T-shape */}
