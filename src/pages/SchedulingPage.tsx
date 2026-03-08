@@ -216,6 +216,48 @@ export default function SchedulingPage() {
 
   useEffect(() => { fetchMeetings(); fetchCsatData(); }, []);
 
+  // Fetch team members for managers
+  useEffect(() => {
+    if (!isManager) return;
+    const fetchTeam = async () => {
+      try {
+        const { data } = await supabase.functions.invoke('manage-users', {
+          body: {},
+          headers: {},
+        });
+        // manage-users returns list via GET with action=list
+        const res = await supabase.functions.invoke('manage-users', {
+          method: 'GET',
+        });
+        // Try fetching via URL params
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-users?action=list`,
+          {
+            headers: {
+              Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            },
+          }
+        );
+        if (response.ok) {
+          const users = await response.json();
+          if (Array.isArray(users)) {
+            setTeamMembers(
+              users.map((u: any) => ({
+                id: u.id,
+                email: u.email || '',
+                display_name: u.display_name || u.email || u.id,
+              }))
+            );
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching team members', e);
+      }
+    };
+    fetchTeam();
+  }, [isManager]);
+
   // Compute per-email meeting stats
   const emailStats = useMemo(() => {
     const stats: Record<string, { total: number; completed: number; scheduled: number; cancelled: number }> = {};
