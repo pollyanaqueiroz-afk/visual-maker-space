@@ -407,7 +407,7 @@ export default function SchedulingPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Remover esta reunião?')) return;
-    const { error } = await (supabase.from('meetings' as any).delete().eq('id', id) as any);
+    const { error } = await supabase.from('meetings').delete().eq('id', id);
     if (error) toast.error('Erro ao remover');
     else { toast.success('Reunião removida'); fetchMeetings(); }
   };
