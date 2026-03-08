@@ -97,11 +97,13 @@ function imageLabel(img: { image_type: string; product_name?: string | null; obs
 
 export default function Dashboard() {
   const { hasPermission, hasRole } = usePermissions();
+  const { user } = useAuth();
   const isGerenteImpl = hasRole('gerente_implantacao');
-  const canCreate = hasPermission('briefings.create') || isGerenteImpl;
-  const canEdit = hasPermission('briefings.edit') || isGerenteImpl;
-  const canAssign = hasPermission('briefings.assign') || isGerenteImpl;
-  const canChangeAssignee = hasPermission('briefings.change_assignee') || isGerenteImpl;
+  const canManage = hasRole('admin') || hasRole('gerente_implantacao') || hasRole('analista_implantacao');
+  const canCreate = hasPermission('briefings.create') || isGerenteImpl || canManage;
+  const canEdit = hasPermission('briefings.edit') || isGerenteImpl || canManage;
+  const canAssign = hasPermission('briefings.assign') || isGerenteImpl || canManage;
+  const canChangeAssignee = hasPermission('briefings.change_assignee') || isGerenteImpl || canManage;
   const [images, setImages] = useState<ImageWithRequest[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
   const [reviews, setReviews] = useState<ReviewRecord[]>([]);
@@ -223,6 +225,26 @@ export default function Dashboard() {
       toast.success('Status atualizado');
       fetchData();
     }
+  };
+
+  const deleteImage = async (id: string, label: string) => {
+    if (!canManage) return;
+    if (!confirm(`Excluir arte "${label}"?`)) return;
+    const { error } = await supabase.from('briefing_images').delete().eq('id', id);
+    if (error) { toast.error('Erro ao excluir'); return; }
+    // Audit
+    await (supabase.from('briefing_reviews' as any).insert({ briefing_image_id: id, action: 'deleted', reviewed_by: user?.email || 'admin', reviewer_comments: `Arte excluída por ${user?.email}` }) as any);
+    toast.success('Arte excluída');
+    fetchData();
+  };
+
+  const revertApproval = async (id: string, targetStatus: RequestStatus) => {
+    if (!canManage) return;
+    const { error } = await supabase.from('briefing_images').update({ status: targetStatus } as any).eq('id', id);
+    if (error) { toast.error('Erro ao reverter'); return; }
+    await (supabase.from('briefing_reviews' as any).insert({ briefing_image_id: id, action: `reverted_to_${targetStatus}`, reviewed_by: user?.email || 'admin', reviewer_comments: `Status revertido para ${STATUS_LABELS[targetStatus]} por ${user?.email}` }) as any);
+    toast.success(`Status revertido para ${STATUS_LABELS[targetStatus]}`);
+    fetchData();
   };
 
   const handleBulkStatusChange = async (status: RequestStatus) => {
@@ -826,6 +848,18 @@ export default function Dashboard() {
                               )}
                               <BrandAssetsDialog platformUrl={img.platform_url} clientName={extractClientName(img.platform_url)} />
                               <ImageDetailDialog image={img} reviews={reviews.filter(r => r.briefing_image_id === img.id)} />
+                              {canManage && img.status === 'completed' && (
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-500" title="Reverter aprovação"
+                                  onClick={() => revertApproval(img.id, 'review')}>
+                                  <RefreshCw className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
+                              {canManage && (
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" title="Excluir arte"
+                                  onClick={() => deleteImage(img.id, imageLabel(img))}>
+                                  <AlertTriangle className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
                             </div>
                           </TableCell>
                           <TableCell>

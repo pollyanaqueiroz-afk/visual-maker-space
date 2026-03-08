@@ -1,10 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { usePermissions } from '@/hooks/usePermissions';
-import { ArrowLeft, Copy, ExternalLink, Clock, CheckCircle2, Circle, Lock, AlertTriangle, Upload, MessageSquare, Image as ImageIcon, ShieldCheck, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Copy, ExternalLink, Clock, CheckCircle2, Circle, Lock, AlertTriangle, Upload, MessageSquare, Image as ImageIcon, ShieldCheck, RotateCcw, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -24,14 +26,22 @@ export default function AplicativoDetailPage() {
   const { clienteId } = useParams();
   const navigate = useNavigate();
   const { hasPermission, hasRole } = usePermissions();
+  const { user } = useAuth();
   const isGerenteImpl = hasRole('gerente_implantacao');
-  const canEdit = hasPermission('aplicativos.edit') || isGerenteImpl;
+  const canManage = hasRole('admin') || hasRole('gerente_implantacao') || hasRole('analista_implantacao');
+  const canEdit = hasPermission('aplicativos.edit') || isGerenteImpl || canManage;
   const queryClient = useQueryClient();
   const [selectedFase, setSelectedFase] = useState<number | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [validationDialogOpen, setValidationDialogOpen] = useState(false);
   const [validationItemId, setValidationItemId] = useState<string | null>(null);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState('');
+  const [editingDesc, setEditingDesc] = useState('');
+  const [editingClient, setEditingClient] = useState(false);
+  const [clientForm, setClientForm] = useState({ nome: '', email: '', empresa: '', plataforma: '', responsavel_nome: '', prazo_estimado: '' });
+  const [manualFase, setManualFase] = useState<string>('');
 
   const { data: cliente } = useQuery({
     queryKey: ['app-cliente', clienteId],
@@ -103,20 +113,90 @@ export default function AplicativoDetailPage() {
     }
   }, [formulario]);
 
+  // Init client form when cliente loads
+  useEffect(() => {
+    if (cliente) {
+      setClientForm({
+        nome: cliente.nome || '', email: cliente.email || '', empresa: cliente.empresa || '',
+        plataforma: cliente.plataforma || '', responsavel_nome: cliente.responsavel_nome || '',
+        prazo_estimado: cliente.prazo_estimado || '',
+      });
+      setManualFase(String(cliente.fase_atual ?? 0));
+    }
+  }, [cliente]);
+
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['app-checklist', clienteId] });
+    queryClient.invalidateQueries({ queryKey: ['app-fases', clienteId] });
+    queryClient.invalidateQueries({ queryKey: ['app-cliente', clienteId] });
+  };
+
   const toggleItem = useMutation({
-    mutationFn: async ({ id, feito }: { id: string; feito: boolean }) => {
+    mutationFn: async ({ id, feito, texto }: { id: string; feito: boolean; texto?: string }) => {
       const { error } = await supabase.from('app_checklist_items').update({
         feito,
         feito_em: feito ? new Date().toISOString() : null,
-        feito_por: feito ? 'admin' : null,
+        feito_por: feito ? (user?.email || 'admin') : null,
       }).eq('id', id);
       if (error) throw error;
+
+      // Audit trail for unconclude
+      if (!feito && canManage && texto) {
+        await supabase.from('app_conversas').insert({
+          cliente_id: clienteId!,
+          fase_numero: selectedFase,
+          autor: user?.email || 'admin',
+          tipo: 'sistema',
+          mensagem: `Tarefa "${texto}" desconcluída manualmente por ${user?.email}`,
+        });
+      }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['app-checklist', clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['app-fases', clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['app-cliente', clienteId] });
+    onSuccess: invalidateAll,
+  });
+
+  const saveItemText = useMutation({
+    mutationFn: async ({ id, texto, descricao }: { id: string; texto: string; descricao: string }) => {
+      const { error } = await supabase.from('app_checklist_items').update({ texto, descricao, updated_at: new Date().toISOString() }).eq('id', id);
+      if (error) throw error;
     },
+    onSuccess: () => { invalidateAll(); setEditingItemId(null); toast.success('Item atualizado!'); },
+  });
+
+  const saveClientData = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from('app_clientes').update({
+        nome: clientForm.nome, email: clientForm.email, empresa: clientForm.empresa,
+        plataforma: clientForm.plataforma, responsavel_nome: clientForm.responsavel_nome,
+        prazo_estimado: clientForm.prazo_estimado || null,
+      }).eq('id', clienteId!);
+      if (error) throw error;
+    },
+    onSuccess: () => { invalidateAll(); setEditingClient(false); toast.success('Dados do cliente salvos!'); },
+  });
+
+  const changeManualFase = useMutation({
+    mutationFn: async (targetFase: number) => {
+      // Update fase_atual
+      await supabase.from('app_clientes').update({ fase_atual: targetFase }).eq('id', clienteId!);
+      // Set all fases < target as concluida, target as em_andamento, > target as bloqueada
+      const allFases = fases;
+      for (const f of allFases) {
+        const newStatus = f.numero < targetFase ? 'concluida' : f.numero === targetFase ? 'em_andamento' : 'bloqueada';
+        if (f.status !== newStatus) {
+          await supabase.from('app_fases').update({
+            status: newStatus,
+            data_conclusao: newStatus === 'concluida' && !f.data_conclusao ? new Date().toISOString() : f.data_conclusao,
+            data_inicio: newStatus === 'em_andamento' && !f.data_inicio ? new Date().toISOString() : f.data_inicio,
+          }).eq('id', f.id);
+        }
+      }
+      // Audit
+      await supabase.from('app_conversas').insert({
+        cliente_id: clienteId!, fase_numero: targetFase, autor: user?.email || 'admin', tipo: 'sistema',
+        mensagem: `Fase alterada manualmente para ${targetFase} (${FASE_NAMES[targetFase]}) por ${user?.email}`,
+      });
+    },
+    onSuccess: () => { invalidateAll(); toast.success('Fase alterada!'); },
   });
 
   const revertFase = useMutation({
@@ -306,6 +386,55 @@ export default function AplicativoDetailPage() {
         </div>
       </div>
 
+      {/* Admin: Edit client data */}
+      {canManage && (
+        <Card className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-primary" /> Gestão Interna
+            </h3>
+            <Button variant="outline" size="sm" onClick={() => setEditingClient(!editingClient)}>
+              {editingClient ? 'Cancelar' : 'Editar dados'}
+            </Button>
+          </div>
+          {editingClient && (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
+              <div><label className="text-xs text-muted-foreground">Nome</label><Input value={clientForm.nome} onChange={e => setClientForm(p => ({ ...p, nome: e.target.value }))} className="h-8 text-sm" /></div>
+              <div><label className="text-xs text-muted-foreground">Email</label><Input value={clientForm.email} onChange={e => setClientForm(p => ({ ...p, email: e.target.value }))} className="h-8 text-sm" /></div>
+              <div><label className="text-xs text-muted-foreground">Empresa</label><Input value={clientForm.empresa} onChange={e => setClientForm(p => ({ ...p, empresa: e.target.value }))} className="h-8 text-sm" /></div>
+              <div><label className="text-xs text-muted-foreground">Plataforma</label>
+                <Select value={clientForm.plataforma} onValueChange={v => setClientForm(p => ({ ...p, plataforma: v }))}>
+                  <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="google">🤖 Google</SelectItem>
+                    <SelectItem value="apple">🍎 Apple</SelectItem>
+                    <SelectItem value="ambos">🍎+🤖 Ambos</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div><label className="text-xs text-muted-foreground">Responsável</label><Input value={clientForm.responsavel_nome} onChange={e => setClientForm(p => ({ ...p, responsavel_nome: e.target.value }))} className="h-8 text-sm" /></div>
+              <div><label className="text-xs text-muted-foreground">Prazo estimado</label><Input type="date" value={clientForm.prazo_estimado} onChange={e => setClientForm(p => ({ ...p, prazo_estimado: e.target.value }))} className="h-8 text-sm" /></div>
+              <div className="col-span-full"><Button size="sm" onClick={() => saveClientData.mutate()} disabled={saveClientData.isPending}>Salvar dados</Button></div>
+            </div>
+          )}
+          <div className="flex items-center gap-3">
+            <label className="text-xs text-muted-foreground whitespace-nowrap">Mover para fase:</label>
+            <Select value={manualFase} onValueChange={v => setManualFase(v)}>
+              <SelectTrigger className="w-48 h-8 text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {FASE_NAMES.map((name, i) => (
+                  <SelectItem key={i} value={String(i)}>F{i} — {name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button size="sm" variant="outline" disabled={changeManualFase.isPending || manualFase === String(cliente.fase_atual)}
+              onClick={() => { if (confirm(`Mover para fase ${manualFase}?`)) changeManualFase.mutate(Number(manualFase)); }}>
+              Aplicar
+            </Button>
+          </div>
+        </Card>
+      )}
+
       {/* Timeline */}
       <div className="space-y-2">
         {fases.map((fase) => {
@@ -431,13 +560,31 @@ export default function AplicativoDetailPage() {
                               ) : (
                                 <Checkbox
                                   checked={item.feito}
-                                  disabled={item.ator === 'cliente' && !canEdit && !isGerenteImpl}
-                                  onCheckedChange={(checked) => toggleItem.mutate({ id: item.id, feito: !!checked })}
+                                  disabled={!canManage && item.ator === 'cliente' && !canEdit && !isGerenteImpl}
+                                  onCheckedChange={(checked) => toggleItem.mutate({ id: item.id, feito: !!checked, texto: item.texto })}
                                 />
                               )}
                               <div className="flex-1 min-w-0">
-                                <p className={`text-sm ${item.feito ? 'line-through text-muted-foreground' : ''}`}>{item.texto}</p>
-                                {item.descricao && <p className="text-xs text-muted-foreground mt-0.5">{item.descricao}</p>}
+                                {editingItemId === item.id && canManage ? (
+                                  <div className="space-y-1.5">
+                                    <Input value={editingText} onChange={e => setEditingText(e.target.value)}
+                                      onBlur={() => { if (editingText.trim()) saveItemText.mutate({ id: item.id, texto: editingText, descricao: editingDesc }); }}
+                                      onKeyDown={e => { if (e.key === 'Enter') saveItemText.mutate({ id: item.id, texto: editingText, descricao: editingDesc }); if (e.key === 'Escape') setEditingItemId(null); }}
+                                      className="h-7 text-sm" autoFocus />
+                                    <Input value={editingDesc} onChange={e => setEditingDesc(e.target.value)} placeholder="Descrição..." className="h-7 text-xs" />
+                                  </div>
+                                ) : (
+                                  <div className="group flex items-start gap-1">
+                                    <p className={`text-sm ${item.feito ? 'line-through text-muted-foreground' : ''}`}>{item.texto}</p>
+                                    {canManage && (
+                                      <button onClick={(e) => { e.stopPropagation(); setEditingItemId(item.id); setEditingText(item.texto); setEditingDesc(item.descricao || ''); }}
+                                        className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-0.5">
+                                        <Pencil className="h-3 w-3 text-muted-foreground hover:text-primary" />
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                                {editingItemId !== item.id && item.descricao && <p className="text-xs text-muted-foreground mt-0.5">{item.descricao}</p>}
                                 {item.feito_em && (
                                   <p className={`text-[10px] mt-0.5 ${(selectedFase === 2 || selectedFase === 4) ? 'text-green-600 font-medium' : 'text-muted-foreground'}`}>
                                     {(selectedFase === 2 || selectedFase === 4) ? `✅ Aprovado em ${format(new Date(item.feito_em), 'dd/MM/yyyy HH:mm')}` : `✓ ${format(new Date(item.feito_em), 'dd/MM/yyyy HH:mm')}`}
