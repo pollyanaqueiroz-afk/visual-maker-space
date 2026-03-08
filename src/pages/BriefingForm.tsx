@@ -348,7 +348,7 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
       toast.error('Selecione pelo menos um tipo de arte');
       return;
     }
-    // Skip step 2 when mockupOnly (go from step 1 directly to step 3)
+    setSlideDir(1);
     if (mockupOnly && step === 1) {
       setStep(3);
     } else {
@@ -358,7 +358,7 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
   };
 
   const prevStep = () => {
-    // Skip step 2 when mockupOnly (go from step 3 back to step 1)
+    setSlideDir(-1);
     if (mockupOnly && step === 3) {
       setStep(1);
     } else {
