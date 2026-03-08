@@ -1299,23 +1299,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           {/* Expanded content — full width below all tracks */}
           <AnimatePresence>
             {selectedTimelineFase && (
-              <Card className="bg-white/5 border-white/10 p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    {selectedTimelineFase.plataforma === 'google' && <span>🤖</span>}
-                    {selectedTimelineFase.plataforma === 'apple' && <span>🍎</span>}
-                    {!selectedTimelineFase.plataforma && <span>📋</span>}
-                    <h3 className="text-sm font-semibold">{FASE_NAMES[selectedTimelineFase.fase]}</h3>
-                    {selectedTimelineFase.plataforma && (
-                      <Badge variant="outline" className="text-[10px]">
-                        {selectedTimelineFase.plataforma === 'google' ? 'Google Play' : 'Apple'}
-                      </Badge>
-                    )}
-                  </div>
-                  <button onClick={() => setSelectedTimelineFase(null)} className="text-white/40 hover:text-white text-xs">✕</button>
-                </div>
-                {renderExpandedFase(selectedTimelineFase.fase, selectedTimelineFase.plataforma)?.props?.children}
-              </Card>
+              renderExpandedFase(selectedTimelineFase.fase, selectedTimelineFase.plataforma || undefined)
             )}
           </AnimatePresence>
 
