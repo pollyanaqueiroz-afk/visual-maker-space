@@ -233,14 +233,17 @@ export default function SchedulingPage() {
           }
         );
         if (response.ok) {
-          const users = await response.json();
+          const result = await response.json();
+          const users = result.users || result;
           if (Array.isArray(users)) {
             setTeamMembers(
-              users.map((u: any) => ({
-                id: u.id,
-                email: u.email || '',
-                display_name: u.display_name || u.email || u.id,
-              }))
+              users
+                .filter((u: any) => u.email?.endsWith('@curseduca.com'))
+                .map((u: any) => ({
+                  id: u.id,
+                  email: u.email || '',
+                  display_name: u.display_name || u.email || u.id,
+                }))
             );
           }
         }
