@@ -409,7 +409,50 @@ export default function AplicativosPage() {
     if (ator === 'designer') return { text: 'Designer', color: 'bg-purple-500/10 text-purple-500 border-purple-500/20' };
     return { text: ator, color: 'bg-muted text-muted-foreground border-border' };
   };
-  const handleConfirmDrop = async () => {
+
+  const addBusinessDays = (date: Date, days: number) => {
+    let count = 0;
+    const result = new Date(date);
+    while (count < days) {
+      result.setDate(result.getDate() + 1);
+      const dow = result.getDay();
+      if (dow !== 0 && dow !== 6) count++;
+    }
+    return result;
+  };
+
+  const handlePubUrlConfirm = async (item: any, clienteId: string) => {
+    const urlInput = pubUrlInputs[item.id]?.trim();
+    if (!urlInput) { toast.error('Informe a URL da loja'); return; }
+    setPubUrlSaving(prev => new Set(prev).add(item.id));
+    try {
+      const urlField = item.plataforma === 'google' ? 'url_loja_google' : 'url_loja_apple';
+      await supabase.from('app_clientes').update({ [urlField]: urlInput } as any).eq('id', clienteId);
+      await supabase.from('app_checklist_items').update({
+        feito: true, feito_em: new Date().toISOString(), feito_por: user?.email || 'equipe_interna',
+      }).eq('id', item.id);
+      await supabase.functions.invoke('notify-app-client', {
+        body: { tipo: 'app_publicado', cliente_id: clienteId, plataforma: item.plataforma, url_loja: urlInput },
+      });
+      await supabase.from('app_notificacoes').insert({
+        cliente_id: clienteId, tipo: 'app_publicado', canal: 'email', destinatario: 'cliente',
+        titulo: item.plataforma === 'google' ? '🎉 Seu app está na Google Play!' : '🎉 Seu app está na App Store!',
+        mensagem: `Seu aplicativo foi publicado! Acesse: ${urlInput}`,
+        agendado_para: new Date().toISOString(),
+      });
+      queryClient.invalidateQueries({ queryKey: ['app-checklist-full'] });
+      queryClient.invalidateQueries({ queryKey: ['app-checklist-counts'] });
+      queryClient.invalidateQueries({ queryKey: ['app-fases-all'] });
+      queryClient.invalidateQueries({ queryKey: ['app-clientes'] });
+      setPubUrlExpanded(prev => ({ ...prev, [item.id]: false }));
+      setPubUrlInputs(prev => ({ ...prev, [item.id]: '' }));
+      toast.success('✅ Publicação confirmada e cliente notificado!');
+    } catch (e: any) {
+      toast.error(e.message || 'Erro ao confirmar publicação');
+    } finally {
+      setPubUrlSaving(prev => { const s = new Set(prev); s.delete(item.id); return s; });
+    }
+  };
     if (!pendingDrop) return;
     setDropping(true);
     try {
