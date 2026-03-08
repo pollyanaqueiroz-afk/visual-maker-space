@@ -2,13 +2,13 @@ import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { Smartphone, Plus, Bell, AlertTriangle, Apple, Bot, Clock, CheckCircle, Users, TrendingUp, ClipboardList, Filter, FileText, ChevronRight, Info } from 'lucide-react';
+import { Smartphone, Plus, Bell, AlertTriangle, Apple, Bot, Clock, CheckCircle, Users, TrendingUp, ClipboardList, Filter, FileText, ChevronRight, Info, UserPlus, UserPen, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/hooks/useAuth';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -18,10 +18,53 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
-import { format, differenceInHours, differenceInDays, addBusinessDays as fnsAddBusinessDays } from 'date-fns';
+import { format, differenceInHours, differenceInDays, addBusinessDays as fnsAddBusinessDays, subMonths, startOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ExternalLink } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+// ResponsavelPicker component
+function ResponsavelPicker({ currentValue, onSelect }: { currentValue: string; onSelect: (nome: string) => void }) {
+  const [input, setInput] = useState(currentValue);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from('app_checklist_items')
+      .select('responsavel')
+      .not('responsavel', 'is', null)
+      .then(({ data }) => {
+        const nomes = [...new Set((data || []).map((d: any) => d.responsavel).filter(Boolean))] as string[];
+        setSuggestions(nomes.sort());
+      });
+  }, []);
+
+  const filtered = suggestions.filter(s =>
+    !input || s.toLowerCase().includes(input.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-2">
+      <Label className="text-xs">Responsável</Label>
+      <Input placeholder="Nome ou email" value={input} onChange={e => setInput(e.target.value)} className="h-8 text-sm" />
+      {filtered.length > 0 && (
+        <div className="space-y-1 max-h-32 overflow-y-auto">
+          {filtered.map(nome => (
+            <button key={nome} onClick={() => onSelect(nome)} className="w-full text-left px-2 py-1 text-sm rounded hover:bg-muted/50">
+              {nome}
+            </button>
+          ))}
+        </div>
+      )}
+      <Button size="sm" className="w-full" disabled={!input.trim()} onClick={() => onSelect(input.trim())}>
+        Atribuir
+      </Button>
+    </div>
+  );
+}
 
 const FASE_NAMES = [
   'Pré-Requisitos',
@@ -68,6 +111,7 @@ export default function AplicativosPage() {
   const { hasRole } = usePermissions();
   const { user } = useAuth();
   const canDrag = hasRole('admin') || hasRole('gerente_implantacao') || hasRole('analista_implantacao');
+  const canManage = canDrag;
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('kanban');
@@ -85,6 +129,7 @@ export default function AplicativosPage() {
   const [pubUrlInputs, setPubUrlInputs] = useState<Record<string, string>>({});
   const [pubUrlExpanded, setPubUrlExpanded] = useState<Record<string, boolean>>({});
   const [pubUrlSaving, setPubUrlSaving] = useState<Set<string>>(new Set());
+  const [filterResponsavelTask, setFilterResponsavelTask] = useState('all');
 
   // Drag and drop states
   const [dragOverColumn, setDragOverColumn] = useState<number | null>(null);
@@ -200,7 +245,7 @@ export default function AplicativosPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('app_checklist_items')
-        .select('id, cliente_id, fase_numero, texto, descricao, ator, tipo, feito, feito_em, feito_por, created_at, plataforma')
+        .select('id, cliente_id, fase_numero, texto, descricao, ator, tipo, feito, feito_em, feito_por, created_at, plataforma, responsavel, sla_horas, sla_vencimento')
         .neq('ator', 'cliente')
         .order('fase_numero')
         .order('created_at');
@@ -285,6 +330,26 @@ export default function AplicativosPage() {
       toast.error(e.message);
     },
   });
+
+  const updateResponsavel = async (itemId: string, nome: string, clienteId?: string, faseNumero?: number) => {
+    await (supabase.from('app_checklist_items').update({
+      responsavel: nome,
+      sla_vencimento: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    } as any) as any).eq('id', itemId);
+
+    if (clienteId) {
+      await supabase.from('app_conversas').insert({
+        cliente_id: clienteId,
+        fase_numero: faseNumero || 0,
+        autor: user?.email || 'Sistema',
+        tipo: 'sistema',
+        mensagem: `Tarefa atribuída a ${nome} por ${user?.email}`,
+      });
+    }
+
+    queryClient.invalidateQueries({ queryKey: ['app-checklist-full'] });
+    toast.success(`Atribuído a ${nome}`);
+  };
 
   const handleMooniSave = async () => {
     if (!mooniText.trim() || !mooniItemId) return;
@@ -452,8 +517,20 @@ export default function AplicativosPage() {
         items: g.items.filter((item: any) => item.feito === feito),
       })).filter(g => g.items.length > 0);
     }
+    // Task-level responsável filter
+    if (filterResponsavelTask === 'unassigned') {
+      result = result.map(g => ({
+        ...g,
+        items: g.items.filter((item: any) => !item.responsavel),
+      })).filter(g => g.items.length > 0);
+    } else if (filterResponsavelTask !== 'all') {
+      result = result.map(g => ({
+        ...g,
+        items: g.items.filter((item: any) => item.responsavel === filterResponsavelTask),
+      })).filter(g => g.items.length > 0);
+    }
     return result;
-  }, [internalPendencies, pendencyFilter, phaseFilter, statusFilter]);
+  }, [internalPendencies, pendencyFilter, phaseFilter, statusFilter, filterResponsavelTask]);
 
   const uniquePhases = useMemo(() => {
     const phases = new Set<number>();
@@ -468,6 +545,16 @@ export default function AplicativosPage() {
       if (g.cliente?.responsavel_nome) names.add(g.cliente.responsavel_nome);
     });
     return Array.from(names).sort();
+  }, [internalPendencies]);
+
+  const uniqueTaskResponsaveis = useMemo(() => {
+    const names = new Set<string>();
+    internalPendencies.forEach(g => g.items.forEach((item: any) => { if (item.responsavel) names.add(item.responsavel); }));
+    return Array.from(names).sort();
+  }, [internalPendencies]);
+
+  const unassignedTaskCount = useMemo(() => {
+    return internalPendencies.reduce((sum, g) => sum + g.items.filter((i: any) => !i.responsavel && !i.feito).length, 0);
   }, [internalPendencies]);
 
   const totalInternalPending = useMemo(() => {
@@ -804,6 +891,12 @@ export default function AplicativosPage() {
               <Badge variant="destructive" className="ml-1 text-[10px] px-1.5 py-0">{totalInternalPending}</Badge>
             )}
           </TabsTrigger>
+          {canManage && (
+            <TabsTrigger value="produtividade" className="gap-1.5">
+              <BarChart3 className="h-3.5 w-3.5" />
+              Produtividade
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="kanban" className="space-y-4 mt-4 overflow-hidden">
@@ -1117,7 +1210,20 @@ export default function AplicativosPage() {
             </Card>
           </div>
 
-          {/* Filter bar */}
+          {/* Unassigned alert */}
+          {unassignedTaskCount > 0 && (
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive/20 shrink-0">
+                <AlertTriangle className="h-4 w-4 text-destructive" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-destructive">{unassignedTaskCount} tarefa{unassignedTaskCount > 1 ? 's' : ''} sem responsável atribuído</p>
+                <p className="text-xs text-destructive/60">Atribua um responsável para garantir rastreabilidade e SLA</p>
+              </div>
+              <Button variant="destructive" size="sm" onClick={() => setFilterResponsavelTask('unassigned')}>Ver tarefas</Button>
+            </div>
+          )}
+
           <div className="flex items-center gap-3">
             <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
             <Select value={pendencyFilter} onValueChange={setPendencyFilter}>
@@ -1153,12 +1259,24 @@ export default function AplicativosPage() {
                 <SelectItem value="concluido">✅ Concluído</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={filterResponsavelTask} onValueChange={setFilterResponsavelTask}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Responsável tarefa" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos responsáveis</SelectItem>
+                <SelectItem value="unassigned">⚠️ Sem responsável</SelectItem>
+                {uniqueTaskResponsaveis.map(nome => (
+                  <SelectItem key={nome} value={nome}>{nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {(() => {
-              const activeFilterCount = [pendencyFilter, phaseFilter, statusFilter].filter(f => f !== 'todos' && f !== 'todas' && f !== 'pendente').length;
+              const activeFilterCount = [pendencyFilter, phaseFilter, statusFilter, filterResponsavelTask].filter(f => f !== 'todos' && f !== 'todas' && f !== 'pendente' && f !== 'all').length;
               return activeFilterCount > 0 ? (
                 <>
                   <Badge variant="secondary" className="text-xs">{activeFilterCount} filtro{activeFilterCount > 1 ? 's' : ''}</Badge>
-                  <Button variant="ghost" size="sm" onClick={() => { setPendencyFilter('todos'); setPhaseFilter('todas'); setStatusFilter('pendente'); }} className="text-xs">
+                  <Button variant="ghost" size="sm" onClick={() => { setPendencyFilter('todos'); setPhaseFilter('todas'); setStatusFilter('pendente'); setFilterResponsavelTask('all'); }} className="text-xs">
                     Limpar filtros
                   </Button>
                 </>
@@ -1410,7 +1528,122 @@ export default function AplicativosPage() {
             </div>
           )}
         </TabsContent>
+
+        {/* Produtividade Tab */}
+        {canManage && (
+          <TabsContent value="produtividade" className="space-y-6 mt-4">
+            {(() => {
+              const doneItems = allChecklist.filter((i: any) => i.feito && i.feito_em);
+              const onTime = doneItems.filter((i: any) => !i.sla_vencimento || new Date(i.feito_em) <= new Date(i.sla_vencimento)).length;
+              const late = doneItems.filter((i: any) => i.sla_vencimento && new Date(i.feito_em) > new Date(i.sla_vencimento)).length;
+              const totalDone = doneItems.length;
+              const slaRate = totalDone > 0 ? Math.round((onTime / totalDone) * 100) : 100;
+
+              // Per-person stats
+              const perPerson: Record<string, { done: number; onTime: number; late: number; slaRate: number; pending: number; avgHours: string }> = {};
+              allChecklist.forEach((item: any) => {
+                const nome = item.responsavel || 'Sem responsável';
+                if (!perPerson[nome]) perPerson[nome] = { done: 0, onTime: 0, late: 0, slaRate: 0, pending: 0, avgHours: '0' };
+                if (item.feito) {
+                  perPerson[nome].done++;
+                  if (!item.sla_vencimento || new Date(item.feito_em) <= new Date(item.sla_vencimento)) perPerson[nome].onTime++;
+                  else perPerson[nome].late++;
+                } else {
+                  perPerson[nome].pending++;
+                }
+              });
+              Object.entries(perPerson).forEach(([nome, stats]) => {
+                stats.slaRate = stats.done > 0 ? Math.round((stats.onTime / stats.done) * 100) : 100;
+                const personItems = allChecklist.filter((i: any) => (i.responsavel || 'Sem responsável') === nome && i.feito && i.feito_em && i.created_at);
+                if (personItems.length > 0) {
+                  const totalH = personItems.reduce((sum: number, i: any) => sum + (new Date(i.feito_em).getTime() - new Date(i.created_at).getTime()) / 3600000, 0);
+                  stats.avgHours = (totalH / personItems.length).toFixed(1);
+                }
+              });
+
+              // Monthly chart data (last 6 months)
+              const monthlyData = Array.from({ length: 6 }, (_, idx) => {
+                const d = subMonths(new Date(), 5 - idx);
+                const monthStart = startOfMonth(d);
+                const nextMonth = startOfMonth(subMonths(new Date(), 4 - idx));
+                const monthItems = doneItems.filter((i: any) => {
+                  const fe = new Date(i.feito_em);
+                  return fe >= monthStart && (idx < 5 ? fe < nextMonth : true);
+                });
+                return {
+                  month: format(monthStart, 'MMM/yy', { locale: ptBR }),
+                  noPrazo: monthItems.filter((i: any) => !i.sla_vencimento || new Date(i.feito_em) <= new Date(i.sla_vencimento)).length,
+                  atrasadas: monthItems.filter((i: any) => i.sla_vencimento && new Date(i.feito_em) > new Date(i.sla_vencimento)).length,
+                };
+              });
+
+              return (
+                <>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <Card><CardContent className="pt-4 pb-3"><p className="text-xs text-muted-foreground">Total concluídas</p><p className="text-2xl font-bold">{totalDone}</p></CardContent></Card>
+                    <Card><CardContent className="pt-4 pb-3"><p className="text-xs text-muted-foreground">No prazo</p><p className="text-2xl font-bold text-green-500">{onTime}</p></CardContent></Card>
+                    <Card><CardContent className="pt-4 pb-3"><p className="text-xs text-muted-foreground">Fora do prazo</p><p className="text-2xl font-bold text-destructive">{late}</p></CardContent></Card>
+                    <Card><CardContent className="pt-4 pb-3"><p className="text-xs text-muted-foreground">SLA Compliance</p><p className={`text-2xl font-bold ${slaRate >= 80 ? 'text-green-500' : slaRate >= 60 ? 'text-amber-500' : 'text-destructive'}`}>{slaRate}%</p></CardContent></Card>
+                  </div>
+
+                  <Card>
+                    <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Users className="h-5 w-5" /> Desempenho por Responsável</CardTitle></CardHeader>
+                    <CardContent>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Responsável</TableHead>
+                            <TableHead className="text-center">Concluídas</TableHead>
+                            <TableHead className="text-center">No prazo</TableHead>
+                            <TableHead className="text-center">Atrasadas</TableHead>
+                            <TableHead className="text-center">SLA %</TableHead>
+                            <TableHead className="text-center">Pendentes</TableHead>
+                            <TableHead className="text-center">Tempo médio</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {Object.entries(perPerson).sort(([,a], [,b]) => b.done - a.done).map(([nome, stats]) => (
+                            <TableRow key={nome}>
+                              <TableCell className="font-medium">{nome}</TableCell>
+                              <TableCell className="text-center">{stats.done}</TableCell>
+                              <TableCell className="text-center text-green-500">{stats.onTime}</TableCell>
+                              <TableCell className="text-center text-destructive">{stats.late}</TableCell>
+                              <TableCell className="text-center">
+                                <Badge variant="outline" className={`text-xs ${stats.slaRate >= 80 ? 'border-green-500/30 text-green-500' : stats.slaRate >= 60 ? 'border-amber-500/30 text-amber-500' : 'border-destructive/30 text-destructive'}`}>{stats.slaRate}%</Badge>
+                              </TableCell>
+                              <TableCell className="text-center">{stats.pending}</TableCell>
+                              <TableCell className="text-center text-muted-foreground text-xs">{stats.avgHours}h</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader><CardTitle className="text-lg flex items-center gap-2"><BarChart3 className="h-5 w-5" /> Entregas por Mês</CardTitle></CardHeader>
+                    <CardContent>
+                      <div className="h-[250px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={monthlyData}>
+                            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                            <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                            <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                            <Tooltip />
+                            <Bar dataKey="noPrazo" name="No prazo" fill="hsl(var(--primary))" stackId="stack" radius={[0, 0, 0, 0]} />
+                            <Bar dataKey="atrasadas" name="Atrasadas" fill="hsl(var(--destructive))" stackId="stack" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
+              );
+            })()}
+          </TabsContent>
+        )}
       </Tabs>
+
 
       {/* Mooni Dialog */}
       <Dialog open={mooniDialogOpen} onOpenChange={setMooniDialogOpen}>

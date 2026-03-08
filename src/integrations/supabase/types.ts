@@ -126,6 +126,9 @@ export type Database = {
           obrigatorio: boolean | null
           ordem: number | null
           plataforma: string
+          responsavel: string | null
+          sla_horas: number | null
+          sla_vencimento: string | null
           texto: string
           tipo: string | null
           updated_at: string | null
@@ -151,6 +154,9 @@ export type Database = {
           obrigatorio?: boolean | null
           ordem?: number | null
           plataforma?: string
+          responsavel?: string | null
+          sla_horas?: number | null
+          sla_vencimento?: string | null
           texto: string
           tipo?: string | null
           updated_at?: string | null
@@ -176,6 +182,9 @@ export type Database = {
           obrigatorio?: boolean | null
           ordem?: number | null
           plataforma?: string
+          responsavel?: string | null
+          sla_horas?: number | null
+          sla_vencimento?: string | null
           texto?: string
           tipo?: string | null
           updated_at?: string | null
