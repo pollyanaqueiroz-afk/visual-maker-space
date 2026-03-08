@@ -474,7 +474,7 @@ export default function SchedulingPage() {
   };
 
   const handleStatusChange = async (id: string, status: string) => {
-    const { error } = await (supabase.from('meetings' as any).update({ status }).eq('id', id) as any);
+    const { error } = await supabase.from('meetings').update({ status }).eq('id', id);
     if (error) toast.error('Erro ao atualizar status');
     else fetchMeetings();
   };
