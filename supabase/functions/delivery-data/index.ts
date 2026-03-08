@@ -106,6 +106,61 @@ Deno.serve(async (req) => {
         .update({ status: "review" })
         .eq("id", image_id);
 
+      // Notify client by email that art is ready for review
+      try {
+        const { data: imgData } = await supabase
+          .from("briefing_images")
+          .select("image_type, product_name, observations, briefing_requests!inner(requester_name, requester_email, platform_url, review_token)")
+          .eq("id", image_id)
+          .single();
+
+        if (imgData) {
+          const req = (imgData as any).briefing_requests;
+          const requesterEmail = req?.requester_email;
+          const requesterName = req?.requester_name;
+          const reviewToken = req?.review_token;
+
+          if (requesterEmail) {
+            const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+            if (RESEND_API_KEY) {
+              const imageTypeLabel: Record<string, string> = {
+                login: "Área de Login",
+                banner_vitrine: "Banner Vitrine",
+                product_cover: "Capa de Produto",
+                trail_banner: "Banner de Trilha",
+                challenge_banner: "Banner de Desafio",
+                community_banner: "Banner de Comunidade",
+                app_mockup: "Mockup do Aplicativo",
+              };
+              const arteName = imageTypeLabel[imgData.image_type] || imgData.image_type;
+              const arteDetail = imgData.observations || imgData.product_name || "";
+              const baseUrl = Deno.env.get("APP_URL") || "https://visual-maker-space.lovable.app";
+              const reviewUrl = reviewToken
+                ? `${baseUrl}/client-review?token=${reviewToken}`
+                : `${baseUrl}/client-review?email=${encodeURIComponent(requesterEmail)}`;
+
+              await fetch("https://api.resend.com/emails", {
+                method: "POST",
+                headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  from: "Curseduca Design <noreply@curseduca.com>",
+                  to: [requesterEmail],
+                  subject: `🎨 Arte pronta para sua aprovação — ${arteName}${arteDetail ? ` (${arteDetail})` : ""}`,
+                  html: `<div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px">
+                    <h2 style="color:#7c3aed;margin-bottom:8px">🎨 Arte pronta!</h2>
+                    <p style="color:#555;font-size:15px">Olá ${requesterName?.split(" ")[0] || ""}! A arte <strong>${arteName}</strong>${arteDetail ? " — " + arteDetail : ""} foi finalizada e está aguardando sua aprovação.</p>
+                    <a href="${reviewUrl}" style="display:inline-block;margin:20px 0;padding:12px 28px;background:#7c3aed;color:#fff;text-decoration:none;border-radius:8px;font-weight:600">Revisar e Aprovar →</a>
+                    <p style="color:#999;font-size:13px">Você pode aprovar ou solicitar ajustes diretamente pelo link acima.</p>
+                  </div>`,
+                }),
+              });
+            }
+          }
+        }
+      } catch (emailErr) {
+        console.error("Failed to send review notification email:", emailErr);
+      }
+
       return new Response(
         JSON.stringify({ success: true }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }

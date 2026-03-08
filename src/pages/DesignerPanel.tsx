@@ -7,8 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
 import { IMAGE_TYPE_LABELS, STATUS_LABELS, STATUS_COLORS } from '@/types/briefing';
-import { Loader2, Clock, ExternalLink, FileImage, Filter, MessageSquare, BarChart3, LogOut } from 'lucide-react';
+import { Loader2, Clock, ExternalLink, FileImage, Filter, MessageSquare, BarChart3, LogOut, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import CursEducaLayout from '@/components/CursEducaLayout';
 import DesignerFeedback from '@/components/designer/DesignerFeedback';
@@ -22,6 +24,13 @@ interface DesignerImage {
   status: string;
   revision_count: number;
   delivery_token: string | null;
+  extra_info: string | null;
+  image_text: string | null;
+  font_suggestion: string | null;
+  element_suggestion: string | null;
+  orientation: string | null;
+  observations: string | null;
+  professional_photo_url: string | null;
   briefing_requests: {
     requester_name: string;
     platform_url: string;
@@ -157,6 +166,7 @@ export default function DesignerPanel() {
                               <TableHead>Cliente</TableHead>
                               <TableHead>Prazo</TableHead>
                               <TableHead>Status</TableHead>
+                              <TableHead>Briefing</TableHead>
                               <TableHead className="text-right">Ação</TableHead>
                             </TableRow>
                           </TableHeader>
@@ -192,6 +202,84 @@ export default function DesignerPanel() {
                                   )}
                                 </TableCell>
                                 <TableCell>{getStatusBadge(img)}</TableCell>
+                                <TableCell>
+                                  <Dialog>
+                                    <DialogTrigger asChild>
+                                      <Button variant="ghost" size="sm" className="gap-1 h-7 text-xs">
+                                        <Eye className="h-3 w-3" /> Ver
+                                      </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-md">
+                                      <DialogHeader>
+                                        <DialogTitle className="flex items-center gap-2">
+                                          <FileImage className="h-5 w-5" />
+                                          {IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type}
+                                          {img.product_name && ` — ${img.product_name}`}
+                                        </DialogTitle>
+                                      </DialogHeader>
+                                      <div className="space-y-3">
+                                        <div className="grid grid-cols-2 gap-3">
+                                          <div>
+                                            <p className="text-xs text-muted-foreground">Cliente</p>
+                                            <p className="text-sm font-medium">{img.briefing_requests.requester_name}</p>
+                                          </div>
+                                          <div>
+                                            <p className="text-xs text-muted-foreground">Prazo</p>
+                                            <p className="text-sm font-medium">{img.deadline ? new Date(img.deadline).toLocaleDateString('pt-BR') : 'Não definido'}</p>
+                                          </div>
+                                        </div>
+                                        <Separator />
+                                        {img.image_text && (
+                                          <div>
+                                            <p className="text-xs font-semibold text-muted-foreground mb-1">Texto da imagem</p>
+                                            <p className="text-sm">{img.image_text}</p>
+                                          </div>
+                                        )}
+                                        {img.font_suggestion && (
+                                          <div>
+                                            <p className="text-xs font-semibold text-muted-foreground mb-1">Sugestão de fonte</p>
+                                            <p className="text-sm">{img.font_suggestion}</p>
+                                          </div>
+                                        )}
+                                        {img.element_suggestion && (
+                                          <div>
+                                            <p className="text-xs font-semibold text-muted-foreground mb-1">Elemento sugerido</p>
+                                            <p className="text-sm">{img.element_suggestion}</p>
+                                          </div>
+                                        )}
+                                        {img.professional_photo_url && (
+                                          <div>
+                                            <p className="text-xs font-semibold text-muted-foreground mb-1">Foto profissional</p>
+                                            <a href={img.professional_photo_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1">
+                                              {img.professional_photo_url} <ExternalLink className="h-3 w-3" />
+                                            </a>
+                                          </div>
+                                        )}
+                                        {img.orientation && (
+                                          <div>
+                                            <p className="text-xs font-semibold text-muted-foreground mb-1">Orientação</p>
+                                            <p className="text-sm">{img.orientation}</p>
+                                          </div>
+                                        )}
+                                        {img.observations && (
+                                          <div>
+                                            <p className="text-xs font-semibold text-muted-foreground mb-1">Observações</p>
+                                            <p className="text-sm">{img.observations}</p>
+                                          </div>
+                                        )}
+                                        {img.extra_info && (
+                                          <div>
+                                            <p className="text-xs font-semibold text-muted-foreground mb-1">📋 Informações do Mooni</p>
+                                            <p className="text-sm whitespace-pre-wrap">{img.extra_info}</p>
+                                          </div>
+                                        )}
+                                        {!img.image_text && !img.font_suggestion && !img.element_suggestion && !img.observations && !img.extra_info && (
+                                          <p className="text-sm text-muted-foreground text-center py-4">Nenhum detalhe de briefing disponível</p>
+                                        )}
+                                      </div>
+                                    </DialogContent>
+                                  </Dialog>
+                                </TableCell>
                                 <TableCell className="text-right">
                                   {img.delivery_token ? (
                                     <Button size="sm" variant="outline" asChild>
@@ -234,6 +322,14 @@ export default function DesignerPanel() {
                                   </span>
                                 )}
                               </div>
+                              {(img.image_text || img.observations || img.font_suggestion || img.element_suggestion) && (
+                                <div className="space-y-1 p-2 rounded-lg bg-muted/30 border border-border">
+                                  {img.image_text && <p className="text-xs text-muted-foreground"><span className="font-medium">Texto:</span> {img.image_text}</p>}
+                                  {img.font_suggestion && <p className="text-xs text-muted-foreground"><span className="font-medium">Fonte:</span> {img.font_suggestion}</p>}
+                                  {img.element_suggestion && <p className="text-xs text-muted-foreground"><span className="font-medium">Elemento:</span> {img.element_suggestion}</p>}
+                                  {img.observations && <p className="text-xs text-muted-foreground"><span className="font-medium">Obs:</span> {img.observations}</p>}
+                                </div>
+                              )}
                               {img.delivery_token && (
                                 <Button size="sm" className="w-full" variant="outline" asChild>
                                   <Link to={`/delivery/${img.delivery_token}`}>Entregar Arte</Link>

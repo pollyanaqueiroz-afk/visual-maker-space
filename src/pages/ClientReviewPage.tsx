@@ -308,7 +308,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
       const { data: assets, error } = await supabase
         .from('brand_assets')
         .select('file_url, file_name')
-        .eq('platform_url', platformUrls[0]);
+        .in('platform_url', platformUrls);
 
       if (error) throw error;
       if (!assets || assets.length === 0) {
