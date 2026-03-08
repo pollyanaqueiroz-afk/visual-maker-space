@@ -1051,7 +1051,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                           <p className="text-xs text-white/50 mt-0.5">Preencha o formulário acima para liberar esta etapa</p>
                         )}
                         {formComplete && !item.feito && (
-                          <p className="text-xs text-white/40 mt-0.5">Nossa equipe está construindo e submetendo seu app na loja</p>
+                          <p className="text-xs text-white/60 mt-0.5">Nossa equipe está construindo e submetendo seu app na loja</p>
                         )}
                         {item.feito && item.feito_em && (
                           <p className="text-[10px] text-green-400/60 mt-0.5">
