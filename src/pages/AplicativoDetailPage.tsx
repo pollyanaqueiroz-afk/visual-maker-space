@@ -112,20 +112,90 @@ export default function AplicativoDetailPage() {
     }
   }, [formulario]);
 
+  // Init client form when cliente loads
+  useEffect(() => {
+    if (cliente) {
+      setClientForm({
+        nome: cliente.nome || '', email: cliente.email || '', empresa: cliente.empresa || '',
+        plataforma: cliente.plataforma || '', responsavel_nome: cliente.responsavel_nome || '',
+        prazo_estimado: cliente.prazo_estimado || '',
+      });
+      setManualFase(String(cliente.fase_atual ?? 0));
+    }
+  }, [cliente]);
+
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['app-checklist', clienteId] });
+    queryClient.invalidateQueries({ queryKey: ['app-fases', clienteId] });
+    queryClient.invalidateQueries({ queryKey: ['app-cliente', clienteId] });
+  };
+
   const toggleItem = useMutation({
-    mutationFn: async ({ id, feito }: { id: string; feito: boolean }) => {
+    mutationFn: async ({ id, feito, texto }: { id: string; feito: boolean; texto?: string }) => {
       const { error } = await supabase.from('app_checklist_items').update({
         feito,
         feito_em: feito ? new Date().toISOString() : null,
-        feito_por: feito ? 'admin' : null,
+        feito_por: feito ? (user?.email || 'admin') : null,
       }).eq('id', id);
       if (error) throw error;
+
+      // Audit trail for unconclude
+      if (!feito && canManage && texto) {
+        await supabase.from('app_conversas').insert({
+          cliente_id: clienteId!,
+          fase_numero: selectedFase,
+          autor: user?.email || 'admin',
+          tipo: 'sistema',
+          mensagem: `Tarefa "${texto}" desconcluída manualmente por ${user?.email}`,
+        });
+      }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['app-checklist', clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['app-fases', clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['app-cliente', clienteId] });
+    onSuccess: invalidateAll,
+  });
+
+  const saveItemText = useMutation({
+    mutationFn: async ({ id, texto, descricao }: { id: string; texto: string; descricao: string }) => {
+      const { error } = await supabase.from('app_checklist_items').update({ texto, descricao, updated_at: new Date().toISOString() }).eq('id', id);
+      if (error) throw error;
     },
+    onSuccess: () => { invalidateAll(); setEditingItemId(null); toast.success('Item atualizado!'); },
+  });
+
+  const saveClientData = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from('app_clientes').update({
+        nome: clientForm.nome, email: clientForm.email, empresa: clientForm.empresa,
+        plataforma: clientForm.plataforma, responsavel_nome: clientForm.responsavel_nome,
+        prazo_estimado: clientForm.prazo_estimado || null,
+      }).eq('id', clienteId!);
+      if (error) throw error;
+    },
+    onSuccess: () => { invalidateAll(); setEditingClient(false); toast.success('Dados do cliente salvos!'); },
+  });
+
+  const changeManualFase = useMutation({
+    mutationFn: async (targetFase: number) => {
+      // Update fase_atual
+      await supabase.from('app_clientes').update({ fase_atual: targetFase }).eq('id', clienteId!);
+      // Set all fases < target as concluida, target as em_andamento, > target as bloqueada
+      const allFases = fases;
+      for (const f of allFases) {
+        const newStatus = f.numero < targetFase ? 'concluida' : f.numero === targetFase ? 'em_andamento' : 'bloqueada';
+        if (f.status !== newStatus) {
+          await supabase.from('app_fases').update({
+            status: newStatus,
+            data_conclusao: newStatus === 'concluida' && !f.data_conclusao ? new Date().toISOString() : f.data_conclusao,
+            data_inicio: newStatus === 'em_andamento' && !f.data_inicio ? new Date().toISOString() : f.data_inicio,
+          }).eq('id', f.id);
+        }
+      }
+      // Audit
+      await supabase.from('app_conversas').insert({
+        cliente_id: clienteId!, fase_numero: targetFase, autor: user?.email || 'admin', tipo: 'sistema',
+        mensagem: `Fase alterada manualmente para ${targetFase} (${FASE_NAMES[targetFase]}) por ${user?.email}`,
+      });
+    },
+    onSuccess: () => { invalidateAll(); toast.success('Fase alterada!'); },
   });
 
   const revertFase = useMutation({
