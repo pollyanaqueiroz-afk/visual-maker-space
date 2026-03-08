@@ -493,11 +493,20 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     if (singleFase6?.status === 'concluida') return '🎉 Seu app está publicado!';
     if (cliente?.fase_atual === 5) return '🏁 Última reta! Teste seu app e aprove para publicarmos.';
 
+    // Client-only progress
+    const clientItemsMsg = checklist.filter((i: any) => i.ator === 'cliente' && i.obrigatorio);
+    const clientDoneMsg = clientItemsMsg.filter((i: any) => i.feito).length;
+    const clientPctMsg = clientItemsMsg.length > 0 ? Math.round((clientDoneMsg / clientItemsMsg.length) * 100) : 0;
+    const totalPctMsg = cliente?.porcentagem_geral || 0;
+
+    if (totalPctMsg === 100) return '🎉 Seu app está 100% pronto!';
+    if (clientPctMsg === 100 && totalPctMsg < 100) return 'Você concluiu tudo! 🎉 Nossa equipe está cuidando do restante.';
+
     const clientPending = checklist.filter((i: any) => !i.feito && i.ator === 'cliente' && !isHiddenPrereq(i.texto) && i.tipo !== 'mooni');
     const currentFasePending = clientPending.filter(i => i.fase_numero === cliente?.fase_atual);
-    if (currentFasePending.length > 0) return `Seu app está ${cliente?.porcentagem_geral}% pronto — faltam ${currentFasePending.length} tarefa(s) suas!`;
+    if (currentFasePending.length > 0) return `Seu app está ${clientPctMsg}% pronto — faltam ${currentFasePending.length} tarefa(s) suas!`;
 
-    return `Seu app está ${cliente?.porcentagem_geral || 0}% pronto`;
+    return `Seu app está ${clientPctMsg}% pronto`;
   };
 
   // ── Celebration effects ──
