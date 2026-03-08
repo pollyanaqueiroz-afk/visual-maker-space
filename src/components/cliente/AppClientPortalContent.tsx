@@ -532,6 +532,31 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     }
   }, [fases]);
 
+  // ── Milestone toasts ──
+  const prevPctRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!cliente) return;
+    const pct = cliente.porcentagem_geral || 0;
+    const prev = prevPctRef.current;
+    prevPctRef.current = pct;
+    if (prev === null || prev === pct) return;
+    const milestones = [
+      { threshold: 25, emoji: '🚀', label: '25% concluído!' },
+      { threshold: 50, emoji: '🔥', label: '50% concluído! Metade do caminho!' },
+      { threshold: 75, emoji: '⚡', label: '75% concluído! Quase lá!' },
+      { threshold: 100, emoji: '🎉', label: '100% concluído! Parabéns!' },
+    ];
+    for (const m of milestones) {
+      if (prev < m.threshold && pct >= m.threshold) {
+        toast.success(`${m.emoji} ${m.label}`, { duration: 4000 });
+        if (m.threshold === 100) {
+          setTimeout(() => confetti({ particleCount: 200, spread: 120, origin: { y: 0.4 } }), 300);
+        }
+        break;
+      }
+    }
+  }, [cliente?.porcentagem_geral]);
+
   // ── Loading ──
   if (isLoading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-white/40" /></div>;
   if (!cliente) return <div className="text-center py-12 text-white/60">Dados não encontrados</div>;
