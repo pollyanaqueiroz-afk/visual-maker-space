@@ -67,12 +67,12 @@ export default function AplicativosPage() {
   const [phaseFilter, setPhaseFilter] = useState('todas');
   const [statusFilter, setStatusFilter] = useState('pendente');
   const [kanbanFilter, setKanbanFilter] = useState<'todos' | 'atrasados'>('todos');
-  const [muninDialogOpen, setMuninDialogOpen] = useState(false);
-  const [muninItemId, setMuninItemId] = useState<string | null>(null);
-  const [muninClientName, setMuninClientName] = useState('');
-  const [muninClientEmpresa, setMuninClientEmpresa] = useState('');
-  const [muninText, setMuninText] = useState('');
-  const [muninSaving, setMuninSaving] = useState(false);
+  const [mooniDialogOpen, setMooniDialogOpen] = useState(false);
+  const [mooniItemId, setMooniItemId] = useState<string | null>(null);
+  const [mooniClientName, setMooniClientName] = useState('');
+  const [mooniClientEmpresa, setMooniClientEmpresa] = useState('');
+  const [mooniText, setMooniText] = useState('');
+  const [mooniSaving, setMooniSaving] = useState(false);
   const [form, setForm] = useState({
     nome: '', url_cliente: '', email: '', whatsapp: '', plataforma: 'ambos', responsavel_nome: '',
   });
@@ -194,14 +194,14 @@ export default function AplicativosPage() {
     },
   });
 
-  const handleMuninSave = async () => {
-    if (!muninText.trim() || !muninItemId) return;
-    setMuninSaving(true);
+  const handleMooniSave = async () => {
+    if (!mooniText.trim() || !mooniItemId) return;
+    setMooniSaving(true);
     try {
       const { data: requests } = await supabase
         .from('briefing_requests')
         .select('id, briefing_images(id, image_type)')
-        .eq('platform_url', muninClientEmpresa);
+        .eq('platform_url', mooniClientEmpresa);
 
       const mockupImageIds = (requests || [])
         .flatMap((r: any) => r.briefing_images || [])
@@ -210,7 +210,7 @@ export default function AplicativosPage() {
 
       for (const imgId of mockupImageIds) {
         await supabase.from('briefing_images')
-          .update({ extra_info: muninText.trim() })
+          .update({ extra_info: mooniText.trim() })
           .eq('id', imgId);
       }
 
@@ -218,21 +218,21 @@ export default function AplicativosPage() {
         feito: true,
         feito_em: new Date().toISOString(),
         feito_por: 'equipe_interna',
-        dados_preenchidos: muninText.trim(),
-      }).eq('id', muninItemId);
+        dados_preenchidos: mooniText.trim(),
+      }).eq('id', mooniItemId);
 
       queryClient.invalidateQueries({ queryKey: ['app-checklist-full'] });
       queryClient.invalidateQueries({ queryKey: ['app-checklist-counts'] });
       queryClient.invalidateQueries({ queryKey: ['app-fases-all'] });
       queryClient.invalidateQueries({ queryKey: ['app-clientes'] });
-      setMuninDialogOpen(false);
-      setMuninText('');
-      setMuninItemId(null);
-      toast.success('Munin criado com sucesso! As informações foram enviadas para as artes de mockup. ✅');
+      setMooniDialogOpen(false);
+      setMooniText('');
+      setMooniItemId(null);
+      toast.success('Mooni criado com sucesso! As informações foram enviadas para as artes de mockup. ✅');
     } catch (e: any) {
-      toast.error(e.message || 'Erro ao salvar Munin');
+      toast.error(e.message || 'Erro ao salvar Mooni');
     } finally {
-      setMuninSaving(false);
+      setMooniSaving(false);
     }
   };
 
@@ -277,8 +277,8 @@ export default function AplicativosPage() {
       return { clienteId, cliente, items };
     }).filter(g => {
       if (!g.cliente) return false;
-      // Filter out items from phases the client has already passed (backfilled items), but keep Munin tasks
-      g.items = g.items.filter((item: any) => item.fase_numero >= g.cliente!.fase_atual || item.tipo === 'munin' || item.texto === 'Criar Munin');
+      // Filter out items from phases the client has already passed (backfilled items), but keep Mooni tasks
+      g.items = g.items.filter((item: any) => item.fase_numero >= g.cliente!.fase_atual || item.tipo === 'mooni' || item.texto === 'Criar Mooni');
       return g.items.length > 0;
     })
       .sort((a, b) => {
@@ -808,16 +808,16 @@ export default function AplicativosPage() {
                           const isCompleting = completingIds.has(item.id);
                           const isDone = item.feito || isCompleting;
                           const isPriority = item.texto?.startsWith('⚠️ PRIORIDADE');
-                          const isMunin = item.tipo === 'munin' || item.texto === 'Criar Munin';
+                          const isMooni = item.tipo === 'mooni' || item.texto === 'Criar Mooni';
 
                           return (
-                            <div key={item.id} className={`grid grid-cols-[32px_1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-3 items-center transition-opacity ${isCompleting ? 'opacity-50' : ''} ${isMunin && !isDone ? 'bg-blue-500/10 border-l-2 border-blue-500' : isPriority && !isDone ? 'bg-destructive/10 border-l-2 border-destructive' : ''}`}>
-                              {isMunin && !isDone ? (
+                            <div key={item.id} className={`grid grid-cols-[32px_1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-3 items-center transition-opacity ${isCompleting ? 'opacity-50' : ''} ${isMooni && !isDone ? 'bg-blue-500/10 border-l-2 border-blue-500' : isPriority && !isDone ? 'bg-destructive/10 border-l-2 border-destructive' : ''}`}>
+                              {isMooni && !isDone ? (
                                 <FileText className="h-4 w-4 text-blue-400" />
                               ) : (
                                 <Checkbox
                                   checked={isDone}
-                                  disabled={isDone || (isMunin && !isDone)}
+                                  disabled={isDone || (isMooni && !isDone)}
                                   className="border-muted-foreground/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
                                   onCheckedChange={(checked) => {
                                     if (checked && !item.feito) completeTask.mutate(item.id);
@@ -827,8 +827,8 @@ export default function AplicativosPage() {
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2">
                                   <p className={`text-sm truncate ${isDone ? 'line-through text-muted-foreground' : ''}`}>{item.texto}</p>
-                                  {isMunin && !isDone && (
-                                    <Badge className="text-[10px] shrink-0 bg-blue-500/20 text-blue-400 border border-blue-500/30">MUNIN</Badge>
+                                  {isMooni && !isDone && (
+                                    <Badge className="text-[10px] shrink-0 bg-blue-500/20 text-blue-400 border border-blue-500/30">MOONI</Badge>
                                   )}
                                   {isPriority && !isDone && (
                                     <Badge variant="destructive" className="text-[10px] shrink-0">PRIORIDADE</Badge>
@@ -840,20 +840,20 @@ export default function AplicativosPage() {
                                 {item.feito && item.feito_em && (
                                   <p className="text-[10px] text-green-500/70 mt-0.5">Concluído em {format(new Date(item.feito_em), "dd/MM/yy 'às' HH:mm")}</p>
                                 )}
-                                {isMunin && !isDone && (
+                                {isMooni && !isDone && (
                                   <Button
                                     size="sm"
                                     className="mt-2 bg-blue-600 hover:bg-blue-700 text-white text-xs h-7"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      setMuninItemId(item.id);
-                                      setMuninClientName(cliente.nome);
-                                      setMuninClientEmpresa(cliente.empresa);
-                                      setMuninText('');
-                                      setMuninDialogOpen(true);
+                                      setMooniItemId(item.id);
+                                      setMooniClientName(cliente.nome);
+                                      setMooniClientEmpresa(cliente.empresa);
+                                      setMooniText('');
+                                      setMooniDialogOpen(true);
                                     }}
                                   >
-                                    <FileText className="h-3 w-3 mr-1" /> Criar Munin
+                                    <FileText className="h-3 w-3 mr-1" /> Criar Mooni
                                   </Button>
                                 )}
                               </div>
@@ -893,28 +893,28 @@ export default function AplicativosPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Munin Dialog */}
-      <Dialog open={muninDialogOpen} onOpenChange={setMuninDialogOpen}>
+      {/* Mooni Dialog */}
+      <Dialog open={mooniDialogOpen} onOpenChange={setMooniDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Criar Munin — {muninClientName}</DialogTitle>
+            <DialogTitle>Criar Mooni — {mooniClientName}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label className="text-sm font-medium">Informações do Munin</Label>
+              <Label className="text-sm font-medium">Informações do Mooni</Label>
               <Textarea
                 className="mt-2 min-h-[200px]"
-                placeholder="Insira aqui todas as informações do Munin necessárias para o designer: paleta de cores, estilo visual, referências, especificações técnicas, links relevantes..."
-                value={muninText}
-                onChange={(e) => setMuninText(e.target.value)}
+                placeholder="Insira aqui todas as informações do Mooni necessárias para o designer: paleta de cores, estilo visual, referências, especificações técnicas, links relevantes..."
+                value={mooniText}
+                onChange={(e) => setMooniText(e.target.value)}
               />
             </div>
             <Button
               className="w-full"
-              disabled={!muninText.trim() || muninSaving}
-              onClick={handleMuninSave}
+              disabled={!mooniText.trim() || mooniSaving}
+              onClick={handleMooniSave}
             >
-              {muninSaving ? <Clock className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
+              {mooniSaving ? <Clock className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
               Salvar e concluir
             </Button>
           </div>

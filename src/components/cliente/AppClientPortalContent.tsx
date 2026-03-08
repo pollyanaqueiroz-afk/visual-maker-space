@@ -415,17 +415,17 @@ export default function AppClientPortalContent({ clienteId }: Props) {
         if (imgErr) throw imgErr;
       }
 
-      // Create "Criar Munin" internal task
+      // Create "Criar Mooni" internal task
       await supabase.from('app_checklist_items').insert({
         cliente_id: clienteId,
         fase_numero: 0,
-        texto: 'Criar Munin',
-        descricao: `Criar o Munin com as informações necessárias para o designer produzir os assets do app de ${cliente!.nome} (${cliente!.empresa}). Após concluir, as informações serão enviadas automaticamente para os designers alocados.`,
+        texto: 'Criar Mooni',
+        descricao: `Criar o Mooni com as informações necessárias para o designer produzir os assets do app de ${cliente!.nome} (${cliente!.empresa}). Após concluir, as informações serão enviadas automaticamente para os designers alocados.`,
         ator: 'analista',
         obrigatorio: true,
         feito: false,
         ordem: 0,
-        tipo: 'munin',
+        tipo: 'mooni',
       });
     },
     onSuccess: () => {

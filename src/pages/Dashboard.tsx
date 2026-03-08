@@ -113,6 +113,8 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
+  const [mooniBlockDialogOpen, setMooniBlockDialogOpen] = useState(false);
+  const [mooniBlockClientName, setMooniBlockClientName] = useState('');
   const topScrollRef = useRef<HTMLDivElement>(null);
   const tableScrollRef = useRef<HTMLDivElement>(null);
   const topScrollInnerRef = useRef<HTMLDivElement>(null);
@@ -795,18 +797,17 @@ export default function Dashboard() {
                                 </SelectContent>
                               </Select>
                               {img.image_type === 'app_mockup' && !img.extra_info ? (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <span>
-                                      <Button variant="outline" size="icon" className="h-8 w-8 opacity-50" disabled>
-                                        <Send className="h-4 w-4" />
-                                      </Button>
-                                    </span>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Aguardando criação do Munin</p>
-                                  </TooltipContent>
-                                </Tooltip>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8 border-amber-500/50 text-amber-500 hover:bg-amber-500/10"
+                                  onClick={() => {
+                                    setMooniBlockClientName(img.requester_name || img.platform_url);
+                                    setMooniBlockDialogOpen(true);
+                                  }}
+                                >
+                                  <Send className="h-4 w-4" />
+                                </Button>
                               ) : (
                                 <AssignBriefingDialog
                                   imageId={img.id}
@@ -1007,6 +1008,43 @@ export default function Dashboard() {
             <GlobalAnalytics />
           </TabsContent>
         </Tabs>
+
+        {/* Mooni Block Dialog */}
+        <Dialog open={mooniBlockDialogOpen} onOpenChange={setMooniBlockDialogOpen}>
+          <DialogContent className="max-w-md">
+            <div className="flex flex-col items-center text-center space-y-4 pt-2">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/10">
+                <AlertTriangle className="h-8 w-8 text-amber-500" />
+              </div>
+              <DialogHeader>
+                <DialogTitle className="text-lg">Não é possível alocar designer</DialogTitle>
+              </DialogHeader>
+              <p className="text-sm text-muted-foreground">
+                A tarefa <span className="font-semibold text-foreground">Criar Mooni</span> ainda não foi concluída para o cliente <span className="font-semibold text-foreground">{mooniBlockClientName}</span>.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                O Mooni contém informações essenciais (paleta de cores, estilo visual, referências) que o designer precisa para produzir os assets do aplicativo.
+              </p>
+              <div className="w-full rounded-lg bg-muted/50 p-4 text-left space-y-2">
+                <p className="text-xs font-semibold text-foreground">O que fazer:</p>
+                <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+                  <li>Acesse <span className="font-medium text-foreground">Gestão de Aplicativos</span> → aba <span className="font-medium text-foreground">Pendências</span></li>
+                  <li>Encontre o cliente e clique em <span className="font-medium text-foreground">Criar Mooni</span></li>
+                  <li>Preencha as informações e salve</li>
+                  <li>Volte aqui e aloque o designer normalmente</li>
+                </ol>
+              </div>
+              <div className="flex gap-3 w-full pt-2">
+                <Button variant="outline" className="flex-1" onClick={() => setMooniBlockDialogOpen(false)}>
+                  Entendi
+                </Button>
+                <Button className="flex-1" asChild>
+                  <a href="/hub/aplicativos">Ir para Aplicativos</a>
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
   );
 }
