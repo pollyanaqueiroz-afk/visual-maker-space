@@ -1248,26 +1248,27 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                     <div className="relative">
                       {status === 'em_andamento' && (
                         <>
-                          <div className="absolute -inset-2 rounded-full bg-primary/15 animate-ping" style={{ animationDuration: '3s' }} />
-                          <div className="absolute -inset-1 rounded-full bg-primary/10 animate-pulse" />
+                          <div className="absolute -inset-2 rounded-full bg-blue-500/20 animate-ping" style={{ animationDuration: '3s' }} />
+                          <div className="absolute -inset-1 rounded-full bg-blue-500/10 animate-pulse" />
                         </>
                       )}
                       <div className={`relative w-14 h-14 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                         status === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50 text-green-400' :
-                        status === 'em_andamento' ? 'bg-gradient-to-br from-primary to-blue-600 shadow-xl shadow-primary/40 ring-2 ring-primary/50 text-white' :
+                        status === 'em_andamento' ? 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-xl shadow-blue-500/40 ring-2 ring-blue-500/50 text-white' :
                         status === 'atrasada' ? 'bg-red-500/30 ring-2 ring-red-500/50 text-red-400' :
                         'bg-white/10 text-white/50'
-                      } ${isSelected ? 'ring-2 ring-primary/50' : ''}`}>
+                      } ${isSelected ? 'ring-2 ring-blue-500/50' : ''}`}>
                         {status === 'concluida' ? <CheckCircle2 className="h-6 w-6" /> :
                          status === 'atrasada' ? <AlertTriangle className="h-6 w-6" /> :
-                         status === 'em_andamento' ? <Star className="h-6 w-6 text-white" /> :
+                         status === 'em_andamento' ? <Loader2 className="h-6 w-6 text-white animate-spin" /> :
                          <Lock className="h-5 w-5" />}
                       </div>
                     </div>
                        <p className={`text-xs mt-2 text-center leading-tight max-w-[90px] font-medium ${
-                          status === 'concluida' ? 'text-green-400' :
-                          status === 'em_andamento' ? 'text-primary font-bold' :
-                          'text-white/80'
+                          status === 'concluida' ? 'text-green-400 font-semibold' :
+                          status === 'em_andamento' ? 'text-blue-400 font-semibold' :
+                          status === 'atrasada' ? 'text-red-400 font-semibold' :
+                          'text-white/35'
                         }`}>{num}. {FASE_NAMES[num]}</p>
                   </button>
                 </div>
