@@ -716,7 +716,7 @@ export default function Dashboard() {
                                       <ChangeDesignerForm
                                         imageId={img.id}
                                         currentEmail={img.assigned_email}
-                                        onChanged={fetchData}
+                                        onChanged={refreshAll}
                                       />
                                     </PopoverContent>
                                   </Popover>
