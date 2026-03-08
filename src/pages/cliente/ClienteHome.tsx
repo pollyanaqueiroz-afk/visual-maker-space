@@ -31,7 +31,7 @@ export default function ClienteHome() {
     },
   });
 
-  // Fetch app client data
+  // Fetch app client data (include cancelled, get latest)
   const { data: appCliente, isLoading: loadingApp } = useQuery({
     queryKey: ['cliente-app', clientEmail],
     enabled: !!clientEmail,
@@ -40,6 +40,8 @@ export default function ClienteHome() {
         .from('app_clientes')
         .select('*')
         .eq('email', clientEmail)
+        .order('data_criacao', { ascending: false })
+        .limit(1)
         .maybeSingle();
       if (error) throw error;
       return data;
