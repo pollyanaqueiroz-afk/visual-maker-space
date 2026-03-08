@@ -1389,7 +1389,10 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                       return null;
                     };
                     const filledValue = item.feito ? getFilledValue(item.texto) : null;
+                    const hasData = filledValue || item.dados_preenchidos;
                     const isExpanded = expandedTimelineItem === item.id;
+                    const canEditTimeline = cliente.fase_atual === item.fase_numero;
+                    const isEditingTimeline = editingItemId === `timeline-${item.id}`;
 
                     return (
                       <div key={item.id}>
@@ -1398,18 +1401,29 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                           onClick={() => {
                             if (item.id === 'mockup-virtual' && !item.feito) {
                               setShowMockupModal(true);
-                            } else if (item.feito && filledValue) {
+                            } else if (item.feito) {
                               setExpandedTimelineItem(isExpanded ? null : item.id);
+                              if (isExpanded) {
+                                setEditingItemId(null);
+                              }
                             }
                           }}
-                          disabled={item.id !== 'mockup-virtual' && (!item.feito || !filledValue)}
+                          disabled={item.id !== 'mockup-virtual' && !item.feito}
                         >
                           {(item.feito || fase?.status === 'concluida') ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" /> : <Circle className="h-3.5 w-3.5 text-white/30 shrink-0" />}
                           <span className={`text-left flex-1 ${(item.feito || fase?.status === 'concluida') ? 'text-white/40 line-through' : 'text-white/70'}`}>{item.texto}</span>
+                          {item.feito && <Eye className="h-3 w-3 text-white/30 shrink-0" />}
                           {!(item.feito || fase?.status === 'concluida') && <Badge variant="outline" className="text-[9px] px-1 py-0 border-white/10 text-white/30 ml-auto shrink-0">{item.ator}</Badge>}
                         </button>
                         {item.feito && item.feito_em && (
-                          <p className="text-[10px] text-green-400/60 ml-5 mt-0.5">✅ Concluído em {format(new Date(item.feito_em), "dd/MM/yyyy 'às' HH:mm")}</p>
+                          <p className="text-[10px] text-green-400/60 ml-5 mt-0.5">
+                            ✅ Concluído em {format(new Date(item.feito_em), "dd/MM/yyyy 'às' HH:mm")}
+                            {item.updated_at && new Date(item.updated_at).getTime() - new Date(item.feito_em).getTime() > 60000 && (
+                              <span className="text-white/30 ml-1">
+                                · Editado em {format(new Date(item.updated_at), "dd/MM/yyyy 'às' HH:mm")}
+                              </span>
+                            )}
+                          </p>
                         )}
                         {!item.feito && fase?.status === 'concluida' && fase?.data_conclusao && (
                           <p className="text-[10px] text-green-400/60 ml-5 mt-0.5">✅ Concluído em {format(new Date(fase.data_conclusao), "dd/MM/yyyy 'às' HH:mm")}</p>
@@ -1418,16 +1432,93 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                           <p className="text-[10px] text-amber-400/60 ml-5 mt-0.5">⏳ O analista tem até 1 dia útil após o envio para verificar</p>
                         )}
                         <AnimatePresence>
-                          {isExpanded && filledValue && (
+                          {isExpanded && item.feito && (
                             <motion.div
                               initial={{ height: 0, opacity: 0 }}
                               animate={{ height: 'auto', opacity: 1 }}
                               exit={{ height: 0, opacity: 0 }}
                               className="overflow-hidden ml-5"
                             >
-                              <div className="rounded bg-white/5 border border-white/10 px-3 py-2 my-1 text-xs text-white/60">
-                                <span className="text-white/40 text-[10px]">Preenchido:</span>
-                                <p className="text-white/80 font-medium mt-0.5">{filledValue}</p>
+                              <div className="rounded bg-white/5 border border-white/10 px-3 py-2 my-1 text-xs space-y-2">
+                                {/* Show filled prereq value */}
+                                {filledValue && (
+                                  <div>
+                                    <span className="text-white/40 text-[10px]">Preenchido:</span>
+                                    <p className="text-white/80 font-medium mt-0.5">{filledValue}</p>
+                                  </div>
+                                )}
+                                
+                                {/* Show dados_preenchidos */}
+                                {isEditingTimeline ? (
+                                  <div className="space-y-2">
+                                    <Textarea
+                                      placeholder="Adicione informações ou observações..."
+                                      className="bg-white/5 border-white/10 text-white text-sm min-h-[60px]"
+                                      value={itemDataInput}
+                                      onChange={e => setItemDataInput(e.target.value)}
+                                    />
+                                    <div className="flex gap-2">
+                                      <Button
+                                        size="sm"
+                                        className="flex-1 h-7 text-xs"
+                                        disabled={saveItemData.isPending}
+                                        onClick={() => saveItemData.mutate({
+                                          itemId: item.id,
+                                          dados: itemDataInput,
+                                          dadosAnteriores: item.dados_preenchidos,
+                                        })}
+                                      >
+                                        {saveItemData.isPending ? 'Salvando...' : 'Salvar'}
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 text-xs text-white/60"
+                                        onClick={() => setEditingItemId(null)}
+                                      >
+                                        Cancelar
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <>
+                                    {item.dados_preenchidos && (
+                                      <div>
+                                        <span className="text-white/40 text-[10px]">Observações:</span>
+                                        <p className="text-white/80 mt-0.5 whitespace-pre-wrap">{item.dados_preenchidos}</p>
+                                      </div>
+                                    )}
+                                    
+                                    {!filledValue && !item.dados_preenchidos && (
+                                      <p className="text-white/40 italic text-[10px]">Nenhum dado adicional registrado.</p>
+                                    )}
+                                  </>
+                                )}
+                                
+                                {/* Edit/readonly indicator */}
+                                {!isEditingTimeline && (
+                                  <div className="flex items-center justify-between pt-1 border-t border-white/5">
+                                    {canEditTimeline ? (
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-6 text-[10px] text-white/50 hover:text-white px-2"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setEditingItemId(`timeline-${item.id}`);
+                                          setItemDataInput(item.dados_preenchidos || '');
+                                        }}
+                                      >
+                                        ✏️ Editar dados
+                                      </Button>
+                                    ) : (
+                                      <p className="text-[10px] text-amber-400/70 flex items-center gap-1">
+                                        <Lock className="h-3 w-3" />
+                                        Fase anterior — somente visualização
+                                      </p>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             </motion.div>
                           )}
