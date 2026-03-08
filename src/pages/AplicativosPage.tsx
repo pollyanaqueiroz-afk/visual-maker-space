@@ -129,6 +129,7 @@ export default function AplicativosPage() {
   const [pubUrlInputs, setPubUrlInputs] = useState<Record<string, string>>({});
   const [pubUrlExpanded, setPubUrlExpanded] = useState<Record<string, boolean>>({});
   const [pubUrlSaving, setPubUrlSaving] = useState<Set<string>>(new Set());
+  const [filterResponsavelTask, setFilterResponsavelTask] = useState('all');
 
   // Drag and drop states
   const [dragOverColumn, setDragOverColumn] = useState<number | null>(null);
