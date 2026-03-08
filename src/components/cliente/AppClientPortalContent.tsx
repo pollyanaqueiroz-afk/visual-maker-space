@@ -1102,15 +1102,17 @@ export default function AppClientPortalContent({ clienteId }: Props) {
 
     return (
       <div className="flex items-center gap-0">
-        <span className="text-[10px] font-semibold shrink-0 mr-2">{emoji}</span>
+        <span className="text-xs font-bold shrink-0 mr-2">
+          {emoji} <span className={plataforma === 'google' ? 'text-blue-400' : 'text-purple-400'}>{plataforma === 'google' ? 'Google Play' : 'Apple'}</span>
+        </span>
         <div className="relative flex items-center flex-1 min-w-0">
           {/* Connecting line */}
-          <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-0.5 bg-white/10" />
+          <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-1 bg-white/15 rounded-full" />
           {/* Progress line */}
           {(() => {
             const completedCount = trackFases.filter(({ fase }) => fase?.status === 'concluida').length;
             const progressWidth = trackFases.length > 1 ? `${(completedCount / (trackFases.length - 1)) * 100}%` : '0%';
-            return <div className="absolute top-1/2 -translate-y-1/2 left-0 h-0.5 bg-green-500 transition-all duration-500" style={{ width: progressWidth }} />;
+            return <div className="absolute top-1/2 -translate-y-1/2 left-0 h-1 bg-green-500 rounded-full transition-all duration-500" style={{ width: progressWidth }} />;
           })()}
           <div className="relative flex justify-between w-full">
             {trackFases.map(({ num, fase }) => {
@@ -1122,18 +1124,22 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                   onClick={() => setSelectedTimelineFase(isSelected ? null : { fase: num, plataforma })}
                   className={`relative z-10 flex flex-col items-center cursor-pointer hover:scale-105 transition-all ${status === 'bloqueada' ? 'opacity-60' : ''} ${isSelected ? 'scale-110' : ''}`}
                 >
-                  <div className={`w-8 h-8 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-[10px] font-bold border-2 transition-all ${
-                    status === 'concluida' ? 'bg-green-500/20 border-green-500 text-green-400' :
-                    status === 'em_andamento' ? 'bg-[#1E293B] border-primary text-primary ring-2 ring-primary/40' :
-                    status === 'atrasada' ? 'bg-red-500/10 border-red-500 text-red-400' :
-                    'bg-white/5 border-white/10 text-white/20'
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
+                    status === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50 text-green-400' :
+                    status === 'em_andamento' ? 'bg-primary/30 ring-2 ring-primary text-primary animate-pulse' :
+                    status === 'atrasada' ? 'bg-red-500/30 ring-2 ring-red-500/50 text-red-400' :
+                    'bg-white/10 text-white/30'
                   } ${isSelected ? 'ring-2 ring-primary/50' : ''}`}>
-                    {status === 'concluida' ? <CheckCircle2 className="h-3.5 w-3.5" /> :
-                     status === 'atrasada' ? <AlertTriangle className="h-3.5 w-3.5" /> :
-                     status === 'em_andamento' ? <Star className="h-3.5 w-3.5" /> :
-                     <Lock className="h-3 w-3" />}
+                    {status === 'concluida' ? <CheckCircle2 className="h-4 w-4" /> :
+                     status === 'atrasada' ? <AlertTriangle className="h-4 w-4" /> :
+                     status === 'em_andamento' ? <Star className="h-4 w-4" /> :
+                     <Lock className="h-3.5 w-3.5" />}
                   </div>
-                  <p className="text-[8px] mt-1 text-center leading-tight max-w-[55px] text-white/40">{FASE_NAMES[num]}</p>
+                  <p className={`text-[9px] mt-1 text-center leading-tight max-w-[60px] ${
+                    status === 'concluida' ? 'text-green-400/80' :
+                    status === 'em_andamento' ? 'text-primary font-semibold' :
+                    'text-white/30'
+                  }`}>{FASE_NAMES[num]}</p>
                 </button>
               );
             })}
@@ -1267,33 +1273,41 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 <button onClick={() => setSelectedTimelineFase(
                   selectedTimelineFase?.fase === 0 && !selectedTimelineFase?.plataforma ? null : { fase: 0 }
                 )}>
-                  <div className={`relative flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors ${
+                  <div className={`relative flex items-center justify-center w-12 h-12 rounded-full transition-colors ${
                     (() => {
                       const f0 = fases.find((f: any) => f.numero === 0);
                       const s = f0?.status || 'bloqueada';
-                      return s === 'concluida' ? 'bg-green-500/20 border-green-500' :
-                        s === 'em_andamento' ? 'bg-[#1E293B] border-primary' :
-                        s === 'atrasada' ? 'bg-red-500/10 border-red-500' :
-                        'bg-white/5 border-white/10';
+                      return s === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50' :
+                        s === 'em_andamento' ? 'bg-primary/30 ring-2 ring-primary' :
+                        s === 'atrasada' ? 'bg-red-500/30 ring-2 ring-red-500/50' :
+                        'bg-white/10';
                     })()
                   } ${selectedTimelineFase?.fase === 0 && !selectedTimelineFase?.plataforma ? 'ring-2 ring-primary/50' : ''}`}>
                     {(() => {
                       const f0 = fases.find((f: any) => f.numero === 0);
                       const s = f0?.status || 'bloqueada';
-                      return s === 'concluida' ? <CheckCircle2 className="h-4 w-4 text-green-400" /> :
-                        s === 'bloqueada' ? <Lock className="h-3.5 w-3.5 text-white/20" /> :
-                        s === 'atrasada' ? <AlertTriangle className="h-3.5 w-3.5 text-red-400" /> :
-                        <span className="text-xs font-bold text-primary">0</span>;
+                      return s === 'concluida' ? <CheckCircle2 className="h-5 w-5 text-green-400" /> :
+                        s === 'bloqueada' ? <Lock className="h-4 w-4 text-white/30" /> :
+                        s === 'atrasada' ? <AlertTriangle className="h-4 w-4 text-red-400" /> :
+                        <span className="text-sm font-bold text-primary">0</span>;
                     })()}
                   </div>
                 </button>
-                <p className="text-[8px] mt-1 text-center leading-tight text-white/40 max-w-[55px]">Pré-<br/>Requisitos</p>
+                <p className={`text-[9px] mt-1 text-center leading-tight max-w-[60px] ${
+                  (() => {
+                    const f0 = fases.find((f: any) => f.numero === 0);
+                    const s = f0?.status || 'bloqueada';
+                    return s === 'concluida' ? 'text-green-400/80' :
+                      s === 'em_andamento' ? 'text-primary font-semibold' :
+                      'text-white/30';
+                  })()
+                }`}>Pré-<br/>Requisitos</p>
               </div>
 
               {/* Bifurcation connector */}
               <div className="flex flex-col items-start shrink-0 self-center">
-                <div className="w-6 border-b-2 border-l-2 border-white/10 h-5 rounded-bl-lg" />
-                <div className="w-6 border-t-2 border-l-2 border-white/10 h-5 rounded-tl-lg" />
+                <div className="w-6 border-b-2 border-l-2 border-white/20 h-5 rounded-bl-lg" />
+                <div className="w-6 border-t-2 border-l-2 border-white/20 h-5 rounded-tl-lg" />
               </div>
 
               {/* Two tracks stacked */}
