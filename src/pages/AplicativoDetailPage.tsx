@@ -349,7 +349,86 @@ export default function AplicativoDetailPage() {
     if (fase.status === 'concluida') return <CheckCircle2 className="h-5 w-5 text-green-500" />;
     if (fase.status === 'em_andamento') return <Circle className="h-5 w-5 text-primary fill-primary/20" />;
     if (fase.status === 'atrasada') return <AlertTriangle className="h-5 w-5 text-destructive" />;
+    if (fase.status === 'cancelada') return <XCircle className="h-5 w-5 text-destructive/40" />;
     return <Lock className="h-5 w-5 text-muted-foreground/40" />;
+  };
+
+  const handleCancelFluxo = async () => {
+    if (!cliente || !cancelMotivo.trim()) return;
+    setCancelling(true);
+    try {
+      await supabase.from('app_clientes').update({
+        status: 'cancelado',
+        cancelado_em: new Date().toISOString(),
+        cancelado_por: user?.email || 'equipe',
+        motivo_cancelamento: cancelMotivo.trim(),
+      } as any).eq('id', cliente.id);
+
+      await supabase.from('app_fases').update({ status: 'cancelada' })
+        .eq('cliente_id', cliente.id)
+        .in('status', ['em_andamento', 'bloqueada']);
+
+      await supabase.from('app_conversas').insert({
+        cliente_id: cliente.id,
+        fase_numero: cliente.fase_atual || 0,
+        autor: user?.email || 'Sistema',
+        tipo: 'sistema',
+        mensagem: `❌ Fluxo cancelado por ${user?.email}. Motivo: ${cancelMotivo.trim()}`,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['app-clientes'] });
+      queryClient.invalidateQueries({ queryKey: ['app-cliente', clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['app-fases', clienteId] });
+      toast.success(`Fluxo de ${cliente.nome} cancelado`);
+      setCancelDialogOpen(false);
+      setCancelMotivo('');
+    } catch (err: any) {
+      toast.error('Erro: ' + err.message);
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const handleReactivate = async () => {
+    if (!confirm('Reativar o fluxo de aplicativo deste cliente?')) return;
+
+    await supabase.from('app_clientes').update({
+      status: 'em_andamento',
+      cancelado_em: null,
+      cancelado_por: null,
+      motivo_cancelamento: null,
+    } as any).eq('id', cliente.id);
+
+    await supabase.from('app_fases').update({ status: 'bloqueada' })
+      .eq('cliente_id', cliente.id).eq('status', 'cancelada');
+
+    const { data: ultimaConcluida } = await supabase
+      .from('app_fases')
+      .select('numero')
+      .eq('cliente_id', cliente.id)
+      .eq('status', 'concluida')
+      .order('numero', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const proximaFase = (ultimaConcluida?.numero ?? -1) + 1;
+    await supabase.from('app_fases').update({
+      status: 'em_andamento',
+      data_inicio: new Date().toISOString(),
+    }).eq('cliente_id', cliente.id).eq('numero', proximaFase);
+
+    await supabase.from('app_conversas').insert({
+      cliente_id: cliente.id,
+      fase_numero: proximaFase,
+      autor: user?.email || 'Sistema',
+      tipo: 'sistema',
+      mensagem: `✅ Fluxo reativado por ${user?.email}`,
+    });
+
+    queryClient.invalidateQueries({ queryKey: ['app-clientes'] });
+    queryClient.invalidateQueries({ queryKey: ['app-cliente', clienteId] });
+    queryClient.invalidateQueries({ queryKey: ['app-fases', clienteId] });
+    toast.success('Fluxo reativado!');
   };
 
   return (
