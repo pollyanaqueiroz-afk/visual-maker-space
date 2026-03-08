@@ -232,7 +232,13 @@ export default function AplicativosPage() {
       g.items = g.items.filter((item: any) => item.fase_numero >= g.cliente!.fase_atual);
       return g.items.length > 0;
     })
-      .sort((a, b) => (b.items.length - a.items.length));
+      .sort((a, b) => {
+        const aPriority = a.items.some((i: any) => i.texto?.startsWith('⚠️ PRIORIDADE'));
+        const bPriority = b.items.some((i: any) => i.texto?.startsWith('⚠️ PRIORIDADE'));
+        if (aPriority && !bPriority) return -1;
+        if (!aPriority && bPriority) return 1;
+        return b.items.length - a.items.length;
+      });
   }, [allChecklist, clientes]);
 
   // Filtered pendencies
