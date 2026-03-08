@@ -508,7 +508,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
               <p className="text-muted-foreground text-sm text-center py-4">Nenhuma arte em produção</p>
             ) : (
               productionImages.map((img) => {
-                const typeLabel = IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type;
+                const typeLabel = `${IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type}${(img as any).observations ? ' — ' + (img as any).observations : ''}`;
                 const isLate = img.deadline && new Date(img.deadline) < new Date();
                 return (
                   <div
