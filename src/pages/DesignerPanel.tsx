@@ -202,6 +202,84 @@ export default function DesignerPanel() {
                                   )}
                                 </TableCell>
                                 <TableCell>{getStatusBadge(img)}</TableCell>
+                                <TableCell>
+                                  <Dialog>
+                                    <DialogTrigger asChild>
+                                      <Button variant="ghost" size="sm" className="gap-1 h-7 text-xs">
+                                        <Eye className="h-3 w-3" /> Ver
+                                      </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-md">
+                                      <DialogHeader>
+                                        <DialogTitle className="flex items-center gap-2">
+                                          <FileImage className="h-5 w-5" />
+                                          {IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type}
+                                          {img.product_name && ` — ${img.product_name}`}
+                                        </DialogTitle>
+                                      </DialogHeader>
+                                      <div className="space-y-3">
+                                        <div className="grid grid-cols-2 gap-3">
+                                          <div>
+                                            <p className="text-xs text-muted-foreground">Cliente</p>
+                                            <p className="text-sm font-medium">{img.briefing_requests.requester_name}</p>
+                                          </div>
+                                          <div>
+                                            <p className="text-xs text-muted-foreground">Prazo</p>
+                                            <p className="text-sm font-medium">{img.deadline ? new Date(img.deadline).toLocaleDateString('pt-BR') : 'Não definido'}</p>
+                                          </div>
+                                        </div>
+                                        <Separator />
+                                        {img.image_text && (
+                                          <div>
+                                            <p className="text-xs font-semibold text-muted-foreground mb-1">Texto da imagem</p>
+                                            <p className="text-sm">{img.image_text}</p>
+                                          </div>
+                                        )}
+                                        {img.font_suggestion && (
+                                          <div>
+                                            <p className="text-xs font-semibold text-muted-foreground mb-1">Sugestão de fonte</p>
+                                            <p className="text-sm">{img.font_suggestion}</p>
+                                          </div>
+                                        )}
+                                        {img.element_suggestion && (
+                                          <div>
+                                            <p className="text-xs font-semibold text-muted-foreground mb-1">Elemento sugerido</p>
+                                            <p className="text-sm">{img.element_suggestion}</p>
+                                          </div>
+                                        )}
+                                        {img.professional_photo_url && (
+                                          <div>
+                                            <p className="text-xs font-semibold text-muted-foreground mb-1">Foto profissional</p>
+                                            <a href={img.professional_photo_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1">
+                                              {img.professional_photo_url} <ExternalLink className="h-3 w-3" />
+                                            </a>
+                                          </div>
+                                        )}
+                                        {img.orientation && (
+                                          <div>
+                                            <p className="text-xs font-semibold text-muted-foreground mb-1">Orientação</p>
+                                            <p className="text-sm">{img.orientation}</p>
+                                          </div>
+                                        )}
+                                        {img.observations && (
+                                          <div>
+                                            <p className="text-xs font-semibold text-muted-foreground mb-1">Observações</p>
+                                            <p className="text-sm">{img.observations}</p>
+                                          </div>
+                                        )}
+                                        {img.extra_info && (
+                                          <div>
+                                            <p className="text-xs font-semibold text-muted-foreground mb-1">📋 Informações do Mooni</p>
+                                            <p className="text-sm whitespace-pre-wrap">{img.extra_info}</p>
+                                          </div>
+                                        )}
+                                        {!img.image_text && !img.font_suggestion && !img.element_suggestion && !img.observations && !img.extra_info && (
+                                          <p className="text-sm text-muted-foreground text-center py-4">Nenhum detalhe de briefing disponível</p>
+                                        )}
+                                      </div>
+                                    </DialogContent>
+                                  </Dialog>
+                                </TableCell>
                                 <TableCell className="text-right">
                                   {img.delivery_token ? (
                                     <Button size="sm" variant="outline" asChild>
