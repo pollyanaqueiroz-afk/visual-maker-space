@@ -990,7 +990,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                       size="sm"
                       className="flex-1"
                       onClick={() => {
-                        toggleCheck.mutate({ id: item.id, feito: true, texto: item.texto });
+                        toggleCheck.mutate({ id: item.id, feito: true, texto: item.texto, fase_numero: item.fase_numero });
                         setConfirmingItemId(null);
                       }}
                     >
