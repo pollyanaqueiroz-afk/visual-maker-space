@@ -796,7 +796,7 @@ export default function Dashboard() {
                                 imageId={img.id}
                                 currentEmail={img.assigned_email}
                                 currentDeadline={img.deadline}
-                                imageLabel={`${IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type}${img.product_name ? ` — ${img.product_name}` : ''}`}
+                                imageLabel={imageLabel(img)}
                                 onAssigned={fetchData}
                               />
                               <BrandAssetsDialog platformUrl={img.platform_url} clientName={extractClientName(img.platform_url)} />
