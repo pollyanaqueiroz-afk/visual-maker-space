@@ -341,15 +341,23 @@ export default function AdminUsersPage() {
         ))}
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por nome ou email..."
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setSelectedIds(new Set()); }}
-          className="pl-9"
-        />
+      {/* Search + active filter */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative max-w-sm flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nome ou email..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setSelectedIds(new Set()); }}
+            className="pl-9"
+          />
+        </div>
+        {filterRole && (
+          <Badge variant="secondary" className="gap-1.5 text-xs cursor-pointer hover:bg-secondary/80" onClick={() => { setFilterRole(null); setSelectedIds(new Set()); }}>
+            Filtro: {getRoleConfig(filterRole).label}
+            <span className="text-muted-foreground">✕</span>
+          </Badge>
+        )}
       </div>
 
       {/* Bulk action bar */}
