@@ -231,9 +231,9 @@ export default function AplicativosPage() {
   const { data: fases = [] } = useQuery({
     queryKey: ['app-fases-all'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('app_fases').select('id, cliente_id, numero, sla_violado, sla_vencimento, porcentagem, status, plataforma');
+      const { data, error } = await supabase.from('app_fases').select('id, cliente_id, numero, sla_violado, sla_vencimento, porcentagem, status, plataforma, data_inicio, data_conclusao');
       if (error) throw error;
-      return data as (AppFase & { plataforma?: string })[];
+      return data as AppFase[];
     },
   });
 
