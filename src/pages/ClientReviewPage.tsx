@@ -395,9 +395,9 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
             <div className="absolute inset-0 bg-gradient-to-br from-muted/5 to-transparent" />
             <div className="relative">
               <div className="mx-auto w-10 h-10 rounded-xl bg-muted flex items-center justify-center mb-2">
-                <Clock className="h-5 w-5 text-muted-foreground" />
+                <Clock className={`h-5 w-5 ${textSub}`} />
               </div>
-              <p className="text-2xl font-extrabold text-foreground">{requestedCount}</p>
+              <p className={`text-2xl font-extrabold ${textMain}`}>{requestedCount}</p>
               <p className="text-[11px] text-muted-foreground font-medium">Solicitado</p>
             </div>
           </motion.div>
