@@ -30,6 +30,7 @@ import BrandAssetsDialog from '@/components/briefing/BrandAssetsDialog';
 import BulkPhotoUploadDialog from '@/components/briefing/BulkPhotoUploadDialog';
 import BulkAssignDialog from '@/components/briefing/BulkAssignDialog';
 import { usePermissions } from '@/hooks/usePermissions';
+import BriefingKanban from '@/components/briefing/BriefingKanban';
 function ChangeDesignerForm({ imageId, currentEmail, onChanged }: { imageId: string; currentEmail: string; onChanged: () => void }) {
   const [email, setEmail] = useState(currentEmail);
   const [saving, setSaving] = useState(false);
