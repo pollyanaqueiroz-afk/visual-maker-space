@@ -564,6 +564,11 @@ export default function Dashboard() {
               Solicitar Mockup
             </Button>
             <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2 justify-start text-xs h-8"
+              onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/designer`);
                 toast.success('Link do painel do designer copiado!');
               }}
             >
