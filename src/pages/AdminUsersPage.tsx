@@ -13,6 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { UserPlus, Trash2, Search, Users, ShieldCheck, Plus, Loader2, LogIn, AlertTriangle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface UserRow {
   id: string;
@@ -53,6 +54,7 @@ export default function AdminUsersPage() {
   const [bulkRoleOpen, setBulkRoleOpen] = useState(false);
   const [bulkRole, setBulkRole] = useState('');
   const [bulkSaving, setBulkSaving] = useState(false);
+  const [filterRole, setFilterRole] = useState<string | null>(null);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -244,9 +246,12 @@ export default function AdminUsersPage() {
   };
 
   const filtered = users.filter(
-    (u) =>
-      u.email?.toLowerCase().includes(search.toLowerCase()) ||
-      u.display_name?.toLowerCase().includes(search.toLowerCase())
+    (u) => {
+      const matchSearch = u.email?.toLowerCase().includes(search.toLowerCase()) ||
+        u.display_name?.toLowerCase().includes(search.toLowerCase());
+      const matchRole = !filterRole || u.roles.includes(filterRole);
+      return matchSearch && matchRole;
+    }
   );
 
   return (
@@ -287,8 +292,11 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Card>
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <Card
+          className={cn("cursor-pointer transition-all hover:shadow-md", !filterRole ? 'ring-2 ring-primary' : '')}
+          onClick={() => { setFilterRole(null); setSelectedIds(new Set()); }}
+        >
           <CardContent className="flex items-center gap-3 p-4">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
               <Users className="h-4 w-4 text-primary" />
@@ -302,8 +310,13 @@ export default function AdminUsersPage() {
         {['admin', 'cs', 'designer', 'implantacao'].map(role => {
           const cfg = getRoleConfig(role);
           const count = users.filter(u => u.roles.includes(role)).length;
+          const isActive = filterRole === role;
           return (
-            <Card key={role}>
+            <Card
+              key={role}
+              className={cn("cursor-pointer transition-all hover:shadow-md", isActive ? 'ring-2 ring-primary' : '')}
+              onClick={() => { setFilterRole(isActive ? null : role); setSelectedIds(new Set()); }}
+            >
               <CardContent className="flex items-center gap-3 p-4">
                 <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${cfg.color.split(' ')[0]}`}>
                   <ShieldCheck className={`h-4 w-4 ${cfg.color.split(' ')[1]}`} />
@@ -328,15 +341,23 @@ export default function AdminUsersPage() {
         ))}
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por nome ou email..."
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setSelectedIds(new Set()); }}
-          className="pl-9"
-        />
+      {/* Search + active filter */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative max-w-sm flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nome ou email..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setSelectedIds(new Set()); }}
+            className="pl-9"
+          />
+        </div>
+        {filterRole && (
+          <Badge variant="secondary" className="gap-1.5 text-xs cursor-pointer hover:bg-secondary/80" onClick={() => { setFilterRole(null); setSelectedIds(new Set()); }}>
+            Filtro: {getRoleConfig(filterRole).label}
+            <span className="text-muted-foreground">✕</span>
+          </Badge>
+        )}
       </div>
 
       {/* Bulk action bar */}
