@@ -365,15 +365,38 @@ export default function Dashboard() {
   // Revision stats
   const revisionRequests = reviews.filter(r => r.action === 'revision_requested');
 
-  const revisionsByEmail = revisionRequests.reduce<Record<string, number>>((acc, r) => {
-    // Find the image to get assigned_email
+  const filteredReviews = (() => {
+    if (!reviewSearch.trim()) return reviews;
+    const q = reviewSearch.toLowerCase();
+    return reviews.filter(rev => {
+      const img = images.find(i => i.id === rev.briefing_image_id);
+      if (!img) return false;
+      return (img.platform_url || '').toLowerCase().includes(q) ||
+        (img.requester_name || '').toLowerCase().includes(q) ||
+        (img.product_name || '').toLowerCase().includes(q);
+    });
+  })();
+
+  const filteredRevisionRequests = (() => {
+    if (!reviewSearch.trim()) return revisionRequests;
+    const q = reviewSearch.toLowerCase();
+    return revisionRequests.filter(rev => {
+      const img = images.find(i => i.id === rev.briefing_image_id);
+      if (!img) return false;
+      return (img.platform_url || '').toLowerCase().includes(q) ||
+        (img.requester_name || '').toLowerCase().includes(q) ||
+        (img.product_name || '').toLowerCase().includes(q);
+    });
+  })();
+
+  const revisionsByEmail = filteredRevisionRequests.reduce<Record<string, number>>((acc, r) => {
     const img = images.find(i => i.id === r.briefing_image_id);
     const email = img?.assigned_email || 'Desconhecido';
     acc[email] = (acc[email] || 0) + 1;
     return acc;
   }, {});
 
-  const revisionsByImage = revisionRequests.reduce<Record<string, { count: number; label: string; designer: string }>>((acc, r) => {
+  const revisionsByImage = filteredRevisionRequests.reduce<Record<string, { count: number; label: string; designer: string }>>((acc, r) => {
     const img = images.find(i => i.id === r.briefing_image_id);
     if (!acc[r.briefing_image_id]) {
       acc[r.briefing_image_id] = {
