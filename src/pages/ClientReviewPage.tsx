@@ -851,7 +851,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
             transition={{ duration: 0.5, type: 'spring' }}
             className="w-full max-w-md"
           >
-            <div className={`relative overflow-hidden ${cardBgSolid} border rounded-3xl shadow-2xl p-8 text-center space-y-6`}>
+             <div className={`relative overflow-hidden ${cardBgSolid} border rounded-3xl shadow-2xl p-8 text-center space-y-6`}>
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary/60 to-primary rounded-t-3xl" />
               <motion.div
                 initial={{ scale: 0 }}
@@ -868,13 +868,35 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
                   <br />Sua opinião é muito importante para nós!
                 </p>
               </div>
+
+              {/* Gamified counters */}
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { label: 'Revisadas', value: completedCount, emoji: '🎨' },
+                  { label: 'Aprovadas', value: totalApproved + completedCount, emoji: '✅' },
+                  { label: 'Total', value: totalImages, emoji: '📊' },
+                ].map((stat, i) => (
+                  <motion.div
+                    key={stat.label}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 + i * 0.1 }}
+                    className={`rounded-xl ${cardBg} p-3`}
+                  >
+                    <p className="text-2xl">{stat.emoji}</p>
+                    <p className={`text-xl font-extrabold ${textMain}`}>{stat.value}</p>
+                    <p className={`text-[10px] ${textSub}`}>{stat.label}</p>
+                  </motion.div>
+                ))}
+              </div>
+
               <div className="flex gap-3 text-4xl justify-center">
                 {['🎨', '✨', '🚀'].map((emoji, i) => (
                   <motion.span
                     key={i}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 + i * 0.15 }}
+                    transition={{ delay: 0.7 + i * 0.15 }}
                   >
                     {emoji}
                   </motion.span>
