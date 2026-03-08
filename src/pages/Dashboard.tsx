@@ -663,7 +663,7 @@ export default function Dashboard() {
                   className="pl-9"
                 />
               </div>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <Select value={filterStatus} onValueChange={(val) => { setFilterStatus(val); setActiveKPI(null); }}>
                 <SelectTrigger className="w-44">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
