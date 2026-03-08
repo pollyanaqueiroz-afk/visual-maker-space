@@ -4,6 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { Smartphone, Plus, Bell, AlertTriangle, Apple, Bot, Clock, CheckCircle, Users, TrendingUp, ClipboardList, Filter, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
+import { usePermissions } from '@/hooks/usePermissions';
+import { useAuth } from '@/hooks/useAuth';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -61,6 +64,10 @@ interface AppFase {
 export default function AplicativosPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { hasRole } = usePermissions();
+  const { user } = useAuth();
+  const canDrag = hasRole('admin') || hasRole('gerente_implantacao') || hasRole('analista_implantacao');
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('kanban');
   const [pendencyFilter, setPendencyFilter] = useState('todos');
@@ -73,6 +80,20 @@ export default function AplicativosPage() {
   const [mooniClientEmpresa, setMooniClientEmpresa] = useState('');
   const [mooniText, setMooniText] = useState('');
   const [mooniSaving, setMooniSaving] = useState(false);
+
+  // Drag and drop states
+  const [dragOverColumn, setDragOverColumn] = useState<number | null>(null);
+  const [dropConfirmOpen, setDropConfirmOpen] = useState(false);
+  const [pendingDrop, setPendingDrop] = useState<{
+    clienteId: string;
+    clienteNome: string;
+    faseAtual: number;
+    plataforma: string;
+    targetFase: number;
+  } | null>(null);
+  const [dropPlataforma, setDropPlataforma] = useState<string>('ambas');
+  const [dropping, setDropping] = useState(false);
+
   const [form, setForm] = useState({
     nome: '', url_cliente: '', email: '', whatsapp: '', plataforma: 'ambos', responsavel_nome: '',
   });
@@ -384,6 +405,54 @@ export default function AplicativosPage() {
     if (ator === 'designer') return { text: 'Designer', color: 'bg-purple-500/10 text-purple-500 border-purple-500/20' };
     return { text: ator, color: 'bg-muted text-muted-foreground border-border' };
   };
+  const handleConfirmDrop = async () => {
+    if (!pendingDrop) return;
+    setDropping(true);
+    try {
+      const { clienteId, faseAtual, plataforma } = pendingDrop;
+      const plat = plataforma === 'ambos' ? dropPlataforma : plataforma;
+
+      let query = supabase.from('app_checklist_items').update({
+        feito: true,
+        feito_em: new Date().toISOString(),
+        feito_por: user?.email || 'equipe_interna',
+      }).eq('cliente_id', clienteId).eq('fase_numero', faseAtual).eq('feito', false);
+
+      if (plat && plat !== 'ambas') {
+        query = query.or(`plataforma.eq.${plat},plataforma.eq.compartilhada`);
+      }
+
+      const { error } = await query;
+      if (error) throw error;
+
+      await supabase.from('app_conversas').insert({
+        cliente_id: clienteId,
+        fase_numero: faseAtual,
+        autor: user?.email || 'Sistema',
+        tipo: 'sistema',
+        mensagem: `Etapa "${FASE_NAMES[faseAtual]}" concluída via Kanban por ${user?.email}${plat && plat !== 'ambas' ? ` (${plat})` : ''}`,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['app-clientes'] });
+      queryClient.invalidateQueries({ queryKey: ['app-fases-all'] });
+      queryClient.invalidateQueries({ queryKey: ['app-checklist-counts'] });
+      queryClient.invalidateQueries({ queryKey: ['app-checklist-full'] });
+
+      toast.success(`✅ ${pendingDrop.clienteNome} avançou para ${FASE_NAMES[pendingDrop.targetFase]}`);
+    } catch (err: any) {
+      toast.error('Erro ao avançar: ' + err.message);
+    } finally {
+      setDropping(false);
+      setDropConfirmOpen(false);
+      setPendingDrop(null);
+      setDropPlataforma('ambas');
+    }
+  };
+
+  // Count pending tasks for a client's current phase
+  const getPendingCount = (clienteId: string, faseNum: number) => {
+    return checklistCounts.filter(i => i.cliente_id === clienteId && i.fase_numero === faseNum && !i.feito).length;
+  };
 
   return (
     <div className="space-y-6">
@@ -598,12 +667,33 @@ export default function AplicativosPage() {
             <div className="w-full overflow-x-auto pb-2">
               <div className="flex gap-3 pb-2" style={{ minWidth: `${7 * 280 + 6 * 12}px` }}>
                 {FASE_NAMES.map((name, idx) => (
-                  <div key={idx} className="w-[280px] shrink-0">
+                  <div
+                    key={idx}
+                    className="w-[280px] shrink-0"
+                    onDragOver={(e) => { e.preventDefault(); setDragOverColumn(idx); }}
+                    onDragLeave={() => setDragOverColumn(null)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setDragOverColumn(null);
+                      const clienteId = e.dataTransfer.getData('clienteId');
+                      const clienteNome = e.dataTransfer.getData('clienteNome');
+                      const faseAtual = parseInt(e.dataTransfer.getData('faseAtual'));
+                      const plataforma = e.dataTransfer.getData('plataforma');
+
+                      if (idx !== faseAtual + 1) {
+                        toast.error('Só é possível avançar para a próxima etapa');
+                        return;
+                      }
+                      setPendingDrop({ clienteId, clienteNome, faseAtual, plataforma, targetFase: idx });
+                      setDropPlataforma('ambas');
+                      setDropConfirmOpen(true);
+                    }}
+                  >
                     <div className="flex items-center justify-between mb-2 px-1">
                       <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{name}</span>
                       <Badge variant="secondary" className="text-[10px]">{columns[idx].length}</Badge>
                     </div>
-                    <div className="space-y-2 min-h-[200px] rounded-lg bg-muted/30 p-2">
+                    <div className={`space-y-2 min-h-[200px] rounded-lg p-2 transition-all ${dragOverColumn === idx ? 'ring-2 ring-dashed ring-primary bg-primary/5' : 'bg-muted/30'}`}>
                       {columns[idx].map(c => {
                         const stats = getChecklistStats(c.id, c.fase_atual);
                         const sla = getSlaInfo(c.id, c.fase_atual);
@@ -611,7 +701,15 @@ export default function AplicativosPage() {
                         return (
                           <Card
                             key={c.id}
-                            className={`p-3 cursor-pointer hover:shadow-md transition-shadow border-l-4 ${statusBorderColor(c.status)}`}
+                            draggable={canDrag}
+                            onDragStart={(e) => {
+                              e.dataTransfer.setData('clienteId', c.id);
+                              e.dataTransfer.setData('clienteNome', c.nome);
+                              e.dataTransfer.setData('faseAtual', String(c.fase_atual));
+                              e.dataTransfer.setData('plataforma', c.plataforma);
+                              e.dataTransfer.effectAllowed = 'move';
+                            }}
+                            className={`p-3 cursor-pointer hover:shadow-md transition-shadow border-l-4 ${statusBorderColor(c.status)} ${canDrag ? 'cursor-grab active:cursor-grabbing' : ''}`}
                             onClick={() => navigate(`/hub/aplicativos/${c.id}`)}
                           >
                             <div className="flex items-start justify-between mb-1.5">
@@ -920,6 +1018,57 @@ export default function AplicativosPage() {
           </div>
         </DialogContent>
       </Dialog>
+      {/* Drop confirmation dialog */}
+      <AlertDialog open={dropConfirmOpen} onOpenChange={setDropConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Concluir etapa?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  Ao mover <span className="font-semibold text-foreground">{pendingDrop?.clienteNome}</span> para
+                  "<span className="font-semibold text-foreground">{FASE_NAMES[pendingDrop?.targetFase || 0]}</span>",
+                  todas as tarefas pendentes da fase "<span className="font-semibold text-foreground">{FASE_NAMES[pendingDrop?.faseAtual || 0]}</span>"
+                  serão marcadas como concluídas.
+                </p>
+                {pendingDrop && (
+                  <p className="text-sm text-amber-500">
+                    ⚠️ {getPendingCount(pendingDrop.clienteId, pendingDrop.faseAtual)} tarefa(s) serão concluídas automaticamente
+                  </p>
+                )}
+                {pendingDrop?.plataforma === 'ambos' && (
+                  <div className="space-y-2 pt-2">
+                    <p className="text-sm font-medium text-foreground">Qual plataforma avançar?</p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant={dropPlataforma === 'google' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setDropPlataforma('google')}
+                      >🤖 Google Play</Button>
+                      <Button
+                        variant={dropPlataforma === 'apple' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setDropPlataforma('apple')}
+                      >🍎 Apple</Button>
+                      <Button
+                        variant={dropPlataforma === 'ambas' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setDropPlataforma('ambas')}
+                      >Ambas</Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={dropping}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction disabled={dropping} onClick={handleConfirmDrop}>
+              {dropping ? 'Movendo...' : 'Confirmar e avançar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
