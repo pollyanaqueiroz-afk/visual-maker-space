@@ -1029,7 +1029,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                       ) : formComplete ? (
                         <Clock className="h-5 w-5 text-amber-400 shrink-0" />
                       ) : (
-                        <Lock className="h-5 w-5 text-white/20 shrink-0" />
+                        <Lock className="h-5 w-5 text-white/40 shrink-0" />
                       )}
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
