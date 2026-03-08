@@ -880,7 +880,7 @@ export default function SchedulingPage() {
             </div>
           )}
 
-
+          <Card className="overflow-hidden border-border/60">
             <CardHeader className="pb-0 pt-4 px-4">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base flex items-center gap-2">
