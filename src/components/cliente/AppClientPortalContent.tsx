@@ -536,6 +536,33 @@ export default function AppClientPortalContent({ clienteId }: Props) {
   if (isLoading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-white/40" /></div>;
   if (!cliente) return <div className="text-center py-12 text-white/60">Dados não encontrados</div>;
 
+  if (cliente.status === 'cancelado') {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+          <AlertTriangle className="h-8 w-8 text-destructive/50" />
+        </div>
+        <div>
+          <h2 className="text-lg font-semibold text-white/80">Solicitação cancelada</h2>
+          {(cliente as any).motivo_cancelamento && (
+            <p className="text-sm text-white/50 mt-1 max-w-md">{(cliente as any).motivo_cancelamento}</p>
+          )}
+          {(cliente as any).cancelado_em && (
+            <p className="text-xs text-white/30 mt-2">
+              Cancelado em {format(new Date((cliente as any).cancelado_em), 'dd/MM/yyyy')}
+            </p>
+          )}
+        </div>
+        <p className="text-sm text-white/40">
+          Se deseja solicitar um novo aplicativo, volte à página inicial do portal.
+        </p>
+        <Button variant="outline" onClick={() => navigate('/cliente')} className="border-white/20 text-white hover:bg-white/10">
+          Voltar ao Portal
+        </Button>
+      </div>
+    );
+  }
+
   // ── Timeline circle renderer (linear layout) ──
   const renderCircle = (faseNum: number, fase: any, plataforma?: string) => {
     const status = fase?.status || 'bloqueada';
