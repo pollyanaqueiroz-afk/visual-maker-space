@@ -1007,9 +1007,9 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 <Lock className="h-4 w-4 text-white/40 shrink-0" />
                 <p className="text-xs text-white/50">Etapa futura — você será notificado quando chegar aqui.</p>
               </div>
-              {items.length > 0 && (
+              {allItems.length > 0 && (
                 <div className="space-y-2">
-                  {items.map(item => (
+                  {allItems.map(item => (
                     <div key={item.id} className="p-3 rounded-lg bg-white/5 flex items-start gap-3">
                       <Lock className="h-4 w-4 text-white/30 mt-0.5 shrink-0" />
                       <div>
