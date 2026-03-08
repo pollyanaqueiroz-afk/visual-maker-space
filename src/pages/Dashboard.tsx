@@ -240,7 +240,7 @@ export default function Dashboard() {
       toast.error('Erro ao atualizar status');
     } else {
       toast.success('Status atualizado');
-      fetchData();
+      refreshAll();
     }
   };
 
