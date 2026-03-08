@@ -1277,27 +1277,27 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                )}
             </motion.div>
             {/* Right: progress bars */}
-            <div className="shrink-0 w-full md:w-64 space-y-2">
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-white/70">Suas tarefas</span>
-                  <span className="font-bold text-white">{clientPctBar}%{clientPctBar === 100 && ' ✅'}</span>
-                </div>
-                <div className="relative h-2 rounded-full bg-white/10 overflow-hidden">
-                  <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
-                    style={{ width: `${clientPctBar}%`, background: clientPctBar === 100 ? 'linear-gradient(90deg, hsl(142 71% 45%), hsl(142 71% 55%))' : 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))' }} />
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                   <span className="text-white/60">Progresso total</span>
-                   <span className="font-medium text-white/70">{totalPctBar}%</span>
-                </div>
-                <div className="relative h-1.5 rounded-full bg-white/5 overflow-hidden">
-                  <div className="absolute inset-y-0 left-0 rounded-full bg-white/20 transition-all duration-500" style={{ width: `${totalPctBar}%` }} />
-                </div>
-                <p className="text-[10px] text-white/50 mt-0.5">Inclui etapas da equipe Curseduca</p>
-              </div>
+             <div className="shrink-0 w-full md:w-72 space-y-3">
+               <div>
+                 <div className="flex justify-between text-sm mb-1">
+                   <span className="text-white/80 font-medium">Suas tarefas</span>
+                   <span className="font-bold text-white">{clientPctBar}%{clientPctBar === 100 && ' ✅'}</span>
+                 </div>
+                 <div className="relative h-2.5 rounded-full bg-white/10 overflow-hidden">
+                   <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
+                     style={{ width: `${clientPctBar}%`, background: clientPctBar === 100 ? 'linear-gradient(90deg, hsl(142 71% 45%), hsl(142 71% 55%))' : 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))' }} />
+                 </div>
+               </div>
+               <div>
+                 <div className="flex justify-between text-sm mb-1">
+                    <span className="text-white/70 font-medium">Progresso total</span>
+                    <span className="font-medium text-white/80">{totalPctBar}%</span>
+                 </div>
+                 <div className="relative h-2 rounded-full bg-white/10 overflow-hidden">
+                   <div className="absolute inset-y-0 left-0 rounded-full bg-white/25 transition-all duration-500" style={{ width: `${totalPctBar}%` }} />
+                 </div>
+                 <p className="text-xs text-white/60 mt-1">Inclui etapas da equipe Curseduca</p>
+               </div>
             </div>
           </div>
         );
