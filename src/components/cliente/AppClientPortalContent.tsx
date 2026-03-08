@@ -580,10 +580,10 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             isActive ? 'w-14 h-14' : 'w-[44px] h-[44px]'
           } ${
             status === 'concluida' ? 'bg-green-500/20 border-2 border-green-500' :
-            isActive ? 'bg-gradient-to-br from-primary to-blue-600 shadow-xl shadow-primary/40 ring-2 ring-primary/50' :
+            isActive ? 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-xl shadow-blue-500/40 ring-2 ring-blue-500/50' :
             status === 'atrasada' ? 'bg-red-500/10 border-2 border-red-500' :
             'bg-white/5 border-2 border-white/10'
-          } ${isSelected ? 'ring-2 ring-primary/50' : ''}`}>
+          } ${isSelected ? 'ring-2 ring-blue-500/50' : ''}`}>
             {status === 'concluida' ? (
               <CheckCircle2 className="h-5 w-5 text-green-400" />
             ) : status === 'bloqueada' ? (
@@ -591,7 +591,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             ) : status === 'atrasada' ? (
               <AlertTriangle className="h-4 w-4 text-red-400" />
             ) : (
-              <Star className={`${isActive ? 'h-6 w-6' : 'h-5 w-5'} text-white`} />
+              <Loader2 className={`${isActive ? 'h-6 w-6' : 'h-5 w-5'} text-white animate-spin`} />
             )}
           </div>
         </div>
