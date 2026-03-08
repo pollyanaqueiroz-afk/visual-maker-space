@@ -856,7 +856,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
             transition={{ duration: 0.5, type: 'spring' }}
             className="w-full max-w-md"
           >
-            <div className="relative overflow-hidden bg-card border border-border rounded-3xl shadow-2xl p-8 text-center space-y-6">
+            <div className={`relative overflow-hidden ${cardBgSolid} border rounded-3xl shadow-2xl p-8 text-center space-y-6`}>
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary/60 to-primary rounded-t-3xl" />
               <motion.div
                 initial={{ scale: 0 }}
