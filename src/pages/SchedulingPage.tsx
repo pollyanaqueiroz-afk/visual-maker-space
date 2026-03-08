@@ -437,7 +437,9 @@ export default function SchedulingPage() {
         }
       }
       setDialogOpen(false);
+      setReschedulingOldData(null);
       fetchMeetings();
+      fetchRescheduleHistory();
     } catch (err: any) {
       toast.error('Erro: ' + err.message);
     } finally {
