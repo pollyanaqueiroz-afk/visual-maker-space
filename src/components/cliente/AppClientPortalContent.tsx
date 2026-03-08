@@ -924,18 +924,22 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     const fase = plataforma ? fases.find((f: any) => f.numero === faseNum && f.plataforma === plataforma) : fases.find((f: any) => f.numero === faseNum);
     if (!fase) return null;
 
-    const items = getItemsForFase(faseNum, plataforma);
+    const allItems = getAllItemsForFase(faseNum, plataforma);
+    const clientItems = getClientItemsForFase(faseNum, plataforma);
     const allFaseItems = checklist.filter((i: any) => {
       if (i.fase_numero !== faseNum) return false;
       if (plataforma && faseNum > 0 && isParallelFlow) return i.plataforma === plataforma || i.plataforma === 'compartilhada';
       return true;
     });
-    const total = allFaseItems.length;
-    const done = allFaseItems.filter((i: any) => i.feito).length;
+
+    // Progress: for phase 3, count all items; for others, count only client items
+    const progressItems = faseNum === 3 ? allItems : clientItems;
+    const total = progressItems.length;
+    const done = progressItems.filter((i: any) => i.feito).length;
     const progress = total > 0 ? Math.round((done / total) * 100) : 0;
 
     // Check if all client items done but internal still pending
-    const clientItemsDone = items.every(i => i.feito);
+    const clientItemsDone = clientItems.every(i => i.feito);
     const hasInternalPending = allFaseItems.some(i => !i.feito && i.ator !== 'cliente');
 
     // Estimation for validation phases (2, 4)
