@@ -860,7 +860,7 @@ export default function Dashboard() {
                                   currentEmail={img.assigned_email}
                                   currentDeadline={img.deadline}
                                   imageLabel={imageLabel(img)}
-                                  onAssigned={fetchData}
+                                  onAssigned={refreshAll}
                                 />
                               )}
                               <BrandAssetsDialog platformUrl={img.platform_url} clientName={extractClientName(img.platform_url)} />
