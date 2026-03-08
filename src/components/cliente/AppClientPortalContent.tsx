@@ -274,8 +274,6 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     return match ? match[0] : null;
   };
 
-  const HIDDEN_PREREQ_TEXTS = ['Ícone do App', 'Splash Screen', 'Screenshots', 'aprovou todos os assets'];
-  const isHiddenPrereq = (texto: string) => HIDDEN_PREREQ_TEXTS.some(t => texto.toLowerCase().includes(t.toLowerCase()));
 
   // ── Mutations ──
   const toggleCheck = useMutation({
