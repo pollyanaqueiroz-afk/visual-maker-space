@@ -79,6 +79,7 @@ interface KanbanCard {
 
 interface BriefingKanbanProps {
   images: ImageWithRequest[];
+  loading?: boolean;
 }
 
 export default function BriefingKanban({ images }: BriefingKanbanProps) {
