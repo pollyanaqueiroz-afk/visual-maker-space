@@ -667,12 +667,33 @@ export default function AplicativosPage() {
             <div className="w-full overflow-x-auto pb-2">
               <div className="flex gap-3 pb-2" style={{ minWidth: `${7 * 280 + 6 * 12}px` }}>
                 {FASE_NAMES.map((name, idx) => (
-                  <div key={idx} className="w-[280px] shrink-0">
+                  <div
+                    key={idx}
+                    className="w-[280px] shrink-0"
+                    onDragOver={(e) => { e.preventDefault(); setDragOverColumn(idx); }}
+                    onDragLeave={() => setDragOverColumn(null)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setDragOverColumn(null);
+                      const clienteId = e.dataTransfer.getData('clienteId');
+                      const clienteNome = e.dataTransfer.getData('clienteNome');
+                      const faseAtual = parseInt(e.dataTransfer.getData('faseAtual'));
+                      const plataforma = e.dataTransfer.getData('plataforma');
+
+                      if (idx !== faseAtual + 1) {
+                        toast.error('Só é possível avançar para a próxima etapa');
+                        return;
+                      }
+                      setPendingDrop({ clienteId, clienteNome, faseAtual, plataforma, targetFase: idx });
+                      setDropPlataforma('ambas');
+                      setDropConfirmOpen(true);
+                    }}
+                  >
                     <div className="flex items-center justify-between mb-2 px-1">
                       <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{name}</span>
                       <Badge variant="secondary" className="text-[10px]">{columns[idx].length}</Badge>
                     </div>
-                    <div className="space-y-2 min-h-[200px] rounded-lg bg-muted/30 p-2">
+                    <div className={`space-y-2 min-h-[200px] rounded-lg p-2 transition-all ${dragOverColumn === idx ? 'ring-2 ring-dashed ring-primary bg-primary/5' : 'bg-muted/30'}`}>
                       {columns[idx].map(c => {
                         const stats = getChecklistStats(c.id, c.fase_atual);
                         const sla = getSlaInfo(c.id, c.fase_atual);
@@ -680,7 +701,15 @@ export default function AplicativosPage() {
                         return (
                           <Card
                             key={c.id}
-                            className={`p-3 cursor-pointer hover:shadow-md transition-shadow border-l-4 ${statusBorderColor(c.status)}`}
+                            draggable={canDrag}
+                            onDragStart={(e) => {
+                              e.dataTransfer.setData('clienteId', c.id);
+                              e.dataTransfer.setData('clienteNome', c.nome);
+                              e.dataTransfer.setData('faseAtual', String(c.fase_atual));
+                              e.dataTransfer.setData('plataforma', c.plataforma);
+                              e.dataTransfer.effectAllowed = 'move';
+                            }}
+                            className={`p-3 cursor-pointer hover:shadow-md transition-shadow border-l-4 ${statusBorderColor(c.status)} ${canDrag ? 'cursor-grab active:cursor-grabbing' : ''}`}
                             onClick={() => navigate(`/hub/aplicativos/${c.id}`)}
                           >
                             <div className="flex items-start justify-between mb-1.5">
