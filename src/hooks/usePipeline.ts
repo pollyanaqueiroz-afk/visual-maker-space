@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
 const BASE_URL = 'https://us-central1-curseduca-inc-ia.cloudfunctions.net/hub-pipeline';
-const AUTH_HEADER = import.meta.env.VITE_HUB_API_AUTH || '';
+const AUTH_HEADER = import.meta.env.VITE_HUB_API_AUTH || 'Basic Y3Vyc2VkdWNhOnZpc2FvMzYwQGN1cnNlZHVjYTIwMjYh';
 
 async function pipelineFetch<T>(params: string): Promise<T> {
   const res = await fetch(`${BASE_URL}?${params}`, { headers: { Authorization: AUTH_HEADER } });
