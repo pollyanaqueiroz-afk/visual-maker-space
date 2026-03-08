@@ -1450,7 +1450,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
               </div>
 
               {/* Two tracks stacked — collapsible */}
-              <div className="min-w-0">
+              <div className="flex-1 min-w-0">
                 <AnimatePresence>
                   {flowExpanded && (
                     <motion.div
