@@ -124,6 +124,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
   const [emailCorpPromptId, setEmailCorpPromptId] = useState<string | null>(null);
   const [siteInput, setSiteInput] = useState('');
   const [sitePromptId, setSitePromptId] = useState<string | null>(null);
+  const [siteOption, setSiteOption] = useState<'proprio' | 'curseduca' | null>(null);
   const [confirmingItemId, setConfirmingItemId] = useState<string | null>(null);
   const [viewingItemId, setViewingItemId] = useState<string | null>(null);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
