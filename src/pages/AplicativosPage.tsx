@@ -277,8 +277,8 @@ export default function AplicativosPage() {
       return { clienteId, cliente, items };
     }).filter(g => {
       if (!g.cliente) return false;
-      // Filter out items from phases the client has already passed (backfilled items), but keep Munin tasks
-      g.items = g.items.filter((item: any) => item.fase_numero >= g.cliente!.fase_atual || item.tipo === 'munin' || item.texto === 'Criar Munin');
+      // Filter out items from phases the client has already passed (backfilled items), but keep Mooni tasks
+      g.items = g.items.filter((item: any) => item.fase_numero >= g.cliente!.fase_atual || item.tipo === 'mooni' || item.texto === 'Criar Mooni');
       return g.items.length > 0;
     })
       .sort((a, b) => {
