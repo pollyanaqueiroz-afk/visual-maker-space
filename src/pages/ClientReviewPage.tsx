@@ -398,7 +398,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
                 <Clock className={`h-5 w-5 ${textSub}`} />
               </div>
               <p className={`text-2xl font-extrabold ${textMain}`}>{requestedCount}</p>
-              <p className="text-[11px] text-muted-foreground font-medium">Solicitado</p>
+              <p className={`text-[11px] ${textSub} font-medium`}>Solicitado</p>
             </div>
           </motion.div>
         )}
