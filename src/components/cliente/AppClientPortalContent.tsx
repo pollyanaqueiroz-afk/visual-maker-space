@@ -424,6 +424,35 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     onError: (e: any) => toast.error(e.message),
   });
 
+  // Mutation to save item data with history tracking
+  const saveItemData = useMutation({
+    mutationFn: async ({ itemId, dados, dadosAnteriores }: { itemId: string; dados: string; dadosAnteriores?: string }) => {
+      // Update the checklist item with new data
+      const { error } = await supabase.from('app_checklist_items').update({
+        dados_preenchidos: dados,
+        updated_at: new Date().toISOString(),
+      }).eq('id', itemId);
+      if (error) throw error;
+
+      // Insert history record
+      const { error: histError } = await supabase.from('app_checklist_historico').insert({
+        checklist_item_id: itemId,
+        dados_anteriores: dadosAnteriores || null,
+        dados_novos: dados,
+        editado_por: 'cliente',
+      });
+      if (histError) throw histError;
+    },
+    onSuccess: () => {
+      invalidateAll();
+      setEditingItemId(null);
+      setViewingItemId(null);
+      setItemDataInput('');
+      toast.success('Dados salvos com sucesso!');
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const resetMockupForm = () => {
     setMockupStep(1);
     setIconOption('');
