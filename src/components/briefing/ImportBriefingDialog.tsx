@@ -418,7 +418,7 @@ export default function ImportBriefingDialog({ onImported }: Props) {
             <div className="text-center">
               <p className="font-medium">Analisando documento...</p>
               <p className="text-sm text-muted-foreground mt-1">{fileName}</p>
-              <p className="text-xs text-muted-foreground mt-2">Extraindo dados com IA</p>
+              <p className="text-xs text-muted-foreground mt-2">{parsingMessage || 'Extraindo dados com IA'}</p>
             </div>
           </div>
         )}
