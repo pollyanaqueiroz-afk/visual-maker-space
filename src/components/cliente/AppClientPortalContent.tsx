@@ -1244,10 +1244,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                   >
                     <div className="relative">
                       {status === 'em_andamento' && (
-                        <>
-                          <div className="absolute -inset-2 rounded-full bg-blue-500/20 animate-ping" style={{ animationDuration: '3s' }} />
-                          <div className="absolute -inset-1 rounded-full bg-blue-500/10 animate-pulse" />
-                        </>
+                        <div className="absolute inset-0 rounded-full bg-blue-500/20 animate-pulse" />
                       )}
                       <div className={`relative w-14 h-14 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                         status === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50 text-green-400' :
