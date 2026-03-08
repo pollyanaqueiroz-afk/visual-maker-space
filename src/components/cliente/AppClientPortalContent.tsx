@@ -266,11 +266,48 @@ export default function AppClientPortalContent({ clienteId }: Props) {
   const ADMIN_APPLE_TEXT = 'Adicionei apps@membros.app.br como admin (Apple)';
 
   const toggleCheck = useMutation({
-    mutationFn: async ({ id, feito, texto }: { id: string; feito: boolean; texto?: string }) => {
+    mutationFn: async ({ id, feito, texto, fase_numero }: { id: string; feito: boolean; texto?: string; fase_numero?: number }) => {
       const { error } = await supabase.from('app_checklist_items').update({
         feito, feito_em: feito ? new Date().toISOString() : null, feito_por: 'cliente',
       }).eq('id', id);
       if (error) throw error;
+
+      // When client UNCHECKS a fase 5 item, create priority pendency
+      if (!feito && texto && fase_numero === 5) {
+        // Check for existing open pendency to avoid duplicates
+        const { data: existing } = await supabase
+          .from('app_checklist_items')
+          .select('id')
+          .eq('cliente_id', clienteId)
+          .eq('fase_numero', 5)
+          .eq('ator', 'analista')
+          .eq('feito', false)
+          .ilike('texto', `%${texto}%`)
+          .maybeSingle();
+
+        if (!existing) {
+          await supabase.from('app_checklist_items').insert({
+            cliente_id: clienteId,
+            fase_numero: 5,
+            texto: `⚠️ PRIORIDADE: Cliente reprovou "${texto}" — verificar e resolver`,
+            descricao: `O cliente ${cliente?.nome} (${cliente?.empresa}) desmarcou a etapa "${texto}" na fase de Teste do App. Isso indica que encontrou problemas. Entrar em contato e resolver com prioridade.`,
+            ator: 'analista',
+            obrigatorio: true,
+            feito: false,
+            ordem: 0,
+          });
+
+          await supabase.from('app_notificacoes').insert({
+            cliente_id: clienteId,
+            tipo: 'teste_app_reprovado',
+            canal: 'portal',
+            destinatario: 'analista',
+            titulo: '🚨 PRIORIDADE: Cliente reprovou teste do app',
+            mensagem: `${cliente?.nome} (${cliente?.empresa}) reprovou a etapa "${texto}" durante o teste do app. Ação imediata necessária.`,
+            agendado_para: new Date().toISOString(),
+          });
+        }
+      }
 
       // When client adds admin, create notification for implantação team
       if (feito && texto && (texto === ADMIN_GOOGLE_TEXT || texto === ADMIN_APPLE_TEXT)) {
@@ -653,7 +690,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 if (checked) {
                   setConfirmingItemId(item.id);
                 } else {
-                  toggleCheck.mutate({ id: item.id, feito: false, texto: item.texto });
+                  toggleCheck.mutate({ id: item.id, feito: false, texto: item.texto, fase_numero: item.fase_numero });
                 }
               }}
               className="mt-0.5 border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
@@ -683,7 +720,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                         size="sm"
                         className="flex-1 bg-green-600 hover:bg-green-700"
                         onClick={() => {
-                          toggleCheck.mutate({ id: item.id, feito: true, texto: item.texto });
+                          toggleCheck.mutate({ id: item.id, feito: true, texto: item.texto, fase_numero: item.fase_numero });
                           setConfirmingItemId(null);
                           toast.success('🎉 App aprovado para publicação!');
                         }}
@@ -923,7 +960,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
               if (checked) {
                 setConfirmingItemId(item.id);
               } else {
-                toggleCheck.mutate({ id: item.id, feito: false, texto: item.texto });
+                toggleCheck.mutate({ id: item.id, feito: false, texto: item.texto, fase_numero: item.fase_numero });
               }
             }}
             className="mt-0.5 border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
@@ -953,7 +990,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                       size="sm"
                       className="flex-1"
                       onClick={() => {
-                        toggleCheck.mutate({ id: item.id, feito: true, texto: item.texto });
+                        toggleCheck.mutate({ id: item.id, feito: true, texto: item.texto, fase_numero: item.fase_numero });
                         setConfirmingItemId(null);
                       }}
                     >
