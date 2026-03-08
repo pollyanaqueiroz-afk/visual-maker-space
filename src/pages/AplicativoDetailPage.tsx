@@ -44,6 +44,9 @@ export default function AplicativoDetailPage() {
   const [editingClient, setEditingClient] = useState(false);
   const [clientForm, setClientForm] = useState({ nome: '', email: '', empresa: '', plataforma: '', responsavel_nome: '', prazo_estimado: '' });
   const [manualFase, setManualFase] = useState<string>('');
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [cancelMotivo, setCancelMotivo] = useState('');
+  const [cancelling, setCancelling] = useState(false);
 
   const { data: cliente } = useQuery({
     queryKey: ['app-cliente', clienteId],
