@@ -66,15 +66,6 @@ export const PERMISSION_MODULES = [
     ],
   },
   {
-    module: 'kanban',
-    label: 'Kanban',
-    permissions: [
-      { key: 'kanban.view', label: 'Visualizar kanban' },
-      { key: 'kanban.edit', label: 'Mover clientes' },
-      { key: 'kanban.manage_columns', label: 'Gerenciar colunas' },
-    ],
-  },
-  {
     module: 'lideranca',
     label: 'Dashboard Liderança',
     permissions: [
