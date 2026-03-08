@@ -829,6 +829,18 @@ export default function ImportBriefingDialog({ onImported }: Props) {
               <p className="font-medium">Erro na importação</p>
               <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap break-words">{errorMsg}</p>
               {fileName && <p className="text-xs text-muted-foreground mt-3">Arquivo: {fileName}</p>}
+
+              {fileName?.toLowerCase().endsWith('.pdf') && (
+                <div className="mt-4 p-3 rounded-lg bg-muted/50 text-left space-y-2">
+                  <p className="text-xs font-semibold text-foreground">💡 Sugestões para PDFs:</p>
+                  <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                    <li>Se o PDF é um scan/imagem, converta para DOCX usando Google Docs ou Microsoft Word</li>
+                    <li>Se o PDF está protegido, remova a proteção antes de importar</li>
+                    <li>Tente copiar o texto do PDF e colar em um arquivo .txt</li>
+                    <li>Se o PDF foi gerado pelo Google Forms ou similar, exporte como DOCX</li>
+                  </ul>
+                </div>
+              )}
             </div>
             <Button variant="outline" onClick={reset}>Tentar novamente</Button>
           </div>
