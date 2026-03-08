@@ -1243,7 +1243,7 @@ export default function SchedulingPage() {
                                   <Bell className="h-3 w-3" /> Em breve
                                 </Badge>
                               )}
-                              {(m as any).meeting_reason && <Badge variant="outline" className="text-[10px]">{(m as any).meeting_reason}</Badge>}
+                              {m.meeting_reason && <Badge variant="outline" className="text-[10px]">{m.meeting_reason}</Badge>}
                             </div>
                             <div className="flex items-center gap-4 text-xs text-muted-foreground">
                               <span className="flex items-center gap-1"><CalendarDays className="h-3 w-3" />{format(parseISO(m.meeting_date), "dd/MM/yyyy")}</span>
