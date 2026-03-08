@@ -1043,7 +1043,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
 
               <div className="p-6 space-y-4">
                 <div>
-                  <h2 className="text-xl font-bold text-foreground">
+                  <h2 className={`text-xl font-bold ${textMain}`}>
                     {currentImage.product_name || imageTypeLabel}
                   </h2>
                   <p className="text-sm text-muted-foreground">{imageTypeLabel}</p>
