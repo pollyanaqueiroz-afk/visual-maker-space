@@ -1608,8 +1608,8 @@ export default function AppClientPortalContent({ clienteId }: Props) {
               <p>Você será notificado assim que precisarmos de você!</p>
             </div>
           )}
-          {/* Mockup request subtask — shown in phase 0 */}
-          {cliente.fase_atual === 0 && !mockupRequest && (
+          {/* Mockup request subtask — available in any phase */}
+          {!mockupRequest && (
             <div className="border-t border-white/10 pt-4 mt-2">
               <Button
                 variant="outline"
@@ -1620,7 +1620,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
               </Button>
             </div>
           )}
-          {cliente.fase_atual === 0 && mockupRequest && (
+          {mockupRequest && (
             <div className="border-t border-white/10 pt-3 mt-2">
               <div className="flex items-center gap-2 text-xs text-green-400">
                 <CheckCircle2 className="h-4 w-4" />
