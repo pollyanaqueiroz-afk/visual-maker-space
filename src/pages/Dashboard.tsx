@@ -113,6 +113,7 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activeKPI, setActiveKPI] = useState<string | null>(null);
+  const [reviewSearch, setReviewSearch] = useState('');
 
   const toggleKPI = (kpi: string) => {
     setActiveKPI(prev => {
