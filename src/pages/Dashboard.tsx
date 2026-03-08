@@ -631,11 +631,8 @@ export default function Dashboard() {
                               <FileImage className="h-4 w-4 text-primary" />
                               <div>
                                 <span className="font-medium text-sm">
-                                  {IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type}
+                                  {imageLabel(img)}
                                 </span>
-                                {img.product_name && (
-                                  <p className="text-xs text-muted-foreground">{img.product_name}</p>
-                                )}
                               </div>
                             </div>
                           </TableCell>
