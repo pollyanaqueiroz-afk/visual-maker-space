@@ -183,6 +183,8 @@ export default function SchedulingPage() {
   const [filterReason, setFilterReason] = useState<string>('all');
   const [sendInvite, setSendInvite] = useState(true);
   const [isRescheduling, setIsRescheduling] = useState(false);
+  const [reschedulingOldData, setReschedulingOldData] = useState<{ date: string; time: string } | null>(null);
+  const [rescheduleHistory, setRescheduleHistory] = useState<Record<string, { previous_date: string; previous_time: string; new_date: string; new_time: string; reason: string; created_at: string }[]>>({});
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmingMeeting, setConfirmingMeeting] = useState<Meeting | null>(null);
   const [confirmForm, setConfirmForm] = useState({
@@ -223,7 +225,22 @@ export default function SchedulingPage() {
     }
   };
 
-  useEffect(() => { fetchMeetings(); fetchCsatData(); }, []);
+  const fetchRescheduleHistory = async () => {
+    const { data } = await supabase
+      .from('meeting_reschedules')
+      .select('meeting_id, previous_date, previous_time, new_date, new_time, reason, created_at')
+      .order('created_at', { ascending: false });
+    if (data) {
+      const map: Record<string, typeof data> = {};
+      for (const r of data as any[]) {
+        if (!map[r.meeting_id]) map[r.meeting_id] = [];
+        map[r.meeting_id].push(r);
+      }
+      setRescheduleHistory(map);
+    }
+  };
+
+  useEffect(() => { fetchMeetings(); fetchCsatData(); fetchRescheduleHistory(); }, []);
 
   // Fetch team members for managers
   useEffect(() => {
@@ -312,6 +329,7 @@ export default function SchedulingPage() {
   const handleReschedule = (m: Meeting) => {
     setEditingId(m.id);
     setIsRescheduling(true);
+    setReschedulingOldData({ date: m.meeting_date, time: m.meeting_time });
     setForm({
       title: m.title,
       description: m.description || '',
@@ -360,7 +378,20 @@ export default function SchedulingPage() {
       if (editingId) {
         const { error } = await supabase.from('meetings').update(payload).eq('id', editingId);
         if (error) throw error;
-        toast.success('Reunião atualizada!');
+
+        // Save reschedule history
+        if (isRescheduling && reschedulingOldData) {
+          await supabase.from('meeting_reschedules').insert({
+            meeting_id: editingId,
+            previous_date: reschedulingOldData.date,
+            previous_time: reschedulingOldData.time,
+            new_date: form.meeting_date,
+            new_time: form.meeting_time,
+            reason: form.reschedule_reason,
+          });
+        }
+
+        toast.success(isRescheduling ? 'Reunião reagendada!' : 'Reunião atualizada!');
       } else {
         const { error } = await supabase.from('meetings').insert(payload);
         if (error) throw error;
@@ -406,7 +437,9 @@ export default function SchedulingPage() {
         }
       }
       setDialogOpen(false);
+      setReschedulingOldData(null);
       fetchMeetings();
+      fetchRescheduleHistory();
     } catch (err: any) {
       toast.error('Erro: ' + err.message);
     } finally {
@@ -1378,9 +1411,32 @@ export default function SchedulingPage() {
                               </div>
                             )}
                             {m.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{m.description}</p>}
-                            {m.reschedule_reason && (
-                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
-                                <RefreshCw className="h-3 w-3" /><span>Reagendado: {m.reschedule_reason}</span>
+                            {(rescheduleHistory[m.id]?.length > 0 || m.reschedule_reason) && (
+                              <div className="mt-1 space-y-1">
+                                <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                                  <RefreshCw className="h-3 w-3" />
+                                  <span>Histórico de reagendamentos ({rescheduleHistory[m.id]?.length || 1})</span>
+                                </div>
+                                {rescheduleHistory[m.id]?.length > 0 ? (
+                                  <div className="ml-4 space-y-1 border-l-2 border-muted pl-3">
+                                    {rescheduleHistory[m.id].slice(0, 3).map((r, idx) => (
+                                      <div key={idx} className="text-[10px] text-muted-foreground">
+                                        <span className="font-medium text-foreground/70">
+                                          {format(parseISO(r.previous_date), 'dd/MM')} {r.previous_time?.slice(0,5)} → {format(parseISO(r.new_date), 'dd/MM')} {r.new_time?.slice(0,5)}
+                                        </span>
+                                        <span className="ml-1.5">— {r.reason}</span>
+                                        <span className="ml-1.5 text-muted-foreground/50">({format(parseISO(r.created_at), 'dd/MM/yy')})</span>
+                                      </div>
+                                    ))}
+                                    {rescheduleHistory[m.id].length > 3 && (
+                                      <p className="text-[10px] text-muted-foreground/50">+{rescheduleHistory[m.id].length - 3} mais</p>
+                                    )}
+                                  </div>
+                                ) : m.reschedule_reason ? (
+                                  <div className="ml-4 text-[10px] text-muted-foreground border-l-2 border-muted pl-3">
+                                    {m.reschedule_reason}
+                                  </div>
+                                ) : null}
                               </div>
                             )}
                             {m.status === 'completed' && (
