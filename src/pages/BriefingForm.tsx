@@ -63,6 +63,7 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
   const { user } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(mockupOnly ? 1 : 0);
+  const [slideDir, setSlideDir] = useState<1 | -1>(1);
   const [form, setForm] = useState<BriefingFormData>(initialForm);
   const [additionalInfo, setAdditionalInfo] = useState('');
   const [selections, setSelections] = useState<ArtSelection>({
