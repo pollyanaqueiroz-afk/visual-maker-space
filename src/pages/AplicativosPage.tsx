@@ -447,18 +447,21 @@ export default function AplicativosPage() {
     return { abertos, atrasadosList, etapasAtrasadasList, publicados, progressoList, atencaoList };
   }, [clientes, fases]);
 
+  const activeClientes = useMemo(() => clientes.filter(c => c.status !== 'cancelado'), [clientes]);
+  const cancelledClientes = useMemo(() => clientes.filter(c => c.status === 'cancelado'), [clientes]);
+
   const columns = useMemo(() => {
     const cols: Record<number, AppCliente[]> = {};
     for (let i = 0; i <= 6; i++) cols[i] = [];
     const filtered = kanbanFilter === 'atrasados'
-      ? clientes.filter(c => clientesComFaseAtrasada.has(c.id) || c.status === 'atrasado')
-      : clientes;
+      ? activeClientes.filter(c => clientesComFaseAtrasada.has(c.id) || c.status === 'atrasado')
+      : activeClientes;
     filtered.forEach(c => {
       const fase = Math.min(c.fase_atual, 6);
       cols[fase].push(c);
     });
     return cols;
-  }, [clientes, kanbanFilter, clientesComFaseAtrasada]);
+  }, [activeClientes, kanbanFilter, clientesComFaseAtrasada]);
 
   // Internal pendencies grouped by client
   const internalPendencies = useMemo(() => {
