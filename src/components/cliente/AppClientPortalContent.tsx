@@ -590,7 +590,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           </div>
         </div>
         {/* Label */}
-        <span className={`mt-1.5 text-[10px] leading-tight text-center w-[72px] font-medium ${statusColor}`}>
+        <span className={`mt-1.5 text-[11px] leading-tight text-center w-[76px] font-medium ${statusColor}`}>
           {FASE_NAMES[faseNum]}
         </span>
       </button>
@@ -911,28 +911,28 @@ export default function AppClientPortalContent({ clienteId }: Props) {
         transition={{ duration: 0.25 }}
         className="overflow-hidden"
       >
-        <div className="mt-4 rounded-xl bg-[#1E293B] border border-white/10 p-4 space-y-4">
+        <div className="mt-4 rounded-xl bg-[#1E293B] border border-white/10 p-5 space-y-4">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {plataforma === 'google' && <span>🤖</span>}
               {plataforma === 'apple' && <span>🍎</span>}
               {!plataforma && <span>📋</span>}
-              <h3 className="text-base font-bold text-white">{faseNum > 0 ? `${faseNum}. ` : ''}{FASE_NAMES[faseNum]}</h3>
+              <h3 className="text-lg font-bold text-white">{faseNum > 0 ? `${faseNum}. ` : ''}{FASE_NAMES[faseNum]}</h3>
               {plataforma && (
-                <Badge variant="outline" className="text-[10px]">
+                <Badge variant="outline" className="text-xs">
                   {plataforma === 'google' ? 'Google Play' : 'Apple'}
                 </Badge>
               )}
-              {fase.data_inicio && (
-                <span className="text-[10px] text-white/50">
+               {fase.data_inicio && (
+                 <span className="text-xs text-white/60">
                   Iniciada em {format(new Date(fase.data_inicio), 'dd/MM/yyyy')}
                   {fase.data_conclusao && ` · Concluída em ${format(new Date(fase.data_conclusao), 'dd/MM/yyyy')}`}
                 </span>
               )}
             </div>
             <div className="flex items-center gap-2">
-              <Badge className={`text-[10px] ${
+              <Badge className={`text-xs ${
                 fase.status === 'concluida' ? 'bg-green-500/20 text-green-400' :
                 fase.status === 'atrasada' ? 'bg-red-500/20 text-red-400' :
                 'bg-primary/20 text-primary'
@@ -943,13 +943,13 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             </div>
           </div>
 
-          <Progress value={progress} className="h-1.5" />
+          <Progress value={progress} className="h-2" />
 
           {/* Estimate */}
           {showEstimate && fase.duracao_dias_estimada && (
             <div className="rounded-lg bg-white/5 border border-white/5 p-3 flex items-center gap-2">
-              <Clock className="h-4 w-4 text-white/50" />
-              <p className="text-xs text-white/60">
+               <Clock className="h-4 w-4 text-white/60" />
+               <p className="text-sm text-white/70">
                 Previsão: ~{fase.duracao_dias_estimada} dias úteis
                 {fase.data_inicio && (
                   <span className="text-white/50"> (até {format(addBusinessDays(new Date(fase.data_inicio), fase.duracao_dias_estimada), 'dd/MM/yyyy')})</span>
@@ -1160,8 +1160,8 @@ export default function AppClientPortalContent({ clienteId }: Props) {
 
     return (
       <div className="flex items-center gap-0">
-         <span className={`text-sm font-bold shrink-0 w-32 text-right pr-3 text-white`}>
-           {emoji} {plataforma === 'google' ? 'Google Play' : 'Apple'}
+          <span className={`text-base font-bold shrink-0 w-36 text-right pr-3 text-white`}>
+            {emoji} {plataforma === 'google' ? 'Google Play' : 'Apple'}
         </span>
         <div className="relative flex items-center flex-1 min-w-0 py-1">
           {/* Connecting line */}
@@ -1193,11 +1193,11 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                        status === 'em_andamento' ? <Star className="h-5 w-5" /> :
                        <Lock className="h-4 w-4" />}
                     </div>
-                     <p className={`text-[10px] mt-1.5 text-center leading-tight max-w-[70px] font-medium ${
-                       status === 'concluida' ? 'text-green-400' :
-                       status === 'em_andamento' ? 'text-white font-semibold' :
-                       'text-white/80'
-                     }`}>{num}. {FASE_NAMES[num]}</p>
+                      <p className={`text-[11px] mt-1.5 text-center leading-tight max-w-[76px] font-medium ${
+                        status === 'concluida' ? 'text-green-400' :
+                        status === 'em_andamento' ? 'text-white font-semibold' :
+                        'text-white/80'
+                      }`}>{num}. {FASE_NAMES[num]}</p>
                   </button>
                 </div>
               );
@@ -1267,37 +1267,37 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-6">
             {/* Left: greeting */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex-1 min-w-0">
-              <h1 className="text-lg font-bold">Olá, {cliente?.nome?.split(' ')[0] || 'Cliente'}! 👋</h1>
-              <p className="text-white/70 text-sm mt-0.5">{getDynamicMessage()}</p>
-              {cliente.data_criacao && (
-                <p className="text-[11px] text-primary/80 mt-1.5 flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  Processo iniciado em <span className="font-semibold text-primary">{format(new Date(cliente.data_criacao), 'dd/MM/yyyy')}</span>
-                </p>
-              )}
+               <h1 className="text-xl font-bold text-white">Olá, {cliente?.nome?.split(' ')[0] || 'Cliente'}! 👋</h1>
+               <p className="text-white/80 text-base mt-1">{getDynamicMessage()}</p>
+               {cliente.data_criacao && (
+                 <p className="text-xs text-primary mt-2 flex items-center gap-1.5">
+                   <Clock className="h-3.5 w-3.5" />
+                   Processo iniciado em <span className="font-semibold text-primary">{format(new Date(cliente.data_criacao), 'dd/MM/yyyy')}</span>
+                 </p>
+               )}
             </motion.div>
             {/* Right: progress bars */}
-            <div className="shrink-0 w-full md:w-64 space-y-2">
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-white/70">Suas tarefas</span>
-                  <span className="font-bold text-white">{clientPctBar}%{clientPctBar === 100 && ' ✅'}</span>
-                </div>
-                <div className="relative h-2 rounded-full bg-white/10 overflow-hidden">
-                  <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
-                    style={{ width: `${clientPctBar}%`, background: clientPctBar === 100 ? 'linear-gradient(90deg, hsl(142 71% 45%), hsl(142 71% 55%))' : 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))' }} />
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                   <span className="text-white/60">Progresso total</span>
-                   <span className="font-medium text-white/70">{totalPctBar}%</span>
-                </div>
-                <div className="relative h-1.5 rounded-full bg-white/5 overflow-hidden">
-                  <div className="absolute inset-y-0 left-0 rounded-full bg-white/20 transition-all duration-500" style={{ width: `${totalPctBar}%` }} />
-                </div>
-                <p className="text-[10px] text-white/50 mt-0.5">Inclui etapas da equipe Curseduca</p>
-              </div>
+             <div className="shrink-0 w-full md:w-72 space-y-3">
+               <div>
+                 <div className="flex justify-between text-sm mb-1">
+                   <span className="text-white/80 font-medium">Suas tarefas</span>
+                   <span className="font-bold text-white">{clientPctBar}%{clientPctBar === 100 && ' ✅'}</span>
+                 </div>
+                 <div className="relative h-2.5 rounded-full bg-white/10 overflow-hidden">
+                   <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
+                     style={{ width: `${clientPctBar}%`, background: clientPctBar === 100 ? 'linear-gradient(90deg, hsl(142 71% 45%), hsl(142 71% 55%))' : 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))' }} />
+                 </div>
+               </div>
+               <div>
+                 <div className="flex justify-between text-sm mb-1">
+                    <span className="text-white/70 font-medium">Progresso total</span>
+                    <span className="font-medium text-white/80">{totalPctBar}%</span>
+                 </div>
+                 <div className="relative h-2 rounded-full bg-white/10 overflow-hidden">
+                   <div className="absolute inset-y-0 left-0 rounded-full bg-white/25 transition-all duration-500" style={{ width: `${totalPctBar}%` }} />
+                 </div>
+                 <p className="text-xs text-white/60 mt-1">Inclui etapas da equipe Curseduca</p>
+               </div>
             </div>
           </div>
         );
@@ -1418,34 +1418,34 @@ export default function AppClientPortalContent({ clienteId }: Props) {
 
       {/* Achievements */}
       <div>
-        <h2 className="text-lg font-semibold mb-3">🏆 Conquistas</h2>
-        <div className="flex flex-wrap gap-2">
-          {fases.filter((f: any) => f.status === 'concluida').map((f: any) => (
-            <motion.div key={f.id} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}>
-              <Badge className={`px-3 py-1.5 ${
-                f.plataforma === 'google' ? 'bg-blue-500/20 text-blue-400' :
-                f.plataforma === 'apple' ? 'bg-purple-500/20 text-purple-400' :
-                'bg-green-500/20 text-green-400'
-              }`}>
-                {f.plataforma === 'google' ? '🤖 ' : f.plataforma === 'apple' ? '🍎 ' : '🏆 '}
-                {FASE_NAMES[f.numero]}
-              </Badge>
-            </motion.div>
-          ))}
-          {fases.filter((f: any) => f.status === 'concluida').length === 0 && (
-            <p className="text-sm text-white/50">Complete etapas para desbloquear conquistas!</p>
-          )}
+         <h2 className="text-xl font-bold text-white mb-4">🏆 Conquistas</h2>
+         <div className="flex flex-wrap gap-2">
+           {fases.filter((f: any) => f.status === 'concluida').map((f: any) => (
+             <motion.div key={f.id} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}>
+               <Badge className={`px-4 py-2 text-sm ${
+                 f.plataforma === 'google' ? 'bg-blue-500/20 text-blue-400' :
+                 f.plataforma === 'apple' ? 'bg-purple-500/20 text-purple-400' :
+                 'bg-green-500/20 text-green-400'
+               }`}>
+                 {f.plataforma === 'google' ? '🤖 ' : f.plataforma === 'apple' ? '🍎 ' : '🏆 '}
+                 {FASE_NAMES[f.numero]}
+               </Badge>
+             </motion.div>
+           ))}
+           {fases.filter((f: any) => f.status === 'concluida').length === 0 && (
+             <p className="text-base text-white/60">Complete etapas para desbloquear conquistas!</p>
+           )}
         </div>
       </div>
 
       {/* Support */}
-      <Card className="bg-[#1E293B] border-white/10 p-6">
-        <h2 className="text-lg font-semibold mb-3">💬 Suporte</h2>
-        <div className="space-y-2 text-sm text-white/70">
+       <Card className="bg-[#1E293B] border-white/10 p-6">
+         <h2 className="text-xl font-bold text-white mb-4">💬 Suporte</h2>
+         <div className="space-y-3 text-base text-white/80">
           {cliente.responsavel_nome && <p>Seu responsável: <span className="text-white">{cliente.responsavel_nome}</span></p>}
-          {cliente.whatsapp && (
-            <a href={`https://wa.me/${cliente.whatsapp}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-green-400 hover:text-green-300">
-              <MessageSquare className="h-4 w-4" /> WhatsApp
+           {cliente.whatsapp && (
+             <a href={`https://wa.me/${cliente.whatsapp}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-green-400 hover:text-green-300 text-base font-medium">
+               <MessageSquare className="h-5 w-5" /> WhatsApp
             </a>
           )}
         </div>
