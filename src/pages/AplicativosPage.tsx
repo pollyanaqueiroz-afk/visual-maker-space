@@ -106,6 +106,9 @@ interface AppFase {
   sla_vencimento: string | null;
   porcentagem: number;
   status: string;
+  plataforma?: string;
+  data_inicio?: string | null;
+  data_conclusao?: string | null;
 }
 
 export default function AplicativosPage() {
