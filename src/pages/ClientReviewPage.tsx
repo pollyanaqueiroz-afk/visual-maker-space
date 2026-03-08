@@ -1138,7 +1138,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
               >
                 <Heart className="h-10 w-10 text-primary fill-primary" />
               </motion.button>
-              <span className="text-[11px] font-medium text-muted-foreground">Aprovar</span>
+              <span className={`text-[11px] font-medium ${textSub}`}>Aprovar</span>
             </div>
           </motion.div>
         )}
