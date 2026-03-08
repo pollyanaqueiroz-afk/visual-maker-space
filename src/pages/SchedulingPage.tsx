@@ -567,6 +567,13 @@ export default function SchedulingPage() {
     [meetings]
   );
 
+  // Meetings past their date still "scheduled" — need conclusion or rescheduling
+  const pendingConclusion = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return meetings.filter(m => m.status === 'scheduled' && isBefore(parseISO(m.meeting_date), today));
+  }, [meetings]);
+
   // Month grid helpers
   const holidays = useMemo(() => getBrazilianHolidays(getYear(calendarMonth)), [calendarMonth]);
   
@@ -1060,6 +1067,84 @@ export default function SchedulingPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Pending alerts below calendar */}
+          {pendingConclusion.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Pending Conclusion */}
+              <Card className="border-destructive/40 bg-destructive/5">
+                <CardHeader className="pb-2 pt-3 px-4">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2 text-destructive">
+                    <CheckCircle className="h-4 w-4" />
+                    {pendingConclusion.length} {pendingConclusion.length === 1 ? 'reunião' : 'reuniões'} pendente{pendingConclusion.length !== 1 ? 's' : ''} de conclusão
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 pb-3 space-y-1.5">
+                  {pendingConclusion.slice(0, 5).map(m => (
+                    <div
+                      key={`conclude-${m.id}`}
+                      className="flex items-center justify-between gap-2 p-2 rounded-lg bg-background border border-border/50 hover:border-destructive/40 transition-all cursor-pointer group"
+                      onClick={() => handleOpenConfirm(m)}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-foreground truncate">{m.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(parseISO(m.meeting_date), "dd/MM")} · {m.client_name || 'Sem cliente'}
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs shrink-0 border-destructive/30 text-destructive hover:bg-destructive/10"
+                      >
+                        Concluir
+                      </Button>
+                    </div>
+                  ))}
+                  {pendingConclusion.length > 5 && (
+                    <p className="text-xs text-muted-foreground text-center pt-1">+{pendingConclusion.length - 5} mais</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Pending Rescheduling */}
+              <Card className="border-destructive/40 bg-destructive/5">
+                <CardHeader className="pb-2 pt-3 px-4">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2 text-destructive">
+                    <RefreshCw className="h-4 w-4" />
+                    {pendingConclusion.length} {pendingConclusion.length === 1 ? 'reunião' : 'reuniões'} pendente{pendingConclusion.length !== 1 ? 's' : ''} de reagendamento
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 pb-3 space-y-1.5">
+                  {pendingConclusion.slice(0, 5).map(m => (
+                    <div
+                      key={`reschedule-${m.id}`}
+                      className="flex items-center justify-between gap-2 p-2 rounded-lg bg-background border border-border/50 hover:border-destructive/40 transition-all cursor-pointer group"
+                      onClick={() => handleReschedule(m)}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-foreground truncate">{m.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(parseISO(m.meeting_date), "dd/MM")} · {m.client_name || 'Sem cliente'}
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs shrink-0 border-destructive/30 text-destructive hover:bg-destructive/10"
+                      >
+                        Reagendar
+                      </Button>
+                    </div>
+                  ))}
+                  {pendingConclusion.length > 5 && (
+                    <p className="text-xs text-muted-foreground text-center pt-1">+{pendingConclusion.length - 5} mais</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
 
           {calendarView === 'month' && (
           <AnimatePresence mode="wait">
