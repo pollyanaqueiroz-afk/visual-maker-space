@@ -65,7 +65,6 @@ export function HubSidebar() {
   const collapsed = state === 'collapsed';
   const [badges, setBadges] = useState<BadgeCounts>({ pendingArts: 0, pendingApps: 0 });
 
-  // Fetch badge counts
   useEffect(() => {
     if (!user) return;
     const fetchCounts = async () => {
@@ -98,10 +97,10 @@ export function HubSidebar() {
               <NavLink
                 to={item.url}
                 end
-                className="hover:bg-muted/50"
-                activeClassName="bg-muted text-primary font-medium"
+                className="hover:bg-white/5 rounded-lg transition-all duration-200"
+                activeClassName="bg-gradient-to-r from-primary/15 to-primary/5 text-primary font-medium border-l-2 border-primary"
               >
-                <item.icon className="mr-2 h-4 w-4" />
+                <item.icon className="mr-2 h-4 w-4 opacity-60 group-[.active]:opacity-100" />
                 {!collapsed && (
                   <span className="flex items-center justify-between flex-1">
                     <span>{item.title}</span>
@@ -133,10 +132,10 @@ export function HubSidebar() {
           <CollapsibleTrigger className="w-full">
             <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground transition-colors">
               <span className="flex items-center gap-2">
-                {(() => { const Icon = icon; return <Icon className="h-3.5 w-3.5" />; })()}
+                {(() => { const Icon = icon; return <Icon className="h-3.5 w-3.5 opacity-60" />; })()}
                 {!collapsed && label}
               </span>
-              {!collapsed && <ChevronDown className="h-3.5 w-3.5 transition-transform [[data-state=open]_&]:rotate-180" />}
+              {!collapsed && <ChevronDown className="h-3.5 w-3.5 opacity-40 transition-transform [[data-state=open]_&]:rotate-180" />}
             </SidebarGroupLabel>
           </CollapsibleTrigger>
           <CollapsibleContent>
@@ -150,11 +149,11 @@ export function HubSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-border/50">
+    <Sidebar collapsible="icon" className="border-r border-border/30">
       <SidebarContent>
         {/* Logo / Brand */}
         <div className="flex items-center gap-3 px-4 py-5">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-emerald-600 text-primary-foreground shadow-lg shadow-primary/20">
             <LayoutDashboard className="h-5 w-5" />
           </div>
           {!collapsed && (
@@ -165,6 +164,9 @@ export function HubSidebar() {
           )}
         </div>
 
+        {/* Separator */}
+        <div className="mx-4 h-px bg-border/30" />
+
         {/* Home */}
         <SidebarGroup>
           <SidebarMenu>
@@ -173,10 +175,10 @@ export function HubSidebar() {
                 <NavLink
                   to="/hub"
                   end
-                  className="hover:bg-muted/50"
-                  activeClassName="bg-muted text-primary font-medium"
+                  className="hover:bg-white/5 rounded-lg transition-all duration-200"
+                  activeClassName="bg-gradient-to-r from-primary/15 to-primary/5 text-primary font-medium border-l-2 border-primary"
                 >
-                  <Home className="mr-2 h-4 w-4" />
+                  <Home className="mr-2 h-4 w-4 opacity-60" />
                   {!collapsed && <span>Home</span>}
                 </NavLink>
               </SidebarMenuButton>
@@ -190,12 +192,12 @@ export function HubSidebar() {
         {renderGroup('Administração', Settings, adminModules)}
       </SidebarContent>
 
-      <SidebarFooter className="p-3">
+      <SidebarFooter className="p-3 border-t border-border/20">
         <Button
           variant="ghost"
           size="sm"
           onClick={signOut}
-          className="w-full justify-start text-muted-foreground hover:text-foreground"
+          className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-white/5"
         >
           <LogOut className="h-4 w-4 mr-2" />
           {!collapsed && <span>Sair</span>}
