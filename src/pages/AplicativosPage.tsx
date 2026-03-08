@@ -982,6 +982,42 @@ export default function AplicativosPage() {
                           const isMooni = item.tipo === 'mooni' || item.texto === 'Criar Mooni';
                           const isPubUrl = item.tipo === 'publicacao_url';
 
+                          // Special rendering for alerta_prazo
+                          if (item.tipo === 'alerta_prazo') {
+                            return (
+                              <div key={item.id} className={`grid grid-cols-[32px_1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-3 items-center ${isDone ? 'opacity-60' : 'bg-destructive/5 border-l-4 border-destructive'}`}>
+                                <AlertTriangle className={`h-4 w-4 ${isDone ? 'text-muted-foreground' : 'text-destructive'}`} />
+                                <div className="min-w-0">
+                                  <p className={`text-sm font-semibold ${isDone ? 'line-through text-muted-foreground' : 'text-destructive'}`}>{item.texto}</p>
+                                  <p className={`text-xs mt-0.5 ${isDone ? 'text-muted-foreground' : 'text-destructive/60'}`}>{item.descricao}</p>
+                                  {isDone && item.feito_em && (
+                                    <p className="text-[10px] text-green-500/70 mt-0.5">Resolvido em {format(new Date(item.feito_em), "dd/MM/yy 'às' HH:mm")}</p>
+                                  )}
+                                  {!isDone && (
+                                    <Checkbox
+                                      checked={false}
+                                      className="mt-2 border-destructive/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                                      onCheckedChange={(checked) => {
+                                        if (checked) completeTask.mutate(item.id);
+                                      }}
+                                    />
+                                  )}
+                                </div>
+                                <Badge variant="outline" className={`text-[10px] w-fit ${ator.color}`}>{ator.text}</Badge>
+                                <span className="text-xs text-muted-foreground">{dataEntrada ? format(dataEntrada, 'dd/MM/yy') : '—'}</span>
+                                <span className="text-xs text-muted-foreground">{format(createdAt, 'dd/MM/yy')}</span>
+                                <div>
+                                  {isDone ? (
+                                    <Badge className="text-[10px] bg-green-500/10 text-green-500 border border-green-500/20">✅ Resolvido</Badge>
+                                  ) : (
+                                    <Badge variant="destructive" className="text-[10px]">URGENTE</Badge>
+                                  )}
+                                </div>
+                                <Badge variant="outline" className="text-[10px] w-fit">Fase {item.fase_numero}</Badge>
+                              </div>
+                            );
+                          }
+
                           // Special rendering for publicacao_url
                           if (isPubUrl) {
                             const fase6 = fases.find(f => f.cliente_id === clienteId && f.numero === 6 && (f as any).plataforma === item.plataforma);
