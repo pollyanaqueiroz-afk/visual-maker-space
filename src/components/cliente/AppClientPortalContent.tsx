@@ -547,7 +547,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
 
     const statusColor = status === 'concluida' ? 'text-green-400' :
       status === 'em_andamento' ? 'text-primary' :
-      status === 'atrasada' ? 'text-red-400' : 'text-white/20';
+      status === 'atrasada' ? 'text-red-400' : 'text-white/50';
 
     return (
       <button
