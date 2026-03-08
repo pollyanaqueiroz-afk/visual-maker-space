@@ -1250,33 +1250,74 @@ export default function AppClientPortalContent({ clienteId }: Props) {
 
       {/* TIMELINE */}
       {isParallelFlow ? (
-        /* ── Parallel: fase 0 centered, then 2 tracks ── */
+        /* ── Parallel: fase 0 left, bifurcation to two horizontal tracks ── */
         <div className="space-y-4">
-          {/* Fase 0 centered */}
-          <div className="flex flex-col items-center">
-            {renderCircle(0, fases.find((f: any) => f.numero === 0))}
-            {/* Vertical connector */}
-            <div className="w-[2px] h-6 bg-white/10 mt-1" />
-            {/* Fork indicator */}
-            <div className="flex items-center gap-0">
-              <div className="w-8 h-[2px] bg-white/10" />
-              <div className="w-2 h-2 rounded-full bg-white/10" />
-              <div className="w-8 h-[2px] bg-white/10" />
+          <div className="overflow-x-auto">
+            <div className="flex items-center gap-0" style={{ minWidth: '520px' }}>
+              {/* Fase 0 on the left, centered vertically between tracks */}
+              <div className="flex flex-col items-center shrink-0 self-center">
+                <button onClick={() => setSelectedTimelineFase(
+                  selectedTimelineFase?.fase === 0 && !selectedTimelineFase?.plataforma ? null : { fase: 0 }
+                )}>
+                  <div className={`relative flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors ${
+                    (() => {
+                      const f0 = fases.find((f: any) => f.numero === 0);
+                      const s = f0?.status || 'bloqueada';
+                      return s === 'concluida' ? 'bg-green-500/20 border-green-500' :
+                        s === 'em_andamento' ? 'bg-[#1E293B] border-primary' :
+                        s === 'atrasada' ? 'bg-red-500/10 border-red-500' :
+                        'bg-white/5 border-white/10';
+                    })()
+                  } ${selectedTimelineFase?.fase === 0 && !selectedTimelineFase?.plataforma ? 'ring-2 ring-primary/50' : ''}`}>
+                    {(() => {
+                      const f0 = fases.find((f: any) => f.numero === 0);
+                      const s = f0?.status || 'bloqueada';
+                      return s === 'concluida' ? <CheckCircle2 className="h-4 w-4 text-green-400" /> :
+                        s === 'bloqueada' ? <Lock className="h-3.5 w-3.5 text-white/20" /> :
+                        s === 'atrasada' ? <AlertTriangle className="h-3.5 w-3.5 text-red-400" /> :
+                        <span className="text-xs font-bold text-primary">0</span>;
+                    })()}
+                  </div>
+                </button>
+                <p className="text-[8px] mt-1 text-center leading-tight text-white/40 max-w-[55px]">Pré-<br/>Requisitos</p>
+              </div>
+
+              {/* Bifurcation connector */}
+              <div className="flex flex-col items-start shrink-0 self-center">
+                <div className="w-6 border-b-2 border-l-2 border-white/10 h-5 rounded-bl-lg" />
+                <div className="w-6 border-t-2 border-l-2 border-white/10 h-5 rounded-tl-lg" />
+              </div>
+
+              {/* Two tracks stacked */}
+              <div className="flex-1 flex flex-col gap-4 min-w-0">
+                {renderParallelTrackRow('google', '🤖')}
+                {renderParallelTrackRow('apple', '🍎')}
+              </div>
             </div>
           </div>
 
-          {/* Expanded fase 0 */}
+          {/* Expanded content — full width below all tracks */}
           <AnimatePresence>
-            {selectedTimelineFase?.fase === 0 && !selectedTimelineFase?.plataforma && (
-              renderExpandedFase(0)
+            {selectedTimelineFase && (
+              <Card className="bg-white/5 border-white/10 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    {selectedTimelineFase.plataforma === 'google' && <span>🤖</span>}
+                    {selectedTimelineFase.plataforma === 'apple' && <span>🍎</span>}
+                    {!selectedTimelineFase.plataforma && <span>📋</span>}
+                    <h3 className="text-sm font-semibold">{FASE_NAMES[selectedTimelineFase.fase]}</h3>
+                    {selectedTimelineFase.plataforma && (
+                      <Badge variant="outline" className="text-[10px]">
+                        {selectedTimelineFase.plataforma === 'google' ? 'Google Play' : 'Apple'}
+                      </Badge>
+                    )}
+                  </div>
+                  <button onClick={() => setSelectedTimelineFase(null)} className="text-white/40 hover:text-white text-xs">✕</button>
+                </div>
+                {renderExpandedFase(selectedTimelineFase.fase, selectedTimelineFase.plataforma)?.props?.children}
+              </Card>
             )}
           </AnimatePresence>
-
-          {/* Two tracks */}
-          <div className="flex flex-col md:flex-row gap-6">
-            {renderTrack('google', 'Google Play', '🤖', 'border-blue-500/20 bg-blue-500/5')}
-            {renderTrack('apple', 'Apple', '🍎', 'border-purple-500/20 bg-purple-500/5')}
-          </div>
 
           {/* Per-platform celebrations */}
           {(() => {
