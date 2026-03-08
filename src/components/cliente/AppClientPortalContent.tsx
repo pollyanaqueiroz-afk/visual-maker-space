@@ -837,8 +837,8 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             }}
             className="mt-0.5 border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500" />
           <div className="flex-1">
-            <p className={`text-sm font-medium ${item.feito ? 'text-green-400' : ''}`}>{item.texto}</p>
-            {item.descricao && <p className="text-xs text-white/50 mt-1">{item.descricao}</p>}
+             <p className={`text-sm font-medium ${item.feito ? 'text-green-400' : 'text-white'}`}>{item.texto}</p>
+             {item.descricao && <p className="text-xs text-white/60 mt-1">{item.descricao}</p>}
             {item.feito && item.feito_em && (
               <p className="text-[10px] text-green-400/70 mt-1">✅ {format(new Date(item.feito_em), "dd/MM/yyyy 'às' HH:mm")}</p>
             )}
