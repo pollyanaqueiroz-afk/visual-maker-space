@@ -5,7 +5,16 @@ import mammoth from 'mammoth';
 import * as pdfjsLib from 'pdfjs-dist';
 import { format } from 'date-fns';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs`;
+// Configurar worker do PDF.js com versão dinâmica
+try {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+} catch {
+  try {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+  } catch {
+    console.warn('PDF.js worker setup failed, will use inline worker');
+  }
+}
 
 import { ptBR } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -77,6 +86,7 @@ export default function ImportBriefingDialog({ onImported }: Props) {
     images: { image_type: string; product_name: string | null; image_text: string | null }[];
   } | null>(null);
   const [receivedAt, setReceivedAt] = useState<Date>(new Date());
+  const [parsingMessage, setParsingMessage] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
   const reset = () => {
@@ -86,27 +96,97 @@ export default function ImportBriefingDialog({ onImported }: Props) {
     setErrorMsg('');
     setDuplicateInfo(null);
     setReceivedAt(new Date());
+    setParsingMessage('');
   };
 
   const extractText = async (file: File): Promise<string> => {
     const ext = file.name.split('.').pop()?.toLowerCase();
+
     if (ext === 'docx') {
       const arrayBuffer = await file.arrayBuffer();
       const result = await mammoth.extractRawText({ arrayBuffer });
       return result.value;
     }
+
     if (ext === 'pdf') {
       const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      const pages: string[] = [];
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        pages.push(content.items.map((item: any) => item.str).join(' '));
+
+      try {
+        const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+        const pdf = await loadingTask.promise;
+
+        if (pdf.numPages === 0) {
+          throw new Error('O PDF não contém páginas.');
+        }
+
+        const pages: string[] = [];
+        let totalChars = 0;
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+
+          let lastY: number | null = null;
+          let lineText = '';
+          const pageLines: string[] = [];
+
+          for (const item of content.items) {
+            const textItem = item as any;
+            if (!textItem.str) continue;
+
+            const y = textItem.transform ? textItem.transform[5] : 0;
+
+            if (lastY !== null && Math.abs(y - lastY) > 3) {
+              if (lineText.trim()) pageLines.push(lineText.trim());
+              lineText = '';
+            }
+
+            lineText += textItem.str + (textItem.hasEOL ? '\n' : ' ');
+            lastY = y;
+          }
+          if (lineText.trim()) pageLines.push(lineText.trim());
+
+          const pageText = pageLines.join('\n');
+          pages.push(pageText);
+          totalChars += pageText.length;
+        }
+
+        const fullText = pages.join('\n\n--- Página ---\n\n');
+
+        if (totalChars < 20) {
+          throw new Error(
+            `O PDF tem ${pdf.numPages} página(s) mas apenas ${totalChars} caracteres de texto foram encontrados. ` +
+            `Este PDF provavelmente contém imagens escaneadas ou é protegido. ` +
+            `Tente converter para DOCX ou copiar o texto manualmente.`
+          );
+        }
+
+        return fullText;
+      } catch (pdfErr: any) {
+        if (pdfErr.message?.includes('página') || pdfErr.message?.includes('caracteres')) {
+          throw pdfErr;
+        }
+        console.error('PDF.js error:', pdfErr);
+        throw new Error(
+          `Falha ao processar o PDF: ${pdfErr.message || 'erro desconhecido'}. ` +
+          `Possíveis causas: arquivo corrompido, protegido por senha, ou formato incompatível. ` +
+          `Tente salvar como DOCX e importar novamente.`
+        );
       }
-      return pages.join('\n');
     }
-    return await file.text();
+
+    if (ext === 'doc') {
+      throw new Error(
+        'Formato .doc (Word 97-2003) não é suportado diretamente. ' +
+        'Por favor, abra o arquivo no Word e salve como .docx (Word 2007+) antes de importar.'
+      );
+    }
+
+    if (ext === 'txt') {
+      return await file.text();
+    }
+
+    throw new Error(`Formato .${ext} não suportado. Use .docx, .pdf ou .txt`);
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,16 +195,20 @@ export default function ImportBriefingDialog({ onImported }: Props) {
 
     setFileName(file.name);
     setStep('parsing');
+    setParsingMessage('Lendo arquivo...');
 
     try {
       let text: string;
       try {
-        text = await extractText(file);
-      } catch (extractErr: any) {
         const ext = file.name.split('.').pop()?.toLowerCase();
-        throw new Error(
-          `Falha ao ler o arquivo ${ext?.toUpperCase() || ''}: ${extractErr.message || 'formato não suportado ou arquivo corrompido.'}`
-        );
+        setParsingMessage(ext === 'pdf' ? 'Extraindo texto do PDF...' : 'Extraindo texto do documento...');
+        text = await extractText(file);
+        console.log(`[ImportBriefing] Extracted ${text.length} chars from ${file.name} (${file.type})`);
+        console.log(`[ImportBriefing] First 200 chars:`, text.slice(0, 200));
+        setParsingMessage(`${text.length} caracteres extraídos. Analisando com IA...`);
+      } catch (extractErr: any) {
+        console.error(`[ImportBriefing] Extract failed for ${file.name}:`, extractErr);
+        throw new Error(extractErr.message);
       }
 
       if (!text || text.trim().length < 50) {
@@ -132,6 +216,8 @@ export default function ImportBriefingDialog({ onImported }: Props) {
           `O documento "${file.name}" não contém texto suficiente para análise (apenas ${text?.trim().length || 0} caracteres encontrados). Verifique se o arquivo não está vazio, protegido ou é uma imagem escaneada sem OCR.`
         );
       }
+
+      setParsingMessage('Processando com IA...');
 
       const response = await supabase.functions.invoke('parse-briefing', {
         body: { documentText: text },
@@ -311,12 +397,12 @@ export default function ImportBriefingDialog({ onImported }: Props) {
             </div>
             <div className="text-center">
               <p className="font-medium">Selecione o documento de briefing</p>
-              <p className="text-sm text-muted-foreground mt-1">Formatos aceitos: .docx, .pdf</p>
+              <p className="text-sm text-muted-foreground mt-1">Formatos aceitos: .docx, .pdf, .txt</p>
             </div>
             <input
               ref={fileRef}
               type="file"
-              accept=".docx,.pdf"
+              accept=".docx,.pdf,.txt,.doc"
               className="hidden"
               onChange={handleFileSelect}
             />
@@ -332,7 +418,7 @@ export default function ImportBriefingDialog({ onImported }: Props) {
             <div className="text-center">
               <p className="font-medium">Analisando documento...</p>
               <p className="text-sm text-muted-foreground mt-1">{fileName}</p>
-              <p className="text-xs text-muted-foreground mt-2">Extraindo dados com IA</p>
+              <p className="text-xs text-muted-foreground mt-2">{parsingMessage || 'Extraindo dados com IA'}</p>
             </div>
           </div>
         )}
@@ -743,6 +829,18 @@ export default function ImportBriefingDialog({ onImported }: Props) {
               <p className="font-medium">Erro na importação</p>
               <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap break-words">{errorMsg}</p>
               {fileName && <p className="text-xs text-muted-foreground mt-3">Arquivo: {fileName}</p>}
+
+              {fileName?.toLowerCase().endsWith('.pdf') && (
+                <div className="mt-4 p-3 rounded-lg bg-muted/50 text-left space-y-2">
+                  <p className="text-xs font-semibold text-foreground">💡 Sugestões para PDFs:</p>
+                  <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                    <li>Se o PDF é um scan/imagem, converta para DOCX usando Google Docs ou Microsoft Word</li>
+                    <li>Se o PDF está protegido, remova a proteção antes de importar</li>
+                    <li>Tente copiar o texto do PDF e colar em um arquivo .txt</li>
+                    <li>Se o PDF foi gerado pelo Google Forms ou similar, exporte como DOCX</li>
+                  </ul>
+                </div>
+              )}
             </div>
             <Button variant="outline" onClick={reset}>Tentar novamente</Button>
           </div>
