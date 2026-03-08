@@ -1204,6 +1204,50 @@ export type Database = {
         }
         Relationships: []
       }
+      meeting_reschedules: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          meeting_id: string
+          new_date: string
+          new_time: string
+          previous_date: string
+          previous_time: string
+          reason: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          meeting_id: string
+          new_date: string
+          new_time: string
+          previous_date: string
+          previous_time: string
+          reason: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          meeting_id?: string
+          new_date?: string
+          new_time?: string
+          previous_date?: string
+          previous_time?: string
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_reschedules_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meetings: {
         Row: {
           client_email: string | null
