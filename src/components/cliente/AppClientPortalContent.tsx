@@ -1117,7 +1117,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                         </p>
                       )}
                       {!startDate && !isDone && (
-                        <p className="text-[10px] text-white/30 mt-2">
+                        <p className="text-[10px] text-white/50 mt-2">
                           📅 A previsão será calculada após a conclusão de {prevFaseLabel}
                         </p>
                       )}
