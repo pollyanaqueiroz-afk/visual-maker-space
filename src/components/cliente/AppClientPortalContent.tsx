@@ -1398,7 +1398,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
               {/* Fase 0 + Toggle — aligned to circle center */}
               <div className="shrink-0 flex items-center gap-0">
                 {/* Fase 0 */}
-                <div className="flex flex-col items-center">
+                <div className="flex flex-col items-center relative">
                   {(() => {
                     const f0 = fases.find((f: any) => f.numero === 0);
                     const s = f0?.status || 'bloqueada';
