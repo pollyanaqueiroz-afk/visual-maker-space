@@ -148,9 +148,12 @@ export default function DesignerPanel() {
             <TabsContent value="artes" className="mt-4">
               {images.length === 0 ? (
                 <Card>
-                  <CardContent className="pt-6 text-center">
-                    <FileImage className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                    <p className="text-muted-foreground">Nenhuma arte encontrada para este email.</p>
+                  <CardContent className="pt-6">
+                    <EmptyState
+                      icon={FileImage}
+                      title="Nenhuma arte encontrada"
+                      description="Não encontramos artes atribuídas para este email."
+                    />
                   </CardContent>
                 </Card>
               ) : (
