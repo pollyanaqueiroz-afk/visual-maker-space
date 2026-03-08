@@ -1186,7 +1186,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                       status === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50 text-green-400' :
                       status === 'em_andamento' ? 'bg-primary/30 ring-2 ring-primary text-primary animate-pulse' :
                       status === 'atrasada' ? 'bg-red-500/30 ring-2 ring-red-500/50 text-red-400' :
-                      'bg-white/10 text-white/30'
+                      'bg-white/10 text-white/50'
                     } ${isSelected ? 'ring-2 ring-primary/50' : ''}`}>
                       {status === 'concluida' ? <CheckCircle2 className="h-5 w-5" /> :
                        status === 'atrasada' ? <AlertTriangle className="h-5 w-5" /> :
