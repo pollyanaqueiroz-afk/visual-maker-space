@@ -843,7 +843,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
               <p className="text-[10px] text-green-400/70 mt-1">✅ {format(new Date(item.feito_em), "dd/MM/yyyy 'às' HH:mm")}</p>
             )}
             {!canEdit && item.feito && (
-              <p className="text-[10px] text-amber-400/70 flex items-center gap-1 mt-1"><Lock className="h-3 w-3" /> Somente visualização</p>
+              <p className="text-[10px] text-amber-400/80 flex items-center gap-1 mt-1"><Lock className="h-3 w-3" /> Somente visualização</p>
             )}
             {renderStepGuide(item.texto, item.id)}
             {item.texto === ADMIN_APPLE_TEXT && (
