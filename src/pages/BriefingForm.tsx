@@ -499,10 +499,15 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
                 {step === 2 && 'Passo 2 — Escolha as artes'}
                 {step === 3 && 'Passo 3 — Briefing das artes'}
               </h1>
-              {/* Progress bar */}
+              {/* Animated step indicator */}
               <div className="flex gap-2 mt-4">
                 {[1, 2, 3].map(s => (
-                  <div key={s} className={`h-1.5 rounded-full transition-all duration-300 ${s <= step ? 'bg-white w-12' : 'bg-white/30 w-8'}`} />
+                  <motion.div
+                    key={s}
+                    className={`h-1.5 rounded-full ${s <= step ? 'bg-white' : 'bg-white/30'}`}
+                    animate={{ width: s <= step ? 48 : 32 }}
+                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                  />
                 ))}
               </div>
             </>
