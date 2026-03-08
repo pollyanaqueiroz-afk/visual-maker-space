@@ -81,11 +81,20 @@ interface Meeting {
   meeting_url: string | null;
   client_name: string | null;
   client_email: string | null;
+  client_url: string | null;
   participants: string[];
   status: string;
   notes: string | null;
   created_by: string | null;
   created_at: string;
+  meeting_reason: string | null;
+  reschedule_reason: string | null;
+  loyalty_index: number | null;
+  loyalty_reason: string | null;
+  minutes_url: string | null;
+  recording_url: string | null;
+  funil_status: string | null;
+  funil_notas: string | null;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
