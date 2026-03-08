@@ -289,7 +289,28 @@ export default function AplicativosPage() {
     })();
     const publicados = clientes.filter(c => c.fase_atual >= 6);
     const progressoList = clientes.filter(c => c.fase_atual < 6).sort((a, b) => b.porcentagem_geral - a.porcentagem_geral);
-    return { abertos, atrasadosList, etapasAtrasadasList, publicados, progressoList };
+    // Clients needing attention: SLA violated or status atrasado (deduplicated)
+    const atencaoIds = new Set<string>();
+    const atencaoList: (AppCliente & { motivo: string })[] = [];
+    for (const c of clientes) {
+      if (c.status === 'atrasado' && !atencaoIds.has(c.id)) {
+        atencaoIds.add(c.id);
+        atencaoList.push({ ...c, motivo: 'Cliente inativo' });
+      }
+    }
+    for (const f of fases.filter(f => f.sla_violado)) {
+      const c = clientes.find(cl => cl.id === f.cliente_id);
+      if (c && !atencaoIds.has(c.id)) {
+        atencaoIds.add(c.id);
+        atencaoList.push({ ...c, motivo: `SLA vencido — Fase ${f.numero}` });
+      } else if (c && atencaoIds.has(c.id)) {
+        const existing = atencaoList.find(a => a.id === c.id);
+        if (existing && existing.motivo === 'Cliente inativo') {
+          existing.motivo = `Cliente inativo + SLA vencido`;
+        }
+      }
+    }
+    return { abertos, atrasadosList, etapasAtrasadasList, publicados, progressoList, atencaoList };
   }, [clientes, fases]);
 
   const columns = useMemo(() => {
@@ -630,10 +651,44 @@ export default function AplicativosPage() {
 
       {/* Alert banner */}
       {(slaViolados > 0 || atrasados > 0) && (
-        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+        <div
+          className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive cursor-pointer hover:bg-destructive/10 transition-colors"
+          onClick={() => setExpandedKpi(prev => prev === 'atencao' ? null : 'atencao')}
+        >
           <AlertTriangle className="h-4 w-4 shrink-0" />
-          <span>{slaViolados + atrasados} clientes precisam de atenção — SLA vencido ou cliente inativo</span>
+          <span className="flex-1">{kpiClientLists.atencaoList.length} clientes precisam de atenção — SLA vencido ou cliente inativo</span>
+          <ChevronRight className={`h-4 w-4 shrink-0 transition-transform ${expandedKpi === 'atencao' ? 'rotate-90' : ''}`} />
         </div>
+      )}
+      {expandedKpi === 'atencao' && kpiClientLists.atencaoList.length > 0 && (
+        <Card className="border-destructive/30">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-semibold">🚨 Clientes que precisam de atenção ({kpiClientLists.atencaoList.length})</p>
+              <Button variant="ghost" size="sm" className="text-xs h-6" onClick={() => setExpandedKpi(null)}>Fechar</Button>
+            </div>
+            <div className="space-y-1.5 max-h-60 overflow-y-auto">
+              {kpiClientLists.atencaoList.map((c: any) => (
+                <div
+                  key={c.id}
+                  className="flex items-center gap-3 p-2.5 rounded-md bg-muted/30 hover:bg-muted/50 cursor-pointer transition-colors"
+                  onClick={() => navigate(`/hub/aplicativos/${c.id}`)}
+                >
+                  <PlatformIcon plataforma={c.plataforma} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{c.nome}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">{c.empresa}</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge variant="outline" className="text-[10px]">Fase {c.fase_atual}</Badge>
+                    <Badge variant="destructive" className="text-[10px]">{c.motivo}</Badge>
+                  </div>
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Tabs */}
