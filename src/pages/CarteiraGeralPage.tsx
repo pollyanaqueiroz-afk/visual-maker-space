@@ -140,7 +140,8 @@ export default function CarteiraGeralPage() {
   const [summaryInadimplentes, setSummaryInadimplentes] = useState<number | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ClientRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
-  
+  const [activeKPI, setActiveKPI] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const columns = VIEW_COLUMNS[activeView];
 
@@ -160,6 +161,12 @@ export default function CarteiraGeralPage() {
         fetchUrl += `&cs_email_atual=${encodeURIComponent(userEmail)}`;
       } else if (isAdmin && csFilter) {
         fetchUrl += `&cs_email_atual=${encodeURIComponent(csFilter)}`;
+      }
+      // KPI filter
+      if (activeKPI === 'adimplentes') {
+        fetchUrl += `&status_inadimplencia=Adimplente`;
+      } else if (activeKPI === 'inadimplentes') {
+        fetchUrl += `&status_inadimplencia=Inadimplente`;
       }
 
       const res = await fetch(fetchUrl, {
@@ -181,14 +188,64 @@ export default function CarteiraGeralPage() {
       setApiPage(result.page || 1);
       setApiTotalPages(result.total_pages || 1);
       setApiTotal(result.total || 0);
+      setLoadError(null);
     } catch (err: any) {
-      console.error(err);
-      toast.error(`Erro ao carregar dados: ${err.message}`);
+      console.error('API externa falhou, tentando banco local:', err);
+
+      // Fallback: buscar da tabela clients do Supabase
+      try {
+        let query = supabase
+          .from('clients')
+          .select('*', { count: 'exact' })
+          .order('client_name')
+          .range((page - 1) * PER_PAGE, page * PER_PAGE - 1);
+
+        if (searchTerm) {
+          query = query.or(`client_name.ilike.%${searchTerm}%,client_url.ilike.%${searchTerm}%,id_curseduca.ilike.%${searchTerm}%`);
+        }
+
+        const { data: localData, error: localErr, count } = await query;
+
+        if (localErr) throw localErr;
+
+        const mapped = (localData || []).map(c => ({
+          id_curseduca: c.id_curseduca,
+          cliente_nome: c.client_name,
+          status_financeiro: c.status_financeiro === 'Ativa' ? 'ATIVA' : c.status_financeiro,
+          status_financeiro_inadimplencia: c.valor_total_devido && Number(c.valor_total_devido) > 0 ? 'Inadimplente' : 'Adimplente',
+          fatura_total: c.valor_mensal,
+          plano_base_consolidada: c.plano_contratado,
+          cs_atual: c.nome_do_cs_atual,
+          cs_nome: c.nome_do_cs_atual,
+          cs_email_atual: c.email_do_cs_atual || c.e_mail_do_cs_atual,
+          etapa_do_cs: c.tipo_de_cs,
+          plataforma_nome: c.nome_da_plataforma,
+          url_plataforma: c.client_url,
+          data_ultimo_login: c.data_do_ultimo_login,
+          dias_desde_ultimo_login: c.dias_desde_o_ultimo_login,
+          numero_alunos: c.membros_do_mes_atual,
+          player_banda_utilizada_gb: c.banda_utilizada,
+          player_armazenamento_utilizado_gb: c.armazenamento_utilizado,
+          ia_tokens_utilizados: c.token_de_ia_utilizado,
+          certificados_mec_utilizados: c.certificado_mec_utilizado,
+        }));
+
+        setClientRecords(mapped);
+        setApiTotal(count || mapped.length);
+        setApiTotalPages(Math.ceil((count || mapped.length) / PER_PAGE));
+        setLoadError(null);
+
+        toast.info('Dados carregados do banco local (API externa indisponível)');
+      } catch (fallbackErr: any) {
+        console.error('Fallback also failed:', fallbackErr);
+        setLoadError(`API externa: ${err.message}. Fallback: ${fallbackErr.message}`);
+        toast.error(`Erro ao carregar dados: ${err.message}`);
+      }
     } finally {
       setInitialLoading(false);
       setPageLoading(false);
     }
-  }, [clientRecords.length, isCs, isAdmin, userEmail, csFilter]);
+  }, [clientRecords.length, isCs, isAdmin, userEmail, csFilter, activeKPI]);
 
   // Debounce search
   useEffect(() => {
@@ -202,7 +259,7 @@ export default function CarteiraGeralPage() {
 
   useEffect(() => {
     loadData(apiPage, debouncedSearch, activeView);
-  }, [apiPage, debouncedSearch, activeView, csFilter]);
+  }, [apiPage, debouncedSearch, activeView, csFilter, activeKPI]);
 
   // When switching tabs, reset to page 1
   const handleViewChange = (view: string) => {
@@ -247,7 +304,6 @@ export default function CarteiraGeralPage() {
       try {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-        // Fetch all clients (page 1, large per_page) to extract unique CS emails
         const res = await fetch(
           `${supabaseUrl}/functions/v1/fetch-hub-summary?endpoint=clientes&view=financeiro&page=1&per_page=1000`,
           { headers: { 'Authorization': `Bearer ${supabaseKey}`, 'apikey': supabaseKey } }
@@ -260,7 +316,6 @@ export default function CarteiraGeralPage() {
               csMap.set(c.cs_email_atual, c.cs_atual);
             }
           });
-          // Store as "email|||name" for display
           const entries = Array.from(csMap.entries())
             .sort((a, b) => a[1].localeCompare(b[1]));
           setAvailableCs(entries.map(([email]) => email));
@@ -273,15 +328,26 @@ export default function CarteiraGeralPage() {
     loadCsList();
   }, [isAdmin]);
 
-  const filteredRecords = clientRecords;
-
-
-
+  // Filter records locally for KPI filters
+  const filteredRecords = useMemo(() => {
+    if (!activeKPI || activeKPI === 'total') return clientRecords;
+    return clientRecords.filter(row => {
+      if (activeKPI === 'adimplentes') return row.status_financeiro_inadimplencia === 'Adimplente';
+      if (activeKPI === 'inadimplentes') return row.status_financeiro_inadimplencia === 'Inadimplente';
+      if (activeKPI === 'receita') return row.fatura_total && Number(row.fatura_total) > 0;
+      return true;
+    });
+  }, [clientRecords, activeKPI]);
 
   const stats = useMemo(() => ({
     total: summaryTotal ?? apiTotal,
     totalRevenue: summaryReceita ?? 0,
   }), [summaryTotal, summaryReceita, apiTotal]);
+
+  const toggleKPI = (kpi: string) => {
+    setActiveKPI(prev => prev === kpi ? null : kpi);
+    setApiPage(1);
+  };
 
   const handleDeleteClient = useCallback(async () => {
     if (!deleteTarget?.id) return;
@@ -317,14 +383,20 @@ export default function CarteiraGeralPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card>
+        <Card
+          className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'total' ? 'ring-2 ring-primary' : ''}`}
+          onClick={() => toggleKPI('total')}
+        >
           <CardContent className="p-4 flex flex-col items-center text-center gap-1">
             <Globe className="h-5 w-5 text-foreground" />
             <span className="text-2xl font-bold text-foreground">{new Intl.NumberFormat('pt-BR').format(stats.total)}</span>
             <span className="text-[11px] text-muted-foreground">Total de Clientes</span>
           </CardContent>
         </Card>
-        <Card>
+        <Card
+          className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'receita' ? 'ring-2 ring-primary' : ''}`}
+          onClick={() => toggleKPI('receita')}
+        >
           <CardContent className="p-4 flex flex-col items-center text-center gap-1">
             <DollarSign className="h-5 w-5 text-primary" />
             <span className="text-2xl font-bold text-foreground">
@@ -345,14 +417,20 @@ export default function CarteiraGeralPage() {
             </span>
           </CardContent>
         </Card>
-        <Card>
+        <Card
+          className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'adimplentes' ? 'ring-2 ring-emerald-500' : ''}`}
+          onClick={() => toggleKPI('adimplentes')}
+        >
           <CardContent className="p-4 flex flex-col items-center text-center gap-1">
             <CheckCircle className="h-5 w-5 text-emerald-500" />
             <span className="text-2xl font-bold text-emerald-600">{summaryAdimplentes != null ? new Intl.NumberFormat('pt-BR').format(summaryAdimplentes) : '—'}</span>
             <span className="text-[11px] text-muted-foreground">Adimplentes</span>
           </CardContent>
         </Card>
-        <Card>
+        <Card
+          className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'inadimplentes' ? 'ring-2 ring-destructive' : ''}`}
+          onClick={() => toggleKPI('inadimplentes')}
+        >
           <CardContent className="p-4 flex flex-col items-center text-center gap-1">
             <AlertTriangle className="h-5 w-5 text-destructive" />
             <span className="text-2xl font-bold text-destructive">{summaryInadimplentes != null ? new Intl.NumberFormat('pt-BR').format(summaryInadimplentes) : '—'}</span>
@@ -360,6 +438,23 @@ export default function CarteiraGeralPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Active KPI filter indicator */}
+      {activeKPI && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50">
+          <span className="text-sm text-muted-foreground">
+            Filtrando por: <span className="font-semibold text-foreground">
+              {activeKPI === 'total' ? 'Todos os clientes' :
+               activeKPI === 'receita' ? 'Clientes com receita' :
+               activeKPI === 'adimplentes' ? 'Adimplentes' :
+               'Inadimplentes'}
+            </span>
+          </span>
+          <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => { setActiveKPI(null); setApiPage(1); }}>
+            Limpar filtro ✕
+          </Button>
+        </div>
+      )}
 
       {/* View Tabs */}
       <Tabs value={activeView} onValueChange={handleViewChange}>
@@ -410,7 +505,14 @@ export default function CarteiraGeralPage() {
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
             <Users className="h-4 w-4" />
-            Clientes ({apiTotal})
+            Clientes ({activeKPI ? filteredRecords.length : apiTotal})
+            {activeKPI && (
+              <Badge variant="outline" className="text-[10px] ml-1">
+                {activeKPI === 'adimplentes' ? 'Adimplentes' :
+                 activeKPI === 'inadimplentes' ? 'Inadimplentes' :
+                 activeKPI === 'receita' ? 'Com receita' : 'Todos'}
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -418,14 +520,25 @@ export default function CarteiraGeralPage() {
           <TablePagination
             currentPage={apiPage}
             totalPages={apiTotalPages}
-            totalRecords={apiTotal}
+            totalRecords={activeKPI ? filteredRecords.length : apiTotal}
             perPage={PER_PAGE}
             loading={pageLoading}
             onPageChange={setApiPage}
           />
 
-          {clientRecords.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Nenhum cliente encontrado</p>
+          {filteredRecords.length === 0 ? (
+            loadError ? (
+              <div className="text-center py-8 space-y-2">
+                <AlertTriangle className="h-8 w-8 text-destructive mx-auto" />
+                <p className="text-sm text-destructive font-medium">Erro ao carregar clientes</p>
+                <p className="text-xs text-muted-foreground max-w-md mx-auto">{loadError}</p>
+                <Button variant="outline" size="sm" onClick={() => loadData(1, '', activeView)}>
+                  <RefreshCw className="h-3 w-3 mr-1" /> Tentar novamente
+                </Button>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-8">Nenhum cliente encontrado</p>
+            )
           ) : (
             <div className="relative w-full overflow-x-auto">
               {pageLoading && (
@@ -499,7 +612,7 @@ export default function CarteiraGeralPage() {
           <TablePagination
             currentPage={apiPage}
             totalPages={apiTotalPages}
-            totalRecords={apiTotal}
+            totalRecords={activeKPI ? filteredRecords.length : apiTotal}
             perPage={PER_PAGE}
             loading={pageLoading}
             onPageChange={setApiPage}
