@@ -55,7 +55,7 @@ const adminModules = [
 export function HubSidebar() {
   const { state } = useSidebar();
   const { signOut } = useAuth();
-  const { hasPermission, loading: permsLoading } = usePermissions();
+  const { hasPermission, hasRole, loading: permsLoading } = usePermissions();
   const location = useLocation();
   const collapsed = state === 'collapsed';
 
