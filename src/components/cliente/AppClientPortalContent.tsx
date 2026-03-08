@@ -814,13 +814,47 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                <p className={`text-sm font-medium ${item.feito ? 'text-green-400' : 'text-white'}`}>{item.texto}</p>
               {renderStepGuide(item.texto, item.id)}
               {sitePromptId === item.id && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="mt-3 space-y-2 overflow-hidden">
-                  <Label className="text-xs text-white/70">URL do seu site</Label>
-                  <Input type="url" placeholder="https://www.suaempresa.com.br" value={siteInput} onChange={e => setSiteInput(e.target.value.trim())} className="bg-white/5 border-white/10 text-white text-sm" />
-                  {siteInput && !isValidSite && <p className="text-[10px] text-amber-400">Use um domínio próprio</p>}
-                  <div className="flex gap-2">
-                    <Button size="sm" className="flex-1" disabled={!isValidSite} onClick={() => { toggleCheck.mutate({ id: item.id, feito: true }); setSitePromptId(null); setSiteInput(''); toast.success('Site confirmado!'); }}>Confirmar</Button>
-                    <Button size="sm" variant="ghost" onClick={() => { setSitePromptId(null); setSiteInput(''); }}>Cancelar</Button>
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="mt-3 overflow-hidden">
+                  <div className="space-y-3 rounded-lg bg-white/5 border border-white/10 p-4">
+                    <p className="text-sm font-medium text-white/90">Como deseja configurar o domínio do app?</p>
+                    
+                    {/* Option 1: Own domain */}
+                    <button onClick={() => setSiteOption('proprio')}
+                      className={`w-full p-3 rounded-lg border text-left transition-all ${siteOption === 'proprio' ? 'border-primary bg-primary/10' : 'border-white/10 bg-white/5 hover:bg-white/8'}`}>
+                      <p className="text-sm font-medium text-white/90">🌐 Tenho um site com domínio próprio</p>
+                      <p className="text-xs text-white/50 mt-0.5">Informarei a URL do meu site</p>
+                    </button>
+                    
+                    {siteOption === 'proprio' && (
+                      <div className="pl-4 space-y-2">
+                        <Input type="url" placeholder="https://www.suaempresa.com.br" value={siteInput}
+                          onChange={e => setSiteInput(e.target.value.trim())}
+                          className="bg-white/5 border-white/10 text-white text-sm" />
+                        {siteInput && !isValidSite && <p className="text-[10px] text-amber-400">Use um domínio próprio (não pode ser wixsite, blogspot, etc.)</p>}
+                      </div>
+                    )}
+
+                    {/* Option 2: Use Curseduca URL */}
+                    <button onClick={() => setSiteOption('curseduca')}
+                      className={`w-full p-3 rounded-lg border text-left transition-all ${siteOption === 'curseduca' ? 'border-primary bg-primary/10' : 'border-white/10 bg-white/5 hover:bg-white/8'}`}>
+                      <p className="text-sm font-medium text-white/90">✅ Autorizo usar minha URL da Curseduca</p>
+                      <p className="text-xs text-white/50 mt-0.5">Usar <span className="text-primary font-medium">{cliente?.empresa}</span> como domínio</p>
+                    </button>
+
+                    <div className="flex gap-2 pt-1">
+                      <Button size="sm" className="flex-1"
+                        disabled={(siteOption === 'proprio' && !isValidSite) || !siteOption}
+                        onClick={() => {
+                          toggleCheck.mutate({ id: item.id, feito: true });
+                          setSiteOption(null); setSiteInput(''); setSitePromptId(null);
+                          toast.success(siteOption === 'curseduca' ? 'Autorização registrada! ✅' : 'Site confirmado! ✅');
+                        }}>
+                        Confirmar
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => { setSiteOption(null); setSiteInput(''); setSitePromptId(null); }}>
+                        Cancelar
+                      </Button>
+                    </div>
                   </div>
                 </motion.div>
               )}
