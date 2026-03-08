@@ -1597,7 +1597,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
               <Button
                 variant="outline"
                 className="w-full border-primary/30 text-primary hover:bg-primary/10"
-                onClick={() => navigate('/cliente/solicitar?mockup=1')}
+                onClick={() => setShowMockupModal(true)}
               >
                 <Palette className="h-4 w-4 mr-2" /> Solicitar Mockup do Aplicativo
               </Button>
