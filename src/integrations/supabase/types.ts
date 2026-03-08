@@ -73,6 +73,41 @@ export type Database = {
           },
         ]
       }
+      app_checklist_historico: {
+        Row: {
+          checklist_item_id: string
+          created_at: string
+          dados_anteriores: string | null
+          dados_novos: string | null
+          editado_por: string
+          id: string
+        }
+        Insert: {
+          checklist_item_id: string
+          created_at?: string
+          dados_anteriores?: string | null
+          dados_novos?: string | null
+          editado_por?: string
+          id?: string
+        }
+        Update: {
+          checklist_item_id?: string
+          created_at?: string
+          dados_anteriores?: string | null
+          dados_novos?: string | null
+          editado_por?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_checklist_historico_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "app_checklist_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_checklist_items: {
         Row: {
           aprovado_em: string | null
@@ -81,6 +116,7 @@ export type Database = {
           cliente_id: string | null
           comentario_cliente: string | null
           created_at: string | null
+          dados_preenchidos: string | null
           descricao: string | null
           fase_numero: number
           feito: boolean | null
@@ -91,6 +127,7 @@ export type Database = {
           ordem: number | null
           texto: string
           tipo: string | null
+          updated_at: string | null
           upload_dimensoes_ok: boolean | null
           upload_motivo_rejeicao: string | null
           upload_url: string | null
@@ -103,6 +140,7 @@ export type Database = {
           cliente_id?: string | null
           comentario_cliente?: string | null
           created_at?: string | null
+          dados_preenchidos?: string | null
           descricao?: string | null
           fase_numero: number
           feito?: boolean | null
@@ -113,6 +151,7 @@ export type Database = {
           ordem?: number | null
           texto: string
           tipo?: string | null
+          updated_at?: string | null
           upload_dimensoes_ok?: boolean | null
           upload_motivo_rejeicao?: string | null
           upload_url?: string | null
@@ -125,6 +164,7 @@ export type Database = {
           cliente_id?: string | null
           comentario_cliente?: string | null
           created_at?: string | null
+          dados_preenchidos?: string | null
           descricao?: string | null
           fase_numero?: number
           feito?: boolean | null
@@ -135,6 +175,7 @@ export type Database = {
           ordem?: number | null
           texto?: string
           tipo?: string | null
+          updated_at?: string | null
           upload_dimensoes_ok?: boolean | null
           upload_motivo_rejeicao?: string | null
           upload_url?: string | null
