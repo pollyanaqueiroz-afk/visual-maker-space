@@ -9,14 +9,21 @@ interface KpiCardProps {
   color: string;
   trend?: string;
   className?: string;
+  onClick?: () => void;
+  active?: boolean;
 }
 
-export function KpiCard({ label, value, icon: Icon, color, trend, className }: KpiCardProps) {
+export function KpiCard({ label, value, icon: Icon, color, trend, className, onClick, active }: KpiCardProps) {
   return (
-    <Card className={cn(
-      "relative overflow-hidden border-none shadow-[var(--shadow-kpi)] hover:shadow-[var(--shadow-elevated)] transition-all duration-300",
-      className
-    )}>
+    <Card 
+      className={cn(
+        "relative overflow-hidden border-none shadow-[var(--shadow-kpi)] hover:shadow-[var(--shadow-elevated)] transition-all duration-300",
+        onClick && "cursor-pointer hover:scale-[1.02]",
+        active && "ring-2 ring-primary shadow-[var(--shadow-elevated)]",
+        className
+      )}
+      onClick={onClick}
+    >
       <CardContent className="p-5 flex items-start justify-between gap-3">
         <div className="flex flex-col gap-1 min-w-0">
           <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</span>
