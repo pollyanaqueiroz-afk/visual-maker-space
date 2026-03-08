@@ -115,6 +115,10 @@ export default function Dashboard() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activeKPI, setActiveKPI] = useState<string | null>(null);
   const [reviewSearch, setReviewSearch] = useState('');
+  const [artesPage, setArtesPage] = useState(1);
+  const ARTES_PER_PAGE = 25;
+  const [sortBy, setSortBy] = useState<string>('created_at');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
   const toggleKPI = (kpi: string) => {
     setActiveKPI(prev => {
