@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
 import {
   Search, FileImage, Smartphone, GraduationCap, CheckCircle, Clock,
   AlertTriangle, XCircle, Loader2, Eye, ExternalLink, Users, ClipboardCheck
@@ -45,10 +46,11 @@ export default function ProcessosImplantacaoPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterProcess, setFilterProcess] = useState<string>('all');
   const [selectedClientUrl, setSelectedClientUrl] = useState<string | null>(null);
+  const [activeKPI, setActiveKPI] = useState<string | null>(null);
 
-  // CS vê só seus clientes; admin/gerente/analista vêem todos
   const isCS = !hasRole('admin') && !hasRole('gerente_implantacao') && !hasRole('analista_implantacao') && !hasRole('gerente_cs');
   const userEmail = user?.email || '';
+  const [filterCS, setFilterCS] = useState<string>(isCS ? userEmail : 'all');
 
   // Queries
   const { data: allClients = [], isLoading } = useQuery({
@@ -109,7 +111,29 @@ export default function ProcessosImplantacaoPage() {
     },
   });
 
-  // Consolidar por client_url
+  const { data: allChecklist = [] } = useQuery({
+    queryKey: ['processos-checklist'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('app_checklist_items')
+        .select('id, cliente_id, fase_numero, texto, ator, feito, plataforma, responsavel, sla_vencimento')
+        .eq('feito', false);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // CS list for filter
+  const uniqueCS = useMemo(() => {
+    const names = allClients
+      .map(c => ({ nome: c.nome_do_cs_atual, email: (c.email_do_cs_atual || c.e_mail_do_cs_atual || '').toLowerCase() }))
+      .filter(c => c.nome && c.email);
+    const unique = new Map<string, string>();
+    names.forEach(c => { if (!unique.has(c.email)) unique.set(c.email, c.nome!); });
+    return Array.from(unique.entries()).map(([email, nome]) => ({ email, nome })).sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [allClients]);
+
+  // Consolidate by client_url
   const consolidatedData = useMemo(() => {
     return allClients.map(client => {
       const url = client.client_url;
@@ -132,6 +156,17 @@ export default function ProcessosImplantacaoPage() {
       const hasScorm = clientScorm.length > 0;
       const hasAnyProcess = hasOpenBriefing || hasOpenApp || hasScorm;
 
+      // Overdue detection
+      const briefingOverdue = clientBriefings.some((img: any) => {
+        if (img.status === 'completed' || img.status === 'cancelled') return false;
+        if (img.deadline) return new Date(img.deadline) < new Date();
+        return new Date(img.created_at).getTime() + 7 * 24 * 60 * 60 * 1000 < Date.now();
+      });
+
+      const appFasesCliente = allFases.filter(f => f.cliente_id === appCliente?.id);
+      const appOverdue = appFasesCliente.some(f => f.status === 'atrasada');
+      const isOverdue = briefingOverdue || appOverdue;
+
       return {
         ...client,
         briefing: { total: briefingTotal, completed: briefingCompleted, pending: briefingPending, review: briefingReview, open: briefingOpen },
@@ -141,18 +176,21 @@ export default function ProcessosImplantacaoPage() {
         hasScorm,
         hasOpenBriefing,
         hasAnyProcess,
+        briefingOverdue,
+        appOverdue,
+        isOverdue,
       };
     });
-  }, [allClients, briefingImages, appClientes, scormPackages]);
+  }, [allClients, briefingImages, appClientes, scormPackages, allFases]);
 
-  // Filtros
+  // Filters
   const filteredClients = useMemo(() => {
     let result = consolidatedData.filter(c => c.hasAnyProcess);
 
-    if (isCS && userEmail) {
+    if (filterCS !== 'all') {
       result = result.filter(c => {
         const csEmail = (c.email_do_cs_atual || c.e_mail_do_cs_atual || '').toLowerCase();
-        return csEmail === userEmail.toLowerCase();
+        return csEmail === filterCS.toLowerCase();
       });
     }
 
@@ -171,19 +209,19 @@ export default function ProcessosImplantacaoPage() {
     if (filterProcess === 'scorm') result = result.filter(c => c.hasScorm);
 
     return result;
-  }, [consolidatedData, isCS, userEmail, searchQuery, filterProcess]);
+  }, [consolidatedData, filterCS, searchQuery, filterProcess]);
 
-  // KPIs
-  const baseList = isCS ? consolidatedData.filter(c => {
+  // KPIs - based on CS filter
+  const baseList = filterCS !== 'all' ? consolidatedData.filter(c => {
     const csEmail = (c.email_do_cs_atual || c.e_mail_do_cs_atual || '').toLowerCase();
-    return csEmail === userEmail.toLowerCase();
+    return csEmail === filterCS.toLowerCase();
   }) : consolidatedData;
   const totalWithProcess = baseList.filter(c => c.hasAnyProcess).length;
   const totalWithBriefing = baseList.filter(c => c.hasOpenBriefing).length;
   const totalWithApp = baseList.filter(c => c.appOpen).length;
   const totalWithScorm = baseList.filter(c => c.hasScorm).length;
 
-  // Detalhe
+  // Detail
   const selectedClient = selectedClientUrl ? consolidatedData.find(c => c.client_url === selectedClientUrl) : null;
   const selectedBriefings = selectedClientUrl ? briefingImages.filter((img: any) => img.briefing_requests?.platform_url === selectedClientUrl) : [];
   const selectedAppFases = selectedClient?.app ? allFases.filter(f => f.cliente_id === selectedClient.app!.id) : [];
@@ -197,33 +235,54 @@ export default function ProcessosImplantacaoPage() {
         </p>
       </div>
 
-      {/* KPIs */}
+      {/* KPIs - clickable */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card><CardContent className="pt-4 pb-3 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center"><Users className="h-4 w-4" /></div>
-          <div><p className="text-xl font-bold">{totalWithProcess}</p><p className="text-[11px] text-muted-foreground">Clientes com processos</p></div>
-        </CardContent></Card>
-        <Card><CardContent className="pt-4 pb-3 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center"><FileImage className="h-4 w-4 text-primary" /></div>
-          <div><p className="text-xl font-bold">{totalWithBriefing}</p><p className="text-[11px] text-muted-foreground">Com design em aberto</p></div>
-        </CardContent></Card>
-        <Card><CardContent className="pt-4 pb-3 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-blue-500/10 flex items-center justify-center"><Smartphone className="h-4 w-4 text-blue-500" /></div>
-          <div><p className="text-xl font-bold">{totalWithApp}</p><p className="text-[11px] text-muted-foreground">Com app em andamento</p></div>
-        </CardContent></Card>
-        <Card><CardContent className="pt-4 pb-3 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-purple-500/10 flex items-center justify-center"><GraduationCap className="h-4 w-4 text-purple-500" /></div>
-          <div><p className="text-xl font-bold">{totalWithScorm}</p><p className="text-[11px] text-muted-foreground">Com SCORM</p></div>
-        </CardContent></Card>
+        {[
+          { key: 'all', value: totalWithProcess, label: 'Clientes com processos', icon: <Users className="h-4 w-4" />, bg: 'bg-muted' },
+          { key: 'briefing', value: totalWithBriefing, label: 'Com design em aberto', icon: <FileImage className="h-4 w-4 text-primary" />, bg: 'bg-primary/10' },
+          { key: 'app', value: totalWithApp, label: 'Com app em andamento', icon: <Smartphone className="h-4 w-4 text-blue-500" />, bg: 'bg-blue-500/10' },
+          { key: 'scorm', value: totalWithScorm, label: 'Com SCORM', icon: <GraduationCap className="h-4 w-4 text-purple-500" />, bg: 'bg-purple-500/10' },
+        ].map(kpi => (
+          <Card
+            key={kpi.key}
+            className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === kpi.key ? 'ring-2 ring-primary' : ''}`}
+            onClick={() => {
+              if (activeKPI === kpi.key) {
+                setActiveKPI(null);
+                setFilterProcess('all');
+              } else {
+                setActiveKPI(kpi.key);
+                setFilterProcess(kpi.key === 'all' ? 'all' : kpi.key);
+              }
+            }}
+          >
+            <CardContent className="pt-4 pb-3 flex items-center gap-3">
+              <div className={`w-9 h-9 rounded-full ${kpi.bg} flex items-center justify-center`}>{kpi.icon}</div>
+              <div>
+                <p className="text-xl font-bold">{kpi.value}</p>
+                <p className="text-[11px] text-muted-foreground">{kpi.label}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      {/* Filtros */}
+      {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative w-72">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar por nome, URL, Curseduca ID ou email..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-9" />
+          <Input placeholder="Buscar por nome, URL, ID ou email..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-9" />
         </div>
-        <Select value={filterProcess} onValueChange={setFilterProcess}>
+        <Select value={filterCS} onValueChange={setFilterCS}>
+          <SelectTrigger className="w-56"><SelectValue placeholder="CS Responsável" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os CS</SelectItem>
+            {uniqueCS.map(cs => (
+              <SelectItem key={cs.email} value={cs.email}>{cs.nome}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={filterProcess} onValueChange={v => { setFilterProcess(v); setActiveKPI(v === 'all' ? null : v); }}>
           <SelectTrigger className="w-52"><SelectValue placeholder="Tipo de processo" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos os processos</SelectItem>
@@ -235,7 +294,7 @@ export default function ProcessosImplantacaoPage() {
         <span className="text-sm text-muted-foreground">{filteredClients.length} cliente(s)</span>
       </div>
 
-      {/* Tabela */}
+      {/* Table */}
       {isLoading ? (
         <div className="text-center py-12"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></div>
       ) : (
@@ -255,36 +314,102 @@ export default function ProcessosImplantacaoPage() {
             </TableHeader>
             <TableBody>
               {filteredClients.map(c => (
-                <TableRow key={c.id} className="cursor-pointer hover:bg-muted/30" onClick={() => setSelectedClientUrl(c.client_url)}>
+                <TableRow
+                  key={c.id}
+                  className={`cursor-pointer hover:bg-muted/30 ${c.isOverdue ? 'bg-destructive/5 border-l-4 border-destructive' : ''}`}
+                  onClick={() => setSelectedClientUrl(c.client_url)}
+                >
                   <TableCell>
-                    <div>
-                      <p className="font-medium text-sm">{c.client_name || c.client_url}</p>
-                      <p className="text-xs text-muted-foreground">{c.client_url}</p>
+                    <div className="flex items-center gap-2">
+                      {c.isOverdue && <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />}
+                      <div>
+                        <p className={`font-medium text-sm ${c.isOverdue ? 'text-destructive' : ''}`}>{c.client_name || c.client_url}</p>
+                        <p className="text-xs text-muted-foreground">{c.client_url}</p>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell><span className="text-xs font-mono text-muted-foreground">{c.id_curseduca || '—'}</span></TableCell>
                   <TableCell><span className="text-sm text-muted-foreground">{c.nome_do_cs_atual || '—'}</span></TableCell>
                   <TableCell><span className="text-xs text-muted-foreground">{c.plano_contratado || '—'}</span></TableCell>
+
+                  {/* Design column - enhanced */}
                   <TableCell className="text-center">
                     {c.briefing.total > 0 ? (
                       <div className="flex flex-col items-center gap-1">
-                        <Badge variant="outline" className="text-[9px] gap-0.5"><FileImage className="h-2.5 w-2.5" /> {c.briefing.completed}/{c.briefing.total}</Badge>
-                        {c.briefing.review > 0 && <Badge variant="outline" className="text-[9px] border-amber-500/30 text-amber-500">{c.briefing.review} aguardando</Badge>}
+                        <Badge variant="outline" className={`text-[9px] gap-0.5 ${c.briefingOverdue ? 'border-destructive/30 text-destructive' : ''}`}>
+                          <FileImage className="h-2.5 w-2.5" /> {c.briefing.completed}/{c.briefing.total}
+                        </Badge>
+                        {c.briefing.review > 0 && (
+                          <Badge variant="outline" className="text-[9px] border-purple-500/30 text-purple-500">{c.briefing.review} validação</Badge>
+                        )}
+                        {c.briefing.pending > 0 && (
+                          <Badge variant="outline" className="text-[9px] border-amber-500/30 text-amber-500">{c.briefing.pending} pendente{c.briefing.pending > 1 ? 's' : ''}</Badge>
+                        )}
+                        {c.briefingOverdue && (
+                          <Badge variant="destructive" className="text-[9px]">⚠️ Atrasado</Badge>
+                        )}
                       </div>
                     ) : <span className="text-xs text-muted-foreground">—</span>}
                   </TableCell>
+
+                  {/* App column - expanded */}
                   <TableCell className="text-center">
-                    {c.app ? (
-                      <Badge variant="outline" className={`text-[9px] ${
-                        c.app.status === 'concluido' ? 'border-green-500/30 text-green-500' :
-                        c.app.status === 'cancelado' ? 'border-destructive/30 text-destructive' :
-                        'border-blue-500/30 text-blue-500'
-                      }`}>
-                        <Smartphone className="h-2.5 w-2.5 mr-0.5" />
-                        {c.app.status === 'concluido' ? 'Publicado' : c.app.status === 'cancelado' ? 'Cancelado' : `${c.app.porcentagem_geral || 0}%`}
-                      </Badge>
-                    ) : <span className="text-xs text-muted-foreground">—</span>}
+                    {c.app ? (() => {
+                      const appFasesCliente = allFases.filter(f => f.cliente_id === c.app!.id);
+                      const fasesAtivas = appFasesCliente.filter(f => f.status === 'em_andamento' || f.status === 'atrasada');
+
+                      return (
+                        <div className="flex flex-col items-start gap-1 text-left">
+                          <div className="flex items-center gap-1.5 w-full">
+                            <Smartphone className="h-3 w-3 text-blue-500 shrink-0" />
+                            <Progress value={c.app!.porcentagem_geral || 0} className="h-1.5 flex-1" />
+                            <span className="text-[10px] font-medium shrink-0">{c.app!.porcentagem_geral || 0}%</span>
+                          </div>
+                          {c.app!.status === 'concluido' ? (
+                            <Badge variant="outline" className="text-[9px] border-green-500/30 text-green-500">✅ Publicado</Badge>
+                          ) : c.app!.status === 'cancelado' ? (
+                            <Badge variant="outline" className="text-[9px] border-destructive/30 text-destructive">❌ Cancelado</Badge>
+                          ) : (
+                            <>
+                              {fasesAtivas.map(fase => (
+                                <div key={`${fase.numero}-${fase.plataforma}`} className={`flex items-center gap-1 text-[10px] ${fase.status === 'atrasada' ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+                                  {fase.plataforma && fase.plataforma !== 'compartilhada' && (
+                                    <span>{fase.plataforma === 'google' ? '🤖' : '🍎'}</span>
+                                  )}
+                                  {fase.status === 'atrasada' && <AlertTriangle className="h-2.5 w-2.5" />}
+                                  <span>Fase {fase.numero}: {FASE_NAMES[fase.numero] || ''}</span>
+                                </div>
+                              ))}
+                              {fasesAtivas.length > 0 && (() => {
+                                const faseAtiva = fasesAtivas[0];
+                                const checklistFase = allChecklist.filter(i =>
+                                  i.cliente_id === c.app!.id &&
+                                  i.fase_numero === faseAtiva.numero &&
+                                  !i.feito &&
+                                  (i.plataforma === faseAtiva.plataforma || i.plataforma === 'compartilhada')
+                                );
+                                const pendingClientItems = checklistFase.filter(i => i.ator === 'cliente');
+                                const pendingInternalItems = checklistFase.filter(i => i.ator !== 'cliente');
+
+                                if (pendingClientItems.length > 0) {
+                                  return <Badge variant="outline" className="text-[9px] border-amber-500/30 text-amber-500">Aguardando cliente</Badge>;
+                                } else if (pendingInternalItems.length > 0) {
+                                  const responsavel = pendingInternalItems[0].responsavel;
+                                  return (
+                                    <Badge variant="outline" className="text-[9px] border-blue-500/30 text-blue-500">
+                                      {responsavel ? `Resp: ${responsavel}` : 'Equipe Curseduca'}
+                                    </Badge>
+                                  );
+                                }
+                                return null;
+                              })()}
+                            </>
+                          )}
+                        </div>
+                      );
+                    })() : <span className="text-xs text-muted-foreground">—</span>}
                   </TableCell>
+
                   <TableCell className="text-center">
                     {c.hasScorm ? (
                       <Badge variant="outline" className="text-[9px] border-purple-500/30 text-purple-500">
@@ -309,7 +434,7 @@ export default function ProcessosImplantacaoPage() {
         </Card>
       )}
 
-      {/* Dialog de detalhe */}
+      {/* Detail dialog */}
       <Dialog open={!!selectedClientUrl} onOpenChange={v => { if (!v) setSelectedClientUrl(null); }}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           {selectedClient && (
@@ -376,7 +501,7 @@ export default function ProcessosImplantacaoPage() {
                   )}
                 </TabsContent>
 
-                {/* APLICATIVO */}
+                {/* APP */}
                 <TabsContent value="app" className="mt-4 space-y-3">
                   {!selectedClient.app ? (
                     <p className="text-sm text-muted-foreground text-center py-8">Nenhuma solicitação de aplicativo</p>
@@ -421,6 +546,47 @@ export default function ProcessosImplantacaoPage() {
                         {selectedClient.app.data_criacao && <span>Criado: {format(new Date(selectedClient.app.data_criacao), 'dd/MM/yyyy')}</span>}
                         {selectedClient.app.prazo_estimado && <span>Prazo: {format(new Date(selectedClient.app.prazo_estimado), 'dd/MM/yyyy')}</span>}
                       </div>
+
+                      {/* Pending tasks */}
+                      {selectedClient.app.status !== 'concluido' && selectedClient.app.status !== 'cancelado' && (() => {
+                        const pendingItems = allChecklist.filter(i =>
+                          i.cliente_id === selectedClient.app!.id && !i.feito
+                        );
+                        if (pendingItems.length === 0) return null;
+                        return (
+                          <>
+                            <Separator />
+                            <div>
+                              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                                Tarefas pendentes ({pendingItems.length})
+                              </p>
+                              <div className="space-y-1">
+                                {pendingItems.sort((a, b) => a.fase_numero - b.fase_numero).map(item => {
+                                  const isLate = item.sla_vencimento && new Date(item.sla_vencimento) < new Date();
+                                  return (
+                                    <div key={item.id} className={`flex items-center justify-between px-3 py-1.5 rounded text-xs ${isLate ? 'bg-destructive/10 border border-destructive/20' : 'bg-muted/20'}`}>
+                                      <div className="flex items-center gap-2 min-w-0">
+                                        {isLate && <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />}
+                                        <span className={`truncate ${isLate ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+                                          F{item.fase_numero} — {item.texto}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center gap-2 shrink-0">
+                                        <Badge variant="outline" className={`text-[8px] ${item.ator === 'cliente' ? 'border-amber-500/30 text-amber-500' : 'border-blue-500/30 text-blue-500'}`}>
+                                          {item.ator === 'cliente' ? 'Cliente' : item.responsavel || 'Equipe'}
+                                        </Badge>
+                                        {item.plataforma && item.plataforma !== 'compartilhada' && (
+                                          <span className="text-[8px]">{item.plataforma === 'google' ? '🤖' : '🍎'}</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </>
                   )}
                 </TabsContent>
