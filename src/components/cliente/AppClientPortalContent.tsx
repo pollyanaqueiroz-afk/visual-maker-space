@@ -925,7 +925,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 </Badge>
               )}
               {fase.data_inicio && (
-                <span className="text-[10px] text-white/40">
+                <span className="text-[10px] text-white/50">
                   Iniciada em {format(new Date(fase.data_inicio), 'dd/MM/yyyy')}
                   {fase.data_conclusao && ` · Concluída em ${format(new Date(fase.data_conclusao), 'dd/MM/yyyy')}`}
                 </span>
