@@ -124,6 +124,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
   const [emailCorpPromptId, setEmailCorpPromptId] = useState<string | null>(null);
   const [siteInput, setSiteInput] = useState('');
   const [sitePromptId, setSitePromptId] = useState<string | null>(null);
+  const [siteOption, setSiteOption] = useState<'proprio' | 'curseduca' | null>(null);
   const [confirmingItemId, setConfirmingItemId] = useState<string | null>(null);
   const [viewingItemId, setViewingItemId] = useState<string | null>(null);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
@@ -442,19 +443,22 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     return fases.find((f: any) => f.numero === num);
   };
 
-  // Get items for a fase + platform filter (client-visible only)
-  const getItemsForFase = (faseNum: number, plataforma?: string) => {
+  // Get ALL items for a fase + platform filter (for display)
+  const getAllItemsForFase = (faseNum: number, plataforma?: string) => {
     return checklist.filter((i: any) => {
       if (i.fase_numero !== faseNum) return false;
-      if (i.ator !== 'cliente') return false;
       if (i.tipo === 'mooni') return false;
       if (isHiddenPrereq(i.texto)) return false;
-      // Platform filter for phases 1-6 in parallel flow
       if (plataforma && faseNum > 0 && isParallelFlow) {
         return i.plataforma === plataforma || i.plataforma === 'compartilhada';
       }
       return true;
     });
+  };
+
+  // Get only CLIENT items for a fase (for interaction)
+  const getClientItemsForFase = (faseNum: number, plataforma?: string) => {
+    return getAllItemsForFase(faseNum, plataforma).filter((i: any) => i.ator === 'cliente');
   };
 
   // Check if all fase6 are done
@@ -810,13 +814,47 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                <p className={`text-sm font-medium ${item.feito ? 'text-green-400' : 'text-white'}`}>{item.texto}</p>
               {renderStepGuide(item.texto, item.id)}
               {sitePromptId === item.id && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="mt-3 space-y-2 overflow-hidden">
-                  <Label className="text-xs text-white/70">URL do seu site</Label>
-                  <Input type="url" placeholder="https://www.suaempresa.com.br" value={siteInput} onChange={e => setSiteInput(e.target.value.trim())} className="bg-white/5 border-white/10 text-white text-sm" />
-                  {siteInput && !isValidSite && <p className="text-[10px] text-amber-400">Use um domínio próprio</p>}
-                  <div className="flex gap-2">
-                    <Button size="sm" className="flex-1" disabled={!isValidSite} onClick={() => { toggleCheck.mutate({ id: item.id, feito: true }); setSitePromptId(null); setSiteInput(''); toast.success('Site confirmado!'); }}>Confirmar</Button>
-                    <Button size="sm" variant="ghost" onClick={() => { setSitePromptId(null); setSiteInput(''); }}>Cancelar</Button>
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="mt-3 overflow-hidden">
+                  <div className="space-y-3 rounded-lg bg-white/5 border border-white/10 p-4">
+                    <p className="text-sm font-medium text-white/90">Como deseja configurar o domínio do app?</p>
+                    
+                    {/* Option 1: Own domain */}
+                    <button onClick={() => setSiteOption('proprio')}
+                      className={`w-full p-3 rounded-lg border text-left transition-all ${siteOption === 'proprio' ? 'border-primary bg-primary/10' : 'border-white/10 bg-white/5 hover:bg-white/8'}`}>
+                      <p className="text-sm font-medium text-white/90">🌐 Tenho um site com domínio próprio</p>
+                      <p className="text-xs text-white/50 mt-0.5">Informarei a URL do meu site</p>
+                    </button>
+                    
+                    {siteOption === 'proprio' && (
+                      <div className="pl-4 space-y-2">
+                        <Input type="url" placeholder="https://www.suaempresa.com.br" value={siteInput}
+                          onChange={e => setSiteInput(e.target.value.trim())}
+                          className="bg-white/5 border-white/10 text-white text-sm" />
+                        {siteInput && !isValidSite && <p className="text-[10px] text-amber-400">Use um domínio próprio (não pode ser wixsite, blogspot, etc.)</p>}
+                      </div>
+                    )}
+
+                    {/* Option 2: Use Curseduca URL */}
+                    <button onClick={() => setSiteOption('curseduca')}
+                      className={`w-full p-3 rounded-lg border text-left transition-all ${siteOption === 'curseduca' ? 'border-primary bg-primary/10' : 'border-white/10 bg-white/5 hover:bg-white/8'}`}>
+                      <p className="text-sm font-medium text-white/90">✅ Autorizo usar minha URL da Curseduca</p>
+                      <p className="text-xs text-white/50 mt-0.5">Usar <span className="text-primary font-medium">{cliente?.empresa}</span> como domínio</p>
+                    </button>
+
+                    <div className="flex gap-2 pt-1">
+                      <Button size="sm" className="flex-1"
+                        disabled={(siteOption === 'proprio' && !isValidSite) || !siteOption}
+                        onClick={() => {
+                          toggleCheck.mutate({ id: item.id, feito: true });
+                          setSiteOption(null); setSiteInput(''); setSitePromptId(null);
+                          toast.success(siteOption === 'curseduca' ? 'Autorização registrada! ✅' : 'Site confirmado! ✅');
+                        }}>
+                        Confirmar
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => { setSiteOption(null); setSiteInput(''); setSitePromptId(null); }}>
+                        Cancelar
+                      </Button>
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -881,23 +919,65 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     );
   };
 
+  // ── Render internal (analyst/designer) item — read-only ──
+  const renderInternalItem = (item: any, faseNum: number) => {
+    const formComplete = faseNum === 3 ? !!formulario?.preenchido_completo : true;
+    return (
+      <div key={item.id} className="p-3 rounded-lg bg-white/5 border border-white/[0.08]">
+        <div className="flex items-center gap-3">
+          {item.feito ? (
+            <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
+          ) : formComplete ? (
+            <Clock className="h-5 w-5 text-amber-400 shrink-0 animate-pulse" />
+          ) : (
+            <Lock className="h-5 w-5 text-white/40 shrink-0" />
+          )}
+          <div className="flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className={`text-sm font-medium ${!formComplete ? 'text-white/50' : 'text-white/90'}`}>{item.texto}</p>
+              <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-white/15 text-white/40">
+                Equipe Curseduca
+              </Badge>
+              {item.feito ? (
+                <Badge variant="outline" className="text-[9px] border-green-500/30 text-green-400">✅ Concluído</Badge>
+              ) : formComplete ? (
+                <Badge variant="outline" className="text-[9px] border-amber-500/30 text-amber-400">⏳ Em andamento</Badge>
+              ) : null}
+            </div>
+            {item.descricao && <p className="text-xs text-white/50 mt-0.5">{item.descricao}</p>}
+            {!formComplete && faseNum === 3 && (
+              <p className="text-xs text-white/50 mt-0.5">Preencha o formulário acima para liberar esta etapa</p>
+            )}
+            {item.feito && item.feito_em && (
+              <p className="text-[10px] text-green-400/60 mt-0.5">Concluído em {format(new Date(item.feito_em), "dd/MM/yyyy 'às' HH:mm")}</p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // ── Expanded fase content ──
   const renderExpandedFase = (faseNum: number, plataforma?: string) => {
     const fase = plataforma ? fases.find((f: any) => f.numero === faseNum && f.plataforma === plataforma) : fases.find((f: any) => f.numero === faseNum);
     if (!fase) return null;
 
-    const items = getItemsForFase(faseNum, plataforma);
+    const allItems = getAllItemsForFase(faseNum, plataforma);
+    const clientItems = getClientItemsForFase(faseNum, plataforma);
     const allFaseItems = checklist.filter((i: any) => {
       if (i.fase_numero !== faseNum) return false;
       if (plataforma && faseNum > 0 && isParallelFlow) return i.plataforma === plataforma || i.plataforma === 'compartilhada';
       return true;
     });
-    const total = allFaseItems.length;
-    const done = allFaseItems.filter((i: any) => i.feito).length;
+
+    // Progress: for phase 3, count all items; for others, count only client items
+    const progressItems = faseNum === 3 ? allItems : clientItems;
+    const total = progressItems.length;
+    const done = progressItems.filter((i: any) => i.feito).length;
     const progress = total > 0 ? Math.round((done / total) * 100) : 0;
 
     // Check if all client items done but internal still pending
-    const clientItemsDone = items.every(i => i.feito);
+    const clientItemsDone = clientItems.every(i => i.feito);
     const hasInternalPending = allFaseItems.some(i => !i.feito && i.ator !== 'cliente');
 
     // Estimation for validation phases (2, 4)
@@ -965,13 +1045,18 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 <Lock className="h-4 w-4 text-white/40 shrink-0" />
                 <p className="text-xs text-white/50">Etapa futura — você será notificado quando chegar aqui.</p>
               </div>
-              {items.length > 0 && (
+              {allItems.length > 0 && (
                 <div className="space-y-2">
-                  {items.map(item => (
+                  {allItems.map(item => (
                     <div key={item.id} className="p-3 rounded-lg bg-white/5 flex items-start gap-3">
                       <Lock className="h-4 w-4 text-white/30 mt-0.5 shrink-0" />
                       <div>
-                        <p className="text-sm text-white/50">{item.texto}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm text-white/50">{item.texto}</p>
+                          {item.ator !== 'cliente' && (
+                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-white/10 text-white/30">Equipe Curseduca</Badge>
+                          )}
+                        </div>
                         {item.descricao && <p className="text-xs text-white/[0.35] mt-0.5">{item.descricao}</p>}
                       </div>
                     </div>
@@ -982,9 +1067,9 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           )}
 
           {/* Items (active/completed phases) */}
-          {fase.status !== 'bloqueada' && (items.length > 0 || faseNum === 0) ? (
+          {fase.status !== 'bloqueada' && (allItems.length > 0 || faseNum === 0) ? (
             <div className="space-y-2">
-              {items.map(item => renderClientItem(item))}
+              {allItems.map(item => item.ator === 'cliente' ? renderClientItem(item) : renderInternalItem(item, faseNum))}
               {/* Mockup as inline checklist item in fase 0 */}
               {faseNum === 0 && (
                 <div
@@ -1015,54 +1100,6 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                   </div>
                 </div>
               )}
-              {/* Analyst items — informational, no interaction */}
-              {(() => {
-                const analistaItems = allFaseItems.filter((i: any) => i.ator === 'analista' && i.tipo !== 'mooni' && !isHiddenPrereq(i.texto));
-                if (analistaItems.length === 0) return null;
-                // For fase 3: check if form is complete to determine lock state
-                const formComplete = faseNum === 3 ? !!formulario?.preenchido_completo : true;
-                return analistaItems.map((item: any) => (
-                  <div key={item.id} className="p-3 rounded-lg bg-white/5">
-                    <div className="flex items-center gap-3">
-                      {item.feito ? (
-                        <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
-                      ) : formComplete ? (
-                        <Clock className="h-5 w-5 text-amber-400 shrink-0" />
-                      ) : (
-                        <Lock className="h-5 w-5 text-white/40 shrink-0" />
-                      )}
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className={`text-sm font-medium ${!formComplete ? 'text-white/50' : 'text-white'}`}>
-                            {item.texto}
-                          </p>
-                          {!item.feito && formComplete && (
-                            <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-400">
-                              ⏳ Em andamento
-                            </Badge>
-                          )}
-                          {item.feito && (
-                            <Badge variant="outline" className="text-[10px] border-green-500/30 text-green-400">
-                              ✅ Concluído
-                            </Badge>
-                          )}
-                        </div>
-                        {!formComplete && faseNum === 3 && (
-                          <p className="text-xs text-white/50 mt-0.5">Preencha o formulário acima para liberar esta etapa</p>
-                        )}
-                        {formComplete && !item.feito && (
-                          <p className="text-xs text-white/60 mt-0.5">Nossa equipe está construindo e submetendo seu app na loja</p>
-                        )}
-                        {item.feito && item.feito_em && (
-                          <p className="text-[10px] text-green-400/60 mt-0.5">
-                            Concluído em {format(new Date(item.feito_em), "dd/MM/yyyy 'às' HH:mm")}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ));
-              })()}
               {/* Store validation/approval cards for phases 2 and 4 */}
               {(faseNum === 2 || faseNum === 4) && (() => {
                 const plat = plataforma || (cliente.plataforma === 'apple' ? 'apple' : 'google');
