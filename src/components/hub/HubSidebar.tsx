@@ -27,18 +27,14 @@ const implantacaoModules = [
 ];
 
 const csModules = [
+  { title: 'Processos de Implantação', url: '/hub/processos-implantacao', icon: Package, permission: 'carteira.view' },
   { title: 'Agendamento', url: '/hub/agendamento', icon: CalendarDays, permission: 'agendamento.view' },
   { title: 'Dashboards', url: '/hub/dashboards', icon: BarChart3, permission: 'dashboards.view' },
   { title: 'Carteira Geral', url: '/hub/carteira', icon: Briefcase, permission: 'carteira.view' },
-  
   { title: 'Dashboard Liderança', url: '/hub/lideranca', icon: Crown, permission: 'lideranca.view' },
   { title: 'Funil de Cancelamento', url: '/hub/funil-cancelamento', icon: AlertTriangle, permission: 'funil.view' },
   { title: 'BI', url: '/hub/bi', icon: PieChart, permission: 'dashboards.view' },
   { title: 'Churn & Upsell', url: '/hub/churn-upsell', icon: TrendingDown, permission: 'dashboards.view' },
-];
-
-const processosModules = [
-  { title: 'Processos de Implantação', url: '/hub/processos-implantacao', icon: Package, permission: 'carteira.view' },
 ];
 
 const auditoriaModules = [
@@ -169,27 +165,8 @@ export function HubSidebar() {
         </SidebarGroup>
         )}
 
-        {/* Processos de Implantação */}
-        {hasVisibleItems(processosModules) && (
-        <SidebarGroup>
-          <Collapsible defaultOpen={isInGroup(processosModules)}>
-            <CollapsibleTrigger className="w-full">
-              <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground transition-colors">
-                <span className="flex items-center gap-2">
-                  <Package className="h-3.5 w-3.5" />
-                  {!collapsed && 'Processos'}
-                </span>
-                {!collapsed && <ChevronDown className="h-3.5 w-3.5 transition-transform [[data-state=open]_&]:rotate-180" />}
-              </SidebarGroupLabel>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                {renderItems(processosModules)}
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </SidebarGroup>
-        )}
+
+
 
         {/* Auditoria Group */}
         {hasVisibleItems(auditoriaModules) && (
