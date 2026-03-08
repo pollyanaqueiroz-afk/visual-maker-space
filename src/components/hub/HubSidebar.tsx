@@ -27,18 +27,14 @@ const implantacaoModules = [
 ];
 
 const csModules = [
+  { title: 'Processos de Implantação', url: '/hub/processos-implantacao', icon: Package, permission: 'carteira.view' },
   { title: 'Agendamento', url: '/hub/agendamento', icon: CalendarDays, permission: 'agendamento.view' },
   { title: 'Dashboards', url: '/hub/dashboards', icon: BarChart3, permission: 'dashboards.view' },
   { title: 'Carteira Geral', url: '/hub/carteira', icon: Briefcase, permission: 'carteira.view' },
-  
   { title: 'Dashboard Liderança', url: '/hub/lideranca', icon: Crown, permission: 'lideranca.view' },
   { title: 'Funil de Cancelamento', url: '/hub/funil-cancelamento', icon: AlertTriangle, permission: 'funil.view' },
   { title: 'BI', url: '/hub/bi', icon: PieChart, permission: 'dashboards.view' },
   { title: 'Churn & Upsell', url: '/hub/churn-upsell', icon: TrendingDown, permission: 'dashboards.view' },
-];
-
-const processosModules = [
-  { title: 'Processos de Implantação', url: '/hub/processos-implantacao', icon: Package, permission: 'carteira.view' },
 ];
 
 const auditoriaModules = [
