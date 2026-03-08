@@ -516,6 +516,140 @@ export default function Dashboard() {
           </TabsList>
 
           <TabsContent value="artes" className="space-y-6">
+            {/* Active KPI indicator */}
+            {activeKPI && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/10">
+                <span className="text-sm text-muted-foreground">
+                  Filtro ativo: <span className="font-semibold text-foreground">
+                    {activeKPI === 'total' ? 'Todas as artes' :
+                     activeKPI === 'requests' ? 'Solicitações' :
+                     activeKPI === 'pending' ? 'Pendentes' :
+                     activeKPI === 'in_progress' ? 'Em Produção' :
+                     activeKPI === 'review' ? 'Em Revisão' :
+                     activeKPI === 'completed' ? 'Concluídas' :
+                     'Clientes Abertos'}
+                  </span>
+                </span>
+                <Button variant="ghost" size="sm" className="h-6 text-xs ml-auto" onClick={() => { setActiveKPI(null); setFilterStatus('all'); }}>
+                  Limpar ✕
+                </Button>
+              </div>
+            )}
+
+            {/* Requests detail table */}
+            {activeKPI === 'requests' && (
+              <Card className="animate-in fade-in slide-in-from-top-2 duration-300">
+                <CardContent className="pt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-primary" />
+                      Solicitações ({requests.length})
+                    </h3>
+                    <button onClick={() => setActiveKPI(null)} className="text-muted-foreground hover:text-foreground text-xs">✕</button>
+                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-[11px]">Cliente</TableHead>
+                        <TableHead className="text-[11px]">URL</TableHead>
+                        <TableHead className="text-[11px] text-center">Artes</TableHead>
+                        <TableHead className="text-[11px]">Recebido em</TableHead>
+                        <TableHead className="text-[11px]">Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {requests.map((req: any) => {
+                        const reqImages = images.filter(img => img.request_id === req.id);
+                        const reqCompleted = reqImages.filter(img => img.status === 'completed').length;
+                        const reqTotal = reqImages.length;
+                        return (
+                          <TableRow key={req.id}>
+                            <TableCell className="text-sm font-medium">{extractClientName(req.platform_url)}</TableCell>
+                            <TableCell>
+                              <a href={req.platform_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
+                                {req.platform_url}
+                              </a>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant="outline" className="text-xs">{reqCompleted}/{reqTotal}</Badge>
+                            </TableCell>
+                            <TableCell className="text-xs">
+                              {req.received_at ? format(new Date(req.received_at), 'dd/MM/yyyy') : format(new Date(req.created_at), 'dd/MM/yyyy')}
+                            </TableCell>
+                            <TableCell>
+                              {reqCompleted === reqTotal && reqTotal > 0 ? (
+                                <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0 text-[10px]">Concluída</Badge>
+                              ) : reqImages.some(img => img.status === 'review') ? (
+                                <Badge className="bg-primary/20 text-primary border-0 text-[10px]">Em revisão</Badge>
+                              ) : reqImages.some(img => img.status === 'in_progress') ? (
+                                <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-0 text-[10px]">Em produção</Badge>
+                              ) : (
+                                <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-0 text-[10px]">Pendente</Badge>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Clients detail table */}
+            {activeKPI === 'clients' && (() => {
+              const clientMap: Record<string, { url: string; name: string; total: number; pending: number; inProgress: number; review: number }> = {};
+              images.filter(i => i.status !== 'completed' && i.status !== 'cancelled').forEach(img => {
+                const url = img.platform_url;
+                if (!clientMap[url]) clientMap[url] = { url, name: extractClientName(url), total: 0, pending: 0, inProgress: 0, review: 0 };
+                clientMap[url].total += 1;
+                if (img.status === 'pending') clientMap[url].pending += 1;
+                if (img.status === 'in_progress') clientMap[url].inProgress += 1;
+                if (img.status === 'review') clientMap[url].review += 1;
+              });
+              const clientList = Object.values(clientMap).sort((a, b) => b.total - a.total);
+              return (
+                <Card className="animate-in fade-in slide-in-from-top-2 duration-300">
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-sm font-semibold flex items-center gap-2">
+                        <Users className="h-4 w-4 text-primary" />
+                        Clientes com artes em aberto ({clientList.length})
+                      </h3>
+                      <button onClick={() => setActiveKPI(null)} className="text-muted-foreground hover:text-foreground text-xs">✕</button>
+                    </div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-[11px]">Cliente</TableHead>
+                          <TableHead className="text-[11px] text-center">Em aberto</TableHead>
+                          <TableHead className="text-[11px] text-center">Pendentes</TableHead>
+                          <TableHead className="text-[11px] text-center">Em Produção</TableHead>
+                          <TableHead className="text-[11px] text-center">Em Revisão</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {clientList.map(c => (
+                          <TableRow key={c.url} className="cursor-pointer" onClick={() => { setFilterClient(c.url); setActiveKPI(null); }}>
+                            <TableCell>
+                              <div>
+                                <p className="text-sm font-medium">{c.name}</p>
+                                <p className="text-xs text-muted-foreground">{c.url}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-center font-semibold">{c.total}</TableCell>
+                            <TableCell className="text-center"><Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-0 text-[10px]">{c.pending}</Badge></TableCell>
+                            <TableCell className="text-center"><Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-0 text-[10px]">{c.inProgress}</Badge></TableCell>
+                            <TableCell className="text-center"><Badge className="bg-primary/20 text-primary border-0 text-[10px]">{c.review}</Badge></TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    <p className="text-[10px] text-muted-foreground mt-2">Clique em um cliente para filtrar a tabela de artes</p>
+                  </CardContent>
+                </Card>
+              );
+            })()}
             {/* Filters */}
             <div className="flex flex-wrap items-center gap-4">
               {canCreate && <ImportBriefingDialog onImported={refreshAll} />}
