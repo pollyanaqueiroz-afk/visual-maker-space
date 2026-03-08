@@ -311,7 +311,7 @@ export default function Dashboard() {
     if (!acc[r.briefing_image_id]) {
       acc[r.briefing_image_id] = {
         count: 0,
-        label: img ? `${IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type}${img.product_name ? ` — ${img.product_name}` : ''}` : r.briefing_image_id,
+        label: img ? imageLabel(img) : r.briefing_image_id,
         designer: img?.assigned_email || 'Desconhecido',
       };
     }
