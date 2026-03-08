@@ -14,8 +14,50 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { toast } from 'sonner';
 import { format, isSameDay, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isBefore, addDays, startOfWeek, endOfWeek, addMonths, subMonths, subWeeks, addWeeks, getDay, getYear, setYear, setMonth, getMonth, isSameMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, Video, Clock, User, Trash2, Edit2, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Loader2, CheckCircle, FileText, Star, RefreshCw, AlertCircle, MessageSquare, Eye, TrendingUp, Calendar as CalendarIcon, Bell } from 'lucide-react';
+import { Plus, Video, Clock, User, Trash2, Edit2, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Loader2, CheckCircle, FileText, Star, RefreshCw, AlertCircle, MessageSquare, Eye, TrendingUp, Calendar as CalendarIcon, Bell, PartyPopper } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Brazilian holidays (fixed + Easter-based)
+function getEasterDate(year: number): Date {
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(year, month - 1, day);
+}
+
+function getBrazilianHolidays(year: number): Record<string, string> {
+  const easter = getEasterDate(year);
+  const addD = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+  const fmt = (d: Date) => format(d, 'yyyy-MM-dd');
+  
+  return {
+    [`${year}-01-01`]: 'Ano Novo',
+    [fmt(addD(easter, -47))]: 'Carnaval',
+    [fmt(addD(easter, -46))]: 'Carnaval',
+    [fmt(addD(easter, -2))]: 'Sexta-feira Santa',
+    [fmt(easter)]: 'Páscoa',
+    [`${year}-04-21`]: 'Tiradentes',
+    [`${year}-05-01`]: 'Dia do Trabalho',
+    [fmt(addD(easter, 60))]: 'Corpus Christi',
+    [`${year}-09-07`]: 'Independência',
+    [`${year}-10-12`]: 'N. S. Aparecida',
+    [`${year}-11-02`]: 'Finados',
+    [`${year}-11-15`]: 'Proclamação da República',
+    [`${year}-11-20`]: 'Consciência Negra',
+    [`${year}-12-25`]: 'Natal',
+  };
+}
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePermissions } from '@/hooks/usePermissions';
 
