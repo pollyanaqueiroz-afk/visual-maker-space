@@ -797,17 +797,24 @@ export default function Dashboard() {
                                 </SelectContent>
                               </Select>
                               {img.image_type === 'app_mockup' && !img.extra_info ? (
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  className="h-8 w-8 border-amber-500/50 text-amber-500 hover:bg-amber-500/10"
-                                  onClick={() => {
-                                    setMooniBlockClientName(img.requester_name || img.platform_url);
-                                    setMooniBlockDialogOpen(true);
-                                  }}
-                                >
-                                  <Send className="h-4 w-4" />
-                                </Button>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      className="h-8 w-8 border-amber-500/50 text-amber-500 hover:bg-amber-500/10"
+                                      onClick={() => {
+                                        setMooniBlockClientName(img.requester_name || img.platform_url);
+                                        setMooniBlockDialogOpen(true);
+                                      }}
+                                    >
+                                      <Send className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Mooni não preenchido — crie o Mooni antes de atribuir o designer</p>
+                                  </TooltipContent>
+                                </Tooltip>
                               ) : (
                                 <AssignBriefingDialog
                                   imageId={img.id}
