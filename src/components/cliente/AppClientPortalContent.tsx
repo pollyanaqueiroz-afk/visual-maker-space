@@ -617,17 +617,33 @@ export default function AppClientPortalContent({ clienteId }: Props) {
 
     if (item.tipo === 'link') {
       const link = extractLink(item.descricao);
+      const canEditLink = cliente?.fase_atual === item.fase_numero;
       return (
         <div key={item.id} className="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
           <div className="flex items-start gap-3">
             <Checkbox
               checked={item.feito}
-              onCheckedChange={(checked) => toggleCheck.mutate({ id: item.id, feito: !!checked })}
+              disabled={!canEditLink && item.feito}
+              onCheckedChange={(checked) => {
+                if (canEditLink) {
+                  toggleCheck.mutate({ id: item.id, feito: !!checked });
+                }
+              }}
               className="mt-0.5 border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
             />
             <div className="flex-1">
-              <p className="text-sm font-medium">{item.texto}</p>
+              <p className={`text-sm font-medium ${item.feito ? 'text-green-400' : ''}`}>{item.texto}</p>
               {item.descricao && <p className="text-xs text-white/50 mt-1">{item.descricao}</p>}
+              {item.feito && item.feito_em && (
+                <p className="text-[10px] text-green-400/70 mt-1">
+                  ✅ Concluído em {format(new Date(item.feito_em), "dd/MM/yyyy 'às' HH:mm")}
+                </p>
+              )}
+              {!canEditLink && item.feito && (
+                <p className="text-[10px] text-amber-400/70 flex items-center gap-1 mt-1">
+                  <Lock className="h-3 w-3" /> Fase anterior — somente visualização
+                </p>
+              )}
               {link && (
                 <a href={link} target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1">
