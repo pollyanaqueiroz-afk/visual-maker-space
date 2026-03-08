@@ -1017,6 +1017,17 @@ export default function SchedulingPage() {
                               <h3 className="font-semibold text-foreground truncate">{m.title}</h3>
                               <Badge className={cn('text-[10px] px-2 py-0', config.color)}>{config.label}</Badge>
                               {isPast && <Badge variant="outline" className="text-[10px] text-warning border-warning/30">Atrasada</Badge>}
+                              {m.status === 'scheduled' && !isPast && (() => {
+                                const [hh, mm] = m.meeting_time.split(':').map(Number);
+                                const mt = new Date(); mt.setHours(hh, mm, 0, 0);
+                                const now = new Date();
+                                const diff = mt.getTime() - now.getTime();
+                                return isSameDay(parseISO(m.meeting_date), now) && diff > 0 && diff <= 30 * 60 * 1000;
+                              })() && (
+                                <Badge className="text-[10px] px-2 py-0 bg-amber-500/20 text-amber-500 animate-pulse gap-1">
+                                  <Bell className="h-3 w-3" /> Em breve
+                                </Badge>
+                              )}
                               {(m as any).meeting_reason && <Badge variant="outline" className="text-[10px]">{(m as any).meeting_reason}</Badge>}
                             </div>
                             <div className="flex items-center gap-4 text-xs text-muted-foreground">
