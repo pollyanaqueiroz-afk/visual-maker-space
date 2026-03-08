@@ -1024,9 +1024,9 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           )}
 
           {/* Items (active/completed phases) */}
-          {fase.status !== 'bloqueada' && (items.length > 0 || faseNum === 0) ? (
+          {fase.status !== 'bloqueada' && (allItems.length > 0 || faseNum === 0) ? (
             <div className="space-y-2">
-              {items.map(item => renderClientItem(item))}
+              {allItems.map(item => item.ator === 'cliente' ? renderClientItem(item) : renderInternalItem(item, faseNum))}
               {/* Mockup as inline checklist item in fase 0 */}
               {faseNum === 0 && (
                 <div
