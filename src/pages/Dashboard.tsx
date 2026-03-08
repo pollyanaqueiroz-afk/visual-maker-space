@@ -804,7 +804,7 @@ export default function Dashboard() {
                                       toast.error('Erro ao atualizar data');
                                     } else {
                                       toast.success('Data de recebimento atualizada');
-                                      fetchData();
+                                      refreshAll();
                                     }
                                   }}
                                   disabled={(date) => date > new Date()}
