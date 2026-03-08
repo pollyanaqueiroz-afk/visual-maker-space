@@ -473,7 +473,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
             variant="outline"
             size="sm"
             onClick={() => navigate(`/assets/${encodeURIComponent(platformUrls[0])}`)}
-            className="rounded-full gap-2 h-9 px-4 bg-card/60 backdrop-blur-sm border-border hover:bg-card"
+            className={`rounded-full gap-2 h-9 px-4 ${embedded ? 'bg-white/5 border-white/10 text-white hover:bg-white/10' : 'bg-card/60 backdrop-blur-sm border-border hover:bg-card'}`}
           >
             <FolderOpen className="h-4 w-4" />
             Minha Pasta
