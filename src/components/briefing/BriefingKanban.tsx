@@ -318,6 +318,7 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
           ))}
         </div>
       </div>
+      )}
 
       {/* Drop confirm dialog */}
       <AlertDialog open={dropConfirmOpen} onOpenChange={setDropConfirmOpen}>
