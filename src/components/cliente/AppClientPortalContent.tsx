@@ -1380,9 +1380,9 @@ export default function AppClientPortalContent({ clienteId }: Props) {
         /* ── Parallel: fase 0 left, bifurcation to two horizontal tracks ── */
         <div className="space-y-4">
           <div>
-            <div className="flex items-center gap-0 w-full py-3">
-              {/* Fase 0 on the left, centered vertically between tracks */}
-              <div className="flex flex-col items-center shrink-0 self-center">
+            <div className="flex items-start gap-0 w-full py-3">
+              {/* Fase 0 on the left */}
+              <div className="flex flex-col items-center shrink-0">
                 {(() => {
                   const f0 = fases.find((f: any) => f.numero === 0);
                   const s = f0?.status || 'bloqueada';
@@ -1393,47 +1393,38 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                       <button onClick={() => setSelectedTimelineFase(isF0Selected ? null : { fase: 0 })} className="relative">
                         {isActive && (
                           <>
-                            <div className="absolute -inset-3 rounded-full bg-primary/15 animate-ping" style={{ animationDuration: '3s' }} />
-                            <div className="absolute -inset-2 rounded-full bg-primary/10 animate-pulse" />
+                            <div className="absolute -inset-3 rounded-full bg-blue-500/20 animate-ping" style={{ animationDuration: '3s' }} />
+                            <div className="absolute -inset-2 rounded-full bg-blue-500/10 animate-pulse" />
                           </>
                         )}
                         <div className={`relative flex items-center justify-center w-16 h-16 rounded-full transition-all ${
                           s === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50' :
-                          isActive ? 'bg-gradient-to-br from-primary via-emerald-500 to-green-500 shadow-2xl shadow-primary/50 ring-2 ring-primary/50' :
+                          isActive ? 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-2xl shadow-blue-500/50 ring-2 ring-blue-500/50' :
                           s === 'atrasada' ? 'bg-red-500/30 ring-2 ring-red-500/50' :
                           'bg-white/10'
-                        } ${isF0Selected ? 'ring-2 ring-primary/50' : ''}`}>
+                        } ${isF0Selected ? 'ring-2 ring-blue-500/50' : ''}`}>
                           {s === 'concluida' ? <CheckCircle2 className="h-7 w-7 text-green-400" /> :
                            s === 'bloqueada' ? <Lock className="h-6 w-6 text-white/50" /> :
                            s === 'atrasada' ? <AlertTriangle className="h-6 w-6 text-red-400" /> :
-                           <Star className="h-7 w-7 text-white" />}
+                           <Loader2 className="h-7 w-7 text-white animate-spin" />}
                         </div>
                       </button>
                       <p className={`text-xs mt-1.5 text-center leading-tight max-w-[80px] font-medium ${
-                        s === 'concluida' ? 'text-green-400' :
-                        isActive ? 'text-primary font-bold' :
-                        'text-white/80'
+                        s === 'concluida' ? 'text-green-400 font-semibold' :
+                        isActive ? 'text-blue-400 font-semibold' :
+                        s === 'atrasada' ? 'text-red-400 font-semibold' :
+                        'text-white/35'
                       }`}>Pré-<br/>Requisitos</p>
                     </>
                   );
                 })()}
               </div>
 
-              {/* Bifurcation connector with toggle */}
-              <div className="relative shrink-0 self-stretch flex flex-col justify-center" style={{ width: '40px' }}>
-                {/* Horizontal line from fase 0 */}
-                <div className="absolute left-0 top-1/2 w-3 h-[2px] bg-white/30" style={{ transform: 'translateY(-50%)' }} />
-                {/* Vertical line connecting two tracks */}
-                <div className="absolute left-3 bg-white/30" style={{ top: 'calc(25%)', bottom: 'calc(25%)', width: '2px' }} />
-                {/* Horizontal branch to Google (top) */}
-                <div className="absolute left-3 h-[2px] bg-white/30" style={{ top: '25%', right: '0', transform: 'translateY(-50%)' }} />
-                {/* Horizontal branch to Apple (bottom) */}
-                <div className="absolute left-3 h-[2px] bg-white/30" style={{ bottom: '25%', right: '0', transform: 'translateY(50%)' }} />
-                {/* Toggle button at center */}
+              {/* Toggle button — aligned with circle center */}
+              <div className="shrink-0 flex items-center self-center mx-1">
                 <button
                   onClick={() => setFlowExpanded(!flowExpanded)}
-                  className="absolute z-10 flex items-center justify-center w-6 h-6 rounded-full bg-[#1E293B] border-2 border-white/30 hover:border-white/50 transition-all hover:scale-110"
-                  style={{ left: '12px', top: '50%', transform: 'translate(-50%, -50%)' }}
+                  className="flex items-center justify-center w-6 h-6 rounded-full bg-[#1E293B] border-2 border-white/30 hover:border-white/50 transition-all hover:scale-110"
                 >
                   {flowExpanded ? <Minus className="h-3 w-3 text-white/60" /> : <Plus className="h-3 w-3 text-white/60" />}
                 </button>
