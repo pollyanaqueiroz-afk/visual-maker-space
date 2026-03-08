@@ -1078,7 +1078,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
                   </Badge>
                 </div>
               ) : (
-                <div className="bg-muted/30 aspect-video flex items-center justify-center">
+                <div className="bg-muted/30 flex items-center justify-center" style={{ minHeight: '40vh' }}>
                   <div className="text-center">
                     <ImageIcon className="h-10 w-10 text-muted-foreground/50 mx-auto mb-2" />
                     <p className="text-muted-foreground text-sm">Sem preview disponível</p>
