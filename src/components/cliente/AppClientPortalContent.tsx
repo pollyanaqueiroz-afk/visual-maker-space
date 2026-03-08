@@ -1048,7 +1048,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
         {/* Expanded phase checklist */}
         <AnimatePresence>
           {selectedTimelineFase !== null && (() => {
-            let items: any[] = checklist.filter((i: any) => i.fase_numero === selectedTimelineFase);
+            let items: any[] = checklist.filter((i: any) => i.fase_numero === selectedTimelineFase && !isHiddenPrereq(i.texto));
             // Add virtual mockup request item in phase 0
             if (selectedTimelineFase === 0) {
               items = [...items, {
