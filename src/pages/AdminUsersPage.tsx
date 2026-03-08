@@ -53,6 +53,7 @@ export default function AdminUsersPage() {
   const [bulkRoleOpen, setBulkRoleOpen] = useState(false);
   const [bulkRole, setBulkRole] = useState('');
   const [bulkSaving, setBulkSaving] = useState(false);
+  const [filterRole, setFilterRole] = useState<string | null>(null);
 
   const fetchUsers = async () => {
     setLoading(true);
