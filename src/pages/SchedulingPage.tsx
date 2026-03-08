@@ -797,7 +797,7 @@ export default function SchedulingPage() {
           { label: 'Próximas 30min', value: meetings.filter(m => { if (m.status !== 'scheduled' || !isSameDay(parseISO(m.meeting_date), new Date())) return false; const [hh, mm] = m.meeting_time.split(':').map(Number); const mt = new Date(); mt.setHours(hh, mm, 0, 0); const now = new Date(); return mt > now && mt.getTime() - now.getTime() <= 30 * 60 * 1000; }).length, color: 'text-amber-500', bg: 'bg-amber-500/10', icon: '🔔' },
           { label: 'Esta semana', value: meetings.filter(m => { const d = parseISO(m.meeting_date); return d >= startOfWeek(new Date(), { locale: ptBR }) && d <= endOfWeek(new Date(), { locale: ptBR }) && m.status === 'scheduled'; }).length, color: 'text-info', bg: 'bg-info/10' },
           { label: 'Realizadas', value: meetings.filter(m => m.status === 'completed').length, color: 'text-success', bg: 'bg-success/10' },
-          { label: 'Pendentes', value: meetings.filter(m => m.status === 'scheduled').length, color: 'text-warning', bg: 'bg-warning/10' },
+          { label: 'Pendentes', value: meetings.filter(m => m.status === 'scheduled').length, color: 'text-warning', bg: 'bg-warning/10', sub: pendingConclusion.length > 0 || pendingReschedule.length > 0 ? `${pendingConclusion.length} concluir · ${pendingReschedule.length} reagendar` : undefined },
         ].map((stat, i) => (
           <motion.div key={stat.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
             <Card className="border-border/50">
