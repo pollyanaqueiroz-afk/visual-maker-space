@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { Smartphone, Plus, Bell, AlertTriangle, Apple, Bot, Clock, CheckCircle, Users, TrendingUp, ClipboardList, Filter, FileText } from 'lucide-react';
+import { Smartphone, Plus, Bell, AlertTriangle, Apple, Bot, Clock, CheckCircle, Users, TrendingUp, ClipboardList, Filter, FileText, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -71,6 +71,7 @@ export default function AplicativosPage() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('kanban');
+  const [expandedKpi, setExpandedKpi] = useState<string | null>(null);
   const [pendencyFilter, setPendencyFilter] = useState('todos');
   const [phaseFilter, setPhaseFilter] = useState('todas');
   const [statusFilter, setStatusFilter] = useState('pendente');
@@ -114,9 +115,9 @@ export default function AplicativosPage() {
   const { data: fases = [] } = useQuery({
     queryKey: ['app-fases-all'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('app_fases').select('id, cliente_id, numero, sla_violado, sla_vencimento, porcentagem, status');
+      const { data, error } = await supabase.from('app_fases').select('id, cliente_id, numero, sla_violado, sla_vencimento, porcentagem, status, plataforma');
       if (error) throw error;
-      return data as AppFase[];
+      return data as (AppFase & { plataforma?: string })[];
     },
   });
 
@@ -274,6 +275,22 @@ export default function AplicativosPage() {
   const avgProgress = totalAbertos > 0
     ? Math.round(clientes.filter(c => c.fase_atual < 6).reduce((sum, c) => sum + c.porcentagem_geral, 0) / totalAbertos)
     : 0;
+
+  // KPI detail lists
+  const kpiClientLists = useMemo(() => {
+    const abertos = clientes.filter(c => c.fase_atual < 6);
+    const atrasadosList = clientes.filter(c => c.status === 'atrasado');
+    const etapasAtrasadasList = (() => {
+      const fasesAtrasadasData = fases.filter(f => f.sla_violado || f.status === 'atrasada');
+      return fasesAtrasadasData.map(f => {
+        const c = clientes.find(cl => cl.id === f.cliente_id);
+        return c ? { ...c, faseAtrasada: f.numero, plataformaFase: (f as any).plataforma } : null;
+      }).filter(Boolean) as (AppCliente & { faseAtrasada: number; plataformaFase?: string })[];
+    })();
+    const publicados = clientes.filter(c => c.fase_atual >= 6);
+    const progressoList = clientes.filter(c => c.fase_atual < 6).sort((a, b) => b.porcentagem_geral - a.porcentagem_geral);
+    return { abertos, atrasadosList, etapasAtrasadasList, publicados, progressoList };
+  }, [clientes, fases]);
 
   const columns = useMemo(() => {
     const cols: Record<number, AppCliente[]> = {};
@@ -640,7 +657,8 @@ export default function AplicativosPage() {
           {!isLoading && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                <Card>
+                <Card className={`cursor-pointer transition-all ${expandedKpi === 'abertos' ? 'ring-2 ring-primary' : 'hover:border-primary/40'}`}
+                  onClick={() => setExpandedKpi(prev => prev === 'abertos' ? null : 'abertos')}>
                   <CardContent className="p-4 flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                       <Users className="h-5 w-5 text-primary" />
@@ -651,7 +669,8 @@ export default function AplicativosPage() {
                     </div>
                   </CardContent>
                 </Card>
-                <Card>
+                <Card className={`cursor-pointer transition-all ${expandedKpi === 'atrasados' ? 'ring-2 ring-destructive' : 'hover:border-destructive/40'}`}
+                  onClick={() => setExpandedKpi(prev => prev === 'atrasados' ? null : 'atrasados')}>
                   <CardContent className="p-4 flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
                       <AlertTriangle className="h-5 w-5 text-destructive" />
@@ -662,8 +681,11 @@ export default function AplicativosPage() {
                     </div>
                   </CardContent>
                 </Card>
-                <Card className={`cursor-pointer transition-all ${kanbanFilter === 'atrasados' ? 'ring-2 ring-destructive' : ''}`}
-                  onClick={() => setKanbanFilter(prev => prev === 'atrasados' ? 'todos' : 'atrasados')}>
+                <Card className={`cursor-pointer transition-all ${expandedKpi === 'etapas' ? 'ring-2 ring-destructive' : kanbanFilter === 'atrasados' ? 'ring-2 ring-destructive' : 'hover:border-destructive/40'}`}
+                  onClick={() => {
+                    setExpandedKpi(prev => prev === 'etapas' ? null : 'etapas');
+                    setKanbanFilter(prev => prev === 'atrasados' ? 'todos' : 'atrasados');
+                  }}>
                   <CardContent className="p-4 flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
                       <Clock className="h-5 w-5 text-destructive" />
@@ -674,7 +696,8 @@ export default function AplicativosPage() {
                     </div>
                   </CardContent>
                 </Card>
-                <Card>
+                <Card className={`cursor-pointer transition-all ${expandedKpi === 'publicados' ? 'ring-2 ring-green-500' : 'hover:border-green-500/40'}`}
+                  onClick={() => setExpandedKpi(prev => prev === 'publicados' ? null : 'publicados')}>
                   <CardContent className="p-4 flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-500/10">
                       <CheckCircle className="h-5 w-5 text-green-500" />
@@ -685,7 +708,8 @@ export default function AplicativosPage() {
                     </div>
                   </CardContent>
                 </Card>
-                <Card>
+                <Card className={`cursor-pointer transition-all ${expandedKpi === 'progresso' ? 'ring-2 ring-blue-500' : 'hover:border-blue-500/40'}`}
+                  onClick={() => setExpandedKpi(prev => prev === 'progresso' ? null : 'progresso')}>
                   <CardContent className="p-4 flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
                       <TrendingUp className="h-5 w-5 text-blue-500" />
@@ -697,6 +721,79 @@ export default function AplicativosPage() {
                   </CardContent>
                 </Card>
               </div>
+
+              {/* Expanded KPI detail panel */}
+              {expandedKpi && (() => {
+                const config: Record<string, { title: string; list: any[]; renderExtra?: (c: any) => React.ReactNode }> = {
+                  abertos: {
+                    title: `📂 Em aberto (${kpiClientLists.abertos.length})`,
+                    list: kpiClientLists.abertos,
+                  },
+                  atrasados: {
+                    title: `🚨 Clientes atrasados (${kpiClientLists.atrasadosList.length})`,
+                    list: kpiClientLists.atrasadosList,
+                  },
+                  etapas: {
+                    title: `⏰ Etapas atrasadas (${kpiClientLists.etapasAtrasadasList.length})`,
+                    list: kpiClientLists.etapasAtrasadasList,
+                    renderExtra: (c: any) => (
+                      <Badge variant="destructive" className="text-[10px]">
+                        Fase {c.faseAtrasada} — {FASE_NAMES[c.faseAtrasada] || ''}
+                        {c.plataformaFase && c.plataformaFase !== 'compartilhada' ? ` (${c.plataformaFase === 'google' ? '🤖' : '🍎'})` : ''}
+                      </Badge>
+                    ),
+                  },
+                  publicados: {
+                    title: `✅ Publicados (${kpiClientLists.publicados.length})`,
+                    list: kpiClientLists.publicados,
+                  },
+                  progresso: {
+                    title: `📊 Progresso médio: ${avgProgress}% (${kpiClientLists.progressoList.length} clientes)`,
+                    list: kpiClientLists.progressoList,
+                    renderExtra: (c: any) => (
+                      <div className="flex items-center gap-2 min-w-[120px]">
+                        <Progress value={c.porcentagem_geral} className="h-1.5 flex-1" />
+                        <span className="text-xs font-medium text-muted-foreground w-8 text-right">{c.porcentagem_geral}%</span>
+                      </div>
+                    ),
+                  },
+                };
+                const { title, list, renderExtra } = config[expandedKpi] || { title: '', list: [] };
+                return (
+                  <Card className="border-border/60">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-sm font-semibold">{title}</p>
+                        <Button variant="ghost" size="sm" className="text-xs h-6" onClick={() => setExpandedKpi(null)}>Fechar</Button>
+                      </div>
+                      {list.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-4">Nenhum cliente nesta categoria</p>
+                      ) : (
+                        <div className="space-y-1.5 max-h-60 overflow-y-auto">
+                          {list.map((c: any, i: number) => (
+                            <div
+                              key={`${c.id}-${i}`}
+                              className="flex items-center gap-3 p-2.5 rounded-md bg-muted/30 hover:bg-muted/50 cursor-pointer transition-colors"
+                              onClick={() => navigate(`/hub/aplicativos/${c.id}`)}
+                            >
+                              <PlatformIcon plataforma={c.plataforma} />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{c.nome}</p>
+                                <p className="text-[11px] text-muted-foreground truncate">{c.empresa}</p>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <Badge variant="outline" className="text-[10px]">Fase {c.fase_atual}</Badge>
+                                {renderExtra?.(c)}
+                              </div>
+                              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })()}
 
               {kanbanFilter === 'atrasados' && (
                 <div className="flex items-center gap-2 px-1">
