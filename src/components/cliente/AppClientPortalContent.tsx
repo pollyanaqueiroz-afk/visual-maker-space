@@ -1443,9 +1443,9 @@ export default function AppClientPortalContent({ clienteId }: Props) {
          <h2 className="text-xl font-bold text-white mb-4">💬 Suporte</h2>
          <div className="space-y-3 text-base text-white/80">
           {cliente.responsavel_nome && <p>Seu responsável: <span className="text-white">{cliente.responsavel_nome}</span></p>}
-          {cliente.whatsapp && (
-            <a href={`https://wa.me/${cliente.whatsapp}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-green-400 hover:text-green-300">
-              <MessageSquare className="h-4 w-4" /> WhatsApp
+           {cliente.whatsapp && (
+             <a href={`https://wa.me/${cliente.whatsapp}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-green-400 hover:text-green-300 text-base font-medium">
+               <MessageSquare className="h-5 w-5" /> WhatsApp
             </a>
           )}
         </div>
