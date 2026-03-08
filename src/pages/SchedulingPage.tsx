@@ -957,6 +957,12 @@ export default function SchedulingPage() {
                 <div className="mt-2">
                   <div className="text-sm font-medium text-center text-muted-foreground mb-3">
                     {format(weekDays[0], "dd MMM", { locale: ptBR })} — {format(weekDays[6], "dd MMM yyyy", { locale: ptBR })}
+                    {filterCs !== 'all' && (
+                      <Badge variant="secondary" className="ml-2 text-[10px]">
+                        <User className="h-2.5 w-2.5 mr-1" />
+                        {teamMembers.find(t => t.id === filterCs)?.display_name || 'CS'}
+                      </Badge>
+                    )}
                   </div>
                   <div className="overflow-x-auto">
                     <div className="min-w-[700px]">
