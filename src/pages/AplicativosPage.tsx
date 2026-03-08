@@ -103,6 +103,70 @@ export default function AplicativosPage() {
     nome: '', url_cliente: '', email: '', whatsapp: '', plataforma: 'ambos', responsavel_nome: '',
   });
 
+  // Smart URL matching state
+  const [matchedClient, setMatchedClient] = useState<{ source: string; nome: string; email: string; id?: string } | null>(null);
+  const [existingAppCliente, setExistingAppCliente] = useState(false);
+
+  useEffect(() => {
+    const url = form.url_cliente.trim();
+    if (!url || url.length < 3) {
+      setMatchedClient(null);
+      setExistingAppCliente(false);
+      return;
+    }
+    const timeout = setTimeout(async () => {
+      // 1. Check app_clientes
+      const { data: appCl } = await supabase
+        .from('app_clientes')
+        .select('id, nome')
+        .eq('empresa', url)
+        .maybeSingle();
+      if (appCl) {
+        setExistingAppCliente(true);
+        setMatchedClient({ source: 'app_clientes', nome: appCl.nome, email: '', id: appCl.id });
+        return;
+      }
+      setExistingAppCliente(false);
+
+      // 2. Check clients (carteira)
+      const { data: carteiraCl } = await supabase
+        .from('clients')
+        .select('id, client_name, email_do_cliente, client_url')
+        .eq('client_url', url)
+        .maybeSingle();
+      if (carteiraCl) {
+        setMatchedClient({ source: 'clients', nome: carteiraCl.client_name || '', email: carteiraCl.email_do_cliente || '' });
+        setForm(p => ({
+          ...p,
+          nome: p.nome || carteiraCl.client_name || '',
+          email: p.email || carteiraCl.email_do_cliente || '',
+        }));
+        return;
+      }
+
+      // 3. Check briefing_requests
+      const { data: briefingCl } = await supabase
+        .from('briefing_requests')
+        .select('requester_name, requester_email, platform_url')
+        .eq('platform_url', url)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (briefingCl) {
+        setMatchedClient({ source: 'briefing_requests', nome: briefingCl.requester_name, email: briefingCl.requester_email });
+        setForm(p => ({
+          ...p,
+          nome: p.nome || briefingCl.requester_name,
+          email: p.email || briefingCl.requester_email,
+        }));
+        return;
+      }
+
+      setMatchedClient(null);
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [form.url_cliente]);
+
   const { data: clientes = [], isLoading } = useQuery({
     queryKey: ['app-clientes'],
     queryFn: async () => {
