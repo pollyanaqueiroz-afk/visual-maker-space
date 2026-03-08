@@ -753,6 +753,13 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
   };
 
   if (!authenticated) {
+    if (embedded) {
+      return (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-6 w-6 animate-spin text-white/50" />
+        </div>
+      );
+    }
     return (
       <PageWrapper
         headerTitle="Validação de Artes"
