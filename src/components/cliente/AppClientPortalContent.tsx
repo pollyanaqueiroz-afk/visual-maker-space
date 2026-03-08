@@ -1177,15 +1177,16 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             const progressWidth = trackFases.length > 1 ? `${(completedCount / (trackFases.length - 1)) * 100}%` : '0%';
             return <div className="absolute top-1/2 -translate-y-1/2 left-0 h-1 bg-green-500 rounded-full transition-all duration-500" style={{ width: progressWidth }} />;
           })()}
-          <div className="relative flex justify-between w-full">
+          <div className="relative flex w-full">
             {trackFases.map(({ num, fase }) => {
               const status = fase?.status || 'bloqueada';
               const isSelected = selectedTimelineFase?.fase === num && selectedTimelineFase?.plataforma === plataforma;
               return (
-                <button
-                  key={num}
-                  onClick={() => setSelectedTimelineFase(isSelected ? null : { fase: num, plataforma })}
-                  className={`relative z-10 flex flex-col items-center cursor-pointer hover:scale-105 transition-all ${status === 'bloqueada' ? 'opacity-60' : ''} ${isSelected ? 'scale-110' : ''}`}
+                <div key={num} className="flex-1 flex flex-col items-center relative z-10">
+                  <button
+                    onClick={() => setSelectedTimelineFase(isSelected ? null : { fase: num, plataforma })}
+                    className={`flex flex-col items-center cursor-pointer hover:scale-105 transition-all ${status === 'bloqueada' ? 'opacity-60' : ''} ${isSelected ? 'scale-110' : ''}`}
+                  >
                 >
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
                     status === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50 text-green-400' :
