@@ -918,7 +918,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
               {plataforma === 'google' && <span>🤖</span>}
               {plataforma === 'apple' && <span>🍎</span>}
               {!plataforma && <span>📋</span>}
-              <h3 className="text-sm font-bold">{FASE_NAMES[faseNum]}</h3>
+              <h3 className="text-sm font-bold">{faseNum > 0 ? `${faseNum}. ` : ''}{FASE_NAMES[faseNum]}</h3>
               {plataforma && (
                 <Badge variant="outline" className="text-[10px]">
                   {plataforma === 'google' ? 'Google Play' : 'Apple'}
@@ -1165,8 +1165,8 @@ export default function AppClientPortalContent({ clienteId }: Props) {
 
     return (
       <div className="flex items-center gap-0">
-        <span className="text-sm font-bold shrink-0 mr-2">
-          {emoji} <span className={plataforma === 'google' ? 'text-blue-400' : 'text-purple-400'}>{plataforma === 'google' ? 'Google Play' : 'Apple'}</span>
+        <span className={`text-sm font-bold shrink-0 w-32 text-right pr-3 ${plataforma === 'google' ? 'text-blue-400' : 'text-purple-400'}`}>
+          {emoji} {plataforma === 'google' ? 'Google Play' : 'Apple'}
         </span>
         <div className="relative flex items-center flex-1 min-w-0 py-1">
           {/* Connecting line */}
@@ -1198,11 +1198,11 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                        status === 'em_andamento' ? <Star className="h-5 w-5" /> :
                        <Lock className="h-4 w-4" />}
                     </div>
-                    <p className={`text-[10px] mt-1.5 text-center leading-tight max-w-[60px] ${
+                    <p className={`text-[10px] mt-1.5 text-center leading-tight max-w-[70px] ${
                       status === 'concluida' ? 'text-green-400/80' :
                       status === 'em_andamento' ? 'text-primary font-semibold' :
                       'text-white/30'
-                    }`}>{FASE_NAMES[num]}</p>
+                    }`}>{num}. {FASE_NAMES[num]}</p>
                   </button>
                 </div>
               );
@@ -1350,10 +1350,16 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 }`}>Pré-<br/>Requisitos</p>
               </div>
 
-              {/* Bifurcation connector */}
-              <div className="flex flex-col items-start shrink-0 self-center">
-                <div className="w-6 border-b-2 border-l-2 border-white/20 h-5 rounded-bl-lg" />
-                <div className="w-6 border-t-2 border-l-2 border-white/20 h-5 rounded-tl-lg" />
+              {/* Bifurcation connector — clean T-shape */}
+              <div className="flex items-center shrink-0 self-center">
+                <div className="w-4 h-0.5 bg-white/20" />
+                <div className="relative">
+                  <div className="w-0.5 bg-white/20" style={{ height: '4.5rem' }} />
+                  {/* Top branch */}
+                  <div className="absolute top-0 left-0 w-4 h-0.5 bg-white/20" />
+                  {/* Bottom branch */}
+                  <div className="absolute bottom-0 left-0 w-4 h-0.5 bg-white/20" />
+                </div>
               </div>
 
               {/* Two tracks stacked */}
