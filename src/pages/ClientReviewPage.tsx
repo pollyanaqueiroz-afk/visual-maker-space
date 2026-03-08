@@ -969,7 +969,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
           className="mb-6 text-center"
         >
           <div className={`inline-flex items-center gap-3 ${cardBg} backdrop-blur-sm border rounded-full px-5 py-2.5 shadow-sm`}>
-            <span className="text-sm font-semibold text-foreground">
+            <span className={`text-sm font-semibold ${textMain}`}>
               {currentIndex + 1}
             </span>
             <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
