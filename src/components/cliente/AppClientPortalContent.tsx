@@ -690,7 +690,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 if (checked) {
                   setConfirmingItemId(item.id);
                 } else {
-                  toggleCheck.mutate({ id: item.id, feito: false, texto: item.texto });
+                  toggleCheck.mutate({ id: item.id, feito: false, texto: item.texto, fase_numero: item.fase_numero });
                 }
               }}
               className="mt-0.5 border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
