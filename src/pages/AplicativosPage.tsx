@@ -289,7 +289,28 @@ export default function AplicativosPage() {
     })();
     const publicados = clientes.filter(c => c.fase_atual >= 6);
     const progressoList = clientes.filter(c => c.fase_atual < 6).sort((a, b) => b.porcentagem_geral - a.porcentagem_geral);
-    return { abertos, atrasadosList, etapasAtrasadasList, publicados, progressoList };
+    // Clients needing attention: SLA violated or status atrasado (deduplicated)
+    const atencaoIds = new Set<string>();
+    const atencaoList: (AppCliente & { motivo: string })[] = [];
+    for (const c of clientes) {
+      if (c.status === 'atrasado' && !atencaoIds.has(c.id)) {
+        atencaoIds.add(c.id);
+        atencaoList.push({ ...c, motivo: 'Cliente inativo' });
+      }
+    }
+    for (const f of fases.filter(f => f.sla_violado)) {
+      const c = clientes.find(cl => cl.id === f.cliente_id);
+      if (c && !atencaoIds.has(c.id)) {
+        atencaoIds.add(c.id);
+        atencaoList.push({ ...c, motivo: `SLA vencido — Fase ${f.numero}` });
+      } else if (c && atencaoIds.has(c.id)) {
+        const existing = atencaoList.find(a => a.id === c.id);
+        if (existing && existing.motivo === 'Cliente inativo') {
+          existing.motivo = `Cliente inativo + SLA vencido`;
+        }
+      }
+    }
+    return { abertos, atrasadosList, etapasAtrasadasList, publicados, progressoList, atencaoList };
   }, [clientes, fases]);
 
   const columns = useMemo(() => {
