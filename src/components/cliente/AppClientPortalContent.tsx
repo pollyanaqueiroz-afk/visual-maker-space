@@ -561,10 +561,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
         <div className="relative">
           {/* Active glow effects */}
           {isActive && (
-            <>
-              <div className="absolute -inset-3 rounded-full bg-blue-500/20 animate-ping" style={{ animationDuration: '3s' }} />
-              <div className="absolute -inset-2 rounded-full bg-blue-500/10 animate-pulse" />
-            </>
+            <div className="absolute inset-0 rounded-full bg-blue-500/20 animate-pulse" />
           )}
           {/* Progress ring */}
           {isActive && (
@@ -1247,10 +1244,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                   >
                     <div className="relative">
                       {status === 'em_andamento' && (
-                        <>
-                          <div className="absolute -inset-2 rounded-full bg-blue-500/20 animate-ping" style={{ animationDuration: '3s' }} />
-                          <div className="absolute -inset-1 rounded-full bg-blue-500/10 animate-pulse" />
-                        </>
+                        <div className="absolute inset-0 rounded-full bg-blue-500/20 animate-pulse" />
                       )}
                       <div className={`relative w-14 h-14 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                         status === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50 text-green-400' :
@@ -1378,10 +1372,10 @@ export default function AppClientPortalContent({ clienteId }: Props) {
       {/* TIMELINE */}
       {isParallelFlow ? (
         /* ── Parallel: fase 0 left, bifurcation to two horizontal tracks ── */
-        <div className="space-y-4">
+         <div className="space-y-4">
           <div>
-            <div className="flex items-start gap-0 w-full py-3">
-              {/* Fase 0 on the left */}
+            <div className="grid grid-cols-[auto_auto_1fr] items-center gap-0 w-full py-3">
+              {/* Fase 0 on the left — centered vertically */}
               <div className="flex flex-col items-center shrink-0">
                 {(() => {
                   const f0 = fases.find((f: any) => f.numero === 0);
@@ -1392,14 +1386,11 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                     <>
                       <button onClick={() => setSelectedTimelineFase(isF0Selected ? null : { fase: 0 })} className="relative">
                         {isActive && (
-                          <>
-                            <div className="absolute -inset-3 rounded-full bg-blue-500/20 animate-ping" style={{ animationDuration: '3s' }} />
-                            <div className="absolute -inset-2 rounded-full bg-blue-500/10 animate-pulse" />
-                          </>
+                          <div className="absolute inset-0 rounded-full bg-blue-500/20 animate-pulse" />
                         )}
                         <div className={`relative flex items-center justify-center w-16 h-16 rounded-full transition-all ${
                           s === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50' :
-                          isActive ? 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-2xl shadow-blue-500/50 ring-2 ring-blue-500/50' :
+                          isActive ? 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/30 ring-2 ring-blue-400/40' :
                           s === 'atrasada' ? 'bg-red-500/30 ring-2 ring-red-500/50' :
                           'bg-white/10'
                         } ${isF0Selected ? 'ring-2 ring-blue-500/50' : ''}`}>
@@ -1420,8 +1411,8 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 })()}
               </div>
 
-              {/* Toggle button — aligned with circle center */}
-              <div className="shrink-0 flex items-center self-center mx-1">
+              {/* Toggle button — grid items-center keeps it centered */}
+              <div className="flex items-center justify-center mx-1">
                 <button
                   onClick={() => setFlowExpanded(!flowExpanded)}
                   className="flex items-center justify-center w-6 h-6 rounded-full bg-[#1E293B] border-2 border-white/30 hover:border-white/50 transition-all hover:scale-110"
@@ -1431,27 +1422,29 @@ export default function AppClientPortalContent({ clienteId }: Props) {
               </div>
 
               {/* Two tracks stacked — collapsible */}
-              <AnimatePresence>
-                {flowExpanded && (
-                  <motion.div
-                    initial={{ width: 0, opacity: 0 }}
-                    animate={{ width: 'auto', opacity: 1 }}
-                    exit={{ width: 0, opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="flex-1 flex flex-col gap-8 min-w-0 overflow-hidden"
-                  >
-                    {renderParallelTrackRow('google', '🤖')}
-                    {renderParallelTrackRow('apple', '🍎')}
-                  </motion.div>
+              <div className="min-w-0">
+                <AnimatePresence>
+                  {flowExpanded && (
+                    <motion.div
+                      initial={{ width: 0, opacity: 0 }}
+                      animate={{ width: 'auto', opacity: 1 }}
+                      exit={{ width: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="flex flex-col gap-8 overflow-hidden"
+                    >
+                      {renderParallelTrackRow('google', '🤖')}
+                      {renderParallelTrackRow('apple', '🍎')}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                {!flowExpanded && (
+                  <div className="flex items-center gap-3 text-sm text-white/60 ml-2">
+                    <span>🤖 Fase {fases.find((f: any) => f.plataforma === 'google' && f.status === 'em_andamento')?.numero ?? '—'}</span>
+                    <span className="text-white/30">·</span>
+                    <span>🍎 Fase {fases.find((f: any) => f.plataforma === 'apple' && f.status === 'em_andamento')?.numero ?? '—'}</span>
+                  </div>
                 )}
-              </AnimatePresence>
-              {!flowExpanded && (
-                <div className="flex items-center gap-3 text-sm text-white/60 ml-2">
-                  <span>🤖 Fase {fases.find((f: any) => f.plataforma === 'google' && f.status === 'em_andamento')?.numero ?? '—'}</span>
-                  <span className="text-white/30">·</span>
-                  <span>🍎 Fase {fases.find((f: any) => f.plataforma === 'apple' && f.status === 'em_andamento')?.numero ?? '—'}</span>
-                </div>
-              )}
+              </div>
             </div>
           </div>
 
