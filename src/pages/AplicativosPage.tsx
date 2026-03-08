@@ -808,16 +808,16 @@ export default function AplicativosPage() {
                           const isCompleting = completingIds.has(item.id);
                           const isDone = item.feito || isCompleting;
                           const isPriority = item.texto?.startsWith('⚠️ PRIORIDADE');
-                          const isMunin = item.tipo === 'munin' || item.texto === 'Criar Munin';
+                          const isMooni = item.tipo === 'mooni' || item.texto === 'Criar Mooni';
 
                           return (
-                            <div key={item.id} className={`grid grid-cols-[32px_1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-3 items-center transition-opacity ${isCompleting ? 'opacity-50' : ''} ${isMunin && !isDone ? 'bg-blue-500/10 border-l-2 border-blue-500' : isPriority && !isDone ? 'bg-destructive/10 border-l-2 border-destructive' : ''}`}>
-                              {isMunin && !isDone ? (
+                            <div key={item.id} className={`grid grid-cols-[32px_1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-3 items-center transition-opacity ${isCompleting ? 'opacity-50' : ''} ${isMooni && !isDone ? 'bg-blue-500/10 border-l-2 border-blue-500' : isPriority && !isDone ? 'bg-destructive/10 border-l-2 border-destructive' : ''}`}>
+                              {isMooni && !isDone ? (
                                 <FileText className="h-4 w-4 text-blue-400" />
                               ) : (
                                 <Checkbox
                                   checked={isDone}
-                                  disabled={isDone || (isMunin && !isDone)}
+                                  disabled={isDone || (isMooni && !isDone)}
                                   className="border-muted-foreground/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
                                   onCheckedChange={(checked) => {
                                     if (checked && !item.feito) completeTask.mutate(item.id);
@@ -827,8 +827,8 @@ export default function AplicativosPage() {
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2">
                                   <p className={`text-sm truncate ${isDone ? 'line-through text-muted-foreground' : ''}`}>{item.texto}</p>
-                                  {isMunin && !isDone && (
-                                    <Badge className="text-[10px] shrink-0 bg-blue-500/20 text-blue-400 border border-blue-500/30">MUNIN</Badge>
+                                  {isMooni && !isDone && (
+                                    <Badge className="text-[10px] shrink-0 bg-blue-500/20 text-blue-400 border border-blue-500/30">MOONI</Badge>
                                   )}
                                   {isPriority && !isDone && (
                                     <Badge variant="destructive" className="text-[10px] shrink-0">PRIORIDADE</Badge>
@@ -840,20 +840,20 @@ export default function AplicativosPage() {
                                 {item.feito && item.feito_em && (
                                   <p className="text-[10px] text-green-500/70 mt-0.5">Concluído em {format(new Date(item.feito_em), "dd/MM/yy 'às' HH:mm")}</p>
                                 )}
-                                {isMunin && !isDone && (
+                                {isMooni && !isDone && (
                                   <Button
                                     size="sm"
                                     className="mt-2 bg-blue-600 hover:bg-blue-700 text-white text-xs h-7"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      setMuninItemId(item.id);
-                                      setMuninClientName(cliente.nome);
-                                      setMuninClientEmpresa(cliente.empresa);
-                                      setMuninText('');
-                                      setMuninDialogOpen(true);
+                                      setMooniItemId(item.id);
+                                      setMooniClientName(cliente.nome);
+                                      setMooniClientEmpresa(cliente.empresa);
+                                      setMooniText('');
+                                      setMooniDialogOpen(true);
                                     }}
                                   >
-                                    <FileText className="h-3 w-3 mr-1" /> Criar Munin
+                                    <FileText className="h-3 w-3 mr-1" /> Criar Mooni
                                   </Button>
                                 )}
                               </div>
