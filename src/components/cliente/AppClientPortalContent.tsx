@@ -142,6 +142,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
   const [reviewingImageId, setReviewingImageId] = useState<string | null>(null);
   const [reviewComment, setReviewComment] = useState('');
   const [formData, setFormData] = useState({ nome_app: '', descricao_curta: '', descricao_longa: '', url_privacidade: '', url_termos: '' });
+  const [flowExpanded, setFlowExpanded] = useState(true);
 
   const CNPJ_TEXT = 'Confirmei que meu CNPJ é ME ou LTDA';
   const EMAIL_CORP_TEXT = 'Tenho um e-mail corporativo';
