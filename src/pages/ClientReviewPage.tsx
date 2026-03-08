@@ -1046,7 +1046,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
                   <h2 className={`text-xl font-bold ${textMain}`}>
                     {currentImage.product_name || imageTypeLabel}
                   </h2>
-                  <p className="text-sm text-muted-foreground">{imageTypeLabel}</p>
+                  <p className={`text-sm ${textSub}`}>{imageTypeLabel}</p>
                   {currentImage.revision_count > 0 && (
                     <Badge variant="outline" className="mt-2 text-destructive border-destructive/30 bg-destructive/5">
                       ⚠️ Refação {currentImage.revision_count}
