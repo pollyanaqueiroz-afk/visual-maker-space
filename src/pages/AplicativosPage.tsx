@@ -93,6 +93,9 @@ interface AppCliente {
   ultima_acao_cliente: string | null;
   portal_token: string;
   updated_at: string;
+  cancelado_em: string | null;
+  cancelado_por: string | null;
+  motivo_cancelamento: string | null;
 }
 
 interface AppFase {
