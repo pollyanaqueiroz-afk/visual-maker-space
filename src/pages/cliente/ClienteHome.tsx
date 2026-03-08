@@ -8,7 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { useNavigate } from 'react-router-dom';
 import {
   CheckCircle, AlertTriangle, Palette, Smartphone, Eye, Upload, FileText,
-  ChevronRight, Loader2, Sparkles, PlusCircle,
+  ChevronRight, Loader2, Sparkles, PlusCircle, XCircle,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -31,7 +31,7 @@ export default function ClienteHome() {
     },
   });
 
-  // Fetch app client data
+  // Fetch app client data (include cancelled, get latest)
   const { data: appCliente, isLoading: loadingApp } = useQuery({
     queryKey: ['cliente-app', clientEmail],
     enabled: !!clientEmail,
@@ -40,6 +40,8 @@ export default function ClienteHome() {
         .from('app_clientes')
         .select('*')
         .eq('email', clientEmail)
+        .order('data_criacao', { ascending: false })
+        .limit(1)
         .maybeSingle();
       if (error) throw error;
       return data;
@@ -287,37 +289,62 @@ export default function ClienteHome() {
 
         {/* App status */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <Card className="bg-[#1E293B] border-white/10 cursor-pointer hover:border-white/20 transition-colors"
-            onClick={() => navigate('/cliente/aplicativo')}>
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
-                <Smartphone className="h-5 w-5 text-blue-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <p className="text-xs text-white/50 mb-0.5">Aplicativo</p>
-                  {appPendencies.length > 0 && (
-                    <Badge variant="destructive" className="text-[10px] ml-1">
-                      {appPendencies.length} pendência{appPendencies.length > 1 ? 's' : ''}
-                    </Badge>
+          {appCliente?.status === 'cancelado' ? (
+            <Card className="bg-[#1E293B] border-destructive/20 cursor-pointer hover:border-destructive/30 transition-colors"
+              onClick={() => {
+                createAppFromBriefing.mutate();
+              }}>
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
+                  <XCircle className="h-5 w-5 text-destructive/60" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-destructive/70">Solicitação cancelada</p>
+                  <p className="text-xs text-white/40 mt-0.5">
+                    {(appCliente as any).motivo_cancelamento || 'Seu fluxo de aplicativo foi cancelado'}
+                  </p>
+                </div>
+                <div className="shrink-0">
+                  <div className="flex items-center gap-1.5 text-xs text-white/50">
+                    <PlusCircle className="h-3.5 w-3.5" />
+                    Solicitar novamente
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="bg-[#1E293B] border-white/10 cursor-pointer hover:border-white/20 transition-colors"
+              onClick={() => navigate('/cliente/aplicativo')}>
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
+                  <Smartphone className="h-5 w-5 text-blue-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-xs text-white/50 mb-0.5">Aplicativo</p>
+                    {appPendencies.length > 0 && (
+                      <Badge variant="destructive" className="text-[10px] ml-1">
+                        {appPendencies.length} pendência{appPendencies.length > 1 ? 's' : ''}
+                      </Badge>
+                    )}
+                  </div>
+                  {appCliente ? (
+                    <>
+                      <p className="text-sm font-medium">
+                        {appCliente.fase_atual >= 6
+                          ? '🎉 Publicado!'
+                          : `${appCliente.porcentagem_geral}% concluído`}
+                      </p>
+                      <Progress value={appCliente.porcentagem_geral} className="h-1.5 bg-white/10 mt-1.5" />
+                    </>
+                  ) : (
+                    <p className="text-sm text-white/40">Nenhum projeto de app vinculado</p>
                   )}
                 </div>
-                {appCliente ? (
-                  <>
-                    <p className="text-sm font-medium">
-                      {appCliente.fase_atual >= 6
-                        ? '🎉 Publicado!'
-                        : `${appCliente.porcentagem_geral}% concluído`}
-                    </p>
-                    <Progress value={appCliente.porcentagem_geral} className="h-1.5 bg-white/10 mt-1.5" />
-                  </>
-                ) : (
-                  <p className="text-sm text-white/40">Nenhum projeto de app vinculado</p>
-                )}
-              </div>
-              <ChevronRight className="h-4 w-4 text-white/30 shrink-0" />
-            </CardContent>
-          </Card>
+                <ChevronRight className="h-4 w-4 text-white/30 shrink-0" />
+              </CardContent>
+            </Card>
+          )}
         </motion.div>
 
         {/* Artes status */}

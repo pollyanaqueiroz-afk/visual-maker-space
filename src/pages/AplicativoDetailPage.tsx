@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { usePermissions } from '@/hooks/usePermissions';
-import { ArrowLeft, Copy, ExternalLink, Clock, CheckCircle2, Circle, Lock, AlertTriangle, Upload, MessageSquare, Image as ImageIcon, ShieldCheck, RotateCcw, Pencil } from 'lucide-react';
+import { ArrowLeft, Copy, ExternalLink, Clock, CheckCircle2, Circle, Lock, AlertTriangle, Upload, MessageSquare, Image as ImageIcon, ShieldCheck, RotateCcw, Pencil, XCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -13,9 +13,11 @@ import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { differenceInHours, differenceInDays, format } from 'date-fns';
@@ -42,6 +44,9 @@ export default function AplicativoDetailPage() {
   const [editingClient, setEditingClient] = useState(false);
   const [clientForm, setClientForm] = useState({ nome: '', email: '', empresa: '', plataforma: '', responsavel_nome: '', prazo_estimado: '' });
   const [manualFase, setManualFase] = useState<string>('');
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [cancelMotivo, setCancelMotivo] = useState('');
+  const [cancelling, setCancelling] = useState(false);
 
   const { data: cliente } = useQuery({
     queryKey: ['app-cliente', clienteId],
@@ -344,7 +349,86 @@ export default function AplicativoDetailPage() {
     if (fase.status === 'concluida') return <CheckCircle2 className="h-5 w-5 text-green-500" />;
     if (fase.status === 'em_andamento') return <Circle className="h-5 w-5 text-primary fill-primary/20" />;
     if (fase.status === 'atrasada') return <AlertTriangle className="h-5 w-5 text-destructive" />;
+    if (fase.status === 'cancelada') return <XCircle className="h-5 w-5 text-destructive/40" />;
     return <Lock className="h-5 w-5 text-muted-foreground/40" />;
+  };
+
+  const handleCancelFluxo = async () => {
+    if (!cliente || !cancelMotivo.trim()) return;
+    setCancelling(true);
+    try {
+      await supabase.from('app_clientes').update({
+        status: 'cancelado',
+        cancelado_em: new Date().toISOString(),
+        cancelado_por: user?.email || 'equipe',
+        motivo_cancelamento: cancelMotivo.trim(),
+      } as any).eq('id', cliente.id);
+
+      await supabase.from('app_fases').update({ status: 'cancelada' })
+        .eq('cliente_id', cliente.id)
+        .in('status', ['em_andamento', 'bloqueada']);
+
+      await supabase.from('app_conversas').insert({
+        cliente_id: cliente.id,
+        fase_numero: cliente.fase_atual || 0,
+        autor: user?.email || 'Sistema',
+        tipo: 'sistema',
+        mensagem: `❌ Fluxo cancelado por ${user?.email}. Motivo: ${cancelMotivo.trim()}`,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['app-clientes'] });
+      queryClient.invalidateQueries({ queryKey: ['app-cliente', clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['app-fases', clienteId] });
+      toast.success(`Fluxo de ${cliente.nome} cancelado`);
+      setCancelDialogOpen(false);
+      setCancelMotivo('');
+    } catch (err: any) {
+      toast.error('Erro: ' + err.message);
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const handleReactivate = async () => {
+    if (!confirm('Reativar o fluxo de aplicativo deste cliente?')) return;
+
+    await supabase.from('app_clientes').update({
+      status: 'em_andamento',
+      cancelado_em: null,
+      cancelado_por: null,
+      motivo_cancelamento: null,
+    } as any).eq('id', cliente.id);
+
+    await supabase.from('app_fases').update({ status: 'bloqueada' })
+      .eq('cliente_id', cliente.id).eq('status', 'cancelada');
+
+    const { data: ultimaConcluida } = await supabase
+      .from('app_fases')
+      .select('numero')
+      .eq('cliente_id', cliente.id)
+      .eq('status', 'concluida')
+      .order('numero', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const proximaFase = (ultimaConcluida?.numero ?? -1) + 1;
+    await supabase.from('app_fases').update({
+      status: 'em_andamento',
+      data_inicio: new Date().toISOString(),
+    }).eq('cliente_id', cliente.id).eq('numero', proximaFase);
+
+    await supabase.from('app_conversas').insert({
+      cliente_id: cliente.id,
+      fase_numero: proximaFase,
+      autor: user?.email || 'Sistema',
+      tipo: 'sistema',
+      mensagem: `✅ Fluxo reativado por ${user?.email}`,
+    });
+
+    queryClient.invalidateQueries({ queryKey: ['app-clientes'] });
+    queryClient.invalidateQueries({ queryKey: ['app-cliente', clienteId] });
+    queryClient.invalidateQueries({ queryKey: ['app-fases', clienteId] });
+    toast.success('Fluxo reativado!');
   };
 
   return (
@@ -359,8 +443,8 @@ export default function AplicativoDetailPage() {
             <h1 className="text-xl font-bold">{cliente.nome}</h1>
             <span className="text-muted-foreground">—</span>
             <span className="text-muted-foreground">{cliente.empresa}</span>
-            <Badge variant={cliente.status === 'atrasado' ? 'destructive' : cliente.status === 'concluido' ? 'default' : 'secondary'}>
-              {cliente.status === 'no_prazo' ? 'No prazo' : cliente.status === 'atrasado' ? 'Atrasado' : cliente.status === 'bloqueado' ? 'Bloqueado' : 'Concluído'}
+            <Badge variant={cliente.status === 'cancelado' ? 'destructive' : cliente.status === 'atrasado' ? 'destructive' : cliente.status === 'concluido' ? 'default' : 'secondary'}>
+              {cliente.status === 'cancelado' ? 'Cancelado' : cliente.status === 'no_prazo' ? 'No prazo' : cliente.status === 'atrasado' ? 'Atrasado' : cliente.status === 'bloqueado' ? 'Bloqueado' : 'Concluído'}
             </Badge>
             <Badge variant="outline">
               {cliente.plataforma === 'apple' ? '🍎 Apple' : cliente.plataforma === 'google' ? '🤖 Google' : '🍎+🤖 Ambos'}
@@ -385,6 +469,29 @@ export default function AplicativoDetailPage() {
           </Button>
         </div>
       </div>
+
+      {/* Cancelled banner */}
+      {cliente.status === 'cancelado' && (
+        <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-4 flex items-start gap-3">
+          <XCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-destructive">Fluxo cancelado</p>
+            {(cliente as any).motivo_cancelamento && (
+              <p className="text-xs text-muted-foreground mt-0.5">Motivo: {(cliente as any).motivo_cancelamento}</p>
+            )}
+            {(cliente as any).cancelado_em && (
+              <p className="text-[10px] text-muted-foreground/50 mt-1">
+                Cancelado por {(cliente as any).cancelado_por} em {format(new Date((cliente as any).cancelado_em), "dd/MM/yyyy 'às' HH:mm")}
+              </p>
+            )}
+          </div>
+          {canManage && (
+            <Button variant="outline" size="sm" className="shrink-0" onClick={handleReactivate}>
+              Reativar
+            </Button>
+          )}
+        </div>
+      )}
 
       {/* Admin: Edit client data */}
       {canManage && (
@@ -432,8 +539,78 @@ export default function AplicativoDetailPage() {
               Aplicar
             </Button>
           </div>
+
+          {/* Danger Zone */}
+          {cliente.status !== 'cancelado' && (
+            <div className="mt-8 pt-6 border-t border-destructive/20">
+              <h3 className="text-sm font-semibold text-destructive mb-3 flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" />
+                Zona de Perigo
+              </h3>
+              <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">Cancelar fluxo de aplicativo</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    O cliente será notificado e poderá solicitar novamente no futuro
+                  </p>
+                </div>
+                <Button variant="destructive" size="sm" onClick={() => setCancelDialogOpen(true)}>
+                  Cancelar fluxo
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
       )}
+
+      {/* Cancel Dialog */}
+      <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Cancelar fluxo de aplicativo
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  Tem certeza que deseja cancelar o fluxo de
+                  <span className="font-semibold text-foreground"> {cliente?.nome}</span> ({cliente?.empresa})?
+                </p>
+                <div className="text-sm space-y-1">
+                  <p className="font-medium text-destructive/80">Esta ação irá:</p>
+                  <p className="text-muted-foreground">• Mover o cliente para "Cancelados" no Kanban</p>
+                  <p className="text-muted-foreground">• Informar o cliente no portal que o fluxo foi cancelado</p>
+                  <p className="text-muted-foreground">• Permitir ao cliente solicitar novamente no futuro</p>
+                  <p className="text-muted-foreground">• Manter todo o histórico para auditoria</p>
+                </div>
+                <div className="space-y-2 pt-2">
+                  <Label className="text-sm font-medium">Motivo do cancelamento *</Label>
+                  <Textarea
+                    placeholder="Descreva o motivo do cancelamento..."
+                    value={cancelMotivo}
+                    onChange={e => setCancelMotivo(e.target.value)}
+                    className="min-h-[80px]"
+                  />
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelling} onClick={() => setCancelMotivo('')}>
+              Manter ativo
+            </AlertDialogCancel>
+            <Button
+              variant="destructive"
+              disabled={cancelling || !cancelMotivo.trim()}
+              onClick={handleCancelFluxo}
+            >
+              {cancelling ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Confirmar cancelamento
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Timeline */}
       <div className="space-y-2">

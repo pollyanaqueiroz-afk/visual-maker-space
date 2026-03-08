@@ -205,12 +205,15 @@ export type Database = {
       }
       app_clientes: {
         Row: {
+          cancelado_em: string | null
+          cancelado_por: string | null
           data_criacao: string | null
           email: string
           empresa: string
           fase_atual: number | null
           hubspot_deal_id: string | null
           id: string
+          motivo_cancelamento: string | null
           nome: string
           plataforma: string
           porcentagem_geral: number | null
@@ -228,12 +231,15 @@ export type Database = {
           whatsapp: string | null
         }
         Insert: {
+          cancelado_em?: string | null
+          cancelado_por?: string | null
           data_criacao?: string | null
           email: string
           empresa: string
           fase_atual?: number | null
           hubspot_deal_id?: string | null
           id?: string
+          motivo_cancelamento?: string | null
           nome: string
           plataforma?: string
           porcentagem_geral?: number | null
@@ -251,12 +257,15 @@ export type Database = {
           whatsapp?: string | null
         }
         Update: {
+          cancelado_em?: string | null
+          cancelado_por?: string | null
           data_criacao?: string | null
           email?: string
           empresa?: string
           fase_atual?: number | null
           hubspot_deal_id?: string | null
           id?: string
+          motivo_cancelamento?: string | null
           nome?: string
           plataforma?: string
           porcentagem_geral?: number | null
