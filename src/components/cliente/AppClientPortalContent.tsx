@@ -1008,7 +1008,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                               ✅ {format(new Date(mockupRequest.created_at), "dd/MM/yyyy 'às' HH:mm")}
                             </p>
                           )}
-                          <p className="text-[10px] text-white/40 mt-0.5">Acompanhe na aba "Artes"</p>
+                          <p className="text-[10px] text-white/50 mt-0.5">Acompanhe na aba "Artes"</p>
                         </>
                       )}
                     </div>
