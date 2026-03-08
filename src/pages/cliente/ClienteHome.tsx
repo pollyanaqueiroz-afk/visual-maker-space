@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 export default function ClienteHome() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const clientEmail = user?.email || '';
 
   // Fetch artes data (for status cards)
