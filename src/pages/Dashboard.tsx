@@ -423,6 +423,22 @@ export default function Dashboard() {
     return Array.from(urls).sort();
   }, [images]);
 
+  const designerWorkload = useMemo(() => {
+    const map: Record<string, { email: string; pending: number; inProgress: number; review: number; completed: number; overdue: number; totalActive: number }> = {};
+    images.filter(i => i.assigned_email).forEach(img => {
+      const email = img.assigned_email!;
+      if (!map[email]) map[email] = { email, pending: 0, inProgress: 0, review: 0, completed: 0, overdue: 0, totalActive: 0 };
+      if (img.status === 'pending') { map[email].pending++; map[email].totalActive++; }
+      if (img.status === 'in_progress') { map[email].inProgress++; map[email].totalActive++; }
+      if (img.status === 'review') { map[email].review++; map[email].totalActive++; }
+      if (img.status === 'completed') map[email].completed++;
+      if (isOverdue(img)) map[email].overdue++;
+    });
+    return Object.values(map).sort((a, b) => b.totalActive - a.totalActive);
+  }, [images]);
+
+  const overloadedDesigners = designerWorkload.filter(d => d.totalActive > 5);
+
   const handleMockupSolicitation = async () => {
     if (!mockupClientUrl.trim()) {
       toast.error('Informe a URL da plataforma do cliente');
@@ -813,6 +829,73 @@ export default function Dashboard() {
                 </Card>
               );
             })()}
+            {/* Designer Workload */}
+            {overloadedDesigners.length > 0 && (
+              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-destructive">
+                    {overloadedDesigners.length} designer(s) sobrecarregado(s) — mais de 5 artes simultâneas
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {overloadedDesigners.map(d => `${d.email} (${d.totalActive} artes)`).join(' · ')}
+                  </p>
+                </div>
+              </div>
+            )}
+            <Card className="border-none shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Users className="h-4 w-4 text-primary" /> Carga de Trabalho por Designer
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {designerWorkload.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">Nenhum designer com artes atribuídas</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Designer</TableHead>
+                        <TableHead className="text-center">Em aberto</TableHead>
+                        <TableHead className="text-center">Pendentes</TableHead>
+                        <TableHead className="text-center">Produzindo</TableHead>
+                        <TableHead className="text-center">Em revisão</TableHead>
+                        <TableHead className="text-center">Atrasadas</TableHead>
+                        <TableHead className="text-center">Concluídas</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {designerWorkload.map(d => (
+                        <TableRow key={d.email} className={d.totalActive > 5 ? 'bg-destructive/5' : ''}>
+                          <TableCell className="font-medium text-sm">
+                            {d.email}
+                            {d.totalActive > 5 && <Badge variant="destructive" className="ml-2 text-[9px]">Sobrecarregado</Badge>}
+                          </TableCell>
+                          <TableCell className="text-center font-bold">{d.totalActive}</TableCell>
+                          <TableCell className="text-center">
+                            <Badge className="bg-amber-500/20 text-amber-600 dark:text-amber-400 border-0 text-xs">{d.pending}</Badge>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge className="bg-blue-500/20 text-blue-600 dark:text-blue-400 border-0 text-xs">{d.inProgress}</Badge>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge className="bg-primary/20 text-primary border-0 text-xs">{d.review}</Badge>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {d.overdue > 0
+                              ? <Badge variant="destructive" className="text-xs">{d.overdue}</Badge>
+                              : <span className="text-xs text-muted-foreground">0</span>
+                            }
+                          </TableCell>
+                          <TableCell className="text-center text-xs text-muted-foreground">{d.completed}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
             {/* Filters */}
             <div className="flex flex-wrap items-center gap-4">
               {canCreate && <ImportBriefingDialog onImported={refreshAll} />}
