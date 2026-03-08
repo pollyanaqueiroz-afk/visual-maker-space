@@ -225,7 +225,22 @@ export default function SchedulingPage() {
     }
   };
 
-  useEffect(() => { fetchMeetings(); fetchCsatData(); }, []);
+  const fetchRescheduleHistory = async () => {
+    const { data } = await supabase
+      .from('meeting_reschedules')
+      .select('meeting_id, previous_date, previous_time, new_date, new_time, reason, created_at')
+      .order('created_at', { ascending: false });
+    if (data) {
+      const map: Record<string, typeof data> = {};
+      for (const r of data as any[]) {
+        if (!map[r.meeting_id]) map[r.meeting_id] = [];
+        map[r.meeting_id].push(r);
+      }
+      setRescheduleHistory(map);
+    }
+  };
+
+  useEffect(() => { fetchMeetings(); fetchCsatData(); fetchRescheduleHistory(); }, []);
 
   // Fetch team members for managers
   useEffect(() => {
