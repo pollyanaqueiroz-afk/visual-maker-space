@@ -70,7 +70,7 @@ export default function ProcessosImplantacaoPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('scorm_packages')
-        .select('id, title, created_at, created_by')
+        .select('id, title, created_at, created_by, platform_url')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data || [];
