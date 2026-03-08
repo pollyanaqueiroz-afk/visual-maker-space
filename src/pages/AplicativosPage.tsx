@@ -103,7 +103,7 @@ export default function AplicativosPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('app_checklist_items')
-        .select('id, cliente_id, fase_numero, texto, descricao, ator, feito, feito_em, feito_por, created_at')
+        .select('id, cliente_id, fase_numero, texto, descricao, ator, tipo, feito, feito_em, feito_por, created_at')
         .neq('ator', 'cliente')
         .order('fase_numero')
         .order('created_at');
