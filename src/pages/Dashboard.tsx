@@ -797,18 +797,17 @@ export default function Dashboard() {
                                 </SelectContent>
                               </Select>
                               {img.image_type === 'app_mockup' && !img.extra_info ? (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <span>
-                                      <Button variant="outline" size="icon" className="h-8 w-8 opacity-50" disabled>
-                                        <Send className="h-4 w-4" />
-                                      </Button>
-                                    </span>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Aguardando criação do Munin</p>
-                                  </TooltipContent>
-                                </Tooltip>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8 border-amber-500/50 text-amber-500 hover:bg-amber-500/10"
+                                  onClick={() => {
+                                    setMooniBlockClientName(img.requester_name || img.platform_url);
+                                    setMooniBlockDialogOpen(true);
+                                  }}
+                                >
+                                  <Send className="h-4 w-4" />
+                                </Button>
                               ) : (
                                 <AssignBriefingDialog
                                   imageId={img.id}
