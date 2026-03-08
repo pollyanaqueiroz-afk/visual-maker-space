@@ -39,6 +39,7 @@ Deno.serve(async (req) => {
     const file = formData.get("file") as File;
     const title = (formData.get("title") as string) || "Pacote SCORM";
     const description = (formData.get("description") as string) || "";
+    const platformUrl = (formData.get("platform_url") as string) || null;
 
     if (!file) {
       return new Response(JSON.stringify({ error: "No file provided" }), {
