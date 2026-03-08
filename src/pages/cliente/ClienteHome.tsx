@@ -8,9 +8,10 @@ import { Progress } from '@/components/ui/progress';
 import { useNavigate } from 'react-router-dom';
 import {
   CheckCircle, AlertTriangle, Palette, Smartphone, Eye, Upload, FileText,
-  ChevronRight, Loader2, Sparkles, PlusCircle, XCircle,
+  ChevronRight, Loader2, Sparkles, PlusCircle, XCircle, Clock,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { format } from 'date-fns';
 import { toast } from 'sonner';
 
 export default function ClienteHome() {
