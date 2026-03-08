@@ -246,6 +246,8 @@ export default function AplicativosPage() {
       queryClient.invalidateQueries({ queryKey: ['app-checklist-full'] });
       setDialogOpen(false);
       setForm({ nome: '', url_cliente: '', email: '', whatsapp: '', plataforma: 'ambos', responsavel_nome: '' });
+      setMatchedClient(null);
+      setExistingAppCliente(false);
       if (result?.linked) {
         toast.success(`Cliente "${result.name}" já existia — responsável vinculado com sucesso!`);
       } else {
