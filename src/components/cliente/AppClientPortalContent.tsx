@@ -1314,7 +1314,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 <button onClick={() => setSelectedTimelineFase(
                   selectedTimelineFase?.fase === 0 && !selectedTimelineFase?.plataforma ? null : { fase: 0 }
                 )}>
-                  <div className={`relative flex items-center justify-center w-14 h-14 rounded-full transition-colors ${
+                  <div className={`relative flex items-center justify-center w-16 h-16 rounded-full transition-colors ${
                     (() => {
                       const f0 = fases.find((f: any) => f.numero === 0);
                       const s = f0?.status || 'bloqueada';
