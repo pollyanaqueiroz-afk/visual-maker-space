@@ -1136,8 +1136,8 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 </div>
               </div>
               <div>
-                <p className="text-sm font-semibold text-white/80">Estamos cuidando de tudo!</p>
-                <p className="text-xs text-white/50 mt-1">A equipe Curseduca está trabalhando nesta etapa.<br/>Você será notificado assim que precisarmos de algo.</p>
+                 <p className="text-sm font-semibold text-white">Estamos cuidando de tudo!</p>
+                 <p className="text-xs text-white/60 mt-1">A equipe Curseduca está trabalhando nesta etapa.<br/>Você será notificado assim que precisarmos de algo.</p>
               </div>
             </div>
           ) : fase.status === 'concluida' ? (
