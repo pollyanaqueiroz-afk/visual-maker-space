@@ -544,10 +544,9 @@ export default function AppClientPortalContent({ clienteId }: Props) {
       <button
         key={`${faseNum}-${plataforma || 'shared'}`}
         onClick={() => {
-          if (status === 'bloqueada') return;
           setSelectedTimelineFase(isSelected ? null : { fase: faseNum, plataforma });
         }}
-        className={`relative flex flex-col items-center shrink-0 transition-all ${status === 'bloqueada' ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:scale-105'} ${isSelected ? 'scale-110' : ''}`}
+        className={`relative flex flex-col items-center shrink-0 transition-all cursor-pointer hover:scale-105 ${status === 'bloqueada' ? 'opacity-60' : ''} ${isSelected ? 'scale-110' : ''}`}
       >
         <div className="relative">
           {/* Progress ring */}
