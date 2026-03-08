@@ -1268,7 +1268,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             {/* Left: greeting */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex-1 min-w-0">
               <h1 className="text-lg font-bold">Olá, {cliente?.nome?.split(' ')[0] || 'Cliente'}! 👋</h1>
-              <p className="text-white/60 text-sm mt-0.5">{getDynamicMessage()}</p>
+              <p className="text-white/70 text-sm mt-0.5">{getDynamicMessage()}</p>
               {cliente.data_criacao && (
                 <p className="text-[11px] text-primary/80 mt-1.5 flex items-center gap-1">
                   <Clock className="h-3 w-3" />
