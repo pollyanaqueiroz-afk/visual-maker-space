@@ -13,6 +13,7 @@ import {
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import TimelineSection from '@/components/cliente/TimelineSection';
 
 export default function ClienteHome() {
   const { user } = useAuth();
