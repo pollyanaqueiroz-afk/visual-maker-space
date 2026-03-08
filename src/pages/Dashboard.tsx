@@ -555,11 +555,15 @@ export default function Dashboard() {
               Link Formulário
             </Button>
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               className="flex items-center gap-2 justify-start text-xs h-8"
-              onClick={() => {
-                navigator.clipboard.writeText(`${window.location.origin}/designer`);
+              onClick={() => setMockupSolicitationOpen(true)}
+            >
+              <Smartphone className="h-3.5 w-3.5" />
+              Solicitar Mockup
+            </Button>
+            <Button
                 toast.success('Link do painel do designer copiado!');
               }}
             >
