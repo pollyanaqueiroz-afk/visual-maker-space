@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
 
       const { data, error } = await supabase
         .from("briefing_images")
-        .select("id, image_type, product_name, image_text, deadline, assigned_email, status, observations, orientation, briefing_requests!inner(requester_name, platform_url)")
+        .select("id, image_type, product_name, image_text, deadline, assigned_email, status, observations, orientation, font_suggestion, element_suggestion, professional_photo_url, extra_info, briefing_requests!inner(requester_name, platform_url)")
         .eq("delivery_token", token)
         .single();
 

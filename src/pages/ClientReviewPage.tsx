@@ -254,17 +254,10 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
           image_id: currentImage.id,
           status: 'in_progress',
           revision_count: currentImage.revision_count + 1,
-        },
-      });
-
-      await supabase
-        .from('briefing_reviews')
-        .insert({
-          briefing_image_id: currentImage.id,
-          action: 'revision_requested',
           reviewed_by: email,
           reviewer_comments: rejectionReason,
-        });
+        },
+      });
 
       await supabase.functions.invoke('notify-revision', {
         body: {

@@ -222,6 +222,41 @@ export default function DeliveryPage() {
                 </div>
               </>
             )}
+            {image!.image_text && (
+              <>
+                <Separator />
+                <div>
+                  <span className="text-muted-foreground">Texto da imagem</span>
+                  <p>{image!.image_text}</p>
+                </div>
+              </>
+            )}
+            {image!.font_suggestion && (
+              <div>
+                <span className="text-muted-foreground">Fonte sugerida</span>
+                <p>{image!.font_suggestion}</p>
+              </div>
+            )}
+            {image!.element_suggestion && (
+              <div>
+                <span className="text-muted-foreground">Elemento / Referência visual</span>
+                <p>{image!.element_suggestion}</p>
+              </div>
+            )}
+            {image!.professional_photo_url && (
+              <div>
+                <span className="text-muted-foreground">Foto do profissional</span>
+                <a href={image!.professional_photo_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all text-sm">
+                  {image!.professional_photo_url}
+                </a>
+              </div>
+            )}
+            {image!.extra_info && (
+              <div className="border-l-2 border-primary/30 pl-3">
+                <span className="text-primary text-xs font-semibold">Informações adicionais</span>
+                <p className="whitespace-pre-wrap">{image!.extra_info}</p>
+              </div>
+            )}
             <Badge variant="secondary" className="mt-2">
               Status: {image!.status === 'review' ? 'Em Validação' : image!.status === 'in_progress' ? 'Em Execução' : image!.status === 'completed' ? 'Aprovada' : image!.status === 'pending' ? 'Solicitada' : image!.status}
             </Badge>
