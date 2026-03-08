@@ -327,33 +327,66 @@ export default function AppClientPortalContent({ clienteId }: Props) {
 
   const submitMockupRequest = useMutation({
     mutationFn: async () => {
-      // Create briefing_request
-      const { data: req, error: reqErr } = await supabase.from('briefing_requests').insert({
-        requester_name: cliente!.nome,
-        requester_email: cliente!.email,
-        platform_url: cliente!.empresa,
-        has_trail: false, has_challenge: false, has_community: false,
-        additional_info: mockupObservations || null,
-        notes: 'Solicitação automática de mockup via portal do app',
-      }).select().single();
-      if (reqErr) throw reqErr;
-      // Create app_mockup image
-      const { error: imgErr } = await supabase.from('briefing_images').insert({
-        request_id: req.id,
-        image_type: 'app_mockup' as any,
-        observations: mockupObservations || null,
-        sort_order: 0,
-      });
-      if (imgErr) throw imgErr;
+      const items: { observations: string; logoUrl?: string }[] = [];
+
+      // Icon
+      if (iconOption === 'yes' && iconLogoFile) {
+        const ext = iconLogoFile.name.split('.').pop();
+        const path = `mockup/${clienteId}/logo-${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from('briefing-uploads').upload(path, iconLogoFile);
+        if (upErr) throw upErr;
+        const { data: urlData } = supabase.storage.from('briefing-uploads').getPublicUrl(path);
+        items.push({ observations: 'Ícone do Aplicativo — Cliente quer usar a logo', logoUrl: urlData.publicUrl });
+      } else if (iconOption === 'no' && iconDescription.trim()) {
+        items.push({ observations: `Ícone do Aplicativo — Descrição: ${iconDescription.trim()}` });
+      }
+
+      if (wantThumb) items.push({ observations: 'Thumb (1024x500)' });
+      if (wantScreenshotsTablet) items.push({ observations: '4 Screenshots Tablet (1024x1024)' });
+      if (wantScreenshotsCelular) items.push({ observations: '4 Screenshots Celular' });
+
+      if (items.length === 0) throw new Error('Selecione pelo menos um item');
+
+      for (const item of items) {
+        const { data: req, error: reqErr } = await supabase.from('briefing_requests').insert({
+          requester_name: cliente!.nome,
+          requester_email: cliente!.email,
+          platform_url: cliente!.empresa,
+          has_trail: false, has_challenge: false, has_community: false,
+          notes: 'Solicitação automática via portal do app',
+        }).select().single();
+        if (reqErr) throw reqErr;
+
+        const { error: imgErr } = await supabase.from('briefing_images').insert({
+          request_id: req.id,
+          image_type: 'app_mockup' as any,
+          observations: item.observations,
+          professional_photo_url: item.logoUrl || null,
+          sort_order: 0,
+        });
+        if (imgErr) throw imgErr;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['portal-mockup-request'] });
-      setShowMockupForm(false);
-      setMockupObservations('');
-      toast.success('🎨 Mockup solicitado com sucesso!');
+      setShowMockupModal(false);
+      resetMockupForm();
+      toast.success('🎨 Solicitação enviada com sucesso!');
     },
     onError: (e: any) => toast.error(e.message),
   });
+
+  const resetMockupForm = () => {
+    setMockupStep(1);
+    setIconOption('');
+    setIconLogoFile(null);
+    setIconDescription('');
+    setWantThumb(true);
+    setWantScreenshotsTablet(true);
+    setWantScreenshotsCelular(true);
+    setShowMockupForm(false);
+    setMockupObservations('');
+  };
 
   const saveForm = useMutation({
     mutationFn: async () => {
