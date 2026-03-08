@@ -560,13 +560,31 @@ export default function AplicativoDetailPage() {
                               ) : (
                                 <Checkbox
                                   checked={item.feito}
-                                  disabled={item.ator === 'cliente' && !canEdit && !isGerenteImpl}
-                                  onCheckedChange={(checked) => toggleItem.mutate({ id: item.id, feito: !!checked })}
+                                  disabled={!canManage && item.ator === 'cliente' && !canEdit && !isGerenteImpl}
+                                  onCheckedChange={(checked) => toggleItem.mutate({ id: item.id, feito: !!checked, texto: item.texto })}
                                 />
                               )}
                               <div className="flex-1 min-w-0">
-                                <p className={`text-sm ${item.feito ? 'line-through text-muted-foreground' : ''}`}>{item.texto}</p>
-                                {item.descricao && <p className="text-xs text-muted-foreground mt-0.5">{item.descricao}</p>}
+                                {editingItemId === item.id && canManage ? (
+                                  <div className="space-y-1.5">
+                                    <Input value={editingText} onChange={e => setEditingText(e.target.value)}
+                                      onBlur={() => { if (editingText.trim()) saveItemText.mutate({ id: item.id, texto: editingText, descricao: editingDesc }); }}
+                                      onKeyDown={e => { if (e.key === 'Enter') saveItemText.mutate({ id: item.id, texto: editingText, descricao: editingDesc }); if (e.key === 'Escape') setEditingItemId(null); }}
+                                      className="h-7 text-sm" autoFocus />
+                                    <Input value={editingDesc} onChange={e => setEditingDesc(e.target.value)} placeholder="Descrição..." className="h-7 text-xs" />
+                                  </div>
+                                ) : (
+                                  <div className="group flex items-start gap-1">
+                                    <p className={`text-sm ${item.feito ? 'line-through text-muted-foreground' : ''}`}>{item.texto}</p>
+                                    {canManage && (
+                                      <button onClick={(e) => { e.stopPropagation(); setEditingItemId(item.id); setEditingText(item.texto); setEditingDesc(item.descricao || ''); }}
+                                        className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-0.5">
+                                        <Pencil className="h-3 w-3 text-muted-foreground hover:text-primary" />
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                                {editingItemId !== item.id && item.descricao && <p className="text-xs text-muted-foreground mt-0.5">{item.descricao}</p>}
                                 {item.feito_em && (
                                   <p className={`text-[10px] mt-0.5 ${(selectedFase === 2 || selectedFase === 4) ? 'text-green-600 font-medium' : 'text-muted-foreground'}`}>
                                     {(selectedFase === 2 || selectedFase === 4) ? `✅ Aprovado em ${format(new Date(item.feito_em), 'dd/MM/yyyy HH:mm')}` : `✓ ${format(new Date(item.feito_em), 'dd/MM/yyyy HH:mm')}`}
