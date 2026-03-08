@@ -397,12 +397,12 @@ export default function ImportBriefingDialog({ onImported }: Props) {
             </div>
             <div className="text-center">
               <p className="font-medium">Selecione o documento de briefing</p>
-              <p className="text-sm text-muted-foreground mt-1">Formatos aceitos: .docx, .pdf</p>
+              <p className="text-sm text-muted-foreground mt-1">Formatos aceitos: .docx, .pdf, .txt</p>
             </div>
             <input
               ref={fileRef}
               type="file"
-              accept=".docx,.pdf"
+              accept=".docx,.pdf,.txt,.doc"
               className="hidden"
               onChange={handleFileSelect}
             />
