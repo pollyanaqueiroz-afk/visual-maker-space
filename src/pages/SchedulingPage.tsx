@@ -424,10 +424,10 @@ export default function SchedulingPage() {
   const handleOpenConfirm = (m: Meeting) => {
     setConfirmingMeeting(m);
     setConfirmForm({
-      minutes_url: (m as any).minutes_url || '',
-      recording_url: (m as any).recording_url || '',
-      loyalty_index: (m as any).loyalty_index ? String((m as any).loyalty_index) : '',
-      loyalty_reason: (m as any).loyalty_reason || '',
+      minutes_url: m.minutes_url || '',
+      recording_url: m.recording_url || '',
+      loyalty_index: m.loyalty_index ? String(m.loyalty_index) : '',
+      loyalty_reason: m.loyalty_reason || '',
     });
     setConfirmDialogOpen(true);
   };
