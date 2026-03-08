@@ -614,7 +614,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.2 }} className="overflow-hidden">
               <div className="mt-2 space-y-1 rounded-lg bg-white/5 p-3">
-                {steps.map((step, i) => <p key={i} className="text-xs text-white/60">{step}</p>)}
+                {steps.map((step, i) => <p key={i} className="text-xs text-white/70">{step}</p>)}
               </div>
             </motion.div>
           )}
