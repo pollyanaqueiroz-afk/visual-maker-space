@@ -111,6 +111,7 @@ export default function AplicativosPage() {
   const { hasRole } = usePermissions();
   const { user } = useAuth();
   const canDrag = hasRole('admin') || hasRole('gerente_implantacao') || hasRole('analista_implantacao');
+  const canManage = canDrag;
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('kanban');
