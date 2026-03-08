@@ -1642,6 +1642,7 @@ export default function AplicativosPage() {
             })()}
           </TabsContent>
         )}
+      </Tabs>
 
 
       {/* Mooni Dialog */}
