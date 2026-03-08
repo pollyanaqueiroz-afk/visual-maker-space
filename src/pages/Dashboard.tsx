@@ -302,7 +302,10 @@ export default function Dashboard() {
     } else if (filterStatus !== 'all' && filterStatus !== 'revision') {
       if (i.status !== filterStatus) return false;
     }
-    if (filterStatus === 'revision' && i.revision_count === 0) return false;
+    if (filterStatus === 'revision') {
+      if (i.revision_count === 0) return false;
+      if (i.status === 'completed' || i.status === 'cancelled') return false;
+    }
     if (filterType !== 'all' && i.image_type !== filterType) return false;
     if (filterClient !== 'all' && i.platform_url !== filterClient) return false;
     if (filterOverdue && !isOverdue(i)) return false;
