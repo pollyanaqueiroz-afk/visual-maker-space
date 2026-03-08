@@ -245,9 +245,12 @@ export default function AdminUsersPage() {
   };
 
   const filtered = users.filter(
-    (u) =>
-      u.email?.toLowerCase().includes(search.toLowerCase()) ||
-      u.display_name?.toLowerCase().includes(search.toLowerCase())
+    (u) => {
+      const matchSearch = u.email?.toLowerCase().includes(search.toLowerCase()) ||
+        u.display_name?.toLowerCase().includes(search.toLowerCase());
+      const matchRole = !filterRole || u.roles.includes(filterRole);
+      return matchSearch && matchRole;
+    }
   );
 
   return (
