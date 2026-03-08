@@ -1204,7 +1204,8 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                     status === 'em_andamento' ? 'text-primary font-semibold' :
                     'text-white/30'
                   }`}>{FASE_NAMES[num]}</p>
-                </button>
+                  </button>
+                </div>
               );
             })}
           </div>
