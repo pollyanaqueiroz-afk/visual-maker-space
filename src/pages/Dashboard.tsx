@@ -252,7 +252,7 @@ export default function Dashboard() {
     // Audit
     await (supabase.from('briefing_reviews' as any).insert({ briefing_image_id: id, action: 'deleted', reviewed_by: user?.email || 'admin', reviewer_comments: `Arte excluída por ${user?.email}` }) as any);
     toast.success('Arte excluída');
-    fetchData();
+    refreshAll();
   };
 
   const revertApproval = async (id: string, targetStatus: RequestStatus) => {
