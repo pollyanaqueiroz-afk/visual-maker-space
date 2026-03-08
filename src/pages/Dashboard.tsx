@@ -475,6 +475,7 @@ export default function Dashboard() {
                   <p className="text-xs text-muted-foreground whitespace-nowrap">Total Artes</p>
                 </div>
                 <p className="text-2xl font-bold">{totalImages}</p>
+                <p className="text-[9px] text-muted-foreground leading-tight mt-0.5">Total solicitado (inclui canceladas)</p>
               </CardContent>
             </Card>
             <Card className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'requests' ? 'ring-2 ring-primary' : ''}`} onClick={() => toggleKPI('requests')}>
