@@ -417,7 +417,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
                 <Clock className="h-5 w-5 text-amber-500" />
               </div>
               <p className="text-2xl font-extrabold text-amber-500">{pendingCount}</p>
-              <p className="text-[11px] text-muted-foreground font-medium flex items-center justify-center gap-1">
+              <p className={`text-[11px] ${textSub} font-medium flex items-center justify-center gap-1`}>
                 Em produção <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
               </p>
             </div>
