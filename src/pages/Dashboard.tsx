@@ -949,13 +949,25 @@ export default function Dashboard() {
                         />
                       </TableHead>
                       <TableHead>Pasta</TableHead>
-                      <TableHead>Tipo de Arte</TableHead>
-                      <TableHead>Cliente</TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => handleSortToggle('image_type')}>
+                        Tipo de Arte {sortBy === 'image_type' && (sortDir === 'asc' ? '↑' : '↓')}
+                      </TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => handleSortToggle('platform_url')}>
+                        Cliente {sortBy === 'platform_url' && (sortDir === 'asc' ? '↑' : '↓')}
+                      </TableHead>
                       <TableHead>Solicitante</TableHead>
-                      <TableHead>Responsável</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Refações</TableHead>
-                      <TableHead>Recebido em</TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => handleSortToggle('assigned_email')}>
+                        Responsável {sortBy === 'assigned_email' && (sortDir === 'asc' ? '↑' : '↓')}
+                      </TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => handleSortToggle('status')}>
+                        Status {sortBy === 'status' && (sortDir === 'asc' ? '↑' : '↓')}
+                      </TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => handleSortToggle('revision_count')}>
+                        Refações {sortBy === 'revision_count' && (sortDir === 'asc' ? '↑' : '↓')}
+                      </TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => handleSortToggle('received_at')}>
+                        Recebido em {sortBy === 'received_at' && (sortDir === 'asc' ? '↑' : '↓')}
+                      </TableHead>
                       <TableHead>Tempo em aberto</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                       <TableHead>Texto da Imagem</TableHead>
