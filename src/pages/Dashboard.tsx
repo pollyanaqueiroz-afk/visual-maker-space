@@ -642,6 +642,20 @@ export default function Dashboard() {
               variant="outline"
               size="sm"
               className="flex items-center gap-2 justify-start text-xs h-8"
+              onClick={async () => {
+                toast.info('Enviando lembretes...');
+                const { data, error } = await supabase.functions.invoke('follow-up-review');
+                if (error) { toast.error('Erro: ' + error.message); return; }
+                toast.success(`Lembretes enviados para ${data?.clients || 0} cliente(s) com ${data?.staleArts || 0} arte(s) pendentes`);
+              }}
+            >
+              <Send className="h-3.5 w-3.5" />
+              Enviar Lembretes
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2 justify-start text-xs h-8"
               onClick={() => {
                 navigator.clipboard.writeText(`${window.location.origin}/designer`);
                 toast.success('Link do painel do designer copiado!');
