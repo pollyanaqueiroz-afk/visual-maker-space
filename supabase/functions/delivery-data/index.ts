@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
               };
               const arteName = imageTypeLabel[imgData.image_type] || imgData.image_type;
               const arteDetail = imgData.observations || imgData.product_name || "";
-              const baseUrl = Deno.env.get("APP_URL") || "https://visual-maker-space.lovable.app";
+              const baseUrl = Deno.env.get("APP_URL") || "https://app.curseduca.com";
               const reviewUrl = reviewToken
                 ? `${baseUrl}/client-review?token=${reviewToken}`
                 : `${baseUrl}/client-review?email=${encodeURIComponent(requesterEmail)}`;

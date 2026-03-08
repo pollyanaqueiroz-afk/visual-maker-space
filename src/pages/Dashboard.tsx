@@ -105,57 +105,61 @@ export default function Dashboard() {
   const canEdit = hasPermission('briefings.edit') || isGerenteImpl || canManage;
   const canAssign = hasPermission('briefings.assign') || isGerenteImpl || canManage;
   const canChangeAssignee = hasPermission('briefings.change_assignee') || isGerenteImpl || canManage;
-  const [images, setImages] = useState<ImageWithRequest[]>([]);
-  const [requests, setRequests] = useState<any[]>([]);
-  const [reviews, setReviews] = useState<ReviewRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [filterType, setFilterType] = useState<string>('all');
-  const [filterClient, setFilterClient] = useState<string>('all');
-  const [filterOverdue, setFilterOverdue] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
-  const [mooniBlockDialogOpen, setMooniBlockDialogOpen] = useState(false);
-  const [mooniBlockClientName, setMooniBlockClientName] = useState('');
-  const topScrollRef = useRef<HTMLDivElement>(null);
-  const tableScrollRef = useRef<HTMLDivElement>(null);
-  const topScrollInnerRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
 
-  const fetchData = async () => {
-    const [imgRes, reqRes, revRes] = await Promise.all([
-      supabase
+  const { data: images = [], isLoading: loadingImages } = useQuery({
+    queryKey: ['briefing-images'],
+    queryFn: async () => {
+      const { data, error } = await supabase
         .from('briefing_images')
         .select('*, briefing_requests!inner(requester_name, requester_email, platform_url, received_at, submitted_by)')
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('briefing_requests')
-        .select('id, platform_url, status, created_at, received_at')
-        .order('created_at', { ascending: false }),
-      (supabase.from('briefing_reviews' as any).select('*').order('created_at', { ascending: false }) as any),
-    ]);
-
-    if (imgRes.error) {
-      console.error(imgRes.error);
-      toast.error('Erro ao carregar dados');
-    } else {
-      const mapped = (imgRes.data || []).map((img: any) => ({
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []).map((img: any) => ({
         ...img,
         requester_name: img.briefing_requests?.requester_name || '',
         requester_email: img.briefing_requests?.requester_email || '',
         platform_url: img.briefing_requests?.platform_url || '',
         received_at: img.briefing_requests?.received_at || img.created_at,
         submitted_by: img.briefing_requests?.submitted_by || null,
-      }));
-      setImages(mapped);
-    }
+      })) as ImageWithRequest[];
+    },
+    staleTime: 30_000,
+  });
 
-    setRequests(reqRes.data || []);
-    setReviews((revRes.data || []) as ReviewRecord[]);
-    setLoading(false);
+  const { data: requests = [] } = useQuery({
+    queryKey: ['briefing-requests'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('briefing_requests')
+        .select('id, platform_url, status, created_at, received_at')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 30_000,
+  });
+
+  const { data: reviews = [] } = useQuery({
+    queryKey: ['briefing-reviews'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('briefing_reviews')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []) as ReviewRecord[];
+    },
+    staleTime: 30_000,
+  });
+
+  const loading = loadingImages;
+
+  const refreshAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['briefing-images'] });
+    queryClient.invalidateQueries({ queryKey: ['briefing-requests'] });
+    queryClient.invalidateQueries({ queryKey: ['briefing-reviews'] });
   };
-
-  useEffect(() => { fetchData(); }, []);
 
   const [downloadingReport, setDownloadingReport] = useState(false);
 

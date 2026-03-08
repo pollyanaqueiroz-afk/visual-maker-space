@@ -241,7 +241,12 @@ export default function DeliveryPage() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="designer@email.com"
+                readOnly={!!image?.assigned_email}
+                className={image?.assigned_email ? 'bg-muted' : ''}
               />
+              {image?.assigned_email && (
+                <p className="text-xs text-muted-foreground">Email vinculado ao briefing — não pode ser alterado</p>
+              )}
             </div>
 
             <div className="space-y-2">

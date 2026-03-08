@@ -151,7 +151,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Curseduca Design <onboarding@resend.dev>",
+        from: Deno.env.get("FROM_EMAIL") || "Curseduca <noreply@curseduca.com>",
         to: [request.requester_email],
         subject: `🎨 Sua arte está pronta para aprovação: ${imageTypeLabel}${productLabel}`,
         html,
