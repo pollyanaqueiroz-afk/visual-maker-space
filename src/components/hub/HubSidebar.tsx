@@ -1,8 +1,10 @@
+import { useState, useEffect } from 'react';
 import { FileImage, LayoutDashboard, LogOut, CalendarDays, Crown, Briefcase, BarChart3, Package, Headset, Home, Settings, Users, ShieldCheck, Smartphone, ExternalLink, Database, AlertTriangle, GraduationCap, PieChart, TrendingDown, ClipboardCheck, Activity } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useLocation } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Sidebar,
   SidebarContent,
@@ -16,45 +18,68 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const implantacaoModules = [
-  { title: 'Gestão de Briefings', url: '/hub/briefings', icon: FileImage, permission: 'briefings.view' },
-  { title: 'Gestão de Aplicativos', url: '/hub/aplicativos', icon: Smartphone, permission: 'aplicativos.view' },
-  { title: 'SCORM', url: '/hub/scorm', icon: GraduationCap, permission: 'scorm.view' },
+  { title: 'Gestão de Briefings', url: '/hub/briefings', icon: FileImage, permission: 'briefings.view', badgeKey: 'pendingArts' as const },
+  { title: 'Gestão de Aplicativos', url: '/hub/aplicativos', icon: Smartphone, permission: 'aplicativos.view', badgeKey: 'pendingApps' as const },
+  { title: 'SCORM', url: '/hub/scorm', icon: GraduationCap, permission: 'scorm.view', badgeKey: null },
 ];
 
 const csModules = [
-  { title: 'Agendamento', url: '/hub/agendamento', icon: CalendarDays, permission: 'agendamento.view' },
-  { title: 'Processos de Implantação', url: '/hub/processos-implantacao', icon: ClipboardCheck, permission: null },
-  { title: 'Dashboards', url: '/hub/dashboards', icon: BarChart3, permission: 'dashboards.view' },
-  { title: 'Carteira Geral', url: '/hub/carteira', icon: Briefcase, permission: 'carteira.view' },
-  { title: 'Dashboard Liderança', url: '/hub/lideranca', icon: Crown, permission: 'lideranca.view' },
-  { title: 'Funil de Cancelamento', url: '/hub/funil-cancelamento', icon: AlertTriangle, permission: 'funil.view' },
-  { title: 'BI', url: '/hub/bi', icon: PieChart, permission: 'dashboards.view' },
-  { title: 'Churn & Upsell', url: '/hub/churn-upsell', icon: TrendingDown, permission: 'dashboards.view' },
+  { title: 'Agendamento', url: '/hub/agendamento', icon: CalendarDays, permission: 'agendamento.view', badgeKey: null },
+  { title: 'Processos de Implantação', url: '/hub/processos-implantacao', icon: ClipboardCheck, permission: null, badgeKey: null },
+  { title: 'Dashboards', url: '/hub/dashboards', icon: BarChart3, permission: 'dashboards.view', badgeKey: null },
+  { title: 'Carteira Geral', url: '/hub/carteira', icon: Briefcase, permission: 'carteira.view', badgeKey: null },
+  { title: 'Dashboard Liderança', url: '/hub/lideranca', icon: Crown, permission: 'lideranca.view', badgeKey: null },
+  { title: 'Funil de Cancelamento', url: '/hub/funil-cancelamento', icon: AlertTriangle, permission: 'funil.view', badgeKey: null },
+  { title: 'BI', url: '/hub/bi', icon: PieChart, permission: 'dashboards.view', badgeKey: null },
+  { title: 'Churn & Upsell', url: '/hub/churn-upsell', icon: TrendingDown, permission: 'dashboards.view', badgeKey: null },
 ];
 
 const auditoriaModules = [
-  { title: 'Auditoria', url: '/hub/auditoria', icon: ClipboardCheck, permission: 'admin.view' },
-  { title: 'Pipeline', url: '/hub/pipeline', icon: Activity, permission: 'admin.view' },
+  { title: 'Auditoria', url: '/hub/auditoria', icon: ClipboardCheck, permission: 'admin.view', badgeKey: null },
+  { title: 'Pipeline', url: '/hub/pipeline', icon: Activity, permission: 'admin.view', badgeKey: null },
 ];
 
 const adminModules = [
-  { title: 'Usuários e Permissões', url: '/hub/admin/usuarios', icon: Users, permission: 'admin.view' },
-  { title: 'Permissões por Perfil', url: '/hub/admin/permissoes', icon: ShieldCheck, permission: 'admin.manage_permissions' },
-  { title: 'Campos da Carteira', url: '/hub/admin/campos', icon: Database, permission: 'carteira.manage_fields' },
-  { title: 'Hub do Cliente', url: '/cliente', icon: ExternalLink, permission: 'admin.view' },
+  { title: 'Usuários e Permissões', url: '/hub/admin/usuarios', icon: Users, permission: 'admin.view', badgeKey: null },
+  { title: 'Permissões por Perfil', url: '/hub/admin/permissoes', icon: ShieldCheck, permission: 'admin.manage_permissions', badgeKey: null },
+  { title: 'Campos da Carteira', url: '/hub/admin/campos', icon: Database, permission: 'carteira.manage_fields', badgeKey: null },
+  { title: 'Hub do Cliente', url: '/cliente', icon: ExternalLink, permission: 'admin.view', badgeKey: null },
 ];
+
+type BadgeCounts = {
+  pendingArts: number;
+  pendingApps: number;
+};
 
 export function HubSidebar() {
   const { state } = useSidebar();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const { hasPermission, hasRole, loading: permsLoading } = usePermissions();
   const location = useLocation();
   const collapsed = state === 'collapsed';
+  const [badges, setBadges] = useState<BadgeCounts>({ pendingArts: 0, pendingApps: 0 });
+
+  // Fetch badge counts
+  useEffect(() => {
+    if (!user) return;
+    const fetchCounts = async () => {
+      const [artsRes, appsRes] = await Promise.all([
+        supabase.from('briefing_images').select('id', { count: 'exact', head: true }).in('status', ['pending', 'in_progress']),
+        supabase.from('app_clientes').select('id', { count: 'exact', head: true }).neq('status', 'concluido'),
+      ]);
+      setBadges({
+        pendingArts: artsRes.count ?? 0,
+        pendingApps: appsRes.count ?? 0,
+      });
+    };
+    fetchCounts();
+  }, [user]);
 
   const isInGroup = (items: typeof implantacaoModules) =>
     items.some(i => location.pathname.startsWith(i.url));
@@ -62,7 +87,7 @@ export function HubSidebar() {
   const hasVisibleItems = (items: typeof csModules) =>
     items.some(i => i.permission === null || hasPermission(i.permission));
 
-  const renderItems = (items: typeof csModules) => {
+  const renderItems = (items: typeof implantacaoModules) => {
     const visible = items.filter(i => i.permission === null ? !hasRole('cliente') : hasPermission(i.permission));
     if (visible.length === 0) return null;
     return (
@@ -77,12 +102,50 @@ export function HubSidebar() {
                 activeClassName="bg-muted text-primary font-medium"
               >
                 <item.icon className="mr-2 h-4 w-4" />
-                {!collapsed && <span>{item.title}</span>}
+                {!collapsed && (
+                  <span className="flex items-center justify-between flex-1">
+                    <span>{item.title}</span>
+                    {item.badgeKey && badges[item.badgeKey] > 0 && (
+                      <Badge variant="secondary" className="ml-auto h-5 min-w-5 px-1.5 text-[10px] font-bold bg-primary/10 text-primary">
+                        {badges[item.badgeKey]}
+                      </Badge>
+                    )}
+                  </span>
+                )}
               </NavLink>
             </SidebarMenuButton>
           </SidebarMenuItem>
         ))}
       </SidebarMenu>
+    );
+  };
+
+  const renderGroup = (
+    label: string,
+    icon: React.ElementType,
+    items: typeof implantacaoModules,
+  ) => {
+    if (!hasVisibleItems(items)) return null;
+    const active = isInGroup(items);
+    return (
+      <SidebarGroup>
+        <Collapsible defaultOpen={active}>
+          <CollapsibleTrigger className="w-full">
+            <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground transition-colors">
+              <span className="flex items-center gap-2">
+                {(() => { const Icon = icon; return <Icon className="h-3.5 w-3.5" />; })()}
+                {!collapsed && label}
+              </span>
+              {!collapsed && <ChevronDown className="h-3.5 w-3.5 transition-transform [[data-state=open]_&]:rotate-180" />}
+            </SidebarGroupLabel>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              {renderItems(items)}
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </Collapsible>
+      </SidebarGroup>
     );
   };
 
@@ -121,93 +184,10 @@ export function HubSidebar() {
           </SidebarMenu>
         </SidebarGroup>
 
-        {/* Implantação Group */}
-        {hasVisibleItems(implantacaoModules) && (
-        <SidebarGroup>
-          <Collapsible defaultOpen={true}>
-            <CollapsibleTrigger className="w-full">
-              <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground transition-colors">
-                <span className="flex items-center gap-2">
-                  <Package className="h-3.5 w-3.5" />
-                  {!collapsed && 'Implantação'}
-                </span>
-                {!collapsed && <ChevronDown className="h-3.5 w-3.5 transition-transform [[data-state=open]_&]:rotate-180" />}
-              </SidebarGroupLabel>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                {renderItems(implantacaoModules)}
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </SidebarGroup>
-        )}
-
-        {/* CS Group */}
-        {hasVisibleItems(csModules) && (
-        <SidebarGroup>
-          <Collapsible defaultOpen={true}>
-            <CollapsibleTrigger className="w-full">
-              <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground transition-colors">
-                <span className="flex items-center gap-2">
-                  <Headset className="h-3.5 w-3.5" />
-                  {!collapsed && 'CS'}
-                </span>
-                {!collapsed && <ChevronDown className="h-3.5 w-3.5 transition-transform [[data-state=open]_&]:rotate-180" />}
-              </SidebarGroupLabel>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                {renderItems(csModules)}
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </SidebarGroup>
-        )}
-
-        {/* Auditoria Group */}
-        {hasVisibleItems(auditoriaModules) && (
-        <SidebarGroup>
-          <Collapsible defaultOpen={true}>
-            <CollapsibleTrigger className="w-full">
-              <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground transition-colors">
-                <span className="flex items-center gap-2">
-                  <ClipboardCheck className="h-3.5 w-3.5" />
-                  {!collapsed && 'Operações'}
-                </span>
-                {!collapsed && <ChevronDown className="h-3.5 w-3.5 transition-transform [[data-state=open]_&]:rotate-180" />}
-              </SidebarGroupLabel>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                {renderItems(auditoriaModules)}
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </SidebarGroup>
-        )}
-
-        {/* Administração Group */}
-        {hasVisibleItems(adminModules) && (
-        <SidebarGroup>
-          <Collapsible defaultOpen={true}>
-            <CollapsibleTrigger className="w-full">
-              <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground transition-colors">
-                <span className="flex items-center gap-2">
-                  <Settings className="h-3.5 w-3.5" />
-                  {!collapsed && 'Administração'}
-                </span>
-                {!collapsed && <ChevronDown className="h-3.5 w-3.5 transition-transform [[data-state=open]_&]:rotate-180" />}
-              </SidebarGroupLabel>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                {renderItems(adminModules)}
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </SidebarGroup>
-        )}
+        {renderGroup('Implantação', Package, implantacaoModules)}
+        {renderGroup('CS', Headset, csModules)}
+        {renderGroup('Operações', ClipboardCheck, auditoriaModules)}
+        {renderGroup('Administração', Settings, adminModules)}
       </SidebarContent>
 
       <SidebarFooter className="p-3">

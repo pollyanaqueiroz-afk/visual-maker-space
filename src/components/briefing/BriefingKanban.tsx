@@ -259,7 +259,24 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
               </div>
 
               <div className="space-y-2">
-                {(kanbanColumns[col.key] || []).map(card => (
+                {(kanbanColumns[col.key] || []).map(card => {
+                  // Conditional row colors
+                  const rowBg = card.slaOverdue
+                    ? 'bg-pink-50 dark:bg-pink-950/20'
+                    : card.status === 'review'
+                      ? 'bg-violet-50 dark:bg-violet-950/20'
+                      : '';
+
+                  // Deadline semaphore
+                  const deadlineSemaphore = (() => {
+                    if (card.status === 'completed' || card.status === 'cancelled') return null;
+                    const days = Math.floor((Date.now() - new Date(card.receivedAt).getTime()) / (1000 * 60 * 60 * 24));
+                    if (days > 7) return { color: 'text-destructive', dot: 'bg-destructive', label: `⚠️ SLA excedido (${days}d)` };
+                    if (days > 5) return { color: 'text-amber-600', dot: 'bg-amber-500', label: `${7 - days}d restante(s)` };
+                    return { color: 'text-emerald-600', dot: 'bg-emerald-500', label: `${7 - days}d restante(s)` };
+                  })();
+
+                  return (
                   <Card
                     key={card.requestId}
                     draggable={col.key !== 'completed'}
@@ -269,7 +286,7 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
                       e.dataTransfer.setData('cardName', card.requesterName || card.platformUrl);
                       e.dataTransfer.effectAllowed = 'move';
                     }}
-                    className={`p-3 cursor-pointer hover:shadow-md transition-shadow border-l-4 ${col.border} ${card.slaOverdue ? 'bg-destructive/5' : ''} ${col.key !== 'completed' ? 'cursor-grab active:cursor-grabbing' : ''}`}
+                    className={`p-3 cursor-pointer hover:shadow-md transition-shadow border-l-4 ${col.border} ${rowBg} ${col.key !== 'completed' ? 'cursor-grab active:cursor-grabbing' : ''}`}
                     onClick={() => setEditingCard(card)}
                   >
                     <div className="flex items-start justify-between gap-1">
@@ -277,7 +294,7 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
                         <p className="text-sm font-semibold truncate">{card.requesterName || 'Sem nome'}</p>
                         <p className="text-[10px] text-muted-foreground truncate">{extractClientName(card.platformUrl)}</p>
                       </div>
-                      {card.slaOverdue && <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />}
+                      {card.slaOverdue && <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5 animate-pulse" />}
                     </div>
 
                     <div className="flex flex-wrap gap-1 mt-2">
@@ -300,16 +317,15 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
                       )}
                     </div>
 
-                    {card.receivedAt && card.status !== 'completed' && card.status !== 'cancelled' && (() => {
-                      const days = Math.floor((Date.now() - new Date(card.receivedAt).getTime()) / (1000 * 60 * 60 * 24));
-                      return (
-                        <p className={`text-[10px] mt-1 ${days > 7 ? 'text-destructive font-medium' : days > 5 ? 'text-amber-600' : 'text-muted-foreground'}`}>
-                          {days > 7 ? `⚠️ SLA excedido (${days}d)` : `${7 - days}d restante(s) no SLA`}
-                        </p>
-                      );
-                    })()}
+                    {deadlineSemaphore && (
+                      <div className={`flex items-center gap-1.5 text-[10px] mt-1 ${deadlineSemaphore.color} font-medium`}>
+                        <span className={`inline-block h-2 w-2 rounded-full ${deadlineSemaphore.dot}`} />
+                        {deadlineSemaphore.label}
+                      </div>
+                    )}
                   </Card>
-                ))}
+                  );
+                })}
                 {(kanbanColumns[col.key] || []).length === 0 && (
                   <p className="text-xs text-muted-foreground text-center py-6">Nenhuma solicitação</p>
                 )}

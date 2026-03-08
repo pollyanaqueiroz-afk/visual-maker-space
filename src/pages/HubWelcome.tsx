@@ -59,6 +59,7 @@ export default function HubWelcome() {
   const [selectedPending, setSelectedPending] = useState<PendingItem | null>(null);
   const [pendingDialogOpen, setPendingDialogOpen] = useState(false);
   const [pendingRefresh, setPendingRefresh] = useState(0);
+  const [summaryStats, setSummaryStats] = useState({ pendingArts: 0, overdueArts: 0, todayMeetings: 0 });
 
   useEffect(() => {
     if (!user) return;
@@ -82,12 +83,27 @@ export default function HubWelcome() {
     (async () => {
       setLoadingPending(true);
       const items: PendingItem[] = [];
-      const { data: meetings } = await supabase
-        .from('meetings')
-        .select('id, title, meeting_date, client_name, loyalty_index, minutes_url, recording_url')
-        .eq('status', 'completed')
-        .eq('created_by', user.id)
-        .order('meeting_date', { ascending: false });
+      const today = new Date().toISOString().split('T')[0];
+
+      const [meetingsRes, pendingArtsRes, overdueArtsRes, todayMeetingsRes] = await Promise.all([
+        supabase
+          .from('meetings')
+          .select('id, title, meeting_date, client_name, loyalty_index, minutes_url, recording_url')
+          .eq('status', 'completed')
+          .eq('created_by', user.id)
+          .order('meeting_date', { ascending: false }),
+        supabase.from('briefing_images').select('id', { count: 'exact', head: true }).in('status', ['pending', 'in_progress']),
+        supabase.from('briefing_images').select('created_at', { count: 'exact', head: true }).in('status', ['pending', 'in_progress']).lt('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
+        supabase.from('meetings').select('id', { count: 'exact', head: true }).eq('meeting_date', today).in('status', ['scheduled', 'confirmed']),
+      ]);
+
+      setSummaryStats({
+        pendingArts: pendingArtsRes.count ?? 0,
+        overdueArts: overdueArtsRes.count ?? 0,
+        todayMeetings: todayMeetingsRes.count ?? 0,
+      });
+
+      const meetings = meetingsRes.data;
       if (meetings) {
         for (const m of meetings) {
           if (!m.loyalty_index) items.push({ id: m.id + '-loyalty', type: 'loyalty', title: m.title, subtitle: m.client_name || 'Sem cliente', date: m.meeting_date, meetingId: m.id });
@@ -178,6 +194,26 @@ export default function HubWelcome() {
           <p className="text-muted-foreground mt-2 text-base">
             Este é o seu Hub de Operações. Escolha um módulo para começar.
           </p>
+          {/* Quick summary */}
+          {!loadingPending && (summaryStats.pendingArts > 0 || summaryStats.overdueArts > 0 || summaryStats.todayMeetings > 0) && (
+            <div className="flex flex-wrap gap-3 mt-3">
+              {summaryStats.pendingArts > 0 && (
+                <Badge variant="secondary" className="text-xs font-medium gap-1.5 py-1 px-2.5">
+                  <FileImage className="h-3 w-3" /> {summaryStats.pendingArts} arte{summaryStats.pendingArts !== 1 ? 's' : ''} pendente{summaryStats.pendingArts !== 1 ? 's' : ''}
+                </Badge>
+              )}
+              {summaryStats.overdueArts > 0 && (
+                <Badge variant="destructive" className="text-xs font-medium gap-1.5 py-1 px-2.5">
+                  <AlertTriangle className="h-3 w-3" /> {summaryStats.overdueArts} atrasada{summaryStats.overdueArts !== 1 ? 's' : ''}
+                </Badge>
+              )}
+              {summaryStats.todayMeetings > 0 && (
+                <Badge variant="outline" className="text-xs font-medium gap-1.5 py-1 px-2.5">
+                  <CalendarDays className="h-3 w-3" /> {summaryStats.todayMeetings} reuniã{summaryStats.todayMeetings !== 1 ? 'ões' : 'o'} hoje
+                </Badge>
+              )}
+            </div>
+          )}
         </motion.div>
 
         <Tabs defaultValue="pendencias" className="w-full">
