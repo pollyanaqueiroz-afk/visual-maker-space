@@ -566,9 +566,23 @@ export default function CarteiraGeralPage() {
                       onClick={() => row.id_curseduca && setDetailId(row.id_curseduca)}
                     >
                       <TableCell className="text-xs text-muted-foreground">{(apiPage - 1) * PER_PAGE + i + 1}</TableCell>
-                      {columns.map(col => (
+                       {columns.map(col => (
                         <TableCell key={col.key} className="text-xs whitespace-nowrap max-w-[250px] truncate">
-                          {col.key === 'status_financeiro' ? (
+                          {col.key === 'cliente_nome' ? (
+                            <div className="flex items-center gap-2">
+                              {(() => {
+                                const dias = Number(row.dias_desde_ultimo_login);
+                                const inadimplente = row.status_financeiro_inadimplencia === 'Inadimplente';
+                                const dotColor = inadimplente || dias > 30
+                                  ? 'bg-destructive'
+                                  : dias > 14
+                                  ? 'bg-amber-500'
+                                  : 'bg-emerald-500';
+                                return <span className={`inline-block h-2.5 w-2.5 rounded-full shrink-0 ${dotColor}`} />;
+                              })()}
+                              <span>{row[col.key] || '—'}</span>
+                            </div>
+                          ) : col.key === 'status_financeiro' ? (
                             row[col.key] === 'ATIVA' ? (
                               <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0 text-[11px]">Ativa</Badge>
                             ) : row[col.key] === 'INATIVA' ? (
