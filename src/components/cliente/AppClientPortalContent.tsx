@@ -1290,8 +1290,8 @@ export default function AppClientPortalContent({ clienteId }: Props) {
               </div>
               <div>
                 <div className="flex justify-between text-xs mb-1">
-                  <span className="text-white/40">Progresso total</span>
-                  <span className="font-medium text-white/60">{totalPctBar}%</span>
+                   <span className="text-white/60">Progresso total</span>
+                   <span className="font-medium text-white/70">{totalPctBar}%</span>
                 </div>
                 <div className="relative h-1.5 rounded-full bg-white/5 overflow-hidden">
                   <div className="absolute inset-y-0 left-0 rounded-full bg-white/20 transition-all duration-500" style={{ width: `${totalPctBar}%` }} />
