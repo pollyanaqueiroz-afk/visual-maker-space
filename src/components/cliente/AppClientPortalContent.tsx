@@ -934,32 +934,44 @@ export default function AppClientPortalContent({ clienteId }: Props) {
 
   // ── Render internal (analyst/designer) item — read-only ──
   const renderInternalItem = (item: any, faseNum: number) => {
-    const formComplete = faseNum === 3 ? !!formulario?.preenchido_completo : true;
+    // Check if all client items in same fase/platform are done
+    const clientItemsSameFase = checklist.filter((i: any) =>
+      i.ator === 'cliente' &&
+      i.fase_numero === faseNum &&
+      (i.plataforma === item.plataforma || i.plataforma === 'compartilhada' || item.plataforma === 'compartilhada')
+    );
+    const allClientDone = clientItemsSameFase.length > 0 && clientItemsSameFase.every((i: any) => i.feito);
+
     return (
       <div key={item.id} className="p-3 rounded-lg bg-white/5 border border-white/[0.08]">
         <div className="flex items-center gap-3">
           {item.feito ? (
             <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
-          ) : formComplete ? (
+          ) : allClientDone ? (
             <Clock className="h-5 w-5 text-amber-400 shrink-0 animate-pulse" />
           ) : (
-            <Lock className="h-5 w-5 text-white/40 shrink-0" />
+            <Lock className="h-5 w-5 text-white/20 shrink-0" />
           )}
           <div className="flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <p className={`text-sm font-medium ${!formComplete ? 'text-white/50' : 'text-white/90'}`}>{item.texto}</p>
+              <p className={`text-sm font-medium ${item.feito ? 'text-white/90' : allClientDone ? 'text-white/90' : 'text-white/40'}`}>{item.texto}</p>
               <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-white/15 text-white/40">
                 Equipe Curseduca
               </Badge>
               {item.feito ? (
                 <Badge variant="outline" className="text-[9px] border-green-500/30 text-green-400">✅ Concluído</Badge>
-              ) : formComplete ? (
+              ) : allClientDone ? (
                 <Badge variant="outline" className="text-[9px] border-amber-500/30 text-amber-400">⏳ Em andamento</Badge>
-              ) : null}
+              ) : (
+                <Badge variant="outline" className="text-[9px] border-white/15 text-white/30">🔒 Aguardando suas tarefas</Badge>
+              )}
             </div>
-            {item.descricao && <p className="text-xs text-white/50 mt-0.5">{item.descricao}</p>}
-            {!formComplete && faseNum === 3 && (
-              <p className="text-xs text-white/50 mt-0.5">Preencha o formulário acima para liberar esta etapa</p>
+            {item.descricao && <p className={`text-xs mt-0.5 ${item.feito || allClientDone ? 'text-white/50' : 'text-white/25'}`}>{item.descricao}</p>}
+            {!item.feito && allClientDone && (
+              <p className="text-[10px] text-amber-400/60 mt-0.5">A equipe Curseduca está verificando suas informações</p>
+            )}
+            {!item.feito && !allClientDone && (
+              <p className="text-[10px] text-white/25 mt-0.5">Conclua as tarefas acima para liberar esta verificação</p>
             )}
             {item.feito && item.feito_em && (
               <p className="text-[10px] text-green-400/60 mt-0.5">Concluído em {format(new Date(item.feito_em), "dd/MM/yyyy 'às' HH:mm")}</p>
