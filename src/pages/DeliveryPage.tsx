@@ -73,6 +73,12 @@ export default function DeliveryPage() {
       return;
     }
 
+    // Validate email matches assigned designer
+    if (image.assigned_email && email.toLowerCase() !== image.assigned_email.toLowerCase()) {
+      toast.error(`Este briefing foi atribuído para ${image.assigned_email}. Use o email correto para entregar.`);
+      return;
+    }
+
     setSubmitting(true);
     try {
       // Upload file
