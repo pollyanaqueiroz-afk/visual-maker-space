@@ -1333,11 +1333,37 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-6">
             {/* Left: greeting */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex-1 min-w-0">
-               <h1 className="text-xl font-bold text-white">Olá, {cliente?.nome?.split(' ')[0] || 'Cliente'}! 👋</h1>
-               <p className="text-white/80 text-base mt-1">{getDynamicMessage()}</p>
+               <h1 className="text-xl font-bold text-white">Olá, {cliente?.nome?.split(' ')[0] || 'Cliente'}!</h1>
+               
+               {isParallelFlow ? (() => {
+                 const googleFasesArr = fases.filter((f: any) => f.plataforma === 'google');
+                 const appleFasesArr = fases.filter((f: any) => f.plataforma === 'apple');
+                 const googleAllDone = googleFasesArr.length > 0 && googleFasesArr.every((f: any) => f.status === 'concluida');
+                 const appleAllDone = appleFasesArr.length > 0 && appleFasesArr.every((f: any) => f.status === 'concluida');
+                 const googleCurrentFaseNum = googleAllDone ? 6 : (googleFasesArr.find((f: any) => f.status === 'em_andamento')?.numero ?? ((googleFasesArr.filter((f: any) => f.status === 'concluida').sort((a: any, b: any) => b.numero - a.numero)[0]?.numero ?? 0) + 1));
+                 const appleCurrentFaseNum = appleAllDone ? 6 : (appleFasesArr.find((f: any) => f.status === 'em_andamento')?.numero ?? ((appleFasesArr.filter((f: any) => f.status === 'concluida').sort((a: any, b: any) => b.numero - a.numero)[0]?.numero ?? 0) + 1));
+                 return (
+                   <div className="mt-2 space-y-1">
+                     <p className="text-xs font-semibold text-white/50 uppercase tracking-wider">Status do projeto</p>
+                     {googleAllDone ? (
+                       <p className="text-sm text-green-400 font-medium">🤖 Google Play: ✅ Publicado!</p>
+                     ) : (
+                       <p className="text-sm text-white/70">🤖 Google Play: Fase {googleCurrentFaseNum} — {FASE_NAMES[googleCurrentFaseNum] || 'Em progresso'}</p>
+                     )}
+                     {appleAllDone ? (
+                       <p className="text-sm text-green-400 font-medium">🍎 Apple: ✅ Publicado!</p>
+                     ) : (
+                       <p className="text-sm text-white/70">🍎 Apple: Fase {appleCurrentFaseNum} — {FASE_NAMES[appleCurrentFaseNum] || 'Em progresso'}</p>
+                     )}
+                   </div>
+                 );
+               })() : (
+                 <p className="text-white/60 text-sm mt-0.5">Seu app está {cliente?.porcentagem_geral || 0}% pronto</p>
+               )}
+               
                {cliente.data_criacao && (
-                 <p className="text-xs text-primary mt-2 flex items-center gap-1.5">
-                   <Clock className="h-3.5 w-3.5" />
+                 <p className="text-[11px] text-primary/80 mt-1.5 flex items-center gap-1">
+                   <Clock className="h-3 w-3" />
                    Processo iniciado em <span className="font-semibold text-primary">{format(new Date(cliente.data_criacao), 'dd/MM/yyyy')}</span>
                  </p>
                )}
