@@ -322,6 +322,14 @@ export default function DesignerPanel() {
                                   </span>
                                 )}
                               </div>
+                              {(img.image_text || img.observations || img.font_suggestion || img.element_suggestion) && (
+                                <div className="space-y-1 p-2 rounded-lg bg-muted/30 border border-border">
+                                  {img.image_text && <p className="text-xs text-muted-foreground"><span className="font-medium">Texto:</span> {img.image_text}</p>}
+                                  {img.font_suggestion && <p className="text-xs text-muted-foreground"><span className="font-medium">Fonte:</span> {img.font_suggestion}</p>}
+                                  {img.element_suggestion && <p className="text-xs text-muted-foreground"><span className="font-medium">Elemento:</span> {img.element_suggestion}</p>}
+                                  {img.observations && <p className="text-xs text-muted-foreground"><span className="font-medium">Obs:</span> {img.observations}</p>}
+                                </div>
+                              )}
                               {img.delivery_token && (
                                 <Button size="sm" className="w-full" variant="outline" asChild>
                                   <Link to={`/delivery/${img.delivery_token}`}>Entregar Arte</Link>
