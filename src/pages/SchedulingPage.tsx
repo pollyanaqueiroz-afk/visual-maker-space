@@ -567,6 +567,13 @@ export default function SchedulingPage() {
     [meetings]
   );
 
+  // Meetings past their date still "scheduled" — need conclusion or rescheduling
+  const pendingConclusion = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return meetings.filter(m => m.status === 'scheduled' && isBefore(parseISO(m.meeting_date), today));
+  }, [meetings]);
+
   // Month grid helpers
   const holidays = useMemo(() => getBrazilianHolidays(getYear(calendarMonth)), [calendarMonth]);
   
