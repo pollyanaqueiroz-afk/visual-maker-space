@@ -96,6 +96,7 @@ export default function ImportBriefingDialog({ onImported }: Props) {
     setErrorMsg('');
     setDuplicateInfo(null);
     setReceivedAt(new Date());
+    setParsingMessage('');
   };
 
   const extractText = async (file: File): Promise<string> => {
