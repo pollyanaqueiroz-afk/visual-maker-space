@@ -153,7 +153,10 @@ const emptyForm = {
   };
 
 export default function SchedulingPage() {
-  const { hasPermission } = usePermissions();
+  const { hasPermission, hasRole } = usePermissions();
+  const { user } = useAuth();
+  const isManager = hasRole('admin') || hasRole('gerente_cs');
+
   const canCreate = hasPermission('agendamento.create');
   const canEdit = hasPermission('agendamento.edit');
   const canDelete = hasPermission('agendamento.delete');
