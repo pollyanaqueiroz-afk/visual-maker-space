@@ -142,7 +142,7 @@ export default function HubLayout({ children }: Props) {
 
             <NotificationBell />
           </header>
-          <main className="flex-1 p-6 min-w-0" style={{ backgroundColor: 'hsl(var(--content-area))', color: 'hsl(var(--content-area-foreground))' }}>
+          <main className="flex-1 p-6 min-w-0">
             {children}
           </main>
         </div>
