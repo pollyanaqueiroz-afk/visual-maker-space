@@ -1153,8 +1153,7 @@ function ImageDetailDialog({ image, reviews }: { image: ImageWithRequest; review
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileImage className="h-5 w-5 text-primary" />
-            {IMAGE_TYPE_LABELS[image.image_type as ImageType] || image.image_type}
-            {image.product_name && <span className="text-muted-foreground font-normal">— {image.product_name}</span>}
+            {imageLabel(image)}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
