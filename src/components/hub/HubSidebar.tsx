@@ -169,7 +169,7 @@ export function HubSidebar() {
         )}
 
         {/* Processos de Implantação */}
-        {hasVisibleItems(processosModules) && (
+        {!hasRole('cliente') && (
         <SidebarGroup>
           <Collapsible defaultOpen={isInGroup(processosModules)}>
             <CollapsibleTrigger className="w-full">
