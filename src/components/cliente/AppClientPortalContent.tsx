@@ -939,6 +939,72 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     );
     const allClientDone = clientItemsSameFase.length > 0 && clientItemsSameFase.every((i: any) => i.feito);
 
+    // Special rendering for publicacao_url items
+    if (item.tipo === 'publicacao_url') {
+      const lastClientDoneDate = allClientDone
+        ? clientItemsSameFase.filter((i: any) => i.feito && i.feito_em).map((i: any) => new Date(i.feito_em)).sort((a: Date, b: Date) => b.getTime() - a.getTime())[0] || null
+        : null;
+      const deadlineDate = lastClientDoneDate ? addBusinessDays(lastClientDoneDate, 1) : null;
+      const isOverdue = deadlineDate && !item.feito && new Date() > deadlineDate;
+      const url = item.plataforma === 'google' ? (cliente as any)?.url_loja_google : (cliente as any)?.url_loja_apple;
+      const lojaName = item.plataforma === 'google' ? 'Google Play' : 'App Store';
+      const emoji = item.plataforma === 'google' ? '🤖' : '🍎';
+
+      return (
+        <div key={item.id} className={`p-3 rounded-lg border ${
+          item.feito ? 'bg-green-500/10 border-green-500/20' :
+          isOverdue ? 'bg-red-500/10 border-red-500/20' :
+          allClientDone ? 'bg-amber-500/10 border-amber-500/20' :
+          'bg-white/5 border-white/[0.08]'
+        }`}>
+          <div className="flex items-center gap-3">
+            {item.feito ? (
+              <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
+            ) : isOverdue ? (
+              <AlertTriangle className="h-5 w-5 text-red-400 shrink-0" />
+            ) : allClientDone ? (
+              <Clock className="h-5 w-5 text-amber-400 shrink-0 animate-pulse" />
+            ) : (
+              <Lock className="h-5 w-5 text-white/20 shrink-0" />
+            )}
+            <div className="flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className={`text-sm font-medium ${item.feito ? 'text-white/90' : isOverdue ? 'text-red-400' : allClientDone ? 'text-white/90' : 'text-white/40'}`}>{item.texto}</p>
+                <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-white/15 text-white/40">Equipe Curseduca</Badge>
+                {item.feito ? (
+                  <Badge variant="outline" className="text-[9px] border-green-500/30 text-green-400">✅ Concluído</Badge>
+                ) : isOverdue ? (
+                  <Badge variant="outline" className="text-[9px] border-red-500/30 text-red-400">🚨 Atrasado</Badge>
+                ) : allClientDone ? (
+                  <Badge variant="outline" className="text-[9px] border-amber-500/30 text-amber-400">⏳ Em andamento</Badge>
+                ) : (
+                  <Badge variant="outline" className="text-[9px] border-white/15 text-white/30">🔒 Aguardando suas tarefas</Badge>
+                )}
+              </div>
+              {isOverdue && deadlineDate && (
+                <p className="text-[10px] text-red-400/80 mt-0.5">⚠️ Prazo excedido! Deveria ter sido concluído até {format(deadlineDate, 'dd/MM/yyyy')}</p>
+              )}
+              {!item.feito && !isOverdue && allClientDone && deadlineDate && (
+                <p className="text-[10px] text-amber-400/60 mt-0.5">📅 Previsão: {format(deadlineDate, 'dd/MM/yyyy')} (1 dia útil)</p>
+              )}
+              {!item.feito && !allClientDone && (
+                <p className="text-[10px] text-white/25 mt-0.5">Conclua as tarefas acima para liberar esta verificação</p>
+              )}
+              {item.feito && item.feito_em && (
+                <p className="text-[10px] text-green-400/60 mt-0.5">Concluído em {format(new Date(item.feito_em), "dd/MM/yyyy 'às' HH:mm")}</p>
+              )}
+              {item.feito && url && (
+                <a href={url} target="_blank" rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-2 text-sm text-primary hover:underline font-medium">
+                  {emoji} Abrir na {lojaName} <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div key={item.id} className="p-3 rounded-lg bg-white/5 border border-white/[0.08]">
         <div className="flex items-center gap-3">
