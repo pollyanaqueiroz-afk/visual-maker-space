@@ -488,6 +488,18 @@ export default function ImportBriefingDialog({ onImported }: Props) {
 
         {step === 'confirm' && parsed && (
           <div className="space-y-4">
+            {parsed.images.some(img => img.observations?.includes('ATENÇÃO: A IA não conseguiu')) && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
+                <div>
+                  <p className="text-sm text-destructive font-medium">A IA não conseguiu extrair as artes automaticamente</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    O formato do documento é muito diferente do esperado. Revise e edite os campos manualmente abaixo, ou adicione artes com o botão "Adicionar arte".
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center gap-2 p-3 rounded-lg bg-warning/10 border border-warning/20">
               <Pencil className="h-4 w-4 text-warning shrink-0" />
               <p className="text-sm text-warning">
