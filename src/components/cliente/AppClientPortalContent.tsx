@@ -443,19 +443,22 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     return fases.find((f: any) => f.numero === num);
   };
 
-  // Get items for a fase + platform filter (client-visible only)
-  const getItemsForFase = (faseNum: number, plataforma?: string) => {
+  // Get ALL items for a fase + platform filter (for display)
+  const getAllItemsForFase = (faseNum: number, plataforma?: string) => {
     return checklist.filter((i: any) => {
       if (i.fase_numero !== faseNum) return false;
-      if (i.ator !== 'cliente') return false;
       if (i.tipo === 'mooni') return false;
       if (isHiddenPrereq(i.texto)) return false;
-      // Platform filter for phases 1-6 in parallel flow
       if (plataforma && faseNum > 0 && isParallelFlow) {
         return i.plataforma === plataforma || i.plataforma === 'compartilhada';
       }
       return true;
     });
+  };
+
+  // Get only CLIENT items for a fase (for interaction)
+  const getClientItemsForFase = (faseNum: number, plataforma?: string) => {
+    return getAllItemsForFase(faseNum, plataforma).filter((i: any) => i.ator === 'cliente');
   };
 
   // Check if all fase6 are done
