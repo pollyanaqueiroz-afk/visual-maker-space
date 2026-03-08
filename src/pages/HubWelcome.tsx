@@ -83,12 +83,27 @@ export default function HubWelcome() {
     (async () => {
       setLoadingPending(true);
       const items: PendingItem[] = [];
-      const { data: meetings } = await supabase
-        .from('meetings')
-        .select('id, title, meeting_date, client_name, loyalty_index, minutes_url, recording_url')
-        .eq('status', 'completed')
-        .eq('created_by', user.id)
-        .order('meeting_date', { ascending: false });
+      const today = new Date().toISOString().split('T')[0];
+
+      const [meetingsRes, pendingArtsRes, overdueArtsRes, todayMeetingsRes] = await Promise.all([
+        supabase
+          .from('meetings')
+          .select('id, title, meeting_date, client_name, loyalty_index, minutes_url, recording_url')
+          .eq('status', 'completed')
+          .eq('created_by', user.id)
+          .order('meeting_date', { ascending: false }),
+        supabase.from('briefing_images').select('id', { count: 'exact', head: true }).in('status', ['pending', 'in_progress']),
+        supabase.from('briefing_images').select('created_at', { count: 'exact', head: true }).in('status', ['pending', 'in_progress']).lt('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
+        supabase.from('meetings').select('id', { count: 'exact', head: true }).eq('meeting_date', today).in('status', ['scheduled', 'confirmed']),
+      ]);
+
+      setSummaryStats({
+        pendingArts: pendingArtsRes.count ?? 0,
+        overdueArts: overdueArtsRes.count ?? 0,
+        todayMeetings: todayMeetingsRes.count ?? 0,
+      });
+
+      const meetings = meetingsRes.data;
       if (meetings) {
         for (const m of meetings) {
           if (!m.loyalty_index) items.push({ id: m.id + '-loyalty', type: 'loyalty', title: m.title, subtitle: m.client_name || 'Sem cliente', date: m.meeting_date, meetingId: m.id });
