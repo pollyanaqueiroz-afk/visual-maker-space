@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
-import { Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle, CalendarIcon, AlertCircle, Link2, FolderOpen, FileText, Palette, UserCheck, FileSpreadsheet, Search, UserPen, X } from 'lucide-react';
+import { Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle, CalendarIcon, AlertCircle, Link2, FolderOpen, FileText, Palette, UserCheck, FileSpreadsheet, Search, UserPen, X, LayoutGrid } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -30,6 +30,7 @@ import BrandAssetsDialog from '@/components/briefing/BrandAssetsDialog';
 import BulkPhotoUploadDialog from '@/components/briefing/BulkPhotoUploadDialog';
 import BulkAssignDialog from '@/components/briefing/BulkAssignDialog';
 import { usePermissions } from '@/hooks/usePermissions';
+import BriefingKanban from '@/components/briefing/BriefingKanban';
 function ChangeDesignerForm({ imageId, currentEmail, onChanged }: { imageId: string; currentEmail: string; onChanged: () => void }) {
   const [email, setEmail] = useState(currentEmail);
   const [saving, setSaving] = useState(false);
@@ -528,8 +529,11 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <Tabs defaultValue="artes" className="space-y-6">
+        <Tabs defaultValue="kanban" className="space-y-6">
           <TabsList>
+            <TabsTrigger value="kanban" className="flex items-center gap-2">
+              <LayoutGrid className="h-4 w-4" /> Kanban
+            </TabsTrigger>
             <TabsTrigger value="artes">Artes</TabsTrigger>
             <TabsTrigger value="revisoes" className="flex items-center gap-2">
               <RefreshCw className="h-4 w-4" /> Refações
@@ -538,6 +542,10 @@ export default function Dashboard() {
               <BarChart3 className="h-4 w-4" /> Analytics
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="kanban" className="space-y-6">
+            <BriefingKanban images={images} />
+          </TabsContent>
 
           <TabsContent value="artes" className="space-y-6">
             {/* Active KPI indicator */}
