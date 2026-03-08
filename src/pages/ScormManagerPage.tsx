@@ -76,6 +76,7 @@ export default function ScormManagerPage() {
       formData.append('file', file);
       formData.append('title', title.trim());
       formData.append('description', description.trim());
+      if (platformUrl.trim()) formData.append('platform_url', platformUrl.trim());
 
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
       const res = await fetch(
