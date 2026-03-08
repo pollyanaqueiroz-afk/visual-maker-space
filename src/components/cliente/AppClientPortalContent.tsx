@@ -911,7 +911,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
         transition={{ duration: 0.25 }}
         className="overflow-hidden"
       >
-        <div className="mt-4 rounded-xl bg-[#1E293B] border border-white/10 p-4 space-y-4">
+        <div className="mt-4 rounded-xl bg-[#1E293B] border border-white/10 p-5 space-y-4">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
