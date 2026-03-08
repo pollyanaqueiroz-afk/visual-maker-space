@@ -1165,7 +1165,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
         </span>
         <div className="relative flex items-center flex-1 min-w-0 py-1">
           {/* Connecting line */}
-          <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-1 bg-white/15 rounded-full" />
+          <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-1.5 bg-white/15 rounded-full" />
           {/* Progress line */}
           {(() => {
             const completedCount = trackFases.filter(({ fase }) => fase?.status === 'concluida').length;
