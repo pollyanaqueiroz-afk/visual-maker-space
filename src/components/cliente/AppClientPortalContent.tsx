@@ -590,7 +590,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           </div>
         </div>
         {/* Label */}
-        <span className={`mt-1.5 text-[10px] leading-tight text-center max-w-[60px] ${statusColor}`}>
+        <span className={`mt-1.5 text-[10px] leading-tight text-center w-[72px] ${statusColor}`}>
           {FASE_NAMES[faseNum]}
         </span>
       </button>
@@ -950,51 +950,40 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             </div>
           )}
 
-          {/* Mockup button for fase 0 */}
-          {faseNum === 0 && !mockupRequest && (
-            <Button variant="outline" className="w-full border-white/10 text-white hover:bg-white/5" onClick={() => setShowMockupModal(true)}>
-              <Palette className="h-4 w-4 mr-2" /> Solicitar Mockup do App
-            </Button>
-          )}
-          {faseNum === 0 && mockupRequest && (
-            <div className="rounded-lg p-3 bg-green-500/10 border border-green-500/20 flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-green-400 shrink-0" />
-              <p className="text-xs text-green-400">Mockup solicitado! Acompanhe na aba "Artes".</p>
-            </div>
-          )}
-
-          {/* Future stage message */}
-          {fase.status === 'bloqueada' && (
-            <div className="text-center py-6 space-y-3 rounded-xl bg-white/5 border border-white/5">
-              <div className="relative mx-auto w-16 h-16">
-                <div className="relative flex items-center justify-center w-full h-full">
-                  <Lock className="h-8 w-8 text-white/20" />
-                </div>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-white/60">Etapa futura</p>
-                <p className="text-xs text-white/40 mt-1">Você será notificado quando chegar aqui.</p>
-              </div>
-              {items.length > 0 && (
-                <div className="space-y-2 mt-4 opacity-50">
-                  {items.map(item => (
-                    <div key={item.id} className="p-3 rounded-lg bg-white/5 flex items-start gap-3">
-                      <Lock className="h-4 w-4 text-white/20 mt-0.5 shrink-0" />
-                      <div>
-                        <p className="text-sm text-white/50">{item.texto}</p>
-                        {item.descricao && <p className="text-xs text-white/30 mt-0.5">{item.descricao}</p>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
           {/* Items (active/completed phases) */}
-          {fase.status !== 'bloqueada' && items.length > 0 ? (
+          {fase.status !== 'bloqueada' && (items.length > 0 || faseNum === 0) ? (
             <div className="space-y-2">
               {items.map(item => renderClientItem(item))}
+              {/* Mockup as inline checklist item in fase 0 */}
+              {faseNum === 0 && (
+                <div
+                  className="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+                  onClick={() => { if (!mockupRequest) setShowMockupModal(true); }}
+                >
+                  <div className="flex items-start gap-3">
+                    {mockupRequest ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-400 mt-0.5 shrink-0" />
+                    ) : (
+                      <Circle className="h-5 w-5 text-white/30 mt-0.5 shrink-0" />
+                    )}
+                    <div className="flex-1">
+                      <p className={`text-sm font-medium ${mockupRequest ? 'text-green-400' : ''}`}>
+                        {mockupRequest ? 'Mockup solicitado!' : 'Solicitar Mockup do Aplicativo'}
+                      </p>
+                      {mockupRequest && (
+                        <>
+                          {mockupRequest.created_at && (
+                            <p className="text-[10px] text-green-400/70 mt-1">
+                              ✅ {format(new Date(mockupRequest.created_at), "dd/MM/yyyy 'às' HH:mm")}
+                            </p>
+                          )}
+                          <p className="text-[10px] text-white/40 mt-0.5">Acompanhe na aba "Artes"</p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ) : fase.status !== 'bloqueada' && clientItemsDone && hasInternalPending ? (
             <div className="text-center py-6 space-y-3 rounded-xl bg-white/5 border border-white/5">
@@ -1028,17 +1017,17 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     }));
 
     return (
-      <div className={`rounded-xl border ${colorClass} p-3 space-y-3`}>
-        <div className="flex items-center gap-2 mb-2">
+      <div className={`rounded-xl border ${colorClass} p-4 space-y-3 flex-1 min-w-0`}>
+        <div className="flex items-center gap-2 mb-1">
           <span className="text-lg">{emoji}</span>
-          <span className="text-xs font-bold text-white/80">{label}</span>
+          <span className="text-sm font-bold text-white/80">{label}</span>
         </div>
         {/* Horizontal circles with connecting line */}
-        <div className="relative flex items-start gap-1 overflow-x-auto pb-2">
+        <div className="relative flex items-start justify-between overflow-x-auto pb-2 gap-2 min-w-0">
           {/* Connecting line */}
           <div className="absolute top-[22px] left-[22px] right-[22px] h-[2px] bg-white/10" />
           {trackFases.map(({ num, fase }) => (
-            <div key={num} className="relative z-10 flex-1 min-w-0 flex justify-center">
+            <div key={num} className="relative z-10 flex-1 min-w-[72px] flex justify-center">
               {renderCircle(num, fase, plataforma)}
             </div>
           ))}
@@ -1191,7 +1180,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           </AnimatePresence>
 
           {/* Two tracks */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="flex flex-col md:flex-row gap-6">
             {renderTrack('google', 'Google Play', '🤖', 'border-blue-500/20 bg-blue-500/5')}
             {renderTrack('apple', 'Apple', '🍎', 'border-purple-500/20 bg-purple-500/5')}
           </div>
