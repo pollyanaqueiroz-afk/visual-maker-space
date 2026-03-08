@@ -138,6 +138,11 @@ export default function Dashboard() {
   const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
   const [mooniBlockDialogOpen, setMooniBlockDialogOpen] = useState(false);
   const [mooniBlockClientName, setMooniBlockClientName] = useState('');
+  const [mockupSolicitationOpen, setMockupSolicitationOpen] = useState(false);
+  const [mockupClientUrl, setMockupClientUrl] = useState('');
+  const [mockupClientSuggestions, setMockupClientSuggestions] = useState<string[]>([]);
+  const [mockupObservations, setMockupObservations] = useState('');
+  const [mockupSubmitting, setMockupSubmitting] = useState(false);
   const topScrollRef = useRef<HTMLDivElement>(null);
   const tableScrollRef = useRef<HTMLDivElement>(null);
   const topScrollInnerRef = useRef<HTMLDivElement>(null);
