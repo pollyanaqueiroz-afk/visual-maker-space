@@ -1350,27 +1350,16 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 }`}>Pré-<br/>Requisitos</p>
               </div>
 
-              {/* Bifurcation connector — clean straight lines */}
+              {/* Bifurcation connector — clean T-shape */}
               <div className="flex items-center shrink-0 self-center">
-                {/* Horizontal line from fase 0 */}
                 <div className="w-4 h-0.5 bg-white/20" />
-                {/* Vertical bar + horizontal branches */}
-                <div className="flex flex-col items-start">
-                  {/* Top branch to Google */}
-                  <div className="flex items-center">
-                    <div className="w-0.5 h-3 bg-white/20" />
-                  </div>
-                  <div className="w-0.5 bg-white/20" style={{ height: 'calc(100%)' }} />
-                  {/* Bottom branch to Apple */}
-                  <div className="flex items-center">
-                    <div className="w-0.5 h-3 bg-white/20" />
-                  </div>
+                <div className="relative">
+                  <div className="w-0.5 bg-white/20" style={{ height: '4.5rem' }} />
+                  {/* Top branch */}
+                  <div className="absolute top-0 left-0 w-4 h-0.5 bg-white/20" />
+                  {/* Bottom branch */}
+                  <div className="absolute bottom-0 left-0 w-4 h-0.5 bg-white/20" />
                 </div>
-              </div>
-              {/* Horizontal connectors into tracks */}
-              <div className="flex flex-col gap-6 shrink-0 self-center">
-                <div className="w-3 h-0.5 bg-white/20" />
-                <div className="w-3 h-0.5 bg-white/20" />
               </div>
 
               {/* Two tracks stacked */}
