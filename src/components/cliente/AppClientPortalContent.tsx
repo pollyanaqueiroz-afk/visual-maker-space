@@ -383,8 +383,12 @@ export default function AppClientPortalContent({ clienteId }: Props) {
   const GOOGLE_TEXTS = ['Criei a conta no Google Play Console', 'Adicionei apps@membros.app.br como admin (Google)'];
   const APPLE_TEXTS = ['Criei a conta no Apple Developer Program', 'Adicionei apps@membros.app.br como admin (Apple)'];
 
+  const HIDDEN_PREREQ_TEXTS = ['Ícone do App', 'Splash Screen', 'Screenshots', 'aprovou todos os assets'];
+  const isHiddenPrereq = (texto: string) => HIDDEN_PREREQ_TEXTS.some(t => texto.toLowerCase().includes(t.toLowerCase()));
+
   const currentItems = checklist.filter(i => {
     if (i.fase_numero !== cliente.fase_atual || i.ator !== 'cliente') return false;
+    if (isHiddenPrereq(i.texto)) return false;
     if (i.texto === DUNS_TEXT && i.feito) return true;
     if (i.feito) return false;
     if (cliente.plataforma === 'google' && i.texto === 'Confirmei que meu CNPJ é ME ou LTDA') return false;
