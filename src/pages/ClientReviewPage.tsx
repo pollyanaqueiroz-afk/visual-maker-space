@@ -25,6 +25,7 @@ interface ReviewableImage {
   id: string;
   image_type: string;
   product_name: string | null;
+  observations: string | null;
   assigned_email: string | null;
   revision_count: number;
   request_id: string;
@@ -41,9 +42,10 @@ interface ReviewableImage {
 
 interface ClientReviewPageProps {
   injectedEmail?: string;
+  embedded?: boolean;
 }
 
-export default function ClientReviewPage({ injectedEmail }: ClientReviewPageProps = {}) {
+export default function ClientReviewPage({ injectedEmail, embedded = false }: ClientReviewPageProps = {}) {
   const navigate = useNavigate();
   const [email, setEmail] = useState(injectedEmail || '');
   const [authenticated, setAuthenticated] = useState(!!injectedEmail);
