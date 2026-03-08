@@ -926,7 +926,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
             animate={{ opacity: 1, y: 0 }}
             className="w-full max-w-md"
           >
-            <div className="relative overflow-hidden bg-card border border-border rounded-3xl shadow-2xl p-8 text-center space-y-5">
+            <div className={`relative overflow-hidden ${cardBgSolid} border rounded-3xl shadow-2xl p-8 text-center space-y-5`}>
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-muted-foreground/20 via-muted-foreground/10 to-muted-foreground/20 rounded-t-3xl" />
               <div className="mx-auto w-20 h-20 rounded-full bg-muted flex items-center justify-center">
                 <Palette className="h-10 w-10 text-muted-foreground" />
