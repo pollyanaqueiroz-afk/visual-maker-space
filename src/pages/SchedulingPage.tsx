@@ -504,6 +504,21 @@ export default function SchedulingPage() {
     [meetings]
   );
 
+  // Month grid helpers
+  const holidays = useMemo(() => getBrazilianHolidays(getYear(calendarMonth)), [calendarMonth]);
+  
+  const monthGridDays = useMemo(() => {
+    const start = startOfMonth(calendarMonth);
+    const end = endOfMonth(calendarMonth);
+    const monthDays = eachDayOfInterval({ start, end });
+    const firstDayOfWeek = getDay(start);
+    const prefixDays: (Date | null)[] = Array(firstDayOfWeek).fill(null);
+    const totalCells = prefixDays.length + monthDays.length;
+    const suffixCount = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+    const suffixDays: (Date | null)[] = Array(suffixCount).fill(null);
+    return [...prefixDays, ...monthDays, ...suffixDays];
+  }, [calendarMonth]);
+
   // Week view helpers
   const weekDays = useMemo(() => {
     return eachDayOfInterval({ start: weekStart, end: addDays(weekStart, 6) });
