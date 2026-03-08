@@ -7,8 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
 import { IMAGE_TYPE_LABELS, STATUS_LABELS, STATUS_COLORS } from '@/types/briefing';
-import { Loader2, Clock, ExternalLink, FileImage, Filter, MessageSquare, BarChart3, LogOut } from 'lucide-react';
+import { Loader2, Clock, ExternalLink, FileImage, Filter, MessageSquare, BarChart3, LogOut, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import CursEducaLayout from '@/components/CursEducaLayout';
 import DesignerFeedback from '@/components/designer/DesignerFeedback';
@@ -22,6 +24,13 @@ interface DesignerImage {
   status: string;
   revision_count: number;
   delivery_token: string | null;
+  extra_info: string | null;
+  image_text: string | null;
+  font_suggestion: string | null;
+  element_suggestion: string | null;
+  orientation: string | null;
+  observations: string | null;
+  professional_photo_url: string | null;
   briefing_requests: {
     requester_name: string;
     platform_url: string;
