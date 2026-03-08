@@ -453,6 +453,7 @@ export default function AplicativosPage() {
       setPubUrlSaving(prev => { const s = new Set(prev); s.delete(item.id); return s; });
     }
   };
+  const handleConfirmDrop = async () => {
     if (!pendingDrop) return;
     setDropping(true);
     try {
