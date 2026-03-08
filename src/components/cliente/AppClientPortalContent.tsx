@@ -1028,17 +1028,17 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     }));
 
     return (
-      <div className={`rounded-xl border ${colorClass} p-3 space-y-3`}>
-        <div className="flex items-center gap-2 mb-2">
+      <div className={`rounded-xl border ${colorClass} p-4 space-y-3 flex-1 min-w-0`}>
+        <div className="flex items-center gap-2 mb-1">
           <span className="text-lg">{emoji}</span>
-          <span className="text-xs font-bold text-white/80">{label}</span>
+          <span className="text-sm font-bold text-white/80">{label}</span>
         </div>
         {/* Horizontal circles with connecting line */}
-        <div className="relative flex items-start gap-1 overflow-x-auto pb-2">
+        <div className="relative flex items-start justify-between overflow-x-auto pb-2 gap-2 min-w-0">
           {/* Connecting line */}
           <div className="absolute top-[22px] left-[22px] right-[22px] h-[2px] bg-white/10" />
           {trackFases.map(({ num, fase }) => (
-            <div key={num} className="relative z-10 flex-1 min-w-0 flex justify-center">
+            <div key={num} className="relative z-10 flex-1 min-w-[72px] flex justify-center">
               {renderCircle(num, fase, plataforma)}
             </div>
           ))}
