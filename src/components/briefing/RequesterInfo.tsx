@@ -18,19 +18,21 @@ export default function RequesterInfo({ data, onChange }: Props) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="name">Nome completo *</Label>
+          <Label htmlFor="name">Nome completo <span className="text-destructive">*</span></Label>
           <Input id="name" value={data.requester_name} onChange={e => onChange({ requester_name: e.target.value })} required placeholder="Seu nome" />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="email">Email *</Label>
+          <Label htmlFor="email">Email <span className="text-destructive">*</span></Label>
           <Input id="email" type="email" value={data.requester_email} onChange={e => onChange({ requester_email: e.target.value })} required placeholder="seu@email.com" />
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="url">URL da Plataforma Curseduca *</Label>
+        <Label htmlFor="url">URL da Plataforma Curseduca <span className="text-destructive">*</span></Label>
         <Input id="url" value={data.platform_url} onChange={e => onChange({ platform_url: e.target.value })} required placeholder="https://suaempresa.curseduca.pro" />
       </div>
+
+      <p className="text-xs text-muted-foreground"><span className="text-destructive">*</span> Campos obrigatórios</p>
     </div>
   );
 }
