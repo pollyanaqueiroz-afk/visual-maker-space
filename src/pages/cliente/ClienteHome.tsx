@@ -460,6 +460,9 @@ export default function ClienteHome() {
           </Card>
         </motion.div>
       )}
+
+      {/* Unified Timeline: Suas Solicitações */}
+      <TimelineSection clientEmail={clientEmail} appCliente={appCliente} navigate={navigate} />
     </div>
   );
 }
