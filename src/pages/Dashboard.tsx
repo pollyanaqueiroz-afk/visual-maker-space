@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
-import { Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle, CalendarIcon, AlertCircle, Link2, FolderOpen, FileText, Palette, UserCheck, FileSpreadsheet, Search, UserPen } from 'lucide-react';
+import { Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle, CalendarIcon, AlertCircle, Link2, FolderOpen, FileText, Palette, UserCheck, FileSpreadsheet, Search, UserPen, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -113,6 +113,7 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activeKPI, setActiveKPI] = useState<string | null>(null);
+  const [reviewSearch, setReviewSearch] = useState('');
 
   const toggleKPI = (kpi: string) => {
     setActiveKPI(prev => {
@@ -364,15 +365,38 @@ export default function Dashboard() {
   // Revision stats
   const revisionRequests = reviews.filter(r => r.action === 'revision_requested');
 
-  const revisionsByEmail = revisionRequests.reduce<Record<string, number>>((acc, r) => {
-    // Find the image to get assigned_email
+  const filteredReviews = (() => {
+    if (!reviewSearch.trim()) return reviews;
+    const q = reviewSearch.toLowerCase();
+    return reviews.filter(rev => {
+      const img = images.find(i => i.id === rev.briefing_image_id);
+      if (!img) return false;
+      return (img.platform_url || '').toLowerCase().includes(q) ||
+        (img.requester_name || '').toLowerCase().includes(q) ||
+        (img.product_name || '').toLowerCase().includes(q);
+    });
+  })();
+
+  const filteredRevisionRequests = (() => {
+    if (!reviewSearch.trim()) return revisionRequests;
+    const q = reviewSearch.toLowerCase();
+    return revisionRequests.filter(rev => {
+      const img = images.find(i => i.id === rev.briefing_image_id);
+      if (!img) return false;
+      return (img.platform_url || '').toLowerCase().includes(q) ||
+        (img.requester_name || '').toLowerCase().includes(q) ||
+        (img.product_name || '').toLowerCase().includes(q);
+    });
+  })();
+
+  const revisionsByEmail = filteredRevisionRequests.reduce<Record<string, number>>((acc, r) => {
     const img = images.find(i => i.id === r.briefing_image_id);
     const email = img?.assigned_email || 'Desconhecido';
     acc[email] = (acc[email] || 0) + 1;
     return acc;
   }, {});
 
-  const revisionsByImage = revisionRequests.reduce<Record<string, { count: number; label: string; designer: string }>>((acc, r) => {
+  const revisionsByImage = filteredRevisionRequests.reduce<Record<string, { count: number; label: string; designer: string }>>((acc, r) => {
     const img = images.find(i => i.id === r.briefing_image_id);
     if (!acc[r.briefing_image_id]) {
       acc[r.briefing_image_id] = {
@@ -1094,6 +1118,30 @@ export default function Dashboard() {
           </TabsContent>
 
           <TabsContent value="revisoes" className="space-y-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Filtrar por URL da plataforma ou nome do cliente..."
+                  value={reviewSearch}
+                  onChange={e => setReviewSearch(e.target.value)}
+                  className="pl-9 h-9 text-sm"
+                />
+                {reviewSearch && (
+                  <button
+                    onClick={() => setReviewSearch('')}
+                    className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              {reviewSearch && (
+                <span className="text-xs text-muted-foreground">
+                  Filtrando por: &quot;{reviewSearch}&quot;
+                </span>
+              )}
+            </div>
             <div className="grid md:grid-cols-2 gap-6">
               {/* Revisions by designer */}
               <Card>
@@ -1174,19 +1222,27 @@ export default function Dashboard() {
               </Card>
             </div>
 
-            {/* Full review history */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Histórico de Revisões</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  Histórico de Revisões
+                  <Badge variant="outline" className="text-xs">{filteredReviews.length}</Badge>
+                  {reviewSearch && filteredReviews.length !== reviews.length && (
+                    <span className="text-xs text-muted-foreground font-normal">de {reviews.length}</span>
+                  )}
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                {reviews.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">Nenhuma revisão registrada</p>
+                {filteredReviews.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    {reviewSearch ? `Nenhuma revisão encontrada para "${reviewSearch}"` : 'Nenhuma revisão registrada'}
+                  </p>
                 ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Data</TableHead>
+                        <TableHead>Cliente</TableHead>
                         <TableHead>Arte</TableHead>
                         <TableHead>Ação</TableHead>
                         <TableHead>Revisor</TableHead>
@@ -1194,11 +1250,19 @@ export default function Dashboard() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {reviews.slice(0, 50).map(rev => {
+                      {filteredReviews.slice(0, 50).map(rev => {
                         const img = images.find(i => i.id === rev.briefing_image_id);
                         return (
                           <TableRow key={rev.id}>
                             <TableCell className="text-sm">{new Date(rev.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                            <TableCell className="text-sm">
+                              {img ? (
+                                <div>
+                                  <p className="font-medium text-xs">{img.requester_name || '—'}</p>
+                                  <p className="text-[10px] text-muted-foreground truncate max-w-[150px]">{img.platform_url || ''}</p>
+                                </div>
+                              ) : '—'}
+                            </TableCell>
                             <TableCell className="text-sm">
                               {img ? imageLabel(img) : rev.briefing_image_id.slice(0, 8)}
                             </TableCell>
