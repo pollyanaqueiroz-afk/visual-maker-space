@@ -1165,7 +1165,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
 
     return (
       <div className="flex items-center gap-0">
-        <span className="text-xs font-bold shrink-0 mr-2">
+        <span className="text-sm font-bold shrink-0 mr-2">
           {emoji} <span className={plataforma === 'google' ? 'text-blue-400' : 'text-purple-400'}>{plataforma === 'google' ? 'Google Play' : 'Apple'}</span>
         </span>
         <div className="relative flex items-center flex-1 min-w-0 py-1">
@@ -1187,22 +1187,22 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                     onClick={() => setSelectedTimelineFase(isSelected ? null : { fase: num, plataforma })}
                     className={`flex flex-col items-center cursor-pointer hover:scale-105 transition-all ${status === 'bloqueada' ? 'opacity-60' : ''} ${isSelected ? 'scale-110' : ''}`}
                   >
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
-                    status === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50 text-green-400' :
-                    status === 'em_andamento' ? 'bg-primary/30 ring-2 ring-primary text-primary animate-pulse' :
-                    status === 'atrasada' ? 'bg-red-500/30 ring-2 ring-red-500/50 text-red-400' :
-                    'bg-white/10 text-white/30'
-                  } ${isSelected ? 'ring-2 ring-primary/50' : ''}`}>
-                    {status === 'concluida' ? <CheckCircle2 className="h-4 w-4" /> :
-                     status === 'atrasada' ? <AlertTriangle className="h-4 w-4" /> :
-                     status === 'em_andamento' ? <Star className="h-4 w-4" /> :
-                     <Lock className="h-3.5 w-3.5" />}
-                  </div>
-                  <p className={`text-[9px] mt-1 text-center leading-tight max-w-[60px] ${
-                    status === 'concluida' ? 'text-green-400/80' :
-                    status === 'em_andamento' ? 'text-primary font-semibold' :
-                    'text-white/30'
-                  }`}>{FASE_NAMES[num]}</p>
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
+                      status === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50 text-green-400' :
+                      status === 'em_andamento' ? 'bg-primary/30 ring-2 ring-primary text-primary animate-pulse' :
+                      status === 'atrasada' ? 'bg-red-500/30 ring-2 ring-red-500/50 text-red-400' :
+                      'bg-white/10 text-white/30'
+                    } ${isSelected ? 'ring-2 ring-primary/50' : ''}`}>
+                      {status === 'concluida' ? <CheckCircle2 className="h-5 w-5" /> :
+                       status === 'atrasada' ? <AlertTriangle className="h-5 w-5" /> :
+                       status === 'em_andamento' ? <Star className="h-5 w-5" /> :
+                       <Lock className="h-4 w-4" />}
+                    </div>
+                    <p className={`text-[10px] mt-1.5 text-center leading-tight max-w-[60px] ${
+                      status === 'concluida' ? 'text-green-400/80' :
+                      status === 'em_andamento' ? 'text-primary font-semibold' :
+                      'text-white/30'
+                    }`}>{FASE_NAMES[num]}</p>
                   </button>
                 </div>
               );
@@ -1262,65 +1262,47 @@ export default function AppClientPortalContent({ clienteId }: Props) {
   // ── Main render ──
   return (
     <div className="space-y-6">
-      {/* Hero message */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-lg font-bold">Olá, {cliente.nome?.split(' ')[0]}! 👋</h1>
-        <p className="text-white/60 text-sm mt-0.5">{getDynamicMessage()}</p>
-        {cliente.data_criacao && (
-          <p className="text-[11px] text-primary/80 mt-1.5 flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            Processo iniciado em <span className="font-semibold text-primary">{format(new Date(cliente.data_criacao), 'dd/MM/yyyy')}</span>
-          </p>
-        )}
-      </motion.div>
-
-      {/* CNPJ alert */}
-      {prereqs?.cnpj_bloqueado && (
-        <Card className="bg-red-500/10 border-red-500/30 p-4 text-red-400">
-          <p className="font-semibold">⚠️ CNPJ MEI não aceito pela Apple</p>
-          <p className="text-sm mt-1 text-red-400/70">Entre em contato com a equipe.</p>
-        </Card>
-      )}
-
-      {/* Overall progress — dual bars */}
+      {/* Hero + Progress side by side */}
       {(() => {
         const clientItemsBar = checklist.filter((i: any) => i.ator === 'cliente' && i.obrigatorio);
         const clientDoneBar = clientItemsBar.filter((i: any) => i.feito).length;
         const clientPctBar = clientItemsBar.length > 0 ? Math.round((clientDoneBar / clientItemsBar.length) * 100) : 0;
         const totalPctBar = cliente.porcentagem_geral || 0;
         return (
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-white/50">Suas tarefas</span>
-                <span className="font-bold text-white flex items-center gap-1">
-                  {clientPctBar}%{clientPctBar === 100 && ' ✅'}
-                </span>
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-6">
+            {/* Left: greeting */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex-1 min-w-0">
+              <h1 className="text-lg font-bold">Olá, {cliente?.nome?.split(' ')[0] || 'Cliente'}! 👋</h1>
+              <p className="text-white/60 text-sm mt-0.5">{getDynamicMessage()}</p>
+              {cliente.data_criacao && (
+                <p className="text-[11px] text-primary/80 mt-1.5 flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  Processo iniciado em <span className="font-semibold text-primary">{format(new Date(cliente.data_criacao), 'dd/MM/yyyy')}</span>
+                </p>
+              )}
+            </motion.div>
+            {/* Right: progress bars */}
+            <div className="shrink-0 w-full md:w-64 space-y-2">
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-white/60">Suas tarefas</span>
+                  <span className="font-bold text-white">{clientPctBar}%{clientPctBar === 100 && ' ✅'}</span>
+                </div>
+                <div className="relative h-2 rounded-full bg-white/10 overflow-hidden">
+                  <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
+                    style={{ width: `${clientPctBar}%`, background: clientPctBar === 100 ? 'linear-gradient(90deg, hsl(142 71% 45%), hsl(142 71% 55%))' : 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))' }} />
+                </div>
               </div>
-              <div className="relative h-2 rounded-full bg-white/10 overflow-hidden">
-                <div
-                  className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
-                  style={{
-                    width: `${clientPctBar}%`,
-                    background: clientPctBar === 100
-                      ? 'linear-gradient(90deg, hsl(142 71% 45%), hsl(142 71% 55%))'
-                      : 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))',
-                  }}
-                />
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-white/40">Progresso total</span>
+                  <span className="font-medium text-white/60">{totalPctBar}%</span>
+                </div>
+                <div className="relative h-1.5 rounded-full bg-white/5 overflow-hidden">
+                  <div className="absolute inset-y-0 left-0 rounded-full bg-white/20 transition-all duration-500" style={{ width: `${totalPctBar}%` }} />
+                </div>
+                <p className="text-[10px] text-white/30 mt-0.5">Inclui etapas da equipe Curseduca</p>
               </div>
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-white/30">Progresso total do projeto</span>
-                <span className="font-medium text-white/50">{totalPctBar}%</span>
-              </div>
-              <div className="relative h-1.5 rounded-full bg-white/5 overflow-hidden">
-                <div
-                  className="absolute inset-y-0 left-0 rounded-full bg-white/20 transition-all duration-500"
-                  style={{ width: `${totalPctBar}%` }}
-                />
-              </div>
-              <p className="text-[10px] text-white/25">Inclui etapas da equipe Curseduca</p>
             </div>
           </div>
         );
@@ -1337,7 +1319,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 <button onClick={() => setSelectedTimelineFase(
                   selectedTimelineFase?.fase === 0 && !selectedTimelineFase?.plataforma ? null : { fase: 0 }
                 )}>
-                  <div className={`relative flex items-center justify-center w-12 h-12 rounded-full transition-colors ${
+                  <div className={`relative flex items-center justify-center w-14 h-14 rounded-full transition-colors ${
                     (() => {
                       const f0 = fases.find((f: any) => f.numero === 0);
                       const s = f0?.status || 'bloqueada';
@@ -1350,14 +1332,14 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                     {(() => {
                       const f0 = fases.find((f: any) => f.numero === 0);
                       const s = f0?.status || 'bloqueada';
-                      return s === 'concluida' ? <CheckCircle2 className="h-5 w-5 text-green-400" /> :
-                        s === 'bloqueada' ? <Lock className="h-4 w-4 text-white/30" /> :
-                        s === 'atrasada' ? <AlertTriangle className="h-4 w-4 text-red-400" /> :
+                      return s === 'concluida' ? <CheckCircle2 className="h-6 w-6 text-green-400" /> :
+                        s === 'bloqueada' ? <Lock className="h-5 w-5 text-white/30" /> :
+                        s === 'atrasada' ? <AlertTriangle className="h-5 w-5 text-red-400" /> :
                         <span className="text-sm font-bold text-primary">0</span>;
                     })()}
                   </div>
                 </button>
-                <p className={`text-[9px] mt-1 text-center leading-tight max-w-[60px] ${
+                <p className={`text-[10px] mt-1 text-center leading-tight max-w-[60px] ${
                   (() => {
                     const f0 = fases.find((f: any) => f.numero === 0);
                     const s = f0?.status || 'bloqueada';
@@ -1375,7 +1357,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
               </div>
 
               {/* Two tracks stacked */}
-              <div className="flex-1 flex flex-col gap-4 min-w-0">
+              <div className="flex-1 flex flex-col gap-6 min-w-0">
                 {renderParallelTrackRow('google', '🤖')}
                 {renderParallelTrackRow('apple', '🍎')}
               </div>
