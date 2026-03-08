@@ -64,6 +64,10 @@ interface AppFase {
 export default function AplicativosPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { hasRole } = usePermissions();
+  const { user } = useAuth();
+  const canDrag = hasRole('admin') || hasRole('gerente_implantacao') || hasRole('analista_implantacao');
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('kanban');
   const [pendencyFilter, setPendencyFilter] = useState('todos');
@@ -76,6 +80,20 @@ export default function AplicativosPage() {
   const [mooniClientEmpresa, setMooniClientEmpresa] = useState('');
   const [mooniText, setMooniText] = useState('');
   const [mooniSaving, setMooniSaving] = useState(false);
+
+  // Drag and drop states
+  const [dragOverColumn, setDragOverColumn] = useState<number | null>(null);
+  const [dropConfirmOpen, setDropConfirmOpen] = useState(false);
+  const [pendingDrop, setPendingDrop] = useState<{
+    clienteId: string;
+    clienteNome: string;
+    faseAtual: number;
+    plataforma: string;
+    targetFase: number;
+  } | null>(null);
+  const [dropPlataforma, setDropPlataforma] = useState<string>('ambas');
+  const [dropping, setDropping] = useState(false);
+
   const [form, setForm] = useState({
     nome: '', url_cliente: '', email: '', whatsapp: '', plataforma: 'ambos', responsavel_nome: '',
   });
