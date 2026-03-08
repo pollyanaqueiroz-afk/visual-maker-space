@@ -54,12 +54,17 @@ function RunStatusBadge({ status }: { status: string }) {
 }
 
 // ── KPI Card ──
-function KpiCard({ icon: Icon, label, value, subtitle, bg, iconColor, loading }: {
+function KpiCard({ icon: Icon, label, value, subtitle, bg, iconColor, loading, onClick }: {
   icon: React.ElementType; label: string; value: string | number;
   subtitle?: string; bg: string; iconColor: string; loading: boolean;
+  onClick?: () => void;
 }) {
   return (
-    <Card className="border-0 shadow-sm" style={{ backgroundColor: bg }}>
+    <Card
+      className={`border-0 shadow-sm transition-all duration-200 ${onClick ? 'cursor-pointer hover:scale-[1.03] hover:shadow-md ring-0 hover:ring-2 hover:ring-primary/20' : ''}`}
+      style={{ backgroundColor: bg }}
+      onClick={onClick}
+    >
       <CardContent className="flex items-center gap-4 p-5">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: `${iconColor}20` }}>
           <Icon className="h-5 w-5" style={{ color: iconColor }} />
@@ -70,6 +75,7 @@ function KpiCard({ icon: Icon, label, value, subtitle, bg, iconColor, loading }:
             <p className="text-2xl font-bold tracking-tight">{value}</p>
           )}
           {subtitle && !loading && <p className="text-[11px] text-muted-foreground mt-0.5">{subtitle}</p>}
+          {onClick && !loading && <p className="text-[10px] text-primary/60 mt-0.5">Clique para ver detalhes →</p>}
         </div>
       </CardContent>
     </Card>
@@ -386,6 +392,7 @@ function StepsHealthTab() {
 export default function PipelinePage() {
   const { data: resumo, loading: loadingResumo, refetch } = usePipelineResumo();
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [activeTab, setActiveTab] = useState('runs');
 
   useEffect(() => {
     if (!autoRefresh) return;
@@ -398,6 +405,13 @@ export default function PipelinePage() {
   const erros24hBg = (resumo?.erros_24h ?? 0) > 0 ? '#FEF2F2' : '#F0FDF4';
   const erros24hColor = (resumo?.erros_24h ?? 0) > 0 ? '#DC2626' : '#16A34A';
   const erros24hSub = resumo ? (resumo.erros_24h === 0 ? 'Sem erros nas últimas 24h ✅' : `${resumo.erros_24h} erro(s) nas últimas 24h ⚠️`) : undefined;
+
+  const scrollToTabs = (tab: string) => {
+    setActiveTab(tab);
+    setTimeout(() => {
+      document.getElementById('pipeline-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
 
   return (
     <div className="space-y-6 p-6">
@@ -418,18 +432,18 @@ export default function PipelinePage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-        <KpiCard icon={Activity} label="Total Runs" value={resumo?.total_runs ?? 0} bg="#F1F5F9" iconColor="#334155" loading={loadingResumo} />
-        <KpiCard icon={TrendingUp} label="Taxa Sucesso" value={`${resumo?.taxa_sucesso_pct?.toFixed(1) ?? 0}%`} subtitle={erros24hSub} bg={taxaBg} iconColor={taxaColor} loading={loadingResumo} />
-        <KpiCard icon={CheckCircle} label="Steps OK" value={resumo?.steps_sucesso ?? 0} bg="#EFF6FF" iconColor="#2563EB" loading={loadingResumo} />
-        <KpiCard icon={XCircle} label="Erros Total" value={resumo?.steps_erro ?? 0} bg="#FEF2F2" iconColor="#DC2626" loading={loadingResumo} />
-        <KpiCard icon={AlertTriangle} label="Erros 24h" value={resumo?.erros_24h ?? 0} bg={erros24hBg} iconColor={erros24hColor} loading={loadingResumo} />
+        <KpiCard icon={Activity} label="Total Runs" value={resumo?.total_runs ?? 0} bg="#F1F5F9" iconColor="#334155" loading={loadingResumo} onClick={() => scrollToTabs('runs')} />
+        <KpiCard icon={TrendingUp} label="Taxa Sucesso" value={`${resumo?.taxa_sucesso_pct?.toFixed(1) ?? 0}%`} subtitle={erros24hSub} bg={taxaBg} iconColor={taxaColor} loading={loadingResumo} onClick={() => scrollToTabs('health')} />
+        <KpiCard icon={CheckCircle} label="Steps OK" value={resumo?.steps_sucesso ?? 0} bg="#EFF6FF" iconColor="#2563EB" loading={loadingResumo} onClick={() => scrollToTabs('health')} />
+        <KpiCard icon={XCircle} label="Erros Total" value={resumo?.steps_erro ?? 0} bg="#FEF2F2" iconColor="#DC2626" loading={loadingResumo} onClick={() => scrollToTabs('erros')} />
+        <KpiCard icon={AlertTriangle} label="Erros 24h" value={resumo?.erros_24h ?? 0} bg={erros24hBg} iconColor={erros24hColor} loading={loadingResumo} onClick={() => scrollToTabs('erros')} />
       </div>
 
       {/* Timeline Chart */}
       <TimelineChart loading={loadingResumo} />
 
       {/* Tabs */}
-      <Tabs defaultValue="runs">
+      <Tabs value={activeTab} onValueChange={setActiveTab} id="pipeline-tabs">
         <TabsList>
           <TabsTrigger value="runs">Execuções</TabsTrigger>
           <TabsTrigger value="erros">Erros</TabsTrigger>
