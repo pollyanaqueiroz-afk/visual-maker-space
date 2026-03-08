@@ -823,7 +823,7 @@ export default function Dashboard() {
                           <TableCell className="text-right">
                             <div className="flex items-center gap-2 justify-end">
                               {img.status === 'review' && (
-                                <ReviewActionDialog image={img} onReviewed={fetchData} />
+                                <ReviewActionDialog image={img} onReviewed={refreshAll} />
                               )}
                               <Select value={img.status} onValueChange={v => updateImageStatus(img.id, v as RequestStatus)}>
                                 <SelectTrigger className="w-36 h-8 text-xs">
