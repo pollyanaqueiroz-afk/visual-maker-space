@@ -81,11 +81,20 @@ interface Meeting {
   meeting_url: string | null;
   client_name: string | null;
   client_email: string | null;
+  client_url: string | null;
   participants: string[];
   status: string;
   notes: string | null;
   created_by: string | null;
   created_at: string;
+  meeting_reason: string | null;
+  reschedule_reason: string | null;
+  loyalty_index: number | null;
+  loyalty_reason: string | null;
+  minutes_url: string | null;
+  recording_url: string | null;
+  funil_status: string | null;
+  funil_notas: string | null;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
@@ -188,11 +197,11 @@ export default function SchedulingPage() {
   const [filterCs, setFilterCs] = useState<string>('all');
 
   const fetchMeetings = async () => {
-    const { data, error } = await (supabase
-      .from('meetings' as any)
+    const { data, error } = await supabase
+      .from('meetings')
       .select('*')
       .order('meeting_date', { ascending: true })
-      .order('meeting_time', { ascending: true }) as any);
+      .order('meeting_time', { ascending: true });
 
     if (error) {
       console.error(error);
@@ -204,7 +213,7 @@ export default function SchedulingPage() {
   };
 
   const fetchCsatData = async () => {
-    const { data } = await (supabase.from('meeting_csat' as any).select('meeting_id, score, responded_at') as any);
+    const { data } = await supabase.from('meeting_csat').select('meeting_id, score, responded_at');
     if (data) {
       const map: Record<string, { score: number | null; responded: boolean }> = {};
       (data as any[]).forEach((c: any) => {
@@ -291,10 +300,10 @@ export default function SchedulingPage() {
       meeting_url: m.meeting_url || '',
       client_name: m.client_name || '',
       client_email: m.client_email || '',
-      client_url: (m as any).client_url || '',
+      client_url: m.client_url || '',
       participants: (m.participants || []).join(', '),
       notes: m.notes || '',
-      meeting_reason: (m as any).meeting_reason || '',
+      meeting_reason: m.meeting_reason || '',
       reschedule_reason: '',
     });
     setDialogOpen(true);
@@ -312,10 +321,10 @@ export default function SchedulingPage() {
       meeting_url: m.meeting_url || '',
       client_name: m.client_name || '',
       client_email: m.client_email || '',
-      client_url: (m as any).client_url || '',
+      client_url: m.client_url || '',
       participants: (m.participants || []).join(', '),
       notes: m.notes || '',
-      meeting_reason: (m as any).meeting_reason || '',
+      meeting_reason: m.meeting_reason || '',
       reschedule_reason: '',
     });
     setDialogOpen(true);
@@ -349,11 +358,11 @@ export default function SchedulingPage() {
       };
 
       if (editingId) {
-        const { error } = await (supabase.from('meetings' as any).update(payload).eq('id', editingId) as any);
+        const { error } = await supabase.from('meetings').update(payload).eq('id', editingId);
         if (error) throw error;
         toast.success('Reunião atualizada!');
       } else {
-        const { error } = await (supabase.from('meetings' as any).insert(payload) as any);
+        const { error } = await supabase.from('meetings').insert(payload);
         if (error) throw error;
 
         // Send invite email if checkbox is checked and client email exists
@@ -407,7 +416,7 @@ export default function SchedulingPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Remover esta reunião?')) return;
-    const { error } = await (supabase.from('meetings' as any).delete().eq('id', id) as any);
+    const { error } = await supabase.from('meetings').delete().eq('id', id);
     if (error) toast.error('Erro ao remover');
     else { toast.success('Reunião removida'); fetchMeetings(); }
   };
@@ -415,10 +424,10 @@ export default function SchedulingPage() {
   const handleOpenConfirm = (m: Meeting) => {
     setConfirmingMeeting(m);
     setConfirmForm({
-      minutes_url: (m as any).minutes_url || '',
-      recording_url: (m as any).recording_url || '',
-      loyalty_index: (m as any).loyalty_index ? String((m as any).loyalty_index) : '',
-      loyalty_reason: (m as any).loyalty_reason || '',
+      minutes_url: m.minutes_url || '',
+      recording_url: m.recording_url || '',
+      loyalty_index: m.loyalty_index ? String(m.loyalty_index) : '',
+      loyalty_reason: m.loyalty_reason || '',
     });
     setConfirmDialogOpen(true);
   };
@@ -435,13 +444,13 @@ export default function SchedulingPage() {
     }
     setConfirmSubmitting(true);
     try {
-      const { error } = await (supabase.from('meetings' as any).update({
+      const { error } = await supabase.from('meetings').update({
         status: 'completed',
         minutes_url: confirmForm.minutes_url || null,
         recording_url: confirmForm.recording_url || null,
         loyalty_index: Number(confirmForm.loyalty_index),
         loyalty_reason: confirmForm.loyalty_reason,
-      }).eq('id', confirmingMeeting.id) as any);
+      }).eq('id', confirmingMeeting.id);
       if (error) throw error;
       toast.success('Reunião confirmada!');
 
@@ -474,7 +483,7 @@ export default function SchedulingPage() {
   };
 
   const handleStatusChange = async (id: string, status: string) => {
-    const { error } = await (supabase.from('meetings' as any).update({ status }).eq('id', id) as any);
+    const { error } = await supabase.from('meetings').update({ status }).eq('id', id);
     if (error) toast.error('Erro ao atualizar status');
     else fetchMeetings();
   };
@@ -483,7 +492,7 @@ export default function SchedulingPage() {
   const reasonCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const m of meetings) {
-      const r = (m as any).meeting_reason;
+      const r = m.meeting_reason;
       if (r) counts[r] = (counts[r] || 0) + 1;
     }
     return counts;
@@ -506,7 +515,7 @@ export default function SchedulingPage() {
   const filteredMeetings = useMemo(() => {
     let list = meetings;
     if (filterStatus !== 'all') list = list.filter(m => m.status === filterStatus);
-    if (filterReason !== 'all') list = list.filter(m => (m as any).meeting_reason === filterReason);
+    if (filterReason !== 'all') list = list.filter(m => m.meeting_reason === filterReason);
     if (selectedDate) list = list.filter(m => isSameDay(parseISO(m.meeting_date), selectedDate));
     return list;
   }, [meetings, filterStatus, filterReason, selectedDate]);
@@ -554,7 +563,7 @@ export default function SchedulingPage() {
   };
 
   const pendingLoyalty = useMemo(() =>
-    meetings.filter(m => m.status === 'completed' && !(m as any).loyalty_index),
+    meetings.filter(m => m.status === 'completed' && !m.loyalty_index),
     [meetings]
   );
 
@@ -1024,7 +1033,7 @@ export default function SchedulingPage() {
                                         <p className="font-semibold">{m.title}</p>
                                         {m.client_name && <p className="text-muted-foreground">{m.client_name}</p>}
                                         <p className="text-muted-foreground">{m.meeting_time.slice(0, 5)} — {m.duration_minutes}min</p>
-                                        {(m as any).meeting_reason && <p className="text-muted-foreground mt-1">{(m as any).meeting_reason}</p>}
+                                        {m.meeting_reason && <p className="text-muted-foreground mt-1">{m.meeting_reason}</p>}
                                         <p className="text-primary mt-1 text-[10px]">Clique para ver detalhes</p>
                                       </TooltipContent>
                                     </Tooltip>
@@ -1205,9 +1214,9 @@ export default function SchedulingPage() {
               {filteredMeetings.map((m, i) => {
                 const config = STATUS_CONFIG[m.status] || STATUS_CONFIG.scheduled;
                 const isPast = isBefore(parseISO(m.meeting_date), new Date()) && m.status === 'scheduled';
-                const hasLoyalty = !!(m as any).loyalty_index;
-                const hasMinutes = !!(m as any).minutes_url;
-                const hasRecording = !!(m as any).recording_url;
+                const hasLoyalty = !!m.loyalty_index;
+                const hasMinutes = !!m.minutes_url;
+                const hasRecording = !!m.recording_url;
                 return (
                   <motion.div key={m.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
                     <Card className={cn(
@@ -1234,7 +1243,7 @@ export default function SchedulingPage() {
                                   <Bell className="h-3 w-3" /> Em breve
                                 </Badge>
                               )}
-                              {(m as any).meeting_reason && <Badge variant="outline" className="text-[10px]">{(m as any).meeting_reason}</Badge>}
+                              {m.meeting_reason && <Badge variant="outline" className="text-[10px]">{m.meeting_reason}</Badge>}
                             </div>
                             <div className="flex items-center gap-4 text-xs text-muted-foreground">
                               <span className="flex items-center gap-1"><CalendarDays className="h-3 w-3" />{format(parseISO(m.meeting_date), "dd/MM/yyyy")}</span>
@@ -1251,25 +1260,25 @@ export default function SchedulingPage() {
                               </div>
                             )}
                             {m.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{m.description}</p>}
-                            {(m as any).reschedule_reason && (
+                            {m.reschedule_reason && (
                               <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
-                                <RefreshCw className="h-3 w-3" /><span>Reagendado: {(m as any).reschedule_reason}</span>
+                                <RefreshCw className="h-3 w-3" /><span>Reagendado: {m.reschedule_reason}</span>
                               </div>
                             )}
                             {m.status === 'completed' && (
                               <div className="mt-2 pt-2 border-t border-border space-y-2">
                                 <div className="flex items-center gap-3 flex-wrap">
-                                  {hasMinutes && <a href={(m as any).minutes_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"><FileText className="h-3.5 w-3.5" /> Ata</a>}
-                                  {hasRecording && <a href={(m as any).recording_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"><Video className="h-3.5 w-3.5" /> Gravação</a>}
+                                  {hasMinutes && <a href={m.minutes_url!} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"><FileText className="h-3.5 w-3.5" /> Ata</a>}
+                                  {hasRecording && <a href={m.recording_url!} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"><Video className="h-3.5 w-3.5" /> Gravação</a>}
                                   {!hasMinutes && !hasRecording && <span className="text-xs text-muted-foreground/60 italic">Sem ata ou gravação</span>}
                                 </div>
                                 {hasLoyalty ? (
                                   <div className="flex items-center gap-3">
                                     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-warning/10">
                                       <Star className="h-3.5 w-3.5 text-warning" />
-                                      <span className="text-xs font-bold text-foreground">Fidelidade: {(m as any).loyalty_index}/4</span>
+                                      <span className="text-xs font-bold text-foreground">Fidelidade: {m.loyalty_index}/4</span>
                                     </div>
-                                    {(m as any).loyalty_reason && <span className="text-xs text-muted-foreground line-clamp-1">— {(m as any).loyalty_reason}</span>}
+                                    {m.loyalty_reason && <span className="text-xs text-muted-foreground line-clamp-1">— {m.loyalty_reason}</span>}
                                     <Button variant="ghost" size="sm" className="h-6 text-[10px] text-muted-foreground hover:text-foreground px-2" onClick={() => handleOpenConfirm(m)}><Edit2 className="h-3 w-3 mr-1" /> Editar</Button>
                                   </div>
                                 ) : (
