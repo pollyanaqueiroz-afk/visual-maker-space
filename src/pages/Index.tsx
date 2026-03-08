@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Lock, UserCircle, Sparkles } from 'lucide-react';
+import { Lock, UserCircle, Sparkles, Users, Palette } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useCountUp } from '@/hooks/useCountUp';
 
 const Index = () => {
   return (
