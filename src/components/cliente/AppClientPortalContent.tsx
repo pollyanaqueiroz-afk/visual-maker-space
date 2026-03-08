@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   CheckCircle2, Circle, MessageSquare, Star, Lock, AlertTriangle,
   ExternalLink, Upload, Image as ImageIcon, Loader2, ChevronDown, ChevronUp,
-  Palette, Clock, Eye, Rocket,
+  Palette, Clock, Eye, Rocket, Plus, Minus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -142,6 +142,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
   const [reviewingImageId, setReviewingImageId] = useState<string | null>(null);
   const [reviewComment, setReviewComment] = useState('');
   const [formData, setFormData] = useState({ nome_app: '', descricao_curta: '', descricao_longa: '', url_privacidade: '', url_termos: '' });
+  const [flowExpanded, setFlowExpanded] = useState(true);
 
   const CNPJ_TEXT = 'Confirmei que meu CNPJ é ME ou LTDA';
   const EMAIL_CORP_TEXT = 'Tenho um e-mail corporativo';
@@ -537,33 +538,39 @@ export default function AppClientPortalContent({ clienteId }: Props) {
   if (isLoading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-white/40" /></div>;
   if (!cliente) return <div className="text-center py-12 text-white/60">Dados não encontrados</div>;
 
-  // ── Timeline circle renderer ──
+  // ── Timeline circle renderer (linear layout) ──
   const renderCircle = (faseNum: number, fase: any, plataforma?: string) => {
     const status = fase?.status || 'bloqueada';
     const pct = fase?.porcentagem || 0;
     const isSelected = selectedTimelineFase?.fase === faseNum && selectedTimelineFase?.plataforma === plataforma;
+    const isActive = status === 'em_andamento';
 
-    const size = 44;
+    const size = isActive ? 56 : 44;
     const strokeWidth = 3;
     const radius = (size - strokeWidth) / 2;
     const circumference = 2 * Math.PI * radius;
     const offset = circumference - (pct / 100) * circumference;
 
     const statusColor = status === 'concluida' ? 'text-green-400' :
-      status === 'em_andamento' ? 'text-primary' :
+      isActive ? 'text-primary font-bold' :
       status === 'atrasada' ? 'text-red-400' : 'text-white/50';
 
     return (
       <button
         key={`${faseNum}-${plataforma || 'shared'}`}
-        onClick={() => {
-          setSelectedTimelineFase(isSelected ? null : { fase: faseNum, plataforma });
-        }}
-        className={`relative flex flex-col items-center shrink-0 transition-all cursor-pointer hover:scale-105 ${status === 'bloqueada' ? 'opacity-60' : ''} ${isSelected ? 'scale-110' : ''}`}
+        onClick={() => setSelectedTimelineFase(isSelected ? null : { fase: faseNum, plataforma })}
+        className={`relative flex flex-col items-center shrink-0 transition-all cursor-pointer hover:scale-105 ${status === 'bloqueada' ? 'opacity-50' : ''} ${isSelected ? 'scale-110' : ''}`}
       >
         <div className="relative">
+          {/* Active glow effects */}
+          {isActive && (
+            <>
+              <div className="absolute -inset-3 rounded-full bg-primary/15 animate-ping" style={{ animationDuration: '3s' }} />
+              <div className="absolute -inset-2 rounded-full bg-primary/10 animate-pulse" />
+            </>
+          )}
           {/* Progress ring */}
-          {status === 'em_andamento' && (
+          {isActive && (
             <svg width={size} height={size} className="absolute -inset-0">
               <circle cx={size/2} cy={size/2} r={radius} fill="none" stroke="hsl(var(--primary) / 0.15)" strokeWidth={strokeWidth} />
               <circle cx={size/2} cy={size/2} r={radius} fill="none" stroke="hsl(var(--primary))" strokeWidth={strokeWidth}
@@ -571,16 +578,14 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 transform={`rotate(-90 ${size/2} ${size/2})`} className="transition-all duration-500" />
             </svg>
           )}
-          {/* Active glow */}
-          {status === 'em_andamento' && isSelected && (
-            <div className="absolute -inset-1.5 rounded-full bg-primary/20 animate-pulse" />
-          )}
           {/* Circle */}
-          <div className={`relative flex items-center justify-center w-[44px] h-[44px] rounded-full border-2 transition-colors ${
-            status === 'concluida' ? 'bg-green-500/20 border-green-500' :
-            status === 'em_andamento' ? 'bg-[#1E293B] border-primary' :
-            status === 'atrasada' ? 'bg-red-500/10 border-red-500' :
-            'bg-white/5 border-white/10'
+          <div className={`relative flex items-center justify-center rounded-full transition-all ${
+            isActive ? 'w-14 h-14' : 'w-[44px] h-[44px]'
+          } ${
+            status === 'concluida' ? 'bg-green-500/20 border-2 border-green-500' :
+            isActive ? 'bg-gradient-to-br from-primary to-blue-600 shadow-xl shadow-primary/40 ring-2 ring-primary/50' :
+            status === 'atrasada' ? 'bg-red-500/10 border-2 border-red-500' :
+            'bg-white/5 border-2 border-white/10'
           } ${isSelected ? 'ring-2 ring-primary/50' : ''}`}>
             {status === 'concluida' ? (
               <CheckCircle2 className="h-5 w-5 text-green-400" />
@@ -589,7 +594,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             ) : status === 'atrasada' ? (
               <AlertTriangle className="h-4 w-4 text-red-400" />
             ) : (
-              <span className="text-xs font-bold text-primary">{faseNum}</span>
+              <Star className={`${isActive ? 'h-6 w-6' : 'h-5 w-5'} text-white`} />
             )}
           </div>
         </div>
@@ -1219,22 +1224,30 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                     onClick={() => setSelectedTimelineFase(isSelected ? null : { fase: num, plataforma })}
                     className={`flex flex-col items-center cursor-pointer hover:scale-105 transition-all ${status === 'bloqueada' ? 'opacity-60' : ''} ${isSelected ? 'scale-110' : ''}`}
                   >
-                     <div className={`w-14 h-14 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                       status === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50 text-green-400' :
-                       status === 'em_andamento' ? 'bg-primary/30 ring-2 ring-primary text-primary animate-pulse' :
-                       status === 'atrasada' ? 'bg-red-500/30 ring-2 ring-red-500/50 text-red-400' :
-                       'bg-white/10 text-white/50'
-                     } ${isSelected ? 'ring-2 ring-primary/50' : ''}`}>
-                       {status === 'concluida' ? <CheckCircle2 className="h-6 w-6" /> :
-                        status === 'atrasada' ? <AlertTriangle className="h-6 w-6" /> :
-                        status === 'em_andamento' ? <Star className="h-6 w-6" /> :
-                        <Lock className="h-5 w-5" />}
-                     </div>
+                    <div className="relative">
+                      {status === 'em_andamento' && (
+                        <>
+                          <div className="absolute -inset-2 rounded-full bg-primary/15 animate-ping" style={{ animationDuration: '3s' }} />
+                          <div className="absolute -inset-1 rounded-full bg-primary/10 animate-pulse" />
+                        </>
+                      )}
+                      <div className={`relative w-14 h-14 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                        status === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50 text-green-400' :
+                        status === 'em_andamento' ? 'bg-gradient-to-br from-primary to-blue-600 shadow-xl shadow-primary/40 ring-2 ring-primary/50 text-white' :
+                        status === 'atrasada' ? 'bg-red-500/30 ring-2 ring-red-500/50 text-red-400' :
+                        'bg-white/10 text-white/50'
+                      } ${isSelected ? 'ring-2 ring-primary/50' : ''}`}>
+                        {status === 'concluida' ? <CheckCircle2 className="h-6 w-6" /> :
+                         status === 'atrasada' ? <AlertTriangle className="h-6 w-6" /> :
+                         status === 'em_andamento' ? <Star className="h-6 w-6 text-white" /> :
+                         <Lock className="h-5 w-5" />}
+                      </div>
+                    </div>
                        <p className={`text-xs mt-2 text-center leading-tight max-w-[90px] font-medium ${
-                         status === 'concluida' ? 'text-green-400' :
-                         status === 'em_andamento' ? 'text-white font-semibold' :
-                         'text-white/80'
-                       }`}>{num}. {FASE_NAMES[num]}</p>
+                          status === 'concluida' ? 'text-green-400' :
+                          status === 'em_andamento' ? 'text-primary font-bold' :
+                          'text-white/80'
+                        }`}>{num}. {FASE_NAMES[num]}</p>
                   </button>
                 </div>
               );
@@ -1348,57 +1361,84 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             <div className="flex items-center gap-0 w-full py-3">
               {/* Fase 0 on the left, centered vertically between tracks */}
               <div className="flex flex-col items-center shrink-0 self-center">
-                <button onClick={() => setSelectedTimelineFase(
-                  selectedTimelineFase?.fase === 0 && !selectedTimelineFase?.plataforma ? null : { fase: 0 }
-                )}>
-                  <div className={`relative flex items-center justify-center w-16 h-16 rounded-full transition-colors ${
-                    (() => {
-                      const f0 = fases.find((f: any) => f.numero === 0);
-                      const s = f0?.status || 'bloqueada';
-                      return s === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50' :
-                        s === 'em_andamento' ? 'bg-primary/30 ring-2 ring-primary' :
-                        s === 'atrasada' ? 'bg-red-500/30 ring-2 ring-red-500/50' :
-                        'bg-white/10';
-                    })()
-                  } ${selectedTimelineFase?.fase === 0 && !selectedTimelineFase?.plataforma ? 'ring-2 ring-primary/50' : ''}`}>
-                    {(() => {
-                      const f0 = fases.find((f: any) => f.numero === 0);
-                      const s = f0?.status || 'bloqueada';
-                       return s === 'concluida' ? <CheckCircle2 className="h-7 w-7 text-green-400" /> :
-                         s === 'bloqueada' ? <Lock className="h-6 w-6 text-white/50" /> :
-                         s === 'atrasada' ? <AlertTriangle className="h-6 w-6 text-red-400" /> :
-                         <span className="text-base font-bold text-primary">0</span>;
-                    })()}
-                  </div>
+                {(() => {
+                  const f0 = fases.find((f: any) => f.numero === 0);
+                  const s = f0?.status || 'bloqueada';
+                  const isActive = s === 'em_andamento';
+                  const isF0Selected = selectedTimelineFase?.fase === 0 && !selectedTimelineFase?.plataforma;
+                  return (
+                    <>
+                      <button onClick={() => setSelectedTimelineFase(isF0Selected ? null : { fase: 0 })} className="relative">
+                        {isActive && (
+                          <>
+                            <div className="absolute -inset-3 rounded-full bg-primary/15 animate-ping" style={{ animationDuration: '3s' }} />
+                            <div className="absolute -inset-2 rounded-full bg-primary/10 animate-pulse" />
+                          </>
+                        )}
+                        <div className={`relative flex items-center justify-center w-16 h-16 rounded-full transition-all ${
+                          s === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50' :
+                          isActive ? 'bg-gradient-to-br from-primary via-emerald-500 to-green-500 shadow-2xl shadow-primary/50 ring-2 ring-primary/50' :
+                          s === 'atrasada' ? 'bg-red-500/30 ring-2 ring-red-500/50' :
+                          'bg-white/10'
+                        } ${isF0Selected ? 'ring-2 ring-primary/50' : ''}`}>
+                          {s === 'concluida' ? <CheckCircle2 className="h-7 w-7 text-green-400" /> :
+                           s === 'bloqueada' ? <Lock className="h-6 w-6 text-white/50" /> :
+                           s === 'atrasada' ? <AlertTriangle className="h-6 w-6 text-red-400" /> :
+                           <Star className="h-7 w-7 text-white" />}
+                        </div>
+                      </button>
+                      <p className={`text-xs mt-1.5 text-center leading-tight max-w-[80px] font-medium ${
+                        s === 'concluida' ? 'text-green-400' :
+                        isActive ? 'text-primary font-bold' :
+                        'text-white/80'
+                      }`}>Pré-<br/>Requisitos</p>
+                    </>
+                  );
+                })()}
+              </div>
+
+              {/* Bifurcation connector with toggle */}
+              <div className="relative shrink-0 self-stretch flex flex-col justify-center" style={{ width: '40px' }}>
+                {/* Horizontal line from fase 0 */}
+                <div className="absolute left-0 top-1/2 w-3 h-[2px] bg-white/30" style={{ transform: 'translateY(-50%)' }} />
+                {/* Vertical line connecting two tracks */}
+                <div className="absolute left-3 bg-white/30" style={{ top: 'calc(25%)', bottom: 'calc(25%)', width: '2px' }} />
+                {/* Horizontal branch to Google (top) */}
+                <div className="absolute left-3 h-[2px] bg-white/30" style={{ top: '25%', right: '0', transform: 'translateY(-50%)' }} />
+                {/* Horizontal branch to Apple (bottom) */}
+                <div className="absolute left-3 h-[2px] bg-white/30" style={{ bottom: '25%', right: '0', transform: 'translateY(50%)' }} />
+                {/* Toggle button at center */}
+                <button
+                  onClick={() => setFlowExpanded(!flowExpanded)}
+                  className="absolute z-10 flex items-center justify-center w-6 h-6 rounded-full bg-[#1E293B] border-2 border-white/30 hover:border-white/50 transition-all hover:scale-110"
+                  style={{ left: '12px', top: '50%', transform: 'translate(-50%, -50%)' }}
+                >
+                  {flowExpanded ? <Minus className="h-3 w-3 text-white/60" /> : <Plus className="h-3 w-3 text-white/60" />}
                 </button>
-                  <p className={`text-xs mt-1.5 text-center leading-tight max-w-[80px] font-medium ${
-                    (() => {
-                      const f0 = fases.find((f: any) => f.numero === 0);
-                      const s = f0?.status || 'bloqueada';
-                      return s === 'concluida' ? 'text-green-400' :
-                        s === 'em_andamento' ? 'text-white font-semibold' :
-                        'text-white/80';
-                    })()
-                  }`}>Pré-<br/>Requisitos</p>
               </div>
 
-              {/* Bifurcation connector — clean T-shape */}
-              <div className="flex items-center shrink-0 self-center">
-                 <div className="w-6 h-0.5 bg-white/20" />
-                 <div className="relative">
-                   <div className="w-0.5 bg-white/20" style={{ height: '5.5rem' }} />
-                  {/* Top branch */}
-                   <div className="absolute top-0 left-0 w-6 h-0.5 bg-white/20" />
-                   {/* Bottom branch */}
-                   <div className="absolute bottom-0 left-0 w-6 h-0.5 bg-white/20" />
+              {/* Two tracks stacked — collapsible */}
+              <AnimatePresence>
+                {flowExpanded && (
+                  <motion.div
+                    initial={{ width: 0, opacity: 0 }}
+                    animate={{ width: 'auto', opacity: 1 }}
+                    exit={{ width: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="flex-1 flex flex-col gap-8 min-w-0 overflow-hidden"
+                  >
+                    {renderParallelTrackRow('google', '🤖')}
+                    {renderParallelTrackRow('apple', '🍎')}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              {!flowExpanded && (
+                <div className="flex items-center gap-3 text-sm text-white/60 ml-2">
+                  <span>🤖 Fase {fases.find((f: any) => f.plataforma === 'google' && f.status === 'em_andamento')?.numero ?? '—'}</span>
+                  <span className="text-white/30">·</span>
+                  <span>🍎 Fase {fases.find((f: any) => f.plataforma === 'apple' && f.status === 'em_andamento')?.numero ?? '—'}</span>
                 </div>
-              </div>
-
-              {/* Two tracks stacked */}
-              <div className="flex-1 flex flex-col gap-8 min-w-0">
-                {renderParallelTrackRow('google', '🤖')}
-                {renderParallelTrackRow('apple', '🍎')}
-              </div>
+              )}
             </div>
           </div>
 
