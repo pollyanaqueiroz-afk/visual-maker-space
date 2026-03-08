@@ -15,7 +15,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { toast } from 'sonner';
 import { format, isSameDay, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isBefore, addDays, startOfWeek, endOfWeek, addMonths, subMonths, subWeeks, addWeeks } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, Video, Clock, User, Trash2, Edit2, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Loader2, CheckCircle, FileText, Star, RefreshCw, AlertCircle, MessageSquare, Eye, TrendingUp, Calendar as CalendarIcon } from 'lucide-react';
+import { Plus, Video, Clock, User, Trash2, Edit2, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Loader2, CheckCircle, FileText, Star, RefreshCw, AlertCircle, MessageSquare, Eye, TrendingUp, Calendar as CalendarIcon, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -652,9 +652,10 @@ export default function SchedulingPage() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[
           { label: 'Hoje', value: meetings.filter(m => isSameDay(parseISO(m.meeting_date), new Date()) && m.status === 'scheduled').length, color: 'text-primary', bg: 'bg-primary/10' },
+          { label: 'Próximas 30min', value: meetings.filter(m => { if (m.status !== 'scheduled' || !isSameDay(parseISO(m.meeting_date), new Date())) return false; const [hh, mm] = m.meeting_time.split(':').map(Number); const mt = new Date(); mt.setHours(hh, mm, 0, 0); const now = new Date(); return mt > now && mt.getTime() - now.getTime() <= 30 * 60 * 1000; }).length, color: 'text-amber-500', bg: 'bg-amber-500/10', icon: '🔔' },
           { label: 'Esta semana', value: meetings.filter(m => { const d = parseISO(m.meeting_date); return d >= startOfWeek(new Date(), { locale: ptBR }) && d <= endOfWeek(new Date(), { locale: ptBR }) && m.status === 'scheduled'; }).length, color: 'text-info', bg: 'bg-info/10' },
           { label: 'Realizadas', value: meetings.filter(m => m.status === 'completed').length, color: 'text-success', bg: 'bg-success/10' },
           { label: 'Pendentes', value: meetings.filter(m => m.status === 'scheduled').length, color: 'text-warning', bg: 'bg-warning/10' },
@@ -1016,6 +1017,17 @@ export default function SchedulingPage() {
                               <h3 className="font-semibold text-foreground truncate">{m.title}</h3>
                               <Badge className={cn('text-[10px] px-2 py-0', config.color)}>{config.label}</Badge>
                               {isPast && <Badge variant="outline" className="text-[10px] text-warning border-warning/30">Atrasada</Badge>}
+                              {m.status === 'scheduled' && !isPast && (() => {
+                                const [hh, mm] = m.meeting_time.split(':').map(Number);
+                                const mt = new Date(); mt.setHours(hh, mm, 0, 0);
+                                const now = new Date();
+                                const diff = mt.getTime() - now.getTime();
+                                return isSameDay(parseISO(m.meeting_date), now) && diff > 0 && diff <= 30 * 60 * 1000;
+                              })() && (
+                                <Badge className="text-[10px] px-2 py-0 bg-amber-500/20 text-amber-500 animate-pulse gap-1">
+                                  <Bell className="h-3 w-3" /> Em breve
+                                </Badge>
+                              )}
                               {(m as any).meeting_reason && <Badge variant="outline" className="text-[10px]">{(m as any).meeting_reason}</Badge>}
                             </div>
                             <div className="flex items-center gap-4 text-xs text-muted-foreground">
