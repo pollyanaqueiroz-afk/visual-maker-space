@@ -531,7 +531,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
 
   // ── Loading ──
   if (isLoading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-white/40" /></div>;
-  if (!cliente) return <div className="text-center py-12 text-white/50">Dados não encontrados</div>;
+  if (!cliente) return <div className="text-center py-12 text-white/60">Dados não encontrados</div>;
 
   // ── Timeline circle renderer ──
   const renderCircle = (faseNum: number, fase: any, plataforma?: string) => {
@@ -547,7 +547,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
 
     const statusColor = status === 'concluida' ? 'text-green-400' :
       status === 'em_andamento' ? 'text-primary' :
-      status === 'atrasada' ? 'text-red-400' : 'text-white/20';
+      status === 'atrasada' ? 'text-red-400' : 'text-white/50';
 
     return (
       <button
@@ -581,7 +581,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             {status === 'concluida' ? (
               <CheckCircle2 className="h-5 w-5 text-green-400" />
             ) : status === 'bloqueada' ? (
-              <Lock className="h-4 w-4 text-white/20" />
+              <Lock className="h-4 w-4 text-white/40" />
             ) : status === 'atrasada' ? (
               <AlertTriangle className="h-4 w-4 text-red-400" />
             ) : (
@@ -590,7 +590,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           </div>
         </div>
         {/* Label */}
-        <span className={`mt-1.5 text-[10px] leading-tight text-center w-[72px] ${statusColor}`}>
+        <span className={`mt-1.5 text-[10px] leading-tight text-center w-[72px] font-medium ${statusColor}`}>
           {FASE_NAMES[faseNum]}
         </span>
       </button>
@@ -614,7 +614,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.2 }} className="overflow-hidden">
               <div className="mt-2 space-y-1 rounded-lg bg-white/5 p-3">
-                {steps.map((step, i) => <p key={i} className="text-xs text-white/60">{step}</p>)}
+                {steps.map((step, i) => <p key={i} className="text-xs text-white/70">{step}</p>)}
               </div>
             </motion.div>
           )}
@@ -641,7 +641,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             </div>
           ) : (
             <div className="space-y-3 rounded-lg bg-white/5 border border-white/10 p-4">
-              <p className="text-xs text-white/50 mb-2">Preencha as informações do seu aplicativo.</p>
+              <p className="text-xs text-white/60 mb-2">Preencha as informações do seu aplicativo.</p>
               <div><Label className="text-white/70">Nome do aplicativo *</Label><Input className="bg-white/5 border-white/10 text-white" value={formData.nome_app} onChange={e => setFormData(p => ({ ...p, nome_app: e.target.value }))} /></div>
               <div><Label className="text-white/70">Descrição curta * ({formData.descricao_curta.length}/80)</Label><Input className="bg-white/5 border-white/10 text-white" value={formData.descricao_curta} maxLength={80} onChange={e => setFormData(p => ({ ...p, descricao_curta: e.target.value }))} /></div>
               <div><Label className="text-white/70">URL Política de Privacidade *</Label><Input className="bg-white/5 border-white/10 text-white" placeholder="https://..." value={formData.url_privacidade} onChange={e => setFormData(p => ({ ...p, url_privacidade: e.target.value }))} /></div>
@@ -667,8 +667,8 @@ export default function AppClientPortalContent({ clienteId }: Props) {
               }}
               className="mt-0.5 border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500" />
             <div className="flex-1">
-              <p className="text-sm font-medium">{item.texto}</p>
-              {item.descricao && <p className="text-xs text-white/50 mt-1">{item.descricao}</p>}
+              <p className="text-sm font-medium text-white">{item.texto}</p>
+              {item.descricao && <p className="text-xs text-white/60 mt-1">{item.descricao}</p>}
               {renderStepGuide(item.texto, item.id)}
               {confirmingItemId === item.id && (
                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="mt-3 overflow-hidden">
@@ -701,7 +701,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
         <div key={item.id} className="space-y-3 p-3 rounded-lg bg-white/5">
           <div className="flex items-start gap-3">
             <Star className="h-5 w-5 mt-0.5 text-yellow-400" />
-            <div className="flex-1"><p className="text-sm font-medium">{item.texto}</p></div>
+            <div className="flex-1"><p className="text-sm font-medium text-white">{item.texto}</p></div>
           </div>
           {pendingAssets.length > 0 ? (
             <div className="space-y-2 ml-8">
@@ -711,9 +711,9 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                     {asset.url ? (
                       <img src={asset.url} alt={asset.nome_arquivo} className="w-16 h-16 object-cover rounded-lg border border-white/10" />
                     ) : (
-                      <div className="w-16 h-16 rounded-lg bg-white/10 flex items-center justify-center"><ImageIcon className="h-6 w-6 text-white/30" /></div>
+                      <div className="w-16 h-16 rounded-lg bg-white/10 flex items-center justify-center"><ImageIcon className="h-6 w-6 text-white/50" /></div>
                     )}
-                    <div className="flex-1 min-w-0"><p className="text-sm font-medium truncate">{asset.nome_arquivo || asset.tipo}</p></div>
+                    <div className="flex-1 min-w-0"><p className="text-sm font-medium text-white truncate">{asset.nome_arquivo || asset.tipo}</p></div>
                   </div>
                   {assetCommenting === asset.id ? (
                     <div className="mt-3 space-y-2">
@@ -807,7 +807,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             <Checkbox checked={item.feito} onCheckedChange={(checked) => { if (checked) setSitePromptId(item.id); else toggleCheck.mutate({ id: item.id, feito: false }); }}
               className="mt-0.5 border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500" />
             <div className="flex-1">
-              <p className={`text-sm font-medium ${item.feito ? 'text-green-400' : ''}`}>{item.texto}</p>
+               <p className={`text-sm font-medium ${item.feito ? 'text-green-400' : 'text-white'}`}>{item.texto}</p>
               {renderStepGuide(item.texto, item.id)}
               {sitePromptId === item.id && (
                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="mt-3 space-y-2 overflow-hidden">
@@ -837,13 +837,13 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             }}
             className="mt-0.5 border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500" />
           <div className="flex-1">
-            <p className={`text-sm font-medium ${item.feito ? 'text-green-400' : ''}`}>{item.texto}</p>
-            {item.descricao && <p className="text-xs text-white/50 mt-1">{item.descricao}</p>}
+             <p className={`text-sm font-medium ${item.feito ? 'text-green-400' : 'text-white'}`}>{item.texto}</p>
+             {item.descricao && <p className="text-xs text-white/60 mt-1">{item.descricao}</p>}
             {item.feito && item.feito_em && (
               <p className="text-[10px] text-green-400/70 mt-1">✅ {format(new Date(item.feito_em), "dd/MM/yyyy 'às' HH:mm")}</p>
             )}
             {!canEdit && item.feito && (
-              <p className="text-[10px] text-amber-400/70 flex items-center gap-1 mt-1"><Lock className="h-3 w-3" /> Somente visualização</p>
+              <p className="text-[10px] text-amber-400/80 flex items-center gap-1 mt-1"><Lock className="h-3 w-3" /> Somente visualização</p>
             )}
             {renderStepGuide(item.texto, item.id)}
             {item.texto === ADMIN_APPLE_TEXT && (
@@ -857,7 +857,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3 space-y-3">
                   <p className="text-xs text-amber-300 font-medium">Tem certeza que concluiu esta etapa?</p>
                   <div className="space-y-1">
-                    <Label className="text-[10px] text-white/60">Observações (opcional):</Label>
+                    <Label className="text-[10px] text-white/70">Observações (opcional):</Label>
                     <Textarea placeholder="Ex: número do pedido, conta criada..." className="bg-white/5 border-white/10 text-white text-sm min-h-[60px]"
                       value={itemDataInput} onChange={e => setItemDataInput(e.target.value)} />
                   </div>
@@ -918,14 +918,14 @@ export default function AppClientPortalContent({ clienteId }: Props) {
               {plataforma === 'google' && <span>🤖</span>}
               {plataforma === 'apple' && <span>🍎</span>}
               {!plataforma && <span>📋</span>}
-              <h3 className="text-sm font-bold">{faseNum > 0 ? `${faseNum}. ` : ''}{FASE_NAMES[faseNum]}</h3>
+              <h3 className="text-base font-bold text-white">{faseNum > 0 ? `${faseNum}. ` : ''}{FASE_NAMES[faseNum]}</h3>
               {plataforma && (
                 <Badge variant="outline" className="text-[10px]">
                   {plataforma === 'google' ? 'Google Play' : 'Apple'}
                 </Badge>
               )}
               {fase.data_inicio && (
-                <span className="text-[10px] text-white/40">
+                <span className="text-[10px] text-white/50">
                   Iniciada em {format(new Date(fase.data_inicio), 'dd/MM/yyyy')}
                   {fase.data_conclusao && ` · Concluída em ${format(new Date(fase.data_conclusao), 'dd/MM/yyyy')}`}
                 </span>
@@ -939,7 +939,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
               } border-0`}>
                 {progress}%
               </Badge>
-              <button onClick={() => setSelectedTimelineFase(null)} className="text-white/40 hover:text-white text-xs ml-1">✕</button>
+              <button onClick={() => setSelectedTimelineFase(null)} className="text-white/50 hover:text-white text-xs ml-1">✕</button>
             </div>
           </div>
 
@@ -948,42 +948,37 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           {/* Estimate */}
           {showEstimate && fase.duracao_dias_estimada && (
             <div className="rounded-lg bg-white/5 border border-white/5 p-3 flex items-center gap-2">
-              <Clock className="h-4 w-4 text-white/30" />
-              <p className="text-xs text-white/50">
+              <Clock className="h-4 w-4 text-white/50" />
+              <p className="text-xs text-white/60">
                 Previsão: ~{fase.duracao_dias_estimada} dias úteis
                 {fase.data_inicio && (
-                  <span className="text-white/30"> (até {format(addBusinessDays(new Date(fase.data_inicio), fase.duracao_dias_estimada), 'dd/MM/yyyy')})</span>
+                  <span className="text-white/50"> (até {format(addBusinessDays(new Date(fase.data_inicio), fase.duracao_dias_estimada), 'dd/MM/yyyy')})</span>
                 )}
               </p>
             </div>
           )}
 
-          {/* Future stage message */}
+          {/* Future stage — compact inline message + visible sub-items */}
           {fase.status === 'bloqueada' && (
-            <div className="text-center py-6 space-y-3 rounded-xl bg-white/5 border border-white/5">
-              <div className="relative mx-auto w-16 h-16">
-                <div className="relative flex items-center justify-center w-full h-full">
-                  <Lock className="h-8 w-8 text-white/20" />
-                </div>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-white/60">Etapa futura</p>
-                <p className="text-xs text-white/40 mt-1">Você será notificado quando chegar aqui.</p>
+            <>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 mb-3">
+                <Lock className="h-4 w-4 text-white/40 shrink-0" />
+                <p className="text-xs text-white/50">Etapa futura — você será notificado quando chegar aqui.</p>
               </div>
               {items.length > 0 && (
-                <div className="space-y-2 mt-4 opacity-50">
+                <div className="space-y-2">
                   {items.map(item => (
                     <div key={item.id} className="p-3 rounded-lg bg-white/5 flex items-start gap-3">
-                      <Lock className="h-4 w-4 text-white/20 mt-0.5 shrink-0" />
+                      <Lock className="h-4 w-4 text-white/30 mt-0.5 shrink-0" />
                       <div>
                         <p className="text-sm text-white/50">{item.texto}</p>
-                        {item.descricao && <p className="text-xs text-white/30 mt-0.5">{item.descricao}</p>}
+                        {item.descricao && <p className="text-xs text-white/[0.35] mt-0.5">{item.descricao}</p>}
                       </div>
                     </div>
                   ))}
                 </div>
               )}
-            </div>
+            </>
           )}
 
           {/* Items (active/completed phases) */}
@@ -1000,10 +995,10 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                     {mockupRequest ? (
                       <CheckCircle2 className="h-5 w-5 text-green-400 mt-0.5 shrink-0" />
                     ) : (
-                      <Circle className="h-5 w-5 text-white/30 mt-0.5 shrink-0" />
+                      <Circle className="h-5 w-5 text-white/50 mt-0.5 shrink-0" />
                     )}
                     <div className="flex-1">
-                      <p className={`text-sm font-medium ${mockupRequest ? 'text-green-400' : ''}`}>
+                      <p className={`text-sm font-medium ${mockupRequest ? 'text-green-400' : 'text-white'}`}>
                         {mockupRequest ? 'Mockup solicitado!' : 'Solicitar Mockup do Aplicativo'}
                       </p>
                       {mockupRequest && (
@@ -1013,7 +1008,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                               ✅ {format(new Date(mockupRequest.created_at), "dd/MM/yyyy 'às' HH:mm")}
                             </p>
                           )}
-                          <p className="text-[10px] text-white/40 mt-0.5">Acompanhe na aba "Artes"</p>
+                          <p className="text-[10px] text-white/50 mt-0.5">Acompanhe na aba "Artes"</p>
                         </>
                       )}
                     </div>
@@ -1034,11 +1029,11 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                       ) : formComplete ? (
                         <Clock className="h-5 w-5 text-amber-400 shrink-0" />
                       ) : (
-                        <Lock className="h-5 w-5 text-white/20 shrink-0" />
+                        <Lock className="h-5 w-5 text-white/40 shrink-0" />
                       )}
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <p className={`text-sm font-medium ${!formComplete ? 'text-white/30' : ''}`}>
+                          <p className={`text-sm font-medium ${!formComplete ? 'text-white/50' : 'text-white'}`}>
                             {item.texto}
                           </p>
                           {!item.feito && formComplete && (
@@ -1053,10 +1048,10 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                           )}
                         </div>
                         {!formComplete && faseNum === 3 && (
-                          <p className="text-xs text-white/30 mt-0.5">Preencha o formulário acima para liberar esta etapa</p>
+                          <p className="text-xs text-white/50 mt-0.5">Preencha o formulário acima para liberar esta etapa</p>
                         )}
                         {formComplete && !item.feito && (
-                          <p className="text-xs text-white/40 mt-0.5">Nossa equipe está construindo e submetendo seu app na loja</p>
+                          <p className="text-xs text-white/60 mt-0.5">Nossa equipe está construindo e submetendo seu app na loja</p>
                         )}
                         {item.feito && item.feito_em && (
                           <p className="text-[10px] text-green-400/60 mt-0.5">
@@ -1122,12 +1117,12 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                         </p>
                       )}
                       {!startDate && !isDone && (
-                        <p className="text-[10px] text-white/30 mt-2">
+                        <p className="text-[10px] text-white/50 mt-2">
                           📅 A previsão será calculada após a conclusão de {prevFaseLabel}
                         </p>
                       )}
                     </div>
-                    <p className="text-[10px] text-white/30 text-center mt-2">{footerText}</p>
+                    <p className="text-[10px] text-white/50 text-center mt-2">{footerText}</p>
                   </div>
                 );
               })()}
@@ -1141,8 +1136,8 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 </div>
               </div>
               <div>
-                <p className="text-sm font-semibold text-white/80">Estamos cuidando de tudo!</p>
-                <p className="text-xs text-white/50 mt-1">A equipe Curseduca está trabalhando nesta etapa.<br/>Você será notificado assim que precisarmos de algo.</p>
+                 <p className="text-sm font-semibold text-white">Estamos cuidando de tudo!</p>
+                 <p className="text-xs text-white/60 mt-1">A equipe Curseduca está trabalhando nesta etapa.<br/>Você será notificado assim que precisarmos de algo.</p>
               </div>
             </div>
           ) : fase.status === 'concluida' ? (
@@ -1165,8 +1160,8 @@ export default function AppClientPortalContent({ clienteId }: Props) {
 
     return (
       <div className="flex items-center gap-0">
-        <span className={`text-sm font-bold shrink-0 w-32 text-right pr-3 ${plataforma === 'google' ? 'text-blue-400' : 'text-purple-400'}`}>
-          {emoji} {plataforma === 'google' ? 'Google Play' : 'Apple'}
+         <span className={`text-sm font-bold shrink-0 w-32 text-right pr-3 text-white`}>
+           {emoji} {plataforma === 'google' ? 'Google Play' : 'Apple'}
         </span>
         <div className="relative flex items-center flex-1 min-w-0 py-1">
           {/* Connecting line */}
@@ -1191,18 +1186,18 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                       status === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50 text-green-400' :
                       status === 'em_andamento' ? 'bg-primary/30 ring-2 ring-primary text-primary animate-pulse' :
                       status === 'atrasada' ? 'bg-red-500/30 ring-2 ring-red-500/50 text-red-400' :
-                      'bg-white/10 text-white/30'
+                      'bg-white/10 text-white/50'
                     } ${isSelected ? 'ring-2 ring-primary/50' : ''}`}>
                       {status === 'concluida' ? <CheckCircle2 className="h-5 w-5" /> :
                        status === 'atrasada' ? <AlertTriangle className="h-5 w-5" /> :
                        status === 'em_andamento' ? <Star className="h-5 w-5" /> :
                        <Lock className="h-4 w-4" />}
                     </div>
-                    <p className={`text-[10px] mt-1.5 text-center leading-tight max-w-[70px] ${
-                      status === 'concluida' ? 'text-green-400/80' :
-                      status === 'em_andamento' ? 'text-primary font-semibold' :
-                      'text-white/30'
-                    }`}>{num}. {FASE_NAMES[num]}</p>
+                     <p className={`text-[10px] mt-1.5 text-center leading-tight max-w-[70px] font-medium ${
+                       status === 'concluida' ? 'text-green-400' :
+                       status === 'em_andamento' ? 'text-white font-semibold' :
+                       'text-white/80'
+                     }`}>{num}. {FASE_NAMES[num]}</p>
                   </button>
                 </div>
               );
@@ -1273,7 +1268,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             {/* Left: greeting */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex-1 min-w-0">
               <h1 className="text-lg font-bold">Olá, {cliente?.nome?.split(' ')[0] || 'Cliente'}! 👋</h1>
-              <p className="text-white/60 text-sm mt-0.5">{getDynamicMessage()}</p>
+              <p className="text-white/70 text-sm mt-0.5">{getDynamicMessage()}</p>
               {cliente.data_criacao && (
                 <p className="text-[11px] text-primary/80 mt-1.5 flex items-center gap-1">
                   <Clock className="h-3 w-3" />
@@ -1285,7 +1280,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             <div className="shrink-0 w-full md:w-64 space-y-2">
               <div>
                 <div className="flex justify-between text-xs mb-1">
-                  <span className="text-white/60">Suas tarefas</span>
+                  <span className="text-white/70">Suas tarefas</span>
                   <span className="font-bold text-white">{clientPctBar}%{clientPctBar === 100 && ' ✅'}</span>
                 </div>
                 <div className="relative h-2 rounded-full bg-white/10 overflow-hidden">
@@ -1295,13 +1290,13 @@ export default function AppClientPortalContent({ clienteId }: Props) {
               </div>
               <div>
                 <div className="flex justify-between text-xs mb-1">
-                  <span className="text-white/40">Progresso total</span>
-                  <span className="font-medium text-white/60">{totalPctBar}%</span>
+                   <span className="text-white/60">Progresso total</span>
+                   <span className="font-medium text-white/70">{totalPctBar}%</span>
                 </div>
                 <div className="relative h-1.5 rounded-full bg-white/5 overflow-hidden">
                   <div className="absolute inset-y-0 left-0 rounded-full bg-white/20 transition-all duration-500" style={{ width: `${totalPctBar}%` }} />
                 </div>
-                <p className="text-[10px] text-white/30 mt-0.5">Inclui etapas da equipe Curseduca</p>
+                <p className="text-[10px] text-white/50 mt-0.5">Inclui etapas da equipe Curseduca</p>
               </div>
             </div>
           </div>
@@ -1333,21 +1328,21 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                       const f0 = fases.find((f: any) => f.numero === 0);
                       const s = f0?.status || 'bloqueada';
                       return s === 'concluida' ? <CheckCircle2 className="h-6 w-6 text-green-400" /> :
-                        s === 'bloqueada' ? <Lock className="h-5 w-5 text-white/30" /> :
+                        s === 'bloqueada' ? <Lock className="h-5 w-5 text-white/50" /> :
                         s === 'atrasada' ? <AlertTriangle className="h-5 w-5 text-red-400" /> :
                         <span className="text-sm font-bold text-primary">0</span>;
                     })()}
                   </div>
                 </button>
-                <p className={`text-[10px] mt-1 text-center leading-tight max-w-[60px] ${
-                  (() => {
-                    const f0 = fases.find((f: any) => f.numero === 0);
-                    const s = f0?.status || 'bloqueada';
-                    return s === 'concluida' ? 'text-green-400/80' :
-                      s === 'em_andamento' ? 'text-primary font-semibold' :
-                      'text-white/30';
-                  })()
-                }`}>Pré-<br/>Requisitos</p>
+                 <p className={`text-[10px] mt-1 text-center leading-tight max-w-[60px] font-medium ${
+                   (() => {
+                     const f0 = fases.find((f: any) => f.numero === 0);
+                     const s = f0?.status || 'bloqueada';
+                     return s === 'concluida' ? 'text-green-400' :
+                       s === 'em_andamento' ? 'text-white font-semibold' :
+                       'text-white/80';
+                   })()
+                 }`}>Pré-<br/>Requisitos</p>
               </div>
 
               {/* Bifurcation connector — clean T-shape */}
@@ -1438,7 +1433,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             </motion.div>
           ))}
           {fases.filter((f: any) => f.status === 'concluida').length === 0 && (
-            <p className="text-sm text-white/30">Complete etapas para desbloquear conquistas!</p>
+            <p className="text-sm text-white/50">Complete etapas para desbloquear conquistas!</p>
           )}
         </div>
       </div>
@@ -1446,7 +1441,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
       {/* Support */}
       <Card className="bg-[#1E293B] border-white/10 p-6">
         <h2 className="text-lg font-semibold mb-3">💬 Suporte</h2>
-        <div className="space-y-2 text-sm text-white/60">
+        <div className="space-y-2 text-sm text-white/70">
           {cliente.responsavel_nome && <p>Seu responsável: <span className="text-white">{cliente.responsavel_nome}</span></p>}
           {cliente.whatsapp && (
             <a href={`https://wa.me/${cliente.whatsapp}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-green-400 hover:text-green-300">
