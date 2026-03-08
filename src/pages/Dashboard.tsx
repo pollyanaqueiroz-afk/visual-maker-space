@@ -1205,7 +1205,7 @@ export default function Dashboard() {
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Filtrar por URL da plataforma ou nome do cliente..."
+                  placeholder="Filtrar por URL, nome do cliente ou email do designer..."
                   value={reviewSearch}
                   onChange={e => setReviewSearch(e.target.value)}
                   className="pl-9 h-9 text-sm"
