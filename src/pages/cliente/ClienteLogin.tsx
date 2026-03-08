@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Loader2, Smartphone, UserPlus } from 'lucide-react';
+import { Loader2, Smartphone, UserPlus, Eye, EyeOff } from 'lucide-react';
 
 export default function ClienteLogin() {
   const navigate = useNavigate();
