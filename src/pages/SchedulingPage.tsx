@@ -1214,9 +1214,9 @@ export default function SchedulingPage() {
               {filteredMeetings.map((m, i) => {
                 const config = STATUS_CONFIG[m.status] || STATUS_CONFIG.scheduled;
                 const isPast = isBefore(parseISO(m.meeting_date), new Date()) && m.status === 'scheduled';
-                const hasLoyalty = !!(m as any).loyalty_index;
-                const hasMinutes = !!(m as any).minutes_url;
-                const hasRecording = !!(m as any).recording_url;
+                const hasLoyalty = !!m.loyalty_index;
+                const hasMinutes = !!m.minutes_url;
+                const hasRecording = !!m.recording_url;
                 return (
                   <motion.div key={m.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
                     <Card className={cn(
