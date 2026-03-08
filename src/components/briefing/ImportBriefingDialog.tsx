@@ -104,8 +104,81 @@ export default function ImportBriefingDialog({ onImported }: Props) {
 
     if (ext === 'docx') {
       const arrayBuffer = await file.arrayBuffer();
-      const result = await mammoth.extractRawText({ arrayBuffer });
-      return result.value;
+
+      // Usar convertToHtml para preservar tabelas e estrutura
+      const htmlResult = await mammoth.convertToHtml({ arrayBuffer });
+      const html = htmlResult.value;
+
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+
+      const extractStructuredText = (element: Element): string => {
+        const parts: string[] = [];
+
+        // Processar tabelas preservando estrutura
+        const tables = element.querySelectorAll('table');
+        tables.forEach(table => {
+          const rows = table.querySelectorAll('tr');
+          rows.forEach(row => {
+            const cells = row.querySelectorAll('td, th');
+            const cellTexts: string[] = [];
+            cells.forEach(cell => {
+              const text = cell.textContent?.trim() || '';
+              if (text) cellTexts.push(text);
+            });
+            if (cellTexts.length > 0) {
+              if (cellTexts.length === 2) {
+                parts.push(`${cellTexts[0]}: ${cellTexts[1]}`);
+              } else {
+                parts.push(cellTexts.join(' | '));
+              }
+            }
+          });
+          parts.push('');
+        });
+
+        // Processar parágrafos, headings, listas
+        const blocks = element.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li');
+        blocks.forEach(block => {
+          if (block.closest('table')) return;
+
+          const text = block.textContent?.trim() || '';
+          if (!text) return;
+
+          const tagName = block.tagName.toLowerCase();
+          if (tagName.startsWith('h')) {
+            parts.push(`\n### ${text}\n`);
+          } else if (tagName === 'li') {
+            parts.push(`• ${text}`);
+          } else {
+            const strongs = block.querySelectorAll('strong, b');
+            if (strongs.length > 0 && strongs[0].textContent) {
+              const label = strongs[0].textContent.trim();
+              const fullText = block.textContent?.trim() || '';
+              const valueText = fullText.replace(label, '').trim().replace(/^[:\s-]+/, '').trim();
+              if (valueText && label.length < 60) {
+                parts.push(`${label}: ${valueText}`);
+              } else {
+                parts.push(text);
+              }
+            } else {
+              parts.push(text);
+            }
+          }
+        });
+
+        return parts.filter(Boolean).join('\n');
+      };
+
+      let structuredText = extractStructuredText(doc.body);
+
+      // Fallback para texto puro se HTML não gerou resultado
+      if (structuredText.trim().length < 50) {
+        const rawResult = await mammoth.extractRawText({ arrayBuffer });
+        structuredText = rawResult.value;
+      }
+
+      return structuredText;
     }
 
     if (ext === 'pdf') {
@@ -151,35 +224,25 @@ export default function ImportBriefingDialog({ onImported }: Props) {
           totalChars += pageText.length;
         }
 
-        const fullText = pages.join('\n\n--- Página ---\n\n');
+        const fullText = pages.join('\n\n');
 
         if (totalChars < 20) {
           throw new Error(
             `O PDF tem ${pdf.numPages} página(s) mas apenas ${totalChars} caracteres de texto foram encontrados. ` +
-            `Este PDF provavelmente contém imagens escaneadas ou é protegido. ` +
-            `Tente converter para DOCX ou copiar o texto manualmente.`
+            `Este PDF provavelmente contém imagens escaneadas. Tente converter para DOCX ou copiar o texto manualmente.`
           );
         }
 
         return fullText;
       } catch (pdfErr: any) {
-        if (pdfErr.message?.includes('página') || pdfErr.message?.includes('caracteres')) {
-          throw pdfErr;
-        }
+        if (pdfErr.message?.includes('página') || pdfErr.message?.includes('caracteres')) throw pdfErr;
         console.error('PDF.js error:', pdfErr);
-        throw new Error(
-          `Falha ao processar o PDF: ${pdfErr.message || 'erro desconhecido'}. ` +
-          `Possíveis causas: arquivo corrompido, protegido por senha, ou formato incompatível. ` +
-          `Tente salvar como DOCX e importar novamente.`
-        );
+        throw new Error(`Falha ao processar o PDF: ${pdfErr.message || 'erro desconhecido'}. Tente salvar como DOCX.`);
       }
     }
 
     if (ext === 'doc') {
-      throw new Error(
-        'Formato .doc (Word 97-2003) não é suportado diretamente. ' +
-        'Por favor, abra o arquivo no Word e salve como .docx (Word 2007+) antes de importar.'
-      );
+      throw new Error('Formato .doc não é suportado. Salve como .docx no Word e tente novamente.');
     }
 
     if (ext === 'txt') {
@@ -425,6 +488,18 @@ export default function ImportBriefingDialog({ onImported }: Props) {
 
         {step === 'confirm' && parsed && (
           <div className="space-y-4">
+            {parsed.images.some(img => img.observations?.includes('ATENÇÃO: A IA não conseguiu')) && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
+                <div>
+                  <p className="text-sm text-destructive font-medium">A IA não conseguiu extrair as artes automaticamente</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    O formato do documento é muito diferente do esperado. Revise e edite os campos manualmente abaixo, ou adicione artes com o botão "Adicionar arte".
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center gap-2 p-3 rounded-lg bg-warning/10 border border-warning/20">
               <Pencil className="h-4 w-4 text-warning shrink-0" />
               <p className="text-sm text-warning">
