@@ -489,12 +489,16 @@ export default function SchedulingPage() {
   // Calendar helpers
   const meetingsByDate = useMemo(() => {
     const map: Record<string, Meeting[]> = {};
-    meetings.forEach(m => {
+    let filtered = meetings;
+    if (filterCs !== 'all') {
+      filtered = filtered.filter(m => m.created_by === filterCs);
+    }
+    filtered.forEach(m => {
       if (!map[m.meeting_date]) map[m.meeting_date] = [];
       map[m.meeting_date].push(m);
     });
     return map;
-  }, [meetings]);
+  }, [meetings, filterCs]);
 
   const filteredMeetings = useMemo(() => {
     let list = meetings;
