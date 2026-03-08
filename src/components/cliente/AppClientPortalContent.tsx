@@ -1240,7 +1240,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 <div key={num} className="flex-1 flex flex-col items-center relative z-10">
                   <button
                     onClick={() => setSelectedTimelineFase(isSelected ? null : { fase: num, plataforma })}
-                    className={`flex flex-col items-center cursor-pointer hover:scale-105 transition-all ${status === 'bloqueada' ? 'opacity-60' : ''} ${isSelected ? 'scale-110' : ''}`}
+                    className={`relative flex flex-col items-center cursor-pointer hover:scale-105 transition-all ${status === 'bloqueada' ? 'opacity-60' : ''} ${isSelected ? 'scale-110' : ''}`}
                   >
                     <div className="relative">
                       {status === 'em_andamento' && (
