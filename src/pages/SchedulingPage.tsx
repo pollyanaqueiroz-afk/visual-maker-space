@@ -188,11 +188,11 @@ export default function SchedulingPage() {
   const [filterCs, setFilterCs] = useState<string>('all');
 
   const fetchMeetings = async () => {
-    const { data, error } = await (supabase
-      .from('meetings' as any)
+    const { data, error } = await supabase
+      .from('meetings')
       .select('*')
       .order('meeting_date', { ascending: true })
-      .order('meeting_time', { ascending: true }) as any);
+      .order('meeting_time', { ascending: true });
 
     if (error) {
       console.error(error);
