@@ -41,12 +41,12 @@ export default function FunilCancelamentoPage() {
   const canEdit = hasPermission('funil.edit');
 
   const fetchData = async () => {
-    const { data, error } = await (supabase
-      .from('meetings' as any)
+    const { data, error } = await supabase
+      .from('meetings')
       .select('id, client_url, client_name, meeting_date, loyalty_reason, title, created_by, funil_status, funil_notas')
       .eq('loyalty_index', 1)
       .eq('status', 'completed')
-      .order('meeting_date', { ascending: false }) as any);
+      .order('meeting_date', { ascending: false });
 
     if (error) {
       toast.error('Erro ao carregar funil de cancelamento');
