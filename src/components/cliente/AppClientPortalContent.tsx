@@ -1052,7 +1052,8 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                     className="relative cursor-pointer"
                     onClick={() => setSelectedTimelineFase(selectedTimelineFase === idx ? null : idx)}
                   >
-                    {isCurrent && (
+                    {/* Progress ring for current and in-progress phases */}
+                    {(isCurrent || (fase?.status === 'em_andamento' && !isDone)) && (
                       <svg className="absolute -inset-1 w-12 h-12" viewBox="0 0 44 44">
                         <circle cx="22" cy="22" r="19" fill="none" stroke="hsl(var(--primary) / 0.2)" strokeWidth="3" />
                         <circle
@@ -1084,6 +1085,15 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                     'text-white/30'
                   }`}>
                     {name}
+                  </p>
+                  {/* Progress percentage */}
+                  <p className={`text-[8px] mt-0.5 font-medium ${
+                    isDone ? 'text-green-400/60' :
+                    isCurrent ? 'text-primary/80' :
+                    progress > 0 ? 'text-white/40' :
+                    'text-white/15'
+                  }`}>
+                    {isDone ? '100%' : totalCount > 0 ? `${Math.round(progress)}%` : ''}
                   </p>
                 </div>
               );
