@@ -530,7 +530,7 @@ export default function AplicativosPage() {
       })).filter(g => g.items.length > 0);
     }
     return result;
-  }, [internalPendencies, pendencyFilter, phaseFilter, statusFilter]);
+  }, [internalPendencies, pendencyFilter, phaseFilter, statusFilter, filterResponsavelTask]);
 
   const uniquePhases = useMemo(() => {
     const phases = new Set<number>();
