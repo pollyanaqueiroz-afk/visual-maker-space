@@ -554,7 +554,7 @@ export default function SchedulingPage() {
   };
 
   const pendingLoyalty = useMemo(() =>
-    meetings.filter(m => m.status === 'completed' && !(m as any).loyalty_index),
+    meetings.filter(m => m.status === 'completed' && !m.loyalty_index),
     [meetings]
   );
 
