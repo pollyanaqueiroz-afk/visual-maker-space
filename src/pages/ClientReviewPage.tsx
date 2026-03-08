@@ -1057,7 +1057,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
                 {currentImage.delivery?.comments && (
                   <div className="bg-muted/40 rounded-2xl p-4 border border-border/50">
                     <p className="text-[11px] text-muted-foreground font-bold mb-1.5 uppercase tracking-widest">💬 Designer</p>
-                    <p className="text-sm text-foreground leading-relaxed">{currentImage.delivery.comments}</p>
+                    <p className={`text-sm ${textMain} leading-relaxed`}>{currentImage.delivery.comments}</p>
                   </div>
                 )}
 
