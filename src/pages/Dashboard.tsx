@@ -875,6 +875,9 @@ export default function Dashboard() {
                 </label>
               </div>
               <span className="text-sm text-muted-foreground">{filtered.length} arte(s)</span>
+              <Button variant="outline" size="sm" className="h-9 text-xs gap-1" onClick={handleExportCSV}>
+                <FileSpreadsheet className="h-3.5 w-3.5" /> Exportar CSV
+              </Button>
               {selectedIds.size > 0 && (
                 <div className="flex items-center gap-3 ml-auto bg-primary/10 rounded-lg px-4 py-2">
                   <span className="text-sm font-medium">{selectedIds.size} selecionada(s)</span>
