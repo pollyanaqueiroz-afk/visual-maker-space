@@ -183,6 +183,8 @@ export default function SchedulingPage() {
   const [filterReason, setFilterReason] = useState<string>('all');
   const [sendInvite, setSendInvite] = useState(true);
   const [isRescheduling, setIsRescheduling] = useState(false);
+  const [reschedulingOldData, setReschedulingOldData] = useState<{ date: string; time: string } | null>(null);
+  const [rescheduleHistory, setRescheduleHistory] = useState<Record<string, { previous_date: string; previous_time: string; new_date: string; new_time: string; reason: string; created_at: string }[]>>({});
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmingMeeting, setConfirmingMeeting] = useState<Meeting | null>(null);
   const [confirmForm, setConfirmForm] = useState({
