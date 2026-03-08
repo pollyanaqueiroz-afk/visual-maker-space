@@ -1018,6 +1018,57 @@ export default function AplicativosPage() {
           </div>
         </DialogContent>
       </Dialog>
+      {/* Drop confirmation dialog */}
+      <AlertDialog open={dropConfirmOpen} onOpenChange={setDropConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Concluir etapa?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  Ao mover <span className="font-semibold text-foreground">{pendingDrop?.clienteNome}</span> para
+                  "<span className="font-semibold text-foreground">{FASE_NAMES[pendingDrop?.targetFase || 0]}</span>",
+                  todas as tarefas pendentes da fase "<span className="font-semibold text-foreground">{FASE_NAMES[pendingDrop?.faseAtual || 0]}</span>"
+                  serão marcadas como concluídas.
+                </p>
+                {pendingDrop && (
+                  <p className="text-sm text-amber-500">
+                    ⚠️ {getPendingCount(pendingDrop.clienteId, pendingDrop.faseAtual)} tarefa(s) serão concluídas automaticamente
+                  </p>
+                )}
+                {pendingDrop?.plataforma === 'ambos' && (
+                  <div className="space-y-2 pt-2">
+                    <p className="text-sm font-medium text-foreground">Qual plataforma avançar?</p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant={dropPlataforma === 'google' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setDropPlataforma('google')}
+                      >🤖 Google Play</Button>
+                      <Button
+                        variant={dropPlataforma === 'apple' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setDropPlataforma('apple')}
+                      >🍎 Apple</Button>
+                      <Button
+                        variant={dropPlataforma === 'ambas' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setDropPlataforma('ambas')}
+                      >Ambas</Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={dropping}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction disabled={dropping} onClick={handleConfirmDrop}>
+              {dropping ? 'Movendo...' : 'Confirmar e avançar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
