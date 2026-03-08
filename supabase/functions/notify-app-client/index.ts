@@ -16,9 +16,79 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Check if this is a direct call with body (e.g. app_publicado)
+    let body: any = null;
+    try {
+      body = await req.json();
+    } catch {
+      body = null;
+    }
+
+    // Handle app_publicado email
+    if (body?.tipo === 'app_publicado') {
+      const { cliente_id, plataforma, url_loja } = body;
+      const { data: cliente } = await supabase.from('app_clientes').select('nome, email, empresa').eq('id', cliente_id).single();
+      if (!cliente?.email) throw new Error('Email do cliente não encontrado');
+
+      const lojaName = plataforma === 'google' ? 'Google Play' : 'App Store';
+      const emoji = plataforma === 'google' ? '🤖' : '🍎';
+
+      const html = `
+        <div style="font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; background: #0F172A; color: white; border-radius: 16px; overflow: hidden;">
+          <div style="background: linear-gradient(135deg, #10b981, #3b82f6); padding: 40px 30px; text-align: center;">
+            <h1 style="font-size: 28px; margin: 0; color: white;">🎉 Parabéns, ${cliente.nome?.split(' ')[0]}!</h1>
+            <p style="font-size: 16px; margin-top: 10px; opacity: 0.9; color: white;">Seu aplicativo está oficialmente no ar!</p>
+          </div>
+          <div style="padding: 30px;">
+            <p style="font-size: 15px; color: #94a3b8; line-height: 1.6;">
+              O aplicativo da <strong style="color: white;">${cliente.empresa}</strong> 
+              foi publicado com sucesso na <strong style="color: white;">${emoji} ${lojaName}</strong>.
+            </p>
+            <div style="background: #1E293B; border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center;">
+              <p style="font-size: 13px; color: #64748b; margin: 0 0 12px;">Acesse seu app agora:</p>
+              <a href="${url_loja}" style="display: inline-block; background: linear-gradient(135deg, #10b981, #3b82f6); color: white; text-decoration: none; padding: 12px 32px; border-radius: 8px; font-weight: bold; font-size: 15px;">
+                Abrir na ${lojaName} →
+              </a>
+            </div>
+            <p style="font-size: 14px; color: #94a3b8; line-height: 1.6;">
+              Agradecemos por confiar na Curseduca para construir o app da sua plataforma. 
+              Se precisar de qualquer ajuda, estamos à disposição!
+            </p>
+            <p style="font-size: 14px; color: #94a3b8; margin-top: 20px;">
+              Com carinho,<br/><strong style="color: white;">Equipe Curseduca</strong> 🚀
+            </p>
+          </div>
+        </div>`;
+
+      // Send via Resend
+      const resendKey = Deno.env.get("RESEND_API_KEY");
+      if (resendKey) {
+        try {
+          await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${resendKey}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              from: "Curseduca Apps <apps@membros.app.br>",
+              to: [cliente.email],
+              subject: `${emoji} Seu app está na ${lojaName}! 🎉`,
+              html,
+            }),
+          });
+        } catch (emailErr) {
+          console.error("Email send failed (non-blocking):", emailErr);
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ ok: true, tipo: 'app_publicado', email: cliente.email }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Original scheduled notification logic
     const now = new Date();
 
-    // 1. Clients inactive > 48h — create notification
+    // 1. Clients inactive > 48h
     const { data: inactive48 } = await supabase
       .from("app_clientes")
       .select("id, nome, empresa, portal_token")
@@ -26,7 +96,6 @@ serve(async (req) => {
       .neq("status", "concluido");
 
     for (const c of inactive48 || []) {
-      // Check if already notified today
       const { data: existing } = await supabase
         .from("app_notificacoes")
         .select("id")
@@ -48,7 +117,7 @@ serve(async (req) => {
       }
     }
 
-    // 2. Clients inactive > 96h — alert CS
+    // 2. Clients inactive > 96h
     const { data: inactive96 } = await supabase
       .from("app_clientes")
       .select("id, nome, empresa")
@@ -74,8 +143,6 @@ serve(async (req) => {
           mensagem: `${c.nome} (${c.empresa}) está inativo há mais de 96 horas.`,
           agendado_para: now.toISOString(),
         });
-
-        // Update client status
         await supabase.from("app_clientes").update({ status: "atrasado" }).eq("id", c.id);
       }
     }
@@ -111,7 +178,6 @@ serve(async (req) => {
 
     let processed = 0;
     for (const n of pending || []) {
-      // For now, just mark as sent (email/whatsapp integration can be added later)
       await supabase.from("app_notificacoes").update({ enviado: true, enviado_em: now.toISOString() }).eq("id", n.id);
       processed++;
     }
