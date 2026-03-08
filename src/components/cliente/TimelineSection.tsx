@@ -79,16 +79,17 @@ export default function TimelineSection({ clientEmail, appCliente, navigate }: P
       <div className="space-y-1.5">
         {allBriefings.map((art, i) => {
           const cfg = STATUS_CONFIG[art.status] || STATUS_CONFIG.pending;
+          const isReview = art.status === 'review';
           return (
             <motion.div
               key={art.id}
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.03 * i }}
-              className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/[0.08] cursor-pointer transition-colors"
+              initial={{ opacity: 0, x: -15, scale: 0.97 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              transition={{ delay: 0.06 * i, type: 'spring', stiffness: 120, damping: 14 }}
+              className={`flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/[0.08] cursor-pointer transition-colors ${isReview ? 'ring-1 ring-amber-500/30' : ''}`}
               onClick={() => navigate('/cliente/artes')}
             >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-500/10">
+              <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-500/10 ${isReview ? 'animate-pulse' : ''}`}>
                 <Palette className="h-4 w-4 text-purple-400" />
               </div>
               <div className="flex-1 min-w-0">
@@ -100,7 +101,7 @@ export default function TimelineSection({ clientEmail, appCliente, navigate }: P
                   {format(new Date(art.created_at), 'dd/MM/yyyy')}
                 </p>
               </div>
-              <Badge variant="outline" className={`text-[10px] shrink-0 ${cfg.className}`}>
+              <Badge variant="outline" className={`text-[10px] shrink-0 ${cfg.className} ${isReview ? 'animate-pulse' : ''}`}>
                 {cfg.label}
               </Badge>
             </motion.div>
