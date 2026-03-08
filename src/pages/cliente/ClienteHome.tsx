@@ -290,12 +290,18 @@ export default function ClienteHome() {
         </button>
       </motion.div>
 
-      {/* Status cards */}
+      {/* Status cards with 3D hover */}
       <div className="space-y-2">
         <h2 className="text-lg font-semibold">📊 Status dos seus projetos</h2>
 
         {/* App status */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12, type: 'spring', stiffness: 100, damping: 14 }}
+          whileHover={{ scale: 1.015, rotateX: 2, rotateY: -1 }}
+          style={{ perspective: 800 }}
+        >
           {appCliente?.status === 'cancelado' ? (
             <Card className="bg-[#1E293B] border-destructive/20 cursor-pointer hover:border-destructive/30 transition-colors"
               onClick={() => {
