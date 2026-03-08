@@ -1193,11 +1193,11 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                        status === 'em_andamento' ? <Star className="h-5 w-5" /> :
                        <Lock className="h-4 w-4" />}
                     </div>
-                    <p className={`text-[10px] mt-1.5 text-center leading-tight max-w-[70px] ${
-                      status === 'concluida' ? 'text-green-400/80' :
-                      status === 'em_andamento' ? 'text-primary font-semibold' :
-                      'text-white/30'
-                    }`}>{num}. {FASE_NAMES[num]}</p>
+                     <p className={`text-[10px] mt-1.5 text-center leading-tight max-w-[70px] font-medium ${
+                       status === 'concluida' ? 'text-green-400' :
+                       status === 'em_andamento' ? 'text-white font-semibold' :
+                       'text-white/80'
+                     }`}>{num}. {FASE_NAMES[num]}</p>
                   </button>
                 </div>
               );
