@@ -76,6 +76,18 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  // Warn before leaving with data
+  useEffect(() => {
+    const hasData = form.platform_url || form.requester_name || form.requester_email;
+    if (!hasData) return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [form.platform_url, form.requester_name, form.requester_email]);
+
   // Auto-fill requester info from logged-in user
   useEffect(() => {
     if (user) {

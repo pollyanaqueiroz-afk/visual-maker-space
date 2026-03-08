@@ -674,7 +674,7 @@ export default function Dashboard() {
           </TabsList>
 
           <TabsContent value="kanban" className="space-y-6">
-            <BriefingKanban images={images} />
+            <BriefingKanban images={images} loading={loadingImages} />
           </TabsContent>
 
           <TabsContent value="artes" className="space-y-6">
