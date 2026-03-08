@@ -1118,7 +1118,30 @@ export default function Dashboard() {
           </TabsContent>
 
           <TabsContent value="revisoes" className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Filtrar por URL da plataforma ou nome do cliente..."
+                  value={reviewSearch}
+                  onChange={e => setReviewSearch(e.target.value)}
+                  className="pl-9 h-9 text-sm"
+                />
+                {reviewSearch && (
+                  <button
+                    onClick={() => setReviewSearch('')}
+                    className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              {reviewSearch && (
+                <span className="text-xs text-muted-foreground">
+                  Filtrando por: &quot;{reviewSearch}&quot;
+                </span>
+              )}
+            </div>
               {/* Revisions by designer */}
               <Card>
                 <CardHeader>
