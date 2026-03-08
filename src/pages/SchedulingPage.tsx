@@ -329,6 +329,7 @@ export default function SchedulingPage() {
   const handleReschedule = (m: Meeting) => {
     setEditingId(m.id);
     setIsRescheduling(true);
+    setReschedulingOldData({ date: m.meeting_date, time: m.meeting_time });
     setForm({
       title: m.title,
       description: m.description || '',
