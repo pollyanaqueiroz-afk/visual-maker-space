@@ -1329,8 +1329,8 @@ export default function AppClientPortalContent({ clienteId }: Props) {
       {isParallelFlow ? (
         /* ── Parallel: fase 0 left, bifurcation to two horizontal tracks ── */
         <div className="space-y-4">
-          <div className="overflow-x-auto">
-            <div className="flex items-center gap-0" style={{ minWidth: '520px' }}>
+          <div>
+            <div className="flex items-center gap-0 w-full py-3">
               {/* Fase 0 on the left, centered vertically between tracks */}
               <div className="flex flex-col items-center shrink-0 self-center">
                 <button onClick={() => setSelectedTimelineFase(
