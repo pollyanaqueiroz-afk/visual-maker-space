@@ -980,7 +980,7 @@ export default function Dashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filtered.map(img => {
+                    {paginatedImages.map(img => {
                       return (
                          <TableRow key={img.id} className={selectedIds.has(img.id) ? 'bg-primary/5' : ''}>
                           <TableCell>
