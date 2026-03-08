@@ -832,7 +832,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                   <Label className="text-xs text-white/70">Informe seu CNPJ</Label>
                   <Input placeholder="00.000.000/0000-00" value={cnpjInput} onChange={e => setCnpjInput(formatCnpj(e.target.value))} className="bg-white/5 border-white/10 text-white text-sm" maxLength={18} />
                   <div className="flex gap-2">
-                    <Button size="sm" className="flex-1" disabled={!isValidCnpj} onClick={() => { toggleCheck.mutate({ id: item.id, feito: true }); setCnpjPromptId(null); setCnpjInput(''); toast.success('CNPJ confirmado!'); }}>Confirmar</Button>
+                    <Button size="sm" className="flex-1" disabled={!isValidCnpj} onClick={() => { toggleCheck.mutate({ id: item.id, feito: true }); setCnpjPromptId(null); setCnpjInput(''); toast.success('CNPJ confirmado!'); confetti({ particleCount: 25, spread: 40, origin: { y: 0.7 }, colors: ['#22c55e', '#10b981'] }); }}>Confirmar</Button>
                     <Button size="sm" variant="ghost" onClick={() => { setCnpjPromptId(null); setCnpjInput(''); }}>Cancelar</Button>
                   </div>
                 </motion.div>
