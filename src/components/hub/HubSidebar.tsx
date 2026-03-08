@@ -1,4 +1,4 @@
-import { FileImage, LayoutDashboard, LogOut, CalendarDays, Crown, Briefcase, BarChart3, Package, Headset, Home, Settings, Users, Kanban, ShieldCheck, Smartphone, ExternalLink, Database, AlertTriangle, GraduationCap, PieChart, TrendingDown, ClipboardCheck, Activity } from 'lucide-react';
+import { FileImage, LayoutDashboard, LogOut, CalendarDays, Crown, Briefcase, BarChart3, Package, Headset, Home, Settings, Users, ShieldCheck, Smartphone, ExternalLink, Database, AlertTriangle, GraduationCap, PieChart, TrendingDown, ClipboardCheck, Activity } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -30,7 +30,7 @@ const csModules = [
   { title: 'Agendamento', url: '/hub/agendamento', icon: CalendarDays, permission: 'agendamento.view' },
   { title: 'Dashboards', url: '/hub/dashboards', icon: BarChart3, permission: 'dashboards.view' },
   { title: 'Carteira Geral', url: '/hub/carteira', icon: Briefcase, permission: 'carteira.view' },
-  { title: 'Kanban', url: '/hub/kanban', icon: Kanban, permission: 'kanban.view' },
+  
   { title: 'Dashboard Liderança', url: '/hub/lideranca', icon: Crown, permission: 'lideranca.view' },
   { title: 'Funil de Cancelamento', url: '/hub/funil-cancelamento', icon: AlertTriangle, permission: 'funil.view' },
   { title: 'BI', url: '/hub/bi', icon: PieChart, permission: 'dashboards.view' },

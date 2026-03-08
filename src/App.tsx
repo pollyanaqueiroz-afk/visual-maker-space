@@ -24,8 +24,6 @@ import CarteiraGeralPage from "./pages/CarteiraGeralPage";
 import CsatPage from "./pages/CsatPage";
 import ClientDetailPage from "./pages/ClientDetailPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
-import KanbanPage from "./pages/KanbanPage";
-import KanbanBoardsPage from "./pages/KanbanBoardsPage";
 import PermissionsPage from "./pages/PermissionsPage";
 import PermissionGuard from "./components/PermissionGuard";
 import FieldManagementPage from "./pages/FieldManagementPage";
@@ -79,8 +77,6 @@ const App = () => (
               <Route path="dashboards" element={<PermissionGuard permission="dashboards.view"><MeetingsDashboard /></PermissionGuard>} />
               <Route path="carteira" element={<PermissionGuard permission="carteira.view"><CarteiraGeralPage /></PermissionGuard>} />
               <Route path="carteira/:clientId" element={<PermissionGuard permission="carteira.view"><ClientDetailPage /></PermissionGuard>} />
-              <Route path="kanban" element={<PermissionGuard permission="kanban.view"><KanbanBoardsPage /></PermissionGuard>} />
-              <Route path="kanban/:boardId" element={<PermissionGuard permission="kanban.view"><KanbanPage /></PermissionGuard>} />
               <Route path="lideranca" element={<PermissionGuard permission="lideranca.view"><LeadershipDashboard /></PermissionGuard>} />
               <Route path="admin/usuarios" element={<PermissionGuard permission="admin.view"><AdminUsersPage /></PermissionGuard>} />
               <Route path="admin/permissoes" element={<PermissionGuard permission="admin.manage_permissions"><PermissionsPage /></PermissionGuard>} />
