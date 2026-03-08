@@ -204,7 +204,7 @@ export default function SchedulingPage() {
   };
 
   const fetchCsatData = async () => {
-    const { data } = await (supabase.from('meeting_csat' as any).select('meeting_id, score, responded_at') as any);
+    const { data } = await supabase.from('meeting_csat').select('meeting_id, score, responded_at');
     if (data) {
       const map: Record<string, { score: number | null; responded: boolean }> = {};
       (data as any[]).forEach((c: any) => {
