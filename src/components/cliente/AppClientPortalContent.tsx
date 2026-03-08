@@ -807,7 +807,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             <Checkbox checked={item.feito} onCheckedChange={(checked) => { if (checked) setSitePromptId(item.id); else toggleCheck.mutate({ id: item.id, feito: false }); }}
               className="mt-0.5 border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500" />
             <div className="flex-1">
-              <p className={`text-sm font-medium ${item.feito ? 'text-green-400' : ''}`}>{item.texto}</p>
+               <p className={`text-sm font-medium ${item.feito ? 'text-green-400' : 'text-white'}`}>{item.texto}</p>
               {renderStepGuide(item.texto, item.id)}
               {sitePromptId === item.id && (
                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="mt-3 space-y-2 overflow-hidden">
