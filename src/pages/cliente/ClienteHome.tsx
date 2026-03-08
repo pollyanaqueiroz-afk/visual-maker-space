@@ -12,21 +12,12 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-interface PendingAction {
-  id: string;
-  type: 'arte' | 'checklist' | 'form' | 'upload' | 'approval';
-  module: 'artes' | 'aplicativo';
-  title: string;
-  description?: string;
-  urgency: 'normal' | 'high';
-}
-
 export default function ClienteHome() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const clientEmail = user?.email || '';
 
-  // Fetch artes pending review
+  // Fetch artes data (for status cards)
   const { data: artesData, isLoading: loadingArtes } = useQuery({
     queryKey: ['cliente-artes-pending', clientEmail],
     enabled: !!clientEmail,
@@ -53,22 +44,55 @@ export default function ClienteHome() {
     },
   });
 
-  // Fetch app checklist items for client
-  const { data: appChecklist = [], isLoading: loadingChecklist } = useQuery({
-    queryKey: ['cliente-app-checklist', appCliente?.id],
+  // Fetch ALL pending app checklist items for client
+  const { data: appPendencies = [], isLoading: loadingChecklist } = useQuery({
+    queryKey: ['cliente-home-app-pendencies', appCliente?.id],
     enabled: !!appCliente?.id,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('app_checklist_items')
-        .select('*')
+        .select('id, texto, descricao, fase_numero, tipo, ordem')
         .eq('cliente_id', appCliente!.id)
         .eq('ator', 'cliente')
         .eq('feito', false)
         .order('fase_numero')
         .order('ordem');
       if (error) throw error;
-      return data;
+      const FASE_NAMES = ['Pré-Requisitos', 'Primeiros Passos', 'Validação pela Loja', 'Criação e Submissão', 'Aprovação das Lojas', 'Teste do App', 'Publicado'];
+      return (data || []).map(i => ({
+        ...i,
+        source: 'app' as const,
+        subtitle: `Fase ${i.fase_numero} — ${FASE_NAMES[i.fase_numero] || ''}`,
+      }));
     },
+    staleTime: 30_000,
+  });
+
+  // Fetch art pendencies (images in review status)
+  const { data: artPendencies = [] } = useQuery({
+    queryKey: ['cliente-home-art-pendencies', clientEmail],
+    enabled: !!clientEmail,
+    queryFn: async () => {
+      const { data: requests } = await supabase
+        .from('briefing_requests')
+        .select('id')
+        .eq('requester_email', clientEmail);
+      if (!requests?.length) return [];
+
+      const { data: images } = await supabase
+        .from('briefing_images')
+        .select('id, image_type, observations, product_name')
+        .in('request_id', requests.map(r => r.id))
+        .eq('status', 'review');
+
+      return (images || []).map(img => ({
+        id: img.id,
+        texto: img.observations || img.product_name || (img.image_type === 'app_mockup' ? 'Mockup do Aplicativo' : img.image_type),
+        source: 'art' as const,
+        subtitle: 'Aguardando sua aprovação',
+      }));
+    },
+    staleTime: 30_000,
   });
 
   // Fetch app form
@@ -88,64 +112,9 @@ export default function ClienteHome() {
 
   const isLoading = loadingArtes || loadingApp || loadingChecklist;
 
-  // Build pending actions list
-  const pendingActions: PendingAction[] = [];
-
-  // Artes pending approval
-  const artesReview = artesData?.images?.review || [];
-  if (artesReview.length > 0) {
-    pendingActions.push({
-      id: 'artes-review',
-      type: 'arte',
-      module: 'artes',
-      title: `${artesReview.length} arte(s) aguardando sua validação`,
-      description: 'Aprove ou solicite refação das artes entregues',
-      urgency: 'high',
-    });
-  }
-
-  // App checklist items
-  const currentFaseItems = appChecklist.filter(i => i.fase_numero === appCliente?.fase_atual);
-  currentFaseItems.forEach(item => {
-    const itemType = item.tipo === 'form' ? 'form' : item.tipo === 'upload' ? 'upload' : item.tipo === 'approval' ? 'approval' : 'checklist';
-    pendingActions.push({
-      id: item.id,
-      type: itemType as any,
-      module: 'aplicativo',
-      title: item.texto,
-      description: item.descricao || undefined,
-      urgency: 'normal',
-    });
-  });
-
-  // App form not complete
-  if (appCliente && appCliente.fase_atual === 4 && appForm && !appForm.preenchido_completo) {
-    pendingActions.push({
-      id: 'app-form',
-      type: 'form',
-      module: 'aplicativo',
-      title: 'Preencher formulário do aplicativo',
-      description: 'Nome, descrição e política de privacidade do app',
-      urgency: 'high',
-    });
-  }
-
-  const getIcon = (type: string) => {
-    switch (type) {
-      case 'arte': return <Eye className="h-4 w-4 text-primary" />;
-      case 'checklist': return <CheckCircle className="h-4 w-4 text-blue-400" />;
-      case 'form': return <FileText className="h-4 w-4 text-amber-400" />;
-      case 'upload': return <Upload className="h-4 w-4 text-purple-400" />;
-      case 'approval': return <Sparkles className="h-4 w-4 text-yellow-400" />;
-      default: return <AlertTriangle className="h-4 w-4 text-destructive" />;
-    }
-  };
-
-  const getModuleIcon = (module: string) => {
-    return module === 'artes'
-      ? <Palette className="h-3 w-3" />
-      : <Smartphone className="h-3 w-3" />;
-  };
+  // Combine all real pendencies
+  const allPendencies = [...appPendencies, ...artPendencies];
+  const hasRealPendencies = allPendencies.length > 0;
 
   const greetingData = () => {
     const h = new Date().getHours();
@@ -155,6 +124,10 @@ export default function ClienteHome() {
   };
 
   const { text: greetingText, gif: greetingGif } = greetingData();
+
+  const greetingSubtitle = hasRealPendencies
+    ? `Você tem ${allPendencies.length} pendência${allPendencies.length > 1 ? 's' : ''} para resolver`
+    : 'Você está em dia! Nenhuma pendência no momento 🎉';
 
   if (isLoading) {
     return (
@@ -191,9 +164,7 @@ export default function ClienteHome() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5, duration: 0.4 }}
           >
-            {pendingActions.length > 0
-              ? `Você tem ${pendingActions.length} pendência(s) para resolver`
-              : 'Você está em dia! Nenhuma pendência no momento 🎉'}
+            {greetingSubtitle}
           </motion.p>
         </div>
       </motion.div>
@@ -246,7 +217,14 @@ export default function ClienteHome() {
                 <Smartphone className="h-5 w-5 text-blue-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-white/50 mb-0.5">Aplicativo</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-xs text-white/50 mb-0.5">Aplicativo</p>
+                  {appPendencies.length > 0 && (
+                    <Badge variant="destructive" className="text-[10px] ml-1">
+                      {appPendencies.length} pendência{appPendencies.length > 1 ? 's' : ''}
+                    </Badge>
+                  )}
+                </div>
                 {appCliente ? (
                   <>
                     <p className="text-sm font-medium">
@@ -274,7 +252,14 @@ export default function ClienteHome() {
                 <Palette className="h-5 w-5 text-purple-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-white/50 mb-0.5">Validação de Artes</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-xs text-white/50 mb-0.5">Validação de Artes</p>
+                  {artPendencies.length > 0 && (
+                    <Badge variant="destructive" className="text-[10px] ml-1">
+                      {artPendencies.length} para aprovar
+                    </Badge>
+                  )}
+                </div>
                 {artesData?.counts?.total > 0 ? (
                   <>
                     <p className="text-sm font-medium">
@@ -299,49 +284,49 @@ export default function ClienteHome() {
       </div>
 
       {/* Pending actions */}
-      {pendingActions.length > 0 && (
+      {hasRealPendencies ? (
         <div className="space-y-2">
-          <h2 className="text-lg font-semibold">📋 Suas pendências</h2>
-          {pendingActions.map((action, i) => (
+          <h3 className="text-sm font-semibold text-white/80 mb-3">
+            📋 Suas pendências ({allPendencies.length})
+          </h3>
+          {allPendencies.map((item, i) => (
             <motion.div
-              key={action.id}
+              key={item.id}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.05 * i }}
             >
-              <Card
-                className="bg-[#1E293B] border-white/10 cursor-pointer hover:border-white/20 transition-colors"
-                onClick={() => navigate(action.module === 'artes' ? '/cliente/artes' : '/cliente/aplicativo')}
+              <div
+                className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/[0.08] cursor-pointer transition-colors"
+                onClick={() => {
+                  if (item.source === 'app') navigate('/cliente/aplicativo');
+                  else navigate('/cliente/artes');
+                }}
               >
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/5">
-                    {getIcon(action.type)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-white/20 text-white/50 gap-1">
-                        {getModuleIcon(action.module)}
-                        {action.module === 'artes' ? 'Artes' : 'Aplicativo'}
-                      </Badge>
-                      {action.urgency === 'high' && (
-                        <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Urgente</Badge>
-                      )}
-                    </div>
-                    <p className="text-sm font-medium truncate">{action.title}</p>
-                    {action.description && (
-                      <p className="text-xs text-white/40 truncate">{action.description}</p>
-                    )}
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-white/30 shrink-0" />
-                </CardContent>
-              </Card>
+                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                  item.source === 'app' ? 'bg-amber-500/10' : 'bg-purple-500/10'
+                }`}>
+                  {item.source === 'app' ? (
+                    <AlertTriangle className="h-4 w-4 text-amber-400" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-purple-400" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white truncate">{item.texto}</p>
+                  <p className="text-xs text-white/40">{item.subtitle}</p>
+                </div>
+                <Badge variant="outline" className={`text-[10px] shrink-0 ${
+                  item.source === 'app' ? 'border-amber-500/30 text-amber-400' : 'border-purple-500/30 text-purple-400'
+                }`}>
+                  {item.source === 'app' ? 'Aplicativo' : 'Arte'}
+                </Badge>
+                <ChevronRight className="h-4 w-4 text-white/30 shrink-0" />
+              </div>
             </motion.div>
           ))}
         </div>
-      )}
-
-      {/* All done state */}
-      {pendingActions.length === 0 && (
+      ) : (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
           <Card className="bg-[#1E293B] border-white/10 border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
