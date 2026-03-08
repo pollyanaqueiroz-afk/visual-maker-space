@@ -112,6 +112,26 @@ export default function Dashboard() {
   const [filterOverdue, setFilterOverdue] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [activeKPI, setActiveKPI] = useState<string | null>(null);
+
+  const toggleKPI = (kpi: string) => {
+    setActiveKPI(prev => {
+      if (prev === kpi) {
+        setFilterStatus('all');
+        return null;
+      }
+      switch (kpi) {
+        case 'total': setFilterStatus('all'); break;
+        case 'pending': setFilterStatus('pending'); break;
+        case 'in_progress': setFilterStatus('in_progress'); break;
+        case 'review': setFilterStatus('review'); break;
+        case 'completed': setFilterStatus('completed'); break;
+        case 'clients': setFilterStatus('all'); break;
+        case 'requests': setFilterStatus('all'); break;
+      }
+      return kpi;
+    });
+  };
   const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
   const [mooniBlockDialogOpen, setMooniBlockDialogOpen] = useState(false);
   const [mooniBlockClientName, setMooniBlockClientName] = useState('');
