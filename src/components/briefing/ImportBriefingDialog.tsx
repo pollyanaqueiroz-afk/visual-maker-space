@@ -195,16 +195,20 @@ export default function ImportBriefingDialog({ onImported }: Props) {
 
     setFileName(file.name);
     setStep('parsing');
+    setParsingMessage('Lendo arquivo...');
 
     try {
       let text: string;
       try {
-        text = await extractText(file);
-      } catch (extractErr: any) {
         const ext = file.name.split('.').pop()?.toLowerCase();
-        throw new Error(
-          `Falha ao ler o arquivo ${ext?.toUpperCase() || ''}: ${extractErr.message || 'formato não suportado ou arquivo corrompido.'}`
-        );
+        setParsingMessage(ext === 'pdf' ? 'Extraindo texto do PDF...' : 'Extraindo texto do documento...');
+        text = await extractText(file);
+        console.log(`[ImportBriefing] Extracted ${text.length} chars from ${file.name} (${file.type})`);
+        console.log(`[ImportBriefing] First 200 chars:`, text.slice(0, 200));
+        setParsingMessage(`${text.length} caracteres extraídos. Analisando com IA...`);
+      } catch (extractErr: any) {
+        console.error(`[ImportBriefing] Extract failed for ${file.name}:`, extractErr);
+        throw new Error(extractErr.message);
       }
 
       if (!text || text.trim().length < 50) {
@@ -212,6 +216,8 @@ export default function ImportBriefingDialog({ onImported }: Props) {
           `O documento "${file.name}" não contém texto suficiente para análise (apenas ${text?.trim().length || 0} caracteres encontrados). Verifique se o arquivo não está vazio, protegido ou é uma imagem escaneada sem OCR.`
         );
       }
+
+      setParsingMessage('Processando com IA...');
 
       const response = await supabase.functions.invoke('parse-briefing', {
         body: { documentText: text },
