@@ -443,8 +443,8 @@ export default function AplicativoDetailPage() {
             <h1 className="text-xl font-bold">{cliente.nome}</h1>
             <span className="text-muted-foreground">—</span>
             <span className="text-muted-foreground">{cliente.empresa}</span>
-            <Badge variant={cliente.status === 'atrasado' ? 'destructive' : cliente.status === 'concluido' ? 'default' : 'secondary'}>
-              {cliente.status === 'no_prazo' ? 'No prazo' : cliente.status === 'atrasado' ? 'Atrasado' : cliente.status === 'bloqueado' ? 'Bloqueado' : 'Concluído'}
+            <Badge variant={cliente.status === 'cancelado' ? 'destructive' : cliente.status === 'atrasado' ? 'destructive' : cliente.status === 'concluido' ? 'default' : 'secondary'}>
+              {cliente.status === 'cancelado' ? 'Cancelado' : cliente.status === 'no_prazo' ? 'No prazo' : cliente.status === 'atrasado' ? 'Atrasado' : cliente.status === 'bloqueado' ? 'Bloqueado' : 'Concluído'}
             </Badge>
             <Badge variant="outline">
               {cliente.plataforma === 'apple' ? '🍎 Apple' : cliente.plataforma === 'google' ? '🤖 Google' : '🍎+🤖 Ambos'}
