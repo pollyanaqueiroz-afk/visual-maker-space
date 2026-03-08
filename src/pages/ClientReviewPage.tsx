@@ -377,8 +377,8 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
               <div className="mx-auto w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
                 <ImageIcon className="h-5 w-5 text-primary" />
               </div>
-              <p className="text-2xl font-extrabold text-foreground">{totalImages}</p>
-              <p className="text-[11px] text-muted-foreground font-medium flex items-center justify-center gap-1">
+              <p className={`text-2xl font-extrabold ${textMain}`}>{totalImages}</p>
+              <p className={`text-[11px] ${textSub} font-medium flex items-center justify-center gap-1`}>
                 Solicitadas <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
               </p>
             </div>
