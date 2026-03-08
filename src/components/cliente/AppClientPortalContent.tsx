@@ -1033,7 +1033,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                       )}
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <p className={`text-sm font-medium ${!formComplete ? 'text-white/30' : ''}`}>
+                          <p className={`text-sm font-medium ${!formComplete ? 'text-white/50' : 'text-white'}`}>
                             {item.texto}
                           </p>
                           {!item.feito && formComplete && (
