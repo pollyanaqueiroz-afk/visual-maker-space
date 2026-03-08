@@ -1296,7 +1296,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 <div className="relative h-1.5 rounded-full bg-white/5 overflow-hidden">
                   <div className="absolute inset-y-0 left-0 rounded-full bg-white/20 transition-all duration-500" style={{ width: `${totalPctBar}%` }} />
                 </div>
-                <p className="text-[10px] text-white/30 mt-0.5">Inclui etapas da equipe Curseduca</p>
+                <p className="text-[10px] text-white/50 mt-0.5">Inclui etapas da equipe Curseduca</p>
               </div>
             </div>
           </div>
