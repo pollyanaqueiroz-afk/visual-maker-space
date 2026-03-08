@@ -1651,13 +1651,29 @@ export default function AppClientPortalContent({ clienteId }: Props) {
         </div>
       )}
 
-      {/* Achievements */}
+      {/* Achievements with unlock animation + glow */}
       <div>
          <h2 className="text-xl font-bold text-white mb-4">🏆 Conquistas</h2>
          <div className="flex flex-wrap gap-2">
-           {fases.filter((f: any) => f.status === 'concluida').map((f: any) => (
-             <motion.div key={f.id} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}>
-               <Badge className={`px-4 py-2 text-sm ${
+           {fases.filter((f: any) => f.status === 'concluida').map((f: any, i: number) => (
+             <motion.div
+               key={f.id}
+               initial={{ opacity: 0, scale: 0, rotate: -15 }}
+               animate={{ opacity: 1, scale: 1, rotate: 0 }}
+               transition={{ delay: i * 0.1, type: 'spring', stiffness: 200, damping: 12 }}
+               className="relative group"
+             >
+               {/* Glow effect */}
+               <motion.div
+                 className={`absolute inset-0 rounded-full blur-md opacity-0 group-hover:opacity-60 transition-opacity ${
+                   f.plataforma === 'google' ? 'bg-blue-500/40' :
+                   f.plataforma === 'apple' ? 'bg-purple-500/40' :
+                   'bg-green-500/40'
+                 }`}
+                 animate={{ scale: [1, 1.15, 1] }}
+                 transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+               />
+               <Badge className={`relative px-4 py-2 text-sm cursor-default transition-transform group-hover:scale-110 ${
                  f.plataforma === 'google' ? 'bg-blue-500/20 text-blue-400' :
                  f.plataforma === 'apple' ? 'bg-purple-500/20 text-purple-400' :
                  'bg-green-500/20 text-green-400'
@@ -1668,7 +1684,13 @@ export default function AppClientPortalContent({ clienteId }: Props) {
              </motion.div>
            ))}
            {fases.filter((f: any) => f.status === 'concluida').length === 0 && (
-             <p className="text-base text-white/60">Complete etapas para desbloquear conquistas!</p>
+             <motion.p
+               initial={{ opacity: 0 }}
+               animate={{ opacity: 1 }}
+               className="text-base text-white/60"
+             >
+               Complete etapas para desbloquear conquistas!
+             </motion.p>
            )}
         </div>
       </div>
