@@ -1124,7 +1124,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
               >
                 <X className="h-7 w-7 text-destructive" />
               </motion.button>
-              <span className="text-[11px] font-medium text-muted-foreground">Reprovar</span>
+              <span className={`text-[11px] font-medium ${textSub}`}>Reprovar</span>
             </div>
 
             {/* Approve */}
