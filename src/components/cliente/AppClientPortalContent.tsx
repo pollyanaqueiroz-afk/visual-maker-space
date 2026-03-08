@@ -538,33 +538,39 @@ export default function AppClientPortalContent({ clienteId }: Props) {
   if (isLoading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-white/40" /></div>;
   if (!cliente) return <div className="text-center py-12 text-white/60">Dados não encontrados</div>;
 
-  // ── Timeline circle renderer ──
+  // ── Timeline circle renderer (linear layout) ──
   const renderCircle = (faseNum: number, fase: any, plataforma?: string) => {
     const status = fase?.status || 'bloqueada';
     const pct = fase?.porcentagem || 0;
     const isSelected = selectedTimelineFase?.fase === faseNum && selectedTimelineFase?.plataforma === plataforma;
+    const isActive = status === 'em_andamento';
 
-    const size = 44;
+    const size = isActive ? 56 : 44;
     const strokeWidth = 3;
     const radius = (size - strokeWidth) / 2;
     const circumference = 2 * Math.PI * radius;
     const offset = circumference - (pct / 100) * circumference;
 
     const statusColor = status === 'concluida' ? 'text-green-400' :
-      status === 'em_andamento' ? 'text-primary' :
+      isActive ? 'text-primary font-bold' :
       status === 'atrasada' ? 'text-red-400' : 'text-white/50';
 
     return (
       <button
         key={`${faseNum}-${plataforma || 'shared'}`}
-        onClick={() => {
-          setSelectedTimelineFase(isSelected ? null : { fase: faseNum, plataforma });
-        }}
-        className={`relative flex flex-col items-center shrink-0 transition-all cursor-pointer hover:scale-105 ${status === 'bloqueada' ? 'opacity-60' : ''} ${isSelected ? 'scale-110' : ''}`}
+        onClick={() => setSelectedTimelineFase(isSelected ? null : { fase: faseNum, plataforma })}
+        className={`relative flex flex-col items-center shrink-0 transition-all cursor-pointer hover:scale-105 ${status === 'bloqueada' ? 'opacity-50' : ''} ${isSelected ? 'scale-110' : ''}`}
       >
         <div className="relative">
+          {/* Active glow effects */}
+          {isActive && (
+            <>
+              <div className="absolute -inset-3 rounded-full bg-primary/15 animate-ping" style={{ animationDuration: '3s' }} />
+              <div className="absolute -inset-2 rounded-full bg-primary/10 animate-pulse" />
+            </>
+          )}
           {/* Progress ring */}
-          {status === 'em_andamento' && (
+          {isActive && (
             <svg width={size} height={size} className="absolute -inset-0">
               <circle cx={size/2} cy={size/2} r={radius} fill="none" stroke="hsl(var(--primary) / 0.15)" strokeWidth={strokeWidth} />
               <circle cx={size/2} cy={size/2} r={radius} fill="none" stroke="hsl(var(--primary))" strokeWidth={strokeWidth}
@@ -572,16 +578,14 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 transform={`rotate(-90 ${size/2} ${size/2})`} className="transition-all duration-500" />
             </svg>
           )}
-          {/* Active glow */}
-          {status === 'em_andamento' && isSelected && (
-            <div className="absolute -inset-1.5 rounded-full bg-primary/20 animate-pulse" />
-          )}
           {/* Circle */}
-          <div className={`relative flex items-center justify-center w-[44px] h-[44px] rounded-full border-2 transition-colors ${
-            status === 'concluida' ? 'bg-green-500/20 border-green-500' :
-            status === 'em_andamento' ? 'bg-[#1E293B] border-primary' :
-            status === 'atrasada' ? 'bg-red-500/10 border-red-500' :
-            'bg-white/5 border-white/10'
+          <div className={`relative flex items-center justify-center rounded-full transition-all ${
+            isActive ? 'w-14 h-14' : 'w-[44px] h-[44px]'
+          } ${
+            status === 'concluida' ? 'bg-green-500/20 border-2 border-green-500' :
+            isActive ? 'bg-gradient-to-br from-primary to-blue-600 shadow-xl shadow-primary/40 ring-2 ring-primary/50' :
+            status === 'atrasada' ? 'bg-red-500/10 border-2 border-red-500' :
+            'bg-white/5 border-2 border-white/10'
           } ${isSelected ? 'ring-2 ring-primary/50' : ''}`}>
             {status === 'concluida' ? (
               <CheckCircle2 className="h-5 w-5 text-green-400" />
@@ -590,7 +594,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             ) : status === 'atrasada' ? (
               <AlertTriangle className="h-4 w-4 text-red-400" />
             ) : (
-              <span className="text-xs font-bold text-primary">{faseNum}</span>
+              <Star className={`${isActive ? 'h-6 w-6' : 'h-5 w-5'} text-white`} />
             )}
           </div>
         </div>
