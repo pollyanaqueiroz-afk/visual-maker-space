@@ -1033,7 +1033,7 @@ export default function SchedulingPage() {
                                         <p className="font-semibold">{m.title}</p>
                                         {m.client_name && <p className="text-muted-foreground">{m.client_name}</p>}
                                         <p className="text-muted-foreground">{m.meeting_time.slice(0, 5)} — {m.duration_minutes}min</p>
-                                        {(m as any).meeting_reason && <p className="text-muted-foreground mt-1">{(m as any).meeting_reason}</p>}
+                                        {m.meeting_reason && <p className="text-muted-foreground mt-1">{m.meeting_reason}</p>}
                                         <p className="text-primary mt-1 text-[10px]">Clique para ver detalhes</p>
                                       </TooltipContent>
                                     </Tooltip>
