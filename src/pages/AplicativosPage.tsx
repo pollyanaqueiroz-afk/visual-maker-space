@@ -81,6 +81,9 @@ export default function AplicativosPage() {
   const [mooniClientEmpresa, setMooniClientEmpresa] = useState('');
   const [mooniText, setMooniText] = useState('');
   const [mooniSaving, setMooniSaving] = useState(false);
+  const [pubUrlInputs, setPubUrlInputs] = useState<Record<string, string>>({});
+  const [pubUrlExpanded, setPubUrlExpanded] = useState<Record<string, boolean>>({});
+  const [pubUrlSaving, setPubUrlSaving] = useState<Set<string>>(new Set());
 
   // Drag and drop states
   const [dragOverColumn, setDragOverColumn] = useState<number | null>(null);
