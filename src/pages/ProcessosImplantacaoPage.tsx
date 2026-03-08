@@ -70,7 +70,7 @@ export default function ProcessosImplantacaoPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('scorm_packages')
-        .select('id, title, created_at, created_by')
+        .select('id, title, created_at, created_by, platform_url')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data || [];
@@ -94,8 +94,9 @@ export default function ProcessosImplantacaoPage() {
       // Aplicativo
       const appCliente = appClientes.find(a => a.empresa === url);
 
-      // SCORM — not linked per client currently
-      const hasScorm = false;
+      // SCORM
+      const clientScormPackages = scormPackages.filter((pkg: any) => pkg.platform_url === url);
+      const hasScorm = clientScormPackages.length > 0;
 
       // Status geral
       let overallStatus = 'sem_processos';

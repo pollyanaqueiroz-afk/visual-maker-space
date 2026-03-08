@@ -21,6 +21,7 @@ export default function ScormManagerPage() {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [platformUrl, setPlatformUrl] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -75,6 +76,7 @@ export default function ScormManagerPage() {
       formData.append('file', file);
       formData.append('title', title.trim());
       formData.append('description', description.trim());
+      if (platformUrl.trim()) formData.append('platform_url', platformUrl.trim());
 
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
       const res = await fetch(
@@ -94,6 +96,7 @@ export default function ScormManagerPage() {
       setOpen(false);
       setTitle('');
       setDescription('');
+      setPlatformUrl('');
       setFile(null);
     } catch (err: any) {
       toast.error(err.message);
@@ -149,6 +152,11 @@ export default function ScormManagerPage() {
               <DialogTitle>Importar Pacote SCORM</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
+              <div>
+                <Label>Cliente (opcional)</Label>
+                <Input value={platformUrl} onChange={e => setPlatformUrl(e.target.value)} placeholder="URL da plataforma do cliente" />
+                <p className="text-[10px] text-muted-foreground mt-0.5">Ex: cliente.curseduca.pro</p>
+              </div>
               <div>
                 <Label>Título *</Label>
                 <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Nome do conteúdo" />
