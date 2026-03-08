@@ -590,7 +590,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           </div>
         </div>
         {/* Label */}
-        <span className={`mt-1.5 text-[10px] leading-tight text-center w-[72px] font-medium ${statusColor}`}>
+        <span className={`mt-1.5 text-[11px] leading-tight text-center w-[76px] font-medium ${statusColor}`}>
           {FASE_NAMES[faseNum]}
         </span>
       </button>
