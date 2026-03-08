@@ -385,6 +385,55 @@ export default function AplicativoDetailPage() {
         </div>
       </div>
 
+      {/* Admin: Edit client data */}
+      {canManage && (
+        <Card className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-primary" /> Gestão Interna
+            </h3>
+            <Button variant="outline" size="sm" onClick={() => setEditingClient(!editingClient)}>
+              {editingClient ? 'Cancelar' : 'Editar dados'}
+            </Button>
+          </div>
+          {editingClient && (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
+              <div><label className="text-xs text-muted-foreground">Nome</label><Input value={clientForm.nome} onChange={e => setClientForm(p => ({ ...p, nome: e.target.value }))} className="h-8 text-sm" /></div>
+              <div><label className="text-xs text-muted-foreground">Email</label><Input value={clientForm.email} onChange={e => setClientForm(p => ({ ...p, email: e.target.value }))} className="h-8 text-sm" /></div>
+              <div><label className="text-xs text-muted-foreground">Empresa</label><Input value={clientForm.empresa} onChange={e => setClientForm(p => ({ ...p, empresa: e.target.value }))} className="h-8 text-sm" /></div>
+              <div><label className="text-xs text-muted-foreground">Plataforma</label>
+                <Select value={clientForm.plataforma} onValueChange={v => setClientForm(p => ({ ...p, plataforma: v }))}>
+                  <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="google">🤖 Google</SelectItem>
+                    <SelectItem value="apple">🍎 Apple</SelectItem>
+                    <SelectItem value="ambos">🍎+🤖 Ambos</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div><label className="text-xs text-muted-foreground">Responsável</label><Input value={clientForm.responsavel_nome} onChange={e => setClientForm(p => ({ ...p, responsavel_nome: e.target.value }))} className="h-8 text-sm" /></div>
+              <div><label className="text-xs text-muted-foreground">Prazo estimado</label><Input type="date" value={clientForm.prazo_estimado} onChange={e => setClientForm(p => ({ ...p, prazo_estimado: e.target.value }))} className="h-8 text-sm" /></div>
+              <div className="col-span-full"><Button size="sm" onClick={() => saveClientData.mutate()} disabled={saveClientData.isPending}>Salvar dados</Button></div>
+            </div>
+          )}
+          <div className="flex items-center gap-3">
+            <label className="text-xs text-muted-foreground whitespace-nowrap">Mover para fase:</label>
+            <Select value={manualFase} onValueChange={v => setManualFase(v)}>
+              <SelectTrigger className="w-48 h-8 text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {FASE_NAMES.map((name, i) => (
+                  <SelectItem key={i} value={String(i)}>F{i} — {name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button size="sm" variant="outline" disabled={changeManualFase.isPending || manualFase === String(cliente.fase_atual)}
+              onClick={() => { if (confirm(`Mover para fase ${manualFase}?`)) changeManualFase.mutate(Number(manualFase)); }}>
+              Aplicar
+            </Button>
+          </div>
+        </Card>
+      )}
+
       {/* Timeline */}
       <div className="space-y-2">
         {fases.map((fase) => {
