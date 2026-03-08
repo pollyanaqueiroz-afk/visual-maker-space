@@ -814,6 +814,22 @@ export default function SchedulingPage() {
                           ))}
                         </SelectContent>
                       </Select>
+                      {isManager && teamMembers.length > 0 && (
+                        <Select value={filterCs} onValueChange={setFilterCs}>
+                          <SelectTrigger className="h-7 w-[180px] text-xs">
+                            <User className="h-3 w-3 mr-1 shrink-0" />
+                            <SelectValue placeholder="Todos os CSs" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todos os CSs</SelectItem>
+                            {teamMembers.map(tm => (
+                              <SelectItem key={tm.id} value={tm.id}>
+                                {tm.display_name || tm.email}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCalendarMonth(subMonths(calendarMonth, 1))}><ChevronLeft className="h-3.5 w-3.5" /></Button>
                       <Button variant="ghost" size="sm" className="h-7 text-xs px-2 font-medium" onClick={() => { setCalendarMonth(new Date()); setSelectedDate(new Date()); }}>Hoje</Button>
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCalendarMonth(addMonths(calendarMonth, 1))}><ChevronRight className="h-3.5 w-3.5" /></Button>
