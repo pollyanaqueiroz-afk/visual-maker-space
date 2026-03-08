@@ -859,7 +859,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                   <Input type="email" placeholder="seunome@suaempresa.com.br" value={emailCorpInput} onChange={e => setEmailCorpInput(e.target.value.trim())} className="bg-white/5 border-white/10 text-white text-sm" />
                   {emailCorpInput && !isValidEmail && <p className="text-[10px] text-amber-400">Use um e-mail corporativo</p>}
                   <div className="flex gap-2">
-                    <Button size="sm" className="flex-1" disabled={!isValidEmail} onClick={() => { toggleCheck.mutate({ id: item.id, feito: true }); setEmailCorpPromptId(null); setEmailCorpInput(''); toast.success('E-mail confirmado!'); }}>Confirmar</Button>
+                    <Button size="sm" className="flex-1" disabled={!isValidEmail} onClick={() => { toggleCheck.mutate({ id: item.id, feito: true }); setEmailCorpPromptId(null); setEmailCorpInput(''); toast.success('E-mail confirmado!'); confetti({ particleCount: 25, spread: 40, origin: { y: 0.7 }, colors: ['#22c55e', '#10b981'] }); }}>Confirmar</Button>
                     <Button size="sm" variant="ghost" onClick={() => { setEmailCorpPromptId(null); setEmailCorpInput(''); }}>Cancelar</Button>
                   </div>
                 </motion.div>
