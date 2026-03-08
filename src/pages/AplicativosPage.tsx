@@ -405,6 +405,54 @@ export default function AplicativosPage() {
     if (ator === 'designer') return { text: 'Designer', color: 'bg-purple-500/10 text-purple-500 border-purple-500/20' };
     return { text: ator, color: 'bg-muted text-muted-foreground border-border' };
   };
+  const handleConfirmDrop = async () => {
+    if (!pendingDrop) return;
+    setDropping(true);
+    try {
+      const { clienteId, faseAtual, plataforma } = pendingDrop;
+      const plat = plataforma === 'ambos' ? dropPlataforma : plataforma;
+
+      let query = supabase.from('app_checklist_items').update({
+        feito: true,
+        feito_em: new Date().toISOString(),
+        feito_por: user?.email || 'equipe_interna',
+      }).eq('cliente_id', clienteId).eq('fase_numero', faseAtual).eq('feito', false);
+
+      if (plat && plat !== 'ambas') {
+        query = query.or(`plataforma.eq.${plat},plataforma.eq.compartilhada`);
+      }
+
+      const { error } = await query;
+      if (error) throw error;
+
+      await supabase.from('app_conversas').insert({
+        cliente_id: clienteId,
+        fase_numero: faseAtual,
+        autor: user?.email || 'Sistema',
+        tipo: 'sistema',
+        mensagem: `Etapa "${FASE_NAMES[faseAtual]}" concluída via Kanban por ${user?.email}${plat && plat !== 'ambas' ? ` (${plat})` : ''}`,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['app-clientes'] });
+      queryClient.invalidateQueries({ queryKey: ['app-fases-all'] });
+      queryClient.invalidateQueries({ queryKey: ['app-checklist-counts'] });
+      queryClient.invalidateQueries({ queryKey: ['app-checklist-full'] });
+
+      toast.success(`✅ ${pendingDrop.clienteNome} avançou para ${FASE_NAMES[pendingDrop.targetFase]}`);
+    } catch (err: any) {
+      toast.error('Erro ao avançar: ' + err.message);
+    } finally {
+      setDropping(false);
+      setDropConfirmOpen(false);
+      setPendingDrop(null);
+      setDropPlataforma('ambas');
+    }
+  };
+
+  // Count pending tasks for a client's current phase
+  const getPendingCount = (clienteId: string, faseNum: number) => {
+    return checklistCounts.filter(i => i.cliente_id === clienteId && i.fase_numero === faseNum && !i.feito).length;
+  };
 
   return (
     <div className="space-y-6">
