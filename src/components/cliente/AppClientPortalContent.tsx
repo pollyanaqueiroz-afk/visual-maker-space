@@ -857,7 +857,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3 space-y-3">
                   <p className="text-xs text-amber-300 font-medium">Tem certeza que concluiu esta etapa?</p>
                   <div className="space-y-1">
-                    <Label className="text-[10px] text-white/60">Observações (opcional):</Label>
+                    <Label className="text-[10px] text-white/70">Observações (opcional):</Label>
                     <Textarea placeholder="Ex: número do pedido, conta criada..." className="bg-white/5 border-white/10 text-white text-sm min-h-[60px]"
                       value={itemDataInput} onChange={e => setItemDataInput(e.target.value)} />
                   </div>
