@@ -522,6 +522,15 @@ export default function Dashboard() {
                 <p className="text-2xl font-bold text-primary">{completedImages}</p>
               </CardContent>
             </Card>
+            <Card className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'cancelled' ? 'ring-2 ring-destructive' : ''}`} onClick={() => toggleKPI('cancelled')}>
+              <CardContent className="pt-3 pb-3 px-3">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <XCircle className="h-3.5 w-3.5 text-destructive" />
+                  <p className="text-xs text-muted-foreground">Canceladas</p>
+                </div>
+                <p className="text-2xl font-bold text-destructive">{cancelledImages}</p>
+              </CardContent>
+            </Card>
             <Card className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'clients' ? 'ring-2 ring-primary' : ''}`} onClick={() => toggleKPI('clients')}>
               <CardContent className="pt-3 pb-3 px-3">
                 <div className="flex items-center gap-1.5 mb-0.5">
