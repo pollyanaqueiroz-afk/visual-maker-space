@@ -101,23 +101,92 @@ export default function ImportBriefingDialog({ onImported }: Props) {
 
   const extractText = async (file: File): Promise<string> => {
     const ext = file.name.split('.').pop()?.toLowerCase();
+
     if (ext === 'docx') {
       const arrayBuffer = await file.arrayBuffer();
       const result = await mammoth.extractRawText({ arrayBuffer });
       return result.value;
     }
+
     if (ext === 'pdf') {
       const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      const pages: string[] = [];
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        pages.push(content.items.map((item: any) => item.str).join(' '));
+
+      try {
+        const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+        const pdf = await loadingTask.promise;
+
+        if (pdf.numPages === 0) {
+          throw new Error('O PDF não contém páginas.');
+        }
+
+        const pages: string[] = [];
+        let totalChars = 0;
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+
+          let lastY: number | null = null;
+          let lineText = '';
+          const pageLines: string[] = [];
+
+          for (const item of content.items) {
+            const textItem = item as any;
+            if (!textItem.str) continue;
+
+            const y = textItem.transform ? textItem.transform[5] : 0;
+
+            if (lastY !== null && Math.abs(y - lastY) > 3) {
+              if (lineText.trim()) pageLines.push(lineText.trim());
+              lineText = '';
+            }
+
+            lineText += textItem.str + (textItem.hasEOL ? '\n' : ' ');
+            lastY = y;
+          }
+          if (lineText.trim()) pageLines.push(lineText.trim());
+
+          const pageText = pageLines.join('\n');
+          pages.push(pageText);
+          totalChars += pageText.length;
+        }
+
+        const fullText = pages.join('\n\n--- Página ---\n\n');
+
+        if (totalChars < 20) {
+          throw new Error(
+            `O PDF tem ${pdf.numPages} página(s) mas apenas ${totalChars} caracteres de texto foram encontrados. ` +
+            `Este PDF provavelmente contém imagens escaneadas ou é protegido. ` +
+            `Tente converter para DOCX ou copiar o texto manualmente.`
+          );
+        }
+
+        return fullText;
+      } catch (pdfErr: any) {
+        if (pdfErr.message?.includes('página') || pdfErr.message?.includes('caracteres')) {
+          throw pdfErr;
+        }
+        console.error('PDF.js error:', pdfErr);
+        throw new Error(
+          `Falha ao processar o PDF: ${pdfErr.message || 'erro desconhecido'}. ` +
+          `Possíveis causas: arquivo corrompido, protegido por senha, ou formato incompatível. ` +
+          `Tente salvar como DOCX e importar novamente.`
+        );
       }
-      return pages.join('\n');
     }
-    return await file.text();
+
+    if (ext === 'doc') {
+      throw new Error(
+        'Formato .doc (Word 97-2003) não é suportado diretamente. ' +
+        'Por favor, abra o arquivo no Word e salve como .docx (Word 2007+) antes de importar.'
+      );
+    }
+
+    if (ext === 'txt') {
+      return await file.text();
+    }
+
+    throw new Error(`Formato .${ext} não suportado. Use .docx, .pdf ou .txt`);
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
