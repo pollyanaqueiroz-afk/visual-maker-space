@@ -49,17 +49,44 @@ export default function ClienteHome() {
     queryKey: ['cliente-home-app-pendencies', appCliente?.id],
     enabled: !!appCliente?.id,
     queryFn: async () => {
+      // Only fetch items from the current active phase
+      const faseAtual = appCliente!.fase_atual ?? 0;
       const { data, error } = await supabase
         .from('app_checklist_items')
-        .select('id, texto, descricao, fase_numero, tipo, ordem')
+        .select('id, texto, descricao, fase_numero, tipo, ordem, plataforma')
         .eq('cliente_id', appCliente!.id)
         .eq('ator', 'cliente')
         .eq('feito', false)
-        .order('fase_numero')
+        .eq('fase_numero', faseAtual)
         .order('ordem');
       if (error) throw error;
+
+      // Also check if there are active phases (em_andamento) to get items from all active phases
+      const { data: activeFases } = await supabase
+        .from('app_fases')
+        .select('numero')
+        .eq('cliente_id', appCliente!.id)
+        .eq('status', 'em_andamento');
+      const activeFaseNums = new Set((activeFases || []).map(f => f.numero));
+      // If current phase items are empty but other phases are active, fetch those too
+      let allItems = data || [];
+      if (activeFaseNums.size > 0) {
+        const otherNums = [...activeFaseNums].filter(n => n !== faseAtual);
+        if (otherNums.length > 0) {
+          const { data: extra } = await supabase
+            .from('app_checklist_items')
+            .select('id, texto, descricao, fase_numero, tipo, ordem, plataforma')
+            .eq('cliente_id', appCliente!.id)
+            .eq('ator', 'cliente')
+            .eq('feito', false)
+            .in('fase_numero', otherNums)
+            .order('ordem');
+          allItems = [...allItems, ...(extra || [])];
+        }
+      }
+
       const FASE_NAMES = ['Pré-Requisitos', 'Primeiros Passos', 'Validação pela Loja', 'Criação e Submissão', 'Aprovação das Lojas', 'Teste do App', 'Publicado'];
-      return (data || []).map(i => ({
+      return allItems.map(i => ({
         ...i,
         source: 'app' as const,
         subtitle: `Fase ${i.fase_numero} — ${FASE_NAMES[i.fase_numero] || ''}`,
