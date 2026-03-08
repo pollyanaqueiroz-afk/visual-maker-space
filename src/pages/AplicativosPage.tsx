@@ -1089,7 +1089,7 @@ export default function AplicativosPage() {
             <div className="text-center py-12 text-muted-foreground">Carregando...</div>
           ) : (
             <div className="w-full overflow-x-auto pb-2">
-              <div className="flex gap-3 pb-2" style={{ minWidth: `${7 * 280 + 6 * 12}px` }}>
+              <div className="flex gap-3 pb-2" style={{ minWidth: `${8 * 280 + 7 * 12}px` }}>
                 {FASE_NAMES.map((name, idx) => (
                   <div
                     key={idx}
