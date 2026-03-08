@@ -82,7 +82,7 @@ interface BriefingKanbanProps {
   loading?: boolean;
 }
 
-export default function BriefingKanban({ images }: BriefingKanbanProps) {
+export default function BriefingKanban({ images, loading = false }: BriefingKanbanProps) {
   const queryClient = useQueryClient();
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
   const [dropConfirmOpen, setDropConfirmOpen] = useState(false);
