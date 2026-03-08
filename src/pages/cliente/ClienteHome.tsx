@@ -251,8 +251,15 @@ export default function ClienteHome() {
         </button>
 
         <button
-          onClick={() => !appCliente && navigate('/cliente/solicitar-app')}
-          disabled={!!appCliente}
+          onClick={() => {
+            if (appCliente) return;
+            if (hasBriefingRequest) {
+              createAppFromBriefing.mutate();
+            } else {
+              navigate('/cliente/solicitar-app');
+            }
+          }}
+          disabled={!!appCliente || createAppFromBriefing.isPending}
           className={cn(
             "flex items-center gap-3 rounded-xl p-4 text-white shadow-lg transition-all",
             appCliente
@@ -264,8 +271,12 @@ export default function ClienteHome() {
             <Smartphone className="h-5 w-5" />
           </div>
           <div className="flex-1 text-left min-w-0">
-            <p className="font-semibold text-sm">{appCliente ? 'App solicitado' : 'Solicitar App'}</p>
-            <p className="text-white/70 text-[10px]">{appCliente ? 'Já em andamento' : 'Crie seu aplicativo'}</p>
+            <p className="font-semibold text-sm">
+              {appCliente ? 'App solicitado' : createAppFromBriefing.isPending ? 'Criando...' : 'Solicitar App'}
+            </p>
+            <p className="text-white/70 text-[10px]">
+              {appCliente ? 'Já em andamento' : hasBriefingRequest ? 'Criar a partir do briefing' : 'Crie seu aplicativo'}
+            </p>
           </div>
         </button>
       </motion.div>
