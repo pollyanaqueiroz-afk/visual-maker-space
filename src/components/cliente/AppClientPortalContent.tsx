@@ -1224,22 +1224,30 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                     onClick={() => setSelectedTimelineFase(isSelected ? null : { fase: num, plataforma })}
                     className={`flex flex-col items-center cursor-pointer hover:scale-105 transition-all ${status === 'bloqueada' ? 'opacity-60' : ''} ${isSelected ? 'scale-110' : ''}`}
                   >
-                     <div className={`w-14 h-14 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                       status === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50 text-green-400' :
-                       status === 'em_andamento' ? 'bg-primary/30 ring-2 ring-primary text-primary animate-pulse' :
-                       status === 'atrasada' ? 'bg-red-500/30 ring-2 ring-red-500/50 text-red-400' :
-                       'bg-white/10 text-white/50'
-                     } ${isSelected ? 'ring-2 ring-primary/50' : ''}`}>
-                       {status === 'concluida' ? <CheckCircle2 className="h-6 w-6" /> :
-                        status === 'atrasada' ? <AlertTriangle className="h-6 w-6" /> :
-                        status === 'em_andamento' ? <Star className="h-6 w-6" /> :
-                        <Lock className="h-5 w-5" />}
-                     </div>
+                    <div className="relative">
+                      {status === 'em_andamento' && (
+                        <>
+                          <div className="absolute -inset-2 rounded-full bg-primary/15 animate-ping" style={{ animationDuration: '3s' }} />
+                          <div className="absolute -inset-1 rounded-full bg-primary/10 animate-pulse" />
+                        </>
+                      )}
+                      <div className={`relative w-14 h-14 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                        status === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50 text-green-400' :
+                        status === 'em_andamento' ? 'bg-gradient-to-br from-primary to-blue-600 shadow-xl shadow-primary/40 ring-2 ring-primary/50 text-white' :
+                        status === 'atrasada' ? 'bg-red-500/30 ring-2 ring-red-500/50 text-red-400' :
+                        'bg-white/10 text-white/50'
+                      } ${isSelected ? 'ring-2 ring-primary/50' : ''}`}>
+                        {status === 'concluida' ? <CheckCircle2 className="h-6 w-6" /> :
+                         status === 'atrasada' ? <AlertTriangle className="h-6 w-6" /> :
+                         status === 'em_andamento' ? <Star className="h-6 w-6 text-white" /> :
+                         <Lock className="h-5 w-5" />}
+                      </div>
+                    </div>
                        <p className={`text-xs mt-2 text-center leading-tight max-w-[90px] font-medium ${
-                         status === 'concluida' ? 'text-green-400' :
-                         status === 'em_andamento' ? 'text-white font-semibold' :
-                         'text-white/80'
-                       }`}>{num}. {FASE_NAMES[num]}</p>
+                          status === 'concluida' ? 'text-green-400' :
+                          status === 'em_andamento' ? 'text-primary font-bold' :
+                          'text-white/80'
+                        }`}>{num}. {FASE_NAMES[num]}</p>
                   </button>
                 </div>
               );
