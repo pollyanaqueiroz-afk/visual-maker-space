@@ -62,15 +62,12 @@ export default function HubWelcome() {
 
   useEffect(() => {
     if (!user) return;
-
-
     (async () => {
       const { data } = await supabase
         .from('profiles')
         .select('display_name')
         .eq('user_id', user.id)
         .single();
-
       if (data?.display_name) {
         setDisplayName(data.display_name);
       } else {
@@ -80,35 +77,24 @@ export default function HubWelcome() {
     })();
   }, [user, pendingRefresh]);
 
-  // Fetch pending items
   useEffect(() => {
     if (!user) return;
     (async () => {
       setLoadingPending(true);
       const items: PendingItem[] = [];
-
-      // Meetings completed but missing loyalty index, minutes or recording
       const { data: meetings } = await supabase
         .from('meetings')
         .select('id, title, meeting_date, client_name, loyalty_index, minutes_url, recording_url')
         .eq('status', 'completed')
         .eq('created_by', user.id)
         .order('meeting_date', { ascending: false });
-
       if (meetings) {
         for (const m of meetings) {
-          if (!m.loyalty_index) {
-            items.push({ id: m.id + '-loyalty', type: 'loyalty', title: m.title, subtitle: m.client_name || 'Sem cliente', date: m.meeting_date, meetingId: m.id });
-          }
-          if (!m.minutes_url) {
-            items.push({ id: m.id + '-minutes', type: 'minutes', title: m.title, subtitle: m.client_name || 'Sem cliente', date: m.meeting_date, meetingId: m.id });
-          }
-          if (!m.recording_url) {
-            items.push({ id: m.id + '-recording', type: 'recording', title: m.title, subtitle: m.client_name || 'Sem cliente', date: m.meeting_date, meetingId: m.id });
-          }
+          if (!m.loyalty_index) items.push({ id: m.id + '-loyalty', type: 'loyalty', title: m.title, subtitle: m.client_name || 'Sem cliente', date: m.meeting_date, meetingId: m.id });
+          if (!m.minutes_url) items.push({ id: m.id + '-minutes', type: 'minutes', title: m.title, subtitle: m.client_name || 'Sem cliente', date: m.meeting_date, meetingId: m.id });
+          if (!m.recording_url) items.push({ id: m.id + '-recording', type: 'recording', title: m.title, subtitle: m.client_name || 'Sem cliente', date: m.meeting_date, meetingId: m.id });
         }
       }
-
       setPendingItems(items);
       setLoadingPending(false);
     })();
@@ -118,10 +104,7 @@ export default function HubWelcome() {
     if (!nameInput.trim() || !user) return;
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ display_name: nameInput.trim() })
-        .eq('user_id', user.id);
+      const { error } = await supabase.from('profiles').update({ display_name: nameInput.trim() }).eq('user_id', user.id);
       if (error) throw error;
       setDisplayName(nameInput.trim());
       setShowNameDialog(false);
@@ -138,15 +121,6 @@ export default function HubWelcome() {
     if (hour < 12) return 'Bom dia';
     if (hour < 18) return 'Boa tarde';
     return 'Boa noite';
-  };
-
-  const getPendingIcon = (type: string) => {
-    switch (type) {
-      case 'loyalty': return <Star className="h-4 w-4 text-destructive" />;
-      case 'minutes': return <FileImage className="h-4 w-4 text-warning" />;
-      case 'recording': return <FileImage className="h-4 w-4 text-info" />;
-      default: return <AlertTriangle className="h-4 w-4 text-destructive" />;
-    }
   };
 
   const getPendingLabel = (type: string) => {
@@ -168,7 +142,6 @@ export default function HubWelcome() {
 
   return (
     <>
-      {/* Name Dialog */}
       <Dialog open={showNameDialog} onOpenChange={() => {}}>
         <DialogContent className="sm:max-w-md" onPointerDownOutside={e => e.preventDefault()}>
           <DialogHeader>
@@ -177,21 +150,13 @@ export default function HubWelcome() {
               Bem-vindo(a) ao Hub de Operações!
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground pt-1">
-              Como você gostaria de ser chamado(a)? Esse nome será usado para personalizar sua experiência.
+              Como você gostaria de ser chamado(a)?
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <div className="space-y-2">
               <Label htmlFor="display-name">Seu nome</Label>
-              <Input
-                id="display-name"
-                value={nameInput}
-                onChange={e => setNameInput(e.target.value)}
-                placeholder="Ex: Ana, Carlos, Mari..."
-                onKeyDown={e => e.key === 'Enter' && nameInput.trim() && handleSaveName()}
-                autoFocus
-                maxLength={50}
-              />
+              <Input id="display-name" value={nameInput} onChange={e => setNameInput(e.target.value)} placeholder="Ex: Ana, Carlos, Mari..." onKeyDown={e => e.key === 'Enter' && nameInput.trim() && handleSaveName()} autoFocus maxLength={50} />
             </div>
             <Button className="w-full" onClick={handleSaveName} disabled={!nameInput.trim() || saving}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Rocket className="h-4 w-4 mr-2" />}
@@ -201,12 +166,11 @@ export default function HubWelcome() {
         </DialogContent>
       </Dialog>
 
-      {/* Welcome Page */}
       <div className="p-6 md:p-10 space-y-8 max-w-4xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ type: 'spring', stiffness: 120, damping: 14 }}
         >
           <h1 className="text-3xl md:text-4xl font-bold text-foreground">
             {getGreeting()}, <span className="text-primary">{displayName || 'colega'}</span>! 👋
@@ -231,7 +195,7 @@ export default function HubWelcome() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Módulos Tab */}
+          {/* Módulos Tab — Quick links with hover float + icon shake */}
           <TabsContent value="modulos">
             <motion.div
               className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"
@@ -244,14 +208,14 @@ export default function HubWelcome() {
                   key={link.url}
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 * (i + 1), duration: 0.4 }}
+                  transition={{ delay: 0.08 * (i + 1), duration: 0.4 }}
                 >
                   <NavLink to={link.url} className="block group" activeClassName="">
-                    <Card className="h-full transition-all duration-200 hover:shadow-md hover:border-primary/30 group-hover:bg-muted/30">
+                    <Card className="h-full transition-all duration-300 hover:shadow-md hover:border-primary/30 group-hover:bg-muted/30 group-hover:-translate-y-1">
                       <CardContent className="p-5 flex flex-col gap-3">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
-                            <link.icon className={`h-5 w-5 ${link.color}`} />
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted group-hover:animate-float">
+                            <link.icon className={`h-5 w-5 ${link.color} group-hover:animate-shake`} />
                           </div>
                           <div>
                             <h3 className="font-semibold text-sm text-foreground">{link.title}</h3>
@@ -266,24 +230,25 @@ export default function HubWelcome() {
             </motion.div>
           </TabsContent>
 
-          {/* Pendências Tab */}
+          {/* Pendências Tab — table rows entering smoothly */}
           <TabsContent value="pendencias">
             {loadingPending ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
             ) : pendingItems.length === 0 ? (
-              <Card className="border-dashed">
-                <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                  <CheckCircle className="h-10 w-10 text-success mb-3" />
-                  <p className="font-medium text-foreground">Tudo em dia! 🎉</p>
-                  <p className="text-sm text-muted-foreground mt-1">Você não tem pendências no momento.</p>
-                </CardContent>
-              </Card>
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }}>
+                <Card className="border-dashed">
+                  <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                    <CheckCircle className="h-10 w-10 text-success mb-3" />
+                    <p className="font-medium text-foreground">Tudo em dia! 🎉</p>
+                    <p className="text-sm text-muted-foreground mt-1">Você não tem pendências no momento.</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ) : (
               <div className="space-y-2">
                 {(() => {
-                  // Group by meetingId
                   const grouped: GroupedPending[] = [];
                   const map = new Map<string, GroupedPending>();
                   for (const item of pendingItems) {
@@ -298,12 +263,12 @@ export default function HubWelcome() {
                   return grouped.map((group, i) => (
                     <motion.div
                       key={group.meetingId}
-                      initial={{ opacity: 0, x: -10 }}
+                      initial={{ opacity: 0, x: -15 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.05, duration: 0.3 }}
+                      transition={{ delay: i * 0.06, duration: 0.35, ease: 'easeOut' }}
                     >
                       <Card
-                        className="cursor-pointer transition-all hover:shadow-sm border-destructive/40 hover:border-destructive/60 bg-destructive/5"
+                        className="cursor-pointer transition-all hover:shadow-sm border-destructive/40 hover:border-destructive/60 bg-destructive/5 animate-sla-pulse"
                         onClick={() => { setSelectedPending(group.items[0]); setPendingDialogOpen(true); }}
                       >
                         <CardContent className="flex items-center gap-4 p-4">
