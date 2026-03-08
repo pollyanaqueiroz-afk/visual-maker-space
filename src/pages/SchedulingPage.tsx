@@ -1053,7 +1053,7 @@ export default function SchedulingPage() {
         </div>
 
         {/* Meeting list */}
-        <div className={cn("space-y-4", calendarView === 'week' ? 'lg:col-span-12' : 'lg:col-span-8')}>
+        <div className="space-y-4 lg:col-span-12">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <h2 className="text-lg font-semibold text-foreground">
               {selectedDate
