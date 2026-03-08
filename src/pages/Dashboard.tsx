@@ -848,6 +848,18 @@ export default function Dashboard() {
                               )}
                               <BrandAssetsDialog platformUrl={img.platform_url} clientName={extractClientName(img.platform_url)} />
                               <ImageDetailDialog image={img} reviews={reviews.filter(r => r.briefing_image_id === img.id)} />
+                              {canManage && img.status === 'completed' && (
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-500" title="Reverter aprovação"
+                                  onClick={() => revertApproval(img.id, 'review')}>
+                                  <RefreshCw className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
+                              {canManage && (
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" title="Excluir arte"
+                                  onClick={() => deleteImage(img.id, imageLabel(img))}>
+                                  <AlertTriangle className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
                             </div>
                           </TableCell>
                           <TableCell>
