@@ -437,7 +437,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
                 <Eye className="h-5 w-5 text-primary" />
               </div>
               <p className="text-2xl font-extrabold text-primary">{images.length}</p>
-              <p className="text-[11px] text-muted-foreground font-medium">Para aprovar</p>
+              <p className={`text-[11px] ${textSub} font-medium`}>Para aprovar</p>
             </div>
           </motion.div>
         )}
