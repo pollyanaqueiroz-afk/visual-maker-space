@@ -882,6 +882,17 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             {item.feito && item.feito_em && (
               <p className="text-[10px] text-green-400/70 mt-1">✅ {format(new Date(item.feito_em), "dd/MM/yyyy 'às' HH:mm")}</p>
             )}
+            {item.texto === 'Solicitei o número DUNS da minha empresa' && item.feito && item.feito_em && (
+              <div className="mt-2 rounded-lg bg-blue-500/10 border border-blue-500/20 p-3">
+                <p className="text-xs text-blue-300 font-medium">📧 O número DUNS chegará no seu e-mail até:</p>
+                <p className="text-sm font-bold text-blue-400 mt-1">
+                  {format(addBusinessDays(new Date(item.feito_em), 14), 'dd/MM/yyyy')}
+                </p>
+                <p className="text-[10px] text-blue-300/60 mt-1">
+                  Prazo estimado de 14 dias úteis. Fique de olho na caixa de entrada e spam.
+                </p>
+              </div>
+            )}
             {!canEdit && item.feito && (
               <p className="text-[10px] text-amber-400/80 flex items-center gap-1 mt-1"><Lock className="h-3 w-3" /> Somente visualização</p>
             )}
