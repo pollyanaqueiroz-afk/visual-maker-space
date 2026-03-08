@@ -45,6 +45,7 @@ Deno.serve(async (req) => {
       const search = url.searchParams.get("search") || "";
       const view = url.searchParams.get("view") || "";
       const csEmail = url.searchParams.get("cs_email_atual") || "";
+      const statusInadimplencia = url.searchParams.get("status_inadimplencia") || "";
 
       let apiUrl: string;
       if (idCurseduca) {
@@ -54,6 +55,7 @@ Deno.serve(async (req) => {
         if (view) params.set("view", view);
         if (search) params.set("search", search);
         if (csEmail) params.set("cs_email_atual", csEmail);
+        if (statusInadimplencia) params.set("status_inadimplencia", statusInadimplencia);
         apiUrl = `https://us-central1-curseduca-inc-ia.cloudfunctions.net/hub-clientes?${params.toString()}`;
       }
 
@@ -61,6 +63,7 @@ Deno.serve(async (req) => {
 
       if (!apiRes.ok) {
         const errText = await apiRes.text();
+        console.error(`[fetch-hub-summary] API hub-clientes error: status=${apiRes.status}, url=${apiUrl}, body=${errText}`);
         throw new Error(`API retornou ${apiRes.status}: ${errText}`);
       }
 
