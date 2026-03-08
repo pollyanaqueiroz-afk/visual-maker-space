@@ -1150,40 +1150,54 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
           </motion.div>
         </AnimatePresence>
 
-        {/* Action buttons */}
+        {/* Action buttons — larger with swipe hints */}
         {!rejecting && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="flex items-center gap-6 mt-8"
+            className="flex items-center gap-8 mt-8"
           >
             {/* Reject */}
             <div className="flex flex-col items-center gap-2">
+              <motion.div
+                animate={{ x: [0, -4, 0] }}
+                transition={{ repeat: Infinity, repeatDelay: 3, duration: 0.6 }}
+                className="text-[10px] text-destructive/50 font-medium flex items-center gap-1 mb-1"
+              >
+                ← Deslize
+              </motion.div>
               <motion.button
-                whileHover={{ scale: 1.12 }}
-                whileTap={{ scale: 0.9 }}
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.88 }}
                 onClick={() => setRejecting(true)}
                 disabled={submitting}
-                className="w-16 h-16 rounded-full bg-destructive/10 hover:bg-destructive/20 border-2 border-destructive/30 hover:border-destructive flex items-center justify-center transition-all disabled:opacity-50 shadow-lg hover:shadow-destructive/20"
+                className="w-[72px] h-[72px] rounded-full bg-destructive/10 hover:bg-destructive/20 border-2 border-destructive/30 hover:border-destructive flex items-center justify-center transition-all disabled:opacity-50 shadow-lg hover:shadow-destructive/25"
               >
-                <X className="h-7 w-7 text-destructive" />
+                <X className="h-8 w-8 text-destructive" />
               </motion.button>
-              <span className={`text-[11px] font-medium ${textSub}`}>Reprovar</span>
+              <span className={`text-xs font-semibold ${textSub}`}>Reprovar</span>
             </div>
 
             {/* Approve */}
             <div className="flex flex-col items-center gap-2">
+              <motion.div
+                animate={{ x: [0, 4, 0] }}
+                transition={{ repeat: Infinity, repeatDelay: 3, duration: 0.6 }}
+                className="text-[10px] text-primary/50 font-medium flex items-center gap-1 mb-1"
+              >
+                Deslize →
+              </motion.div>
               <motion.button
-                whileHover={{ scale: 1.12 }}
-                whileTap={{ scale: 0.9 }}
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.88 }}
                 onClick={handleApprove}
                 disabled={submitting}
-                className="w-20 h-20 rounded-full bg-primary/10 hover:bg-primary/20 border-2 border-primary/40 hover:border-primary flex items-center justify-center transition-all disabled:opacity-50 shadow-lg hover:shadow-primary/25"
+                className="w-[88px] h-[88px] rounded-full bg-primary/10 hover:bg-primary/20 border-3 border-primary/40 hover:border-primary flex items-center justify-center transition-all disabled:opacity-50 shadow-xl hover:shadow-primary/30"
               >
-                <Heart className="h-10 w-10 text-primary fill-primary" />
+                <Heart className="h-11 w-11 text-primary fill-primary" />
               </motion.button>
-              <span className={`text-[11px] font-medium ${textSub}`}>Aprovar</span>
+              <span className={`text-xs font-semibold ${textSub}`}>Aprovar</span>
             </div>
           </motion.div>
         )}

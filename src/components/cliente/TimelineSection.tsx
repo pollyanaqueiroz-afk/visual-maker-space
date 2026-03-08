@@ -76,17 +76,25 @@ export default function TimelineSection({ clientEmail, appCliente, navigate }: P
         </div>
       )}
 
-      <div className="space-y-1.5">
+      {/* Scroll snap container for mobile */}
+      <div className="space-y-1.5 md:space-y-1.5 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory flex md:flex-col gap-3 md:gap-0 pb-2 md:pb-0 -mx-1 px-1">
         {allBriefings.map((art, i) => {
           const cfg = STATUS_CONFIG[art.status] || STATUS_CONFIG.pending;
           const isReview = art.status === 'review';
+          const isDone = art.status === 'completed';
           return (
             <motion.div
               key={art.id}
               initial={{ opacity: 0, x: -15, scale: 0.97 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
               transition={{ delay: 0.06 * i, type: 'spring', stiffness: 120, damping: 14 }}
-              className={`flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/[0.08] cursor-pointer transition-colors ${isReview ? 'ring-1 ring-amber-500/30' : ''}`}
+              className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors snap-start min-w-[280px] md:min-w-0 ${
+                isDone
+                  ? 'bg-white/[0.03] border-white/5 opacity-60'
+                  : isReview
+                    ? 'bg-amber-500/5 border-amber-500/20 ring-1 ring-amber-500/30'
+                    : 'bg-white/5 border-white/10 hover:bg-white/[0.08]'
+              }`}
               onClick={() => navigate('/cliente/artes')}
             >
               <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-500/10 ${isReview ? 'animate-pulse' : ''}`}>
@@ -113,7 +121,7 @@ export default function TimelineSection({ clientEmail, appCliente, navigate }: P
             initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.03 * allBriefings.length }}
-            className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/[0.08] cursor-pointer transition-colors"
+            className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/[0.08] cursor-pointer transition-colors snap-start min-w-[280px] md:min-w-0"
             onClick={() => navigate('/cliente/aplicativo')}
           >
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-500/10">
