@@ -466,6 +466,16 @@ export default function GlobalAnalytics() {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Tempo médio de conclusão por tipo */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="col-span-full">
+        <AvgTimeByTypeCard completedImages={completedImages} reviews={reviews} />
+      </motion.div>
+
+      {/* Top clientes com mais refações */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }} className="col-span-full">
+        <TopRefactionClientsCard images={images} />
+      </motion.div>
     </div>
   );
 }
