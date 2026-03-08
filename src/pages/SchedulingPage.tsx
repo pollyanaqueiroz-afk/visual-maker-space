@@ -819,10 +819,28 @@ export default function SchedulingPage() {
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCalendarMonth(addMonths(calendarMonth, 1))}><ChevronRight className="h-3.5 w-3.5" /></Button>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setWeekStart(subWeeks(weekStart, 1))}><ChevronLeft className="h-3.5 w-3.5" /></Button>
-                      <Button variant="ghost" size="sm" className="h-7 text-xs px-2 font-medium" onClick={() => { setWeekStart(startOfWeek(new Date(), { locale: ptBR })); setSelectedDate(new Date()); }}>Hoje</Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setWeekStart(addWeeks(weekStart, 1))}><ChevronRight className="h-3.5 w-3.5" /></Button>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {isManager && teamMembers.length > 0 && (
+                        <Select value={filterCs} onValueChange={setFilterCs}>
+                          <SelectTrigger className="h-7 w-[180px] text-xs">
+                            <User className="h-3 w-3 mr-1 shrink-0" />
+                            <SelectValue placeholder="Todos os CSs" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todos os CSs</SelectItem>
+                            {teamMembers.map(tm => (
+                              <SelectItem key={tm.id} value={tm.id}>
+                                {tm.display_name || tm.email}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setWeekStart(subWeeks(weekStart, 1))}><ChevronLeft className="h-3.5 w-3.5" /></Button>
+                        <Button variant="ghost" size="sm" className="h-7 text-xs px-2 font-medium" onClick={() => { setWeekStart(startOfWeek(new Date(), { locale: ptBR })); setSelectedDate(new Date()); }}>Hoje</Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setWeekStart(addWeeks(weekStart, 1))}><ChevronRight className="h-3.5 w-3.5" /></Button>
+                      </div>
                     </div>
                   )}
                 </div>
