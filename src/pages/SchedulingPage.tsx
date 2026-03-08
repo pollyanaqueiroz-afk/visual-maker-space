@@ -769,10 +769,83 @@ export default function SchedulingPage() {
                 <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-primary" /> Agendada</div>
                 <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-success" /> Realizada</div>
               </div>
+              </>
+              ) : (
+                /* Weekly Grid View */
+                <div className="mt-2">
+                  <div className="text-sm font-medium text-center text-muted-foreground mb-3">
+                    {format(weekDays[0], "dd MMM", { locale: ptBR })} — {format(weekDays[6], "dd MMM yyyy", { locale: ptBR })}
+                  </div>
+                  <div className="overflow-x-auto">
+                    <div className="min-w-[700px]">
+                      <div className="grid grid-cols-[60px_repeat(7,1fr)] gap-px rounded-t-lg overflow-hidden">
+                        <div className="bg-muted/50 p-2 text-[10px] text-muted-foreground font-medium text-center">Horário</div>
+                        {weekDays.map(day => {
+                          const dayIsToday = isToday(day);
+                          const dayIsSelected = selectedDate && isSameDay(day, selectedDate);
+                          const dateStr = format(day, 'yyyy-MM-dd');
+                          const dayCount = (meetingsByDate[dateStr] || []).filter(m => m.status !== 'cancelled').length;
+                          return (
+                            <div key={dateStr} className={cn("bg-muted/30 p-2 text-center cursor-pointer transition-colors hover:bg-accent/40", dayIsToday && "bg-primary/5", dayIsSelected && "bg-primary/10")} onClick={() => { setSelectedDate(day); setCalendarView('month'); }}>
+                              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{format(day, 'EEE', { locale: ptBR })}</div>
+                              <div className={cn("text-lg font-bold leading-tight", dayIsToday ? "text-primary" : "text-foreground")}>{format(day, 'd')}</div>
+                              {dayCount > 0 && <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 mt-0.5">{dayCount}</Badge>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className="grid grid-cols-[60px_repeat(7,1fr)] gap-px">
+                        {WEEK_HOURS.map(hour => (
+                          <TooltipProvider key={hour} delayDuration={200}>
+                            <div className="bg-muted/20 py-2 px-1 text-[10px] text-muted-foreground text-right tabular-nums font-medium border-t border-border/30">{hour}</div>
+                            {weekDays.map(day => {
+                              const dayMeetingsInHour = getMeetingsForDayAndHour(day, hour);
+                              const dateStr = format(day, 'yyyy-MM-dd');
+                              const dayIsToday = isToday(day);
+                              return (
+                                <div key={`${dateStr}-${hour}`} className={cn("bg-background min-h-[52px] p-0.5 border-t border-border/20 transition-colors hover:bg-accent/20 cursor-pointer relative", dayIsToday && "bg-primary/[0.02]")} onClick={() => { if (dayMeetingsInHour.length === 0) { setForm({ ...emptyForm, meeting_date: dateStr, meeting_time: hour }); setEditingId(null); setIsRescheduling(false); setDialogOpen(true); } }}>
+                                  {dayMeetingsInHour.map(m => (
+                                    <Tooltip key={m.id}>
+                                      <TooltipTrigger asChild>
+                                        <div className={cn("rounded-md px-1.5 py-1 mb-0.5 text-[10px] leading-tight truncate cursor-pointer transition-all hover:shadow-sm", m.status === 'completed' ? 'bg-success/15 border-l-2 border-success hover:bg-success/25' : 'bg-primary/15 border-l-2 border-primary hover:bg-primary/25')} onClick={(e) => { e.stopPropagation(); setSelectedDate(day); setCalendarView('month'); }}>
+                                          <div className="font-semibold truncate text-foreground">{m.title}</div>
+                                          <div className="text-muted-foreground truncate">{m.meeting_time.slice(0, 5)} · {m.duration_minutes}min</div>
+                                          {m.client_name && <div className="text-muted-foreground truncate">{m.client_name}</div>}
+                                        </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="right" className="text-xs max-w-[200px]">
+                                        <p className="font-semibold">{m.title}</p>
+                                        {m.client_name && <p className="text-muted-foreground">{m.client_name}</p>}
+                                        <p className="text-muted-foreground">{m.meeting_time.slice(0, 5)} — {m.duration_minutes}min</p>
+                                        {(m as any).meeting_reason && <p className="text-muted-foreground mt-1">{(m as any).meeting_reason}</p>}
+                                        <p className="text-primary mt-1 text-[10px]">Clique para ver detalhes</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  ))}
+                                  {dayMeetingsInHour.length === 0 && (
+                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                      <Plus className="h-3 w-3 text-muted-foreground/40" />
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </TooltipProvider>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3 px-2 flex items-center gap-3 text-[10px] text-muted-foreground">
+                    <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-primary" /> Agendada</div>
+                    <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-success" /> Realizada</div>
+                    <span className="ml-auto text-muted-foreground/60">Clique em um horário vazio para agendar</span>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Time Slots Panel */}
+          {calendarView === 'month' && (
           <AnimatePresence mode="wait">
             {selectedDate && (
               <motion.div
@@ -821,12 +894,12 @@ export default function SchedulingPage() {
                             );
                           }
 
-                          if (isBusy && isExactStart && meetingInSlot) {
+                          if (isBusy && isExactStart) {
                             return (
                               <Tooltip key={slot}>
                                 <TooltipTrigger asChild>
                                   <div className={cn(
-                                    "flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-all",
+                                    "flex items-center gap-1.5 px-2 py-1.5 rounded-lg cursor-pointer transition-all",
                                     meetingInSlot.status === 'completed' ? 'bg-success/8 hover:bg-success/15 border border-success/20' : 'bg-primary/8 hover:bg-primary/15 border border-primary/20'
                                   )}>
                                     <span className="w-10 text-right text-[10px] tabular-nums font-medium text-foreground/70 mr-1">{slot}</span>
@@ -863,10 +936,11 @@ export default function SchedulingPage() {
               </motion.div>
             )}
           </AnimatePresence>
+          )}
         </div>
 
         {/* Meeting list */}
-        <div className="lg:col-span-8 space-y-4">
+        <div className={cn("space-y-4", calendarView === 'week' ? 'lg:col-span-12' : 'lg:col-span-8')}>
           <div className="flex items-center justify-between flex-wrap gap-2">
             <h2 className="text-lg font-semibold text-foreground">
               {selectedDate
