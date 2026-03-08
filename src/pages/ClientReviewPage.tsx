@@ -685,60 +685,72 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
     </div>
   );
 
-  const PageWrapper = ({ children, headerTitle, headerSubtitle, showStats = false }: { children: React.ReactNode; headerTitle: string; headerSubtitle?: string; showStats?: boolean }) => (
-    <div className="min-h-screen bg-background">
-      {/* Hero header with enhanced gradient */}
-      <div className="relative w-full overflow-hidden" style={{ minHeight: '200px' }}>
-        <img
-          src="/images/bg-curseduca.png"
-          alt="Curseduca"
-          className="absolute inset-0 w-full h-full object-cover scale-105"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-background" />
-        {/* Decorative blur orbs */}
-        <div className="absolute top-8 left-1/4 w-48 h-48 bg-primary/20 rounded-full blur-[80px]" />
-        <div className="absolute bottom-4 right-1/4 w-32 h-32 bg-primary/15 rounded-full blur-[60px]" />
+  const PageWrapper = ({ children, headerTitle, headerSubtitle, showStats = false }: { children: React.ReactNode; headerTitle: string; headerSubtitle?: string; showStats?: boolean }) => {
+    if (embedded) {
+      return (
+        <div className="space-y-6">
+          {showStats && <StatsBar />}
+          {showStats && <ReviewHistory email={email} visible={showHistory} onToggle={() => setShowHistory(v => !v)} />}
+          {children}
+        </div>
+      );
+    }
 
-        <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 py-10 min-h-[200px]">
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full px-5 py-2 mb-4 shadow-lg"
-          >
-            <Sparkles className="h-4 w-4 text-primary-foreground" />
-            <span className="text-primary-foreground/90 text-sm font-semibold tracking-wide">Validação de Artes</span>
-          </motion.div>
-          <motion.h1
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-3xl sm:text-4xl font-extrabold text-primary-foreground drop-shadow-xl"
-            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-          >
-            {headerTitle}
-          </motion.h1>
-          {headerSubtitle && (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="text-primary-foreground/70 mt-3 text-sm sm:text-base max-w-xl"
+    return (
+      <div className="min-h-screen bg-background">
+        {/* Hero header with enhanced gradient */}
+        <div className="relative w-full overflow-hidden" style={{ minHeight: '200px' }}>
+          <img
+            src="/images/bg-curseduca.png"
+            alt="Curseduca"
+            className="absolute inset-0 w-full h-full object-cover scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-background" />
+          {/* Decorative blur orbs */}
+          <div className="absolute top-8 left-1/4 w-48 h-48 bg-primary/20 rounded-full blur-[80px]" />
+          <div className="absolute bottom-4 right-1/4 w-32 h-32 bg-primary/15 rounded-full blur-[60px]" />
+
+          <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 py-10 min-h-[200px]">
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full px-5 py-2 mb-4 shadow-lg"
             >
-              {headerSubtitle}
-            </motion.p>
-          )}
+              <Sparkles className="h-4 w-4 text-primary-foreground" />
+              <span className="text-primary-foreground/90 text-sm font-semibold tracking-wide">Validação de Artes</span>
+            </motion.div>
+            <motion.h1
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="text-3xl sm:text-4xl font-extrabold text-primary-foreground drop-shadow-xl"
+              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+            >
+              {headerTitle}
+            </motion.h1>
+            {headerSubtitle && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="text-primary-foreground/70 mt-3 text-sm sm:text-base max-w-xl"
+              >
+                {headerSubtitle}
+              </motion.p>
+            )}
+          </div>
+        </div>
+
+        {/* Content area */}
+        <div className="relative z-10 -mt-8">
+          {showStats && <StatsBar />}
+          {showStats && <ReviewHistory email={email} visible={showHistory} onToggle={() => setShowHistory(v => !v)} />}
+          {children}
         </div>
       </div>
-
-      {/* Content area */}
-      <div className="relative z-10 -mt-8">
-        {showStats && <StatsBar />}
-        {showStats && <ReviewHistory email={email} visible={showHistory} onToggle={() => setShowHistory(v => !v)} />}
-        {children}
-      </div>
-    </div>
-  );
+    );
+  };
 
   if (!authenticated) {
     return (
