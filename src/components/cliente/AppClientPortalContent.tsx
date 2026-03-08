@@ -447,7 +447,6 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     return checklist.filter((i: any) => {
       if (i.fase_numero !== faseNum) return false;
       if (i.tipo === 'mooni') return false;
-      if (isHiddenPrereq(i.texto)) return false;
       if (plataforma && faseNum > 0 && isParallelFlow) {
         return i.plataforma === plataforma || i.plataforma === 'compartilhada';
       }
