@@ -548,9 +548,9 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     const circumference = 2 * Math.PI * radius;
     const offset = circumference - (pct / 100) * circumference;
 
-    const statusColor = status === 'concluida' ? 'text-green-400' :
-      isActive ? 'text-primary font-bold' :
-      status === 'atrasada' ? 'text-red-400' : 'text-white/50';
+    const statusColor = status === 'concluida' ? 'text-green-400 font-semibold' :
+      isActive ? 'text-blue-400 font-semibold' :
+      status === 'atrasada' ? 'text-red-400 font-semibold' : 'text-white/35';
 
     return (
       <button
