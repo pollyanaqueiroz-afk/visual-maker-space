@@ -1053,7 +1053,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
 
               {/* Delivery preview */}
               {currentImage.delivery ? (
-                <div className="relative bg-muted/50 aspect-video flex items-center justify-center overflow-hidden">
+                <div className="relative bg-muted/50 flex items-center justify-center overflow-hidden" style={{ minHeight: '60vh', maxHeight: '70vh' }}>
                   {currentImage.delivery.file_url.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i) ? (
                     <img
                       src={currentImage.delivery.file_url}
