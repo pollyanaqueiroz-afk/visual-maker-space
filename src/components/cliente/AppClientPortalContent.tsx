@@ -641,7 +641,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             </div>
           ) : (
             <div className="space-y-3 rounded-lg bg-white/5 border border-white/10 p-4">
-              <p className="text-xs text-white/50 mb-2">Preencha as informações do seu aplicativo.</p>
+              <p className="text-xs text-white/60 mb-2">Preencha as informações do seu aplicativo.</p>
               <div><Label className="text-white/70">Nome do aplicativo *</Label><Input className="bg-white/5 border-white/10 text-white" value={formData.nome_app} onChange={e => setFormData(p => ({ ...p, nome_app: e.target.value }))} /></div>
               <div><Label className="text-white/70">Descrição curta * ({formData.descricao_curta.length}/80)</Label><Input className="bg-white/5 border-white/10 text-white" value={formData.descricao_curta} maxLength={80} onChange={e => setFormData(p => ({ ...p, descricao_curta: e.target.value }))} /></div>
               <div><Label className="text-white/70">URL Política de Privacidade *</Label><Input className="bg-white/5 border-white/10 text-white" placeholder="https://..." value={formData.url_privacidade} onChange={e => setFormData(p => ({ ...p, url_privacidade: e.target.value }))} /></div>
