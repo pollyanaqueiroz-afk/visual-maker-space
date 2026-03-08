@@ -67,6 +67,12 @@ export default function AplicativosPage() {
   const [phaseFilter, setPhaseFilter] = useState('todas');
   const [statusFilter, setStatusFilter] = useState('pendente');
   const [kanbanFilter, setKanbanFilter] = useState<'todos' | 'atrasados'>('todos');
+  const [muninDialogOpen, setMuninDialogOpen] = useState(false);
+  const [muninItemId, setMuninItemId] = useState<string | null>(null);
+  const [muninClientName, setMuninClientName] = useState('');
+  const [muninClientEmpresa, setMuninClientEmpresa] = useState('');
+  const [muninText, setMuninText] = useState('');
+  const [muninSaving, setMuninSaving] = useState(false);
   const [form, setForm] = useState({
     nome: '', url_cliente: '', email: '', whatsapp: '', plataforma: 'ambos', responsavel_nome: '',
   });
