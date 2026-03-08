@@ -1282,7 +1282,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           className="text-center space-y-4 py-6">
           <div className="inline-flex items-center justify-center mx-auto">
             <div className="relative">
-              <div className="absolute -inset-3 rounded-full bg-green-500/20 animate-ping" style={{ animationDuration: '2s' }} />
+              <div className="absolute inset-1 rounded-full bg-green-500/20 animate-pulse" style={{ animationDuration: '2s' }} />
               <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-emerald-600 shadow-lg shadow-green-500/30">
                 <CheckCircle2 className="h-10 w-10 text-white" />
               </div>
