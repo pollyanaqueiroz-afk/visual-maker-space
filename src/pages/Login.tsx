@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
+import { Eye, EyeOff } from 'lucide-react';
 import CursEducaLayout from '@/components/CursEducaLayout';
 
 export default function Login() {
