@@ -37,6 +37,7 @@ import BIDashboardPage from "./pages/BIDashboardPage";
 import ChurnUpsellPage from "./pages/ChurnUpsellPage";
 import AuditoriaPage from "./pages/AuditoriaPage";
 import PipelinePage from "./pages/PipelinePage";
+import ProcessosImplantacaoPage from "./pages/ProcessosImplantacaoPage";
 import ClienteLogin from "./pages/cliente/ClienteLogin";
 import ClienteHubLayout from "./pages/cliente/ClienteHubLayout";
 import ClienteHome from "./pages/cliente/ClienteHome";
