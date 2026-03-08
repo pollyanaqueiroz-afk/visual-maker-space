@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +15,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 import { format } from 'date-fns';
@@ -125,6 +127,17 @@ export default function AppClientPortalContent({ clienteId }: Props) {
   const [showMockupForm, setShowMockupForm] = useState(false);
   const [mockupObservations, setMockupObservations] = useState('');
   const [confirmingItemId, setConfirmingItemId] = useState<string | null>(null);
+  // New mockup modal state
+  const [showMockupModal, setShowMockupModal] = useState(false);
+  const [mockupStep, setMockupStep] = useState(1);
+  const [iconOption, setIconOption] = useState<'yes' | 'no' | ''>('');
+  const [iconLogoFile, setIconLogoFile] = useState<File | null>(null);
+  const [iconDescription, setIconDescription] = useState('');
+  const [wantThumb, setWantThumb] = useState(true);
+  const [wantScreenshotsTablet, setWantScreenshotsTablet] = useState(true);
+  const [wantScreenshotsCelular, setWantScreenshotsCelular] = useState(true);
+  const [mockupSubmitting, setMockupSubmitting] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   const CNPJ_TEXT = 'Confirmei que meu CNPJ é ME ou LTDA';
   const EMAIL_CORP_TEXT = 'Tenho um e-mail corporativo';
@@ -314,33 +327,66 @@ export default function AppClientPortalContent({ clienteId }: Props) {
 
   const submitMockupRequest = useMutation({
     mutationFn: async () => {
-      // Create briefing_request
-      const { data: req, error: reqErr } = await supabase.from('briefing_requests').insert({
-        requester_name: cliente!.nome,
-        requester_email: cliente!.email,
-        platform_url: cliente!.empresa,
-        has_trail: false, has_challenge: false, has_community: false,
-        additional_info: mockupObservations || null,
-        notes: 'Solicitação automática de mockup via portal do app',
-      }).select().single();
-      if (reqErr) throw reqErr;
-      // Create app_mockup image
-      const { error: imgErr } = await supabase.from('briefing_images').insert({
-        request_id: req.id,
-        image_type: 'app_mockup' as any,
-        observations: mockupObservations || null,
-        sort_order: 0,
-      });
-      if (imgErr) throw imgErr;
+      const items: { observations: string; logoUrl?: string }[] = [];
+
+      // Icon
+      if (iconOption === 'yes' && iconLogoFile) {
+        const ext = iconLogoFile.name.split('.').pop();
+        const path = `mockup/${clienteId}/logo-${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from('briefing-uploads').upload(path, iconLogoFile);
+        if (upErr) throw upErr;
+        const { data: urlData } = supabase.storage.from('briefing-uploads').getPublicUrl(path);
+        items.push({ observations: 'Ícone do Aplicativo — Cliente quer usar a logo', logoUrl: urlData.publicUrl });
+      } else if (iconOption === 'no' && iconDescription.trim()) {
+        items.push({ observations: `Ícone do Aplicativo — Descrição: ${iconDescription.trim()}` });
+      }
+
+      if (wantThumb) items.push({ observations: 'Thumb (1024x500)' });
+      if (wantScreenshotsTablet) items.push({ observations: '4 Screenshots Tablet (1024x1024)' });
+      if (wantScreenshotsCelular) items.push({ observations: '4 Screenshots Celular' });
+
+      if (items.length === 0) throw new Error('Selecione pelo menos um item');
+
+      for (const item of items) {
+        const { data: req, error: reqErr } = await supabase.from('briefing_requests').insert({
+          requester_name: cliente!.nome,
+          requester_email: cliente!.email,
+          platform_url: cliente!.empresa,
+          has_trail: false, has_challenge: false, has_community: false,
+          notes: 'Solicitação automática via portal do app',
+        }).select().single();
+        if (reqErr) throw reqErr;
+
+        const { error: imgErr } = await supabase.from('briefing_images').insert({
+          request_id: req.id,
+          image_type: 'app_mockup' as any,
+          observations: item.observations,
+          professional_photo_url: item.logoUrl || null,
+          sort_order: 0,
+        });
+        if (imgErr) throw imgErr;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['portal-mockup-request'] });
-      setShowMockupForm(false);
-      setMockupObservations('');
-      toast.success('🎨 Mockup solicitado com sucesso!');
+      setShowMockupModal(false);
+      resetMockupForm();
+      toast.success('🎨 Solicitação enviada com sucesso!');
     },
     onError: (e: any) => toast.error(e.message),
   });
+
+  const resetMockupForm = () => {
+    setMockupStep(1);
+    setIconOption('');
+    setIconLogoFile(null);
+    setIconDescription('');
+    setWantThumb(true);
+    setWantScreenshotsTablet(true);
+    setWantScreenshotsCelular(true);
+    setShowMockupForm(false);
+    setMockupObservations('');
+  };
 
   const saveForm = useMutation({
     mutationFn: async () => {
@@ -1107,7 +1153,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                           className="w-full flex items-center gap-2 text-xs py-1.5 hover:bg-white/5 rounded px-1 -mx-1 transition-colors"
                           onClick={() => {
                             if (item.id === 'mockup-virtual' && !item.feito) {
-                              navigate('/cliente/solicitar?mockup=1');
+                              setShowMockupModal(true);
                             } else if (item.feito && filledValue) {
                               setExpandedTimelineItem(isExpanded ? null : item.id);
                             }
@@ -1551,7 +1597,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
               <Button
                 variant="outline"
                 className="w-full border-primary/30 text-primary hover:bg-primary/10"
-                onClick={() => navigate('/cliente/solicitar?mockup=1')}
+                onClick={() => setShowMockupModal(true)}
               >
                 <Palette className="h-4 w-4 mr-2" /> Solicitar Mockup do Aplicativo
               </Button>
@@ -1714,6 +1760,149 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           )}
         </div>
       </div>
+      {/* Mockup Request Modal */}
+      <Dialog open={showMockupModal} onOpenChange={(v) => { if (!v) { setShowMockupModal(false); resetMockupForm(); } }}>
+        <DialogContent className="max-w-lg bg-[#0F172A] border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-lg">
+              {mockupStep === 1 ? '📋 Dados do Solicitante' : '🎨 Assets do Aplicativo'}
+            </DialogTitle>
+          </DialogHeader>
+
+          {mockupStep === 1 && cliente && (
+            <div className="space-y-4">
+              <div>
+                <Label className="text-xs text-white/60">Nome</Label>
+                <Input value={cliente.nome} disabled className="bg-white/5 border-white/10 text-white/70 mt-1" />
+              </div>
+              <div>
+                <Label className="text-xs text-white/60">E-mail</Label>
+                <Input value={cliente.email} disabled className="bg-white/5 border-white/10 text-white/70 mt-1" />
+              </div>
+              <div>
+                <Label className="text-xs text-white/60">Plataforma</Label>
+                <Input value={cliente.empresa} disabled className="bg-white/5 border-white/10 text-white/70 mt-1" />
+              </div>
+              <Button className="w-full" onClick={() => setMockupStep(2)}>
+                Próximo →
+              </Button>
+            </div>
+          )}
+
+          {mockupStep === 2 && (
+            <div className="space-y-5 max-h-[60vh] overflow-y-auto pr-1">
+              {/* Ícone do Aplicativo */}
+              <div className="space-y-3 rounded-lg border border-white/10 p-4">
+                <h3 className="text-sm font-semibold">📱 Ícone do Aplicativo</h3>
+                <p className="text-xs text-white/60">Quer que o ícone do app seja sua logo?</p>
+                <RadioGroup value={iconOption} onValueChange={(v: 'yes' | 'no') => setIconOption(v)} className="flex gap-4">
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="yes" id="icon-yes" className="border-white/30" />
+                    <Label htmlFor="icon-yes" className="text-sm cursor-pointer">Sim</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="no" id="icon-no" className="border-white/30" />
+                    <Label htmlFor="icon-no" className="text-sm cursor-pointer">Não</Label>
+                  </div>
+                </RadioGroup>
+                {iconOption === 'yes' && (
+                  <div className="space-y-2">
+                    <Label className="text-xs text-white/60">Envie a imagem da logo *</Label>
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setIconLogoFile(e.target.files?.[0] || null)}
+                      className="block w-full text-xs text-white/60 file:mr-3 file:rounded file:border-0 file:bg-primary/20 file:px-3 file:py-1.5 file:text-xs file:text-primary hover:file:bg-primary/30 cursor-pointer"
+                    />
+                    {iconLogoFile && <p className="text-[10px] text-green-400">✓ {iconLogoFile.name}</p>}
+                  </div>
+                )}
+                {iconOption === 'no' && (
+                  <div className="space-y-2">
+                    <Label className="text-xs text-white/60">Descreva como deseja o ícone *</Label>
+                    <Textarea
+                      value={iconDescription}
+                      onChange={(e) => setIconDescription(e.target.value)}
+                      placeholder="Ex: Ícone minimalista com as iniciais da marca em azul..."
+                      className="bg-white/5 border-white/10 text-white min-h-[80px]"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Thumb */}
+              <div className="flex items-start gap-3 rounded-lg border border-white/10 p-4">
+                <Checkbox
+                  id="want-thumb"
+                  checked={wantThumb}
+                  onCheckedChange={(v) => setWantThumb(!!v)}
+                  className="mt-0.5 border-white/30"
+                />
+                <div>
+                  <Label htmlFor="want-thumb" className="text-sm font-semibold cursor-pointer">🖼️ Thumb (1024x500)</Label>
+                  <p className="text-xs text-white/50 mt-0.5">Imagem de destaque para a loja</p>
+                </div>
+              </div>
+
+              {/* Screenshots Tablet */}
+              <div className="flex items-start gap-3 rounded-lg border border-white/10 p-4">
+                <Checkbox
+                  id="want-tablet"
+                  checked={wantScreenshotsTablet}
+                  onCheckedChange={(v) => setWantScreenshotsTablet(!!v)}
+                  className="mt-0.5 border-white/30"
+                />
+                <div>
+                  <Label htmlFor="want-tablet" className="text-sm font-semibold cursor-pointer">📱 4 Screenshots Tablet (1024x1024)</Label>
+                  <p className="text-xs text-white/50 mt-0.5">Capturas de tela para tablets</p>
+                </div>
+              </div>
+
+              {/* Screenshots Celular */}
+              <div className="flex items-start gap-3 rounded-lg border border-white/10 p-4">
+                <Checkbox
+                  id="want-celular"
+                  checked={wantScreenshotsCelular}
+                  onCheckedChange={(v) => setWantScreenshotsCelular(!!v)}
+                  className="mt-0.5 border-white/30"
+                />
+                <div>
+                  <Label htmlFor="want-celular" className="text-sm font-semibold cursor-pointer">📲 4 Screenshots Celular</Label>
+                  <p className="text-xs text-white/50 mt-0.5">Capturas de tela para celulares</p>
+                </div>
+              </div>
+
+              {/* Validation feedback */}
+              {iconOption === 'yes' && !iconLogoFile && (
+                <p className="text-xs text-amber-400">⚠️ Envie a logo para solicitar o ícone</p>
+              )}
+              {iconOption === 'no' && !iconDescription.trim() && (
+                <p className="text-xs text-amber-400">⚠️ Descreva como deseja o ícone</p>
+              )}
+
+              <div className="flex gap-2 pt-2">
+                <Button variant="outline" className="flex-1 border-white/10" onClick={() => setMockupStep(1)}>
+                  ← Voltar
+                </Button>
+                <Button
+                  className="flex-1"
+                  disabled={
+                    submitMockupRequest.isPending ||
+                    (iconOption === 'yes' && !iconLogoFile) ||
+                    (iconOption === 'no' && !iconDescription.trim()) ||
+                    (!iconOption && !wantThumb && !wantScreenshotsTablet && !wantScreenshotsCelular)
+                  }
+                  onClick={() => submitMockupRequest.mutate()}
+                >
+                  {submitMockupRequest.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Enviar solicitação
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
