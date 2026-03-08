@@ -17,6 +17,7 @@ import CursEducaLayout from '@/components/CursEducaLayout';
 import DesignerFeedback from '@/components/designer/DesignerFeedback';
 import DesignerAnalytics from '@/components/designer/DesignerAnalytics';
 import { useCountUp } from '@/hooks/useCountUp';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 interface DesignerImage {
   id: string;
