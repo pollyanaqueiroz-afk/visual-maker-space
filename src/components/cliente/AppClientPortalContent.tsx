@@ -1351,9 +1351,9 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                  <div className="relative">
                    <div className="w-0.5 bg-white/20" style={{ height: '5.5rem' }} />
                   {/* Top branch */}
-                  <div className="absolute top-0 left-0 w-4 h-0.5 bg-white/20" />
-                  {/* Bottom branch */}
-                  <div className="absolute bottom-0 left-0 w-4 h-0.5 bg-white/20" />
+                   <div className="absolute top-0 left-0 w-6 h-0.5 bg-white/20" />
+                   {/* Bottom branch */}
+                   <div className="absolute bottom-0 left-0 w-6 h-0.5 bg-white/20" />
                 </div>
               </div>
 
