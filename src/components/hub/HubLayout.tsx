@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { HubSidebar } from './HubSidebar';
-import { PanelLeftClose, PanelLeftOpen, Bell } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, Bell, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -16,7 +16,7 @@ function SidebarToggleButton() {
   return (
     <button
       onClick={toggleSidebar}
-      className="h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+      className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors cursor-pointer"
       aria-label={collapsed ? 'Expandir menu' : 'Recolher menu'}
     >
       {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
@@ -81,17 +81,17 @@ function NotificationBell() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className="relative h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer">
+        <button className="relative h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors cursor-pointer">
           <Bell className="h-4 w-4" />
           {totalBadge > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground px-1">
+            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-rose-500 text-[9px] font-bold text-white px-1 shadow-lg shadow-red-500/30 animate-pulse">
               {totalBadge > 9 ? '9+' : totalBadge}
             </span>
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
-        <div className="p-3 border-b border-border">
+      <PopoverContent className="w-80 p-0 bg-card border-border/30 shadow-2xl" align="end">
+        <div className="p-3 border-b border-border/20">
           <h3 className="text-sm font-semibold">Notificações</h3>
           {slaAlerts > 0 && (
             <p className="text-[10px] text-destructive mt-0.5">⚠️ {slaAlerts} arte(s) com prazo vencido</p>
@@ -103,7 +103,7 @@ function NotificationBell() {
           ) : notifications.map((n: any) => (
             <div
               key={n.id}
-              className="p-3 border-b border-border/50 hover:bg-muted/30 cursor-pointer"
+              className="p-3 border-b border-border/10 hover:bg-white/[0.03] cursor-pointer transition-colors"
               onClick={() => markAsRead(n.id)}
             >
               <p className="text-sm font-medium">{n.titulo}</p>
@@ -126,12 +126,20 @@ interface Props {
 export default function HubLayout({ children }: Props) {
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex w-full dark bg-background text-foreground">
         <HubSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-12 flex items-center border-b border-border/40 px-4 gap-2">
+          <header className="h-14 flex items-center border-b border-border/30 px-4 gap-3 bg-card/50 backdrop-blur-sm sticky top-0 z-40">
             <SidebarToggleButton />
             <div className="flex-1" />
+
+            {/* Search placeholder */}
+            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border/30 text-muted-foreground text-sm cursor-pointer hover:bg-muted/80 transition-colors">
+              <Search className="h-3.5 w-3.5" />
+              <span>Buscar...</span>
+              <kbd className="ml-4 text-[10px] bg-background/50 px-1.5 py-0.5 rounded border border-border/30">⌘K</kbd>
+            </div>
+
             <NotificationBell />
           </header>
           <main className="flex-1 p-6 min-w-0">
