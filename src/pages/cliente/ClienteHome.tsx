@@ -209,30 +209,35 @@ export default function ClienteHome() {
 
   return (
     <div className="space-y-6">
-      {/* Greeting */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: 'easeOut' }} className="flex items-center gap-4">
+      {/* Greeting with spring */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 120, damping: 14 }}
+        className="flex items-center gap-4"
+      >
         <motion.img
           src={greetingGif}
           alt="Saudação"
           className="h-16 w-16 rounded-2xl object-cover shadow-lg ring-2 ring-white/10"
-          initial={{ scale: 0, rotate: -15 }}
+          initial={{ scale: 0, rotate: -20 }}
           animate={{ scale: 1, rotate: 0 }}
-          transition={{ delay: 0.2, type: 'spring', stiffness: 200, damping: 15 }}
+          transition={{ delay: 0.15, type: 'spring', stiffness: 260, damping: 12 }}
         />
         <div>
           <motion.h1
             className="text-2xl font-bold"
-            initial={{ opacity: 0, x: -20 }}
+            initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
+            transition={{ delay: 0.25, type: 'spring', stiffness: 150, damping: 12 }}
           >
             {greetingText}! 👋
           </motion.h1>
           <motion.p
             className="text-white/50 text-sm mt-1"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5, duration: 0.4 }}
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45, type: 'spring', stiffness: 100, damping: 15 }}
           >
             {greetingSubtitle}
           </motion.p>
