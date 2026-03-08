@@ -950,20 +950,42 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             </div>
           )}
 
-          {/* Mockup button for fase 0 */}
-          {faseNum === 0 && !mockupRequest && (
-            <Button variant="outline" className="w-full border-white/10 text-white hover:bg-white/5" onClick={() => setShowMockupModal(true)}>
-              <Palette className="h-4 w-4 mr-2" /> Solicitar Mockup do App
-            </Button>
-          )}
-          {faseNum === 0 && mockupRequest && (
-            <div className="rounded-lg p-3 bg-green-500/10 border border-green-500/20 flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-green-400 shrink-0" />
-              <p className="text-xs text-green-400">Mockup solicitado! Acompanhe na aba "Artes".</p>
+          {/* Items (active/completed phases) */}
+          {fase.status !== 'bloqueada' && (items.length > 0 || faseNum === 0) ? (
+            <div className="space-y-2">
+              {items.map(item => renderClientItem(item))}
+              {/* Mockup as inline checklist item in fase 0 */}
+              {faseNum === 0 && (
+                <div
+                  className="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+                  onClick={() => { if (!mockupRequest) setShowMockupModal(true); }}
+                >
+                  <div className="flex items-start gap-3">
+                    {mockupRequest ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-400 mt-0.5 shrink-0" />
+                    ) : (
+                      <Circle className="h-5 w-5 text-white/30 mt-0.5 shrink-0" />
+                    )}
+                    <div className="flex-1">
+                      <p className={`text-sm font-medium ${mockupRequest ? 'text-green-400' : ''}`}>
+                        {mockupRequest ? 'Mockup solicitado!' : 'Solicitar Mockup do Aplicativo'}
+                      </p>
+                      {mockupRequest && (
+                        <>
+                          {mockupRequest.created_at && (
+                            <p className="text-[10px] text-green-400/70 mt-1">
+                              ✅ {format(new Date(mockupRequest.created_at), "dd/MM/yyyy 'às' HH:mm")}
+                            </p>
+                          )}
+                          <p className="text-[10px] text-white/40 mt-0.5">Acompanhe na aba "Artes"</p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-
-          {/* Future stage message */}
+          ) : fase.status === 'concluida' ? (
           {fase.status === 'bloqueada' && (
             <div className="text-center py-6 space-y-3 rounded-xl bg-white/5 border border-white/5">
               <div className="relative mx-auto w-16 h-16">
