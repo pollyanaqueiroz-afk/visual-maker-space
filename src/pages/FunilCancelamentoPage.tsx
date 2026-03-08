@@ -101,10 +101,10 @@ export default function FunilCancelamentoPage() {
   useEffect(() => { fetchData(); }, []);
 
   const updateMeeting = async (meetingId: string, field: string, value: string | null) => {
-    const { error } = await (supabase
-      .from('meetings' as any)
+    const { error } = await supabase
+      .from('meetings')
       .update({ [field]: value } as any)
-      .eq('id', meetingId) as any);
+      .eq('id', meetingId);
 
     if (error) {
       toast.error('Erro ao salvar alteração');

@@ -30,12 +30,12 @@ export default function LoyaltyTrackingTab() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data, error } = await (supabase
-        .from('meetings' as any)
+      const { data, error } = await supabase
+        .from('meetings')
         .select('id, client_url, client_name, meeting_date, loyalty_index')
         .eq('created_by', user.id)
         .not('loyalty_index', 'is', null)
-        .order('meeting_date', { ascending: true }) as any);
+        .order('meeting_date', { ascending: true });
       if (error) {
         toast.error('Erro ao carregar dados de fidelidade');
       } else {

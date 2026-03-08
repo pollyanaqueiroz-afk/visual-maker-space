@@ -58,7 +58,7 @@ export default function ClientCsatSection({ clientUrl, clientEmail, clientEmail2
       if (!csatRes.error) setCsatData((csatRes.data || []) as CsatRow[]);
       if (!meetingsRes.error) {
         const map: Record<string, MeetingInfo> = {};
-        (meetingsRes.data || []).forEach((m: MeetingInfo) => { map[m.id] = m; });
+        ((meetingsRes.data || []) as MeetingInfo[]).forEach((m) => { map[m.id] = m; });
         setMeetingsMap(map);
       }
       setLoading(false);

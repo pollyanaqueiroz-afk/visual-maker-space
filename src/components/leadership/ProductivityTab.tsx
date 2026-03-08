@@ -44,9 +44,9 @@ export default function ProductivityTab() {
   useEffect(() => {
     (async () => {
       const [meetingsRes, profilesRes] = await Promise.all([
-        supabase.from('meetings' as any)
+        supabase.from('meetings')
           .select('id, meeting_date, status, client_url, client_name, meeting_reason, duration_minutes, created_by')
-          .order('meeting_date', { ascending: true }) as any,
+          .order('meeting_date', { ascending: true }),
         supabase.from('profiles').select('user_id, email, display_name'),
       ]);
       if (meetingsRes.error) {

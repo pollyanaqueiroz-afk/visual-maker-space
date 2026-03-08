@@ -54,9 +54,9 @@ export default function LeadershipDashboard() {
   useEffect(() => {
     (async () => {
       const [meetingsRes, profilesRes] = await Promise.all([
-        supabase.from('meetings' as any)
+        supabase.from('meetings')
           .select('id, title, meeting_date, meeting_time, status, client_email, client_name, client_url, meeting_reason, loyalty_index, duration_minutes, created_by')
-          .order('meeting_date', { ascending: false }) as any,
+          .order('meeting_date', { ascending: false }),
         supabase.from('profiles').select('user_id, email, display_name'),
       ]);
 
