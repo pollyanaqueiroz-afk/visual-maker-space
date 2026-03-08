@@ -455,7 +455,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
                 <CheckCircle className="h-5 w-5 text-primary" />
               </div>
               <p className="text-2xl font-extrabold text-primary">{totalApproved}</p>
-              <p className="text-[11px] text-muted-foreground font-medium">Aprovadas</p>
+              <p className={`text-[11px] ${textSub} font-medium`}>Aprovadas</p>
             </div>
           </motion.div>
         )}
