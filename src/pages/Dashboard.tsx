@@ -495,8 +495,8 @@ export default function Dashboard() {
           <TabsContent value="artes" className="space-y-6">
             {/* Filters */}
             <div className="flex flex-wrap items-center gap-4">
-              {canCreate && <ImportBriefingDialog onImported={fetchData} />}
-              {canCreate && <BulkPhotoUploadDialog onUploaded={fetchData} />}
+              {canCreate && <ImportBriefingDialog onImported={refreshAll} />}
+              {canCreate && <BulkPhotoUploadDialog onUploaded={refreshAll} />}
               <div className="relative w-56">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
