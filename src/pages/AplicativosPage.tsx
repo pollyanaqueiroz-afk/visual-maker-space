@@ -557,7 +557,7 @@ export default function AplicativosPage() {
     return internalPendencies.reduce((sum, g) => sum + g.items.filter((i: any) => !i.responsavel && !i.feito).length, 0);
   }, [internalPendencies]);
 
-
+  const totalInternalPending = useMemo(() => {
     return internalPendencies.reduce((sum, g) => sum + g.items.filter((i: any) => !i.feito).length, 0);
   }, [internalPendencies]);
 
