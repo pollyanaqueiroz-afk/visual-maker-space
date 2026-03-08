@@ -37,6 +37,10 @@ const csModules = [
   { title: 'Churn & Upsell', url: '/hub/churn-upsell', icon: TrendingDown, permission: 'dashboards.view' },
 ];
 
+const processosModules = [
+  { title: 'Processos de Implantação', url: '/hub/processos-implantacao', icon: Package, permission: 'carteira.view' },
+];
+
 const auditoriaModules = [
   { title: 'Auditoria', url: '/hub/auditoria', icon: ClipboardCheck, permission: 'admin.view' },
   { title: 'Pipeline', url: '/hub/pipeline', icon: Activity, permission: 'admin.view' },
