@@ -740,13 +740,29 @@ export default function SchedulingPage() {
                   <CalendarIcon className="h-4 w-4 text-primary" />
                   Calendário
                 </CardTitle>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <div className="flex items-center bg-muted rounded-lg p-0.5">
                     <Button variant={calendarView === 'month' ? 'default' : 'ghost'} size="sm" className="h-7 text-xs px-3 rounded-md" onClick={() => setCalendarView('month')}>Mês</Button>
                     <Button variant={calendarView === 'week' ? 'default' : 'ghost'} size="sm" className="h-7 text-xs px-3 rounded-md" onClick={() => { setCalendarView('week'); setWeekStart(startOfWeek(selectedDate || new Date(), { locale: ptBR })); }}>Semana</Button>
                   </div>
                   {calendarView === 'month' ? (
                     <div className="flex items-center gap-1">
+                      <Select value={String(getYear(calendarMonth))} onValueChange={v => setCalendarMonth(setYear(calendarMonth, Number(v)))}>
+                        <SelectTrigger className="h-7 w-[80px] text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 5 }, (_, i) => getYear(new Date()) - 1 + i).map(y => (
+                            <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select value={String(getMonth(calendarMonth))} onValueChange={v => setCalendarMonth(setMonth(calendarMonth, Number(v)))}>
+                        <SelectTrigger className="h-7 w-[110px] text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 12 }, (_, i) => (
+                            <SelectItem key={i} value={String(i)}>{format(new Date(2024, i, 1), 'MMMM', { locale: ptBR })}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCalendarMonth(subMonths(calendarMonth, 1))}><ChevronLeft className="h-3.5 w-3.5" /></Button>
                       <Button variant="ghost" size="sm" className="h-7 text-xs px-2 font-medium" onClick={() => { setCalendarMonth(new Date()); setSelectedDate(new Date()); }}>Hoje</Button>
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCalendarMonth(addMonths(calendarMonth, 1))}><ChevronRight className="h-3.5 w-3.5" /></Button>
@@ -764,67 +780,107 @@ export default function SchedulingPage() {
             <CardContent className="px-2 pb-3">
               {calendarView === 'month' ? (
               <>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={(d) => d && setSelectedDate(d)}
-                month={calendarMonth}
-                onMonthChange={setCalendarMonth}
-                locale={ptBR}
-                className="p-1 pointer-events-auto w-full"
-                classNames={{
-                  months: "flex flex-col w-full",
-                  month: "space-y-2 w-full",
-                  caption: "flex justify-center pt-1 relative items-center",
-                  caption_label: "text-sm font-semibold",
-                  nav: "hidden",
-                  table: "w-full border-collapse",
-                  head_row: "flex w-full",
-                  head_cell: "text-muted-foreground rounded-md flex-1 font-medium text-[0.7rem] uppercase tracking-wider",
-                  row: "flex w-full mt-1",
-                  cell: "flex-1 text-center text-sm p-0.5 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected])]:bg-accent/40 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-                  day: "h-9 w-full rounded-lg font-normal aria-selected:opacity-100 hover:bg-accent/60 transition-colors relative",
-                  day_range_end: "day-range-end",
-                  day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground shadow-sm",
-                  day_today: "bg-accent text-accent-foreground font-bold ring-1 ring-primary/30",
-                  day_outside: "day-outside text-muted-foreground/40 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
-                  day_disabled: "text-muted-foreground opacity-50",
-                  day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
-                  day_hidden: "invisible",
-                }}
-                components={{
-                  DayContent: ({ date }) => {
-                    const dateStr = format(date, 'yyyy-MM-dd');
-                    const dayMeetings = meetingsByDate[dateStr] || [];
-                    const activeMeetings = dayMeetings.filter(m => m.status !== 'cancelled');
-                    const count = activeMeetings.length;
+              {/* Full Month Grid */}
+              <div className="mt-2">
+                <div className="text-sm font-semibold text-center text-foreground mb-3 capitalize">
+                  {format(calendarMonth, "MMMM yyyy", { locale: ptBR })}
+                </div>
+                <div className="grid grid-cols-7 gap-px rounded-t-lg overflow-hidden">
+                  {['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'].map(d => (
+                    <div key={d} className="bg-muted/50 p-2 text-[10px] text-muted-foreground font-semibold text-center uppercase tracking-wider">{d}</div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-7 gap-px">
+                  {monthGridDays.map((day, idx) => {
+                    if (!day) {
+                      return <div key={`empty-${idx}`} className="bg-muted/10 min-h-[90px] border-t border-border/10" />;
+                    }
+                    const dateStr = format(day, 'yyyy-MM-dd');
+                    const dayMeetings = (meetingsByDate[dateStr] || []).filter(m => m.status !== 'cancelled');
+                    const holiday = holidays[dateStr];
+                    const dayIsToday = isToday(day);
+                    const dayIsSelected = selectedDate && isSameDay(day, selectedDate);
+                    const isSunday = getDay(day) === 0;
+                    
                     return (
-                      <div className="relative flex flex-col items-center justify-center w-full">
-                        <span>{date.getDate()}</span>
-                        {count > 0 && (
-                          <div className="flex gap-0.5 mt-0.5">
-                            {count <= 3 ? (
-                              activeMeetings.slice(0, 3).map((m, i) => (
-                                <div key={i} className={cn("h-1 w-1 rounded-full", m.status === 'completed' ? 'bg-success' : 'bg-primary')} />
-                              ))
-                            ) : (
-                              <>
-                                <div className="h-1 w-1 rounded-full bg-primary" />
-                                <span className="text-[7px] font-bold text-primary leading-none">{count}</span>
-                              </>
+                      <TooltipProvider key={dateStr} delayDuration={200}>
+                        <div
+                          className={cn(
+                            "bg-background min-h-[90px] p-1.5 border-t border-border/20 transition-all cursor-pointer hover:bg-accent/20 relative group",
+                            dayIsToday && "bg-primary/[0.04] ring-1 ring-inset ring-primary/20",
+                            dayIsSelected && "bg-primary/10 ring-1 ring-inset ring-primary/40",
+                            (isSunday || holiday) && "bg-destructive/[0.02]"
+                          )}
+                          onClick={() => setSelectedDate(day)}
+                        >
+                          <div className="flex items-start justify-between mb-1">
+                            <span className={cn(
+                              "text-sm font-medium leading-none",
+                              dayIsToday && "bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center text-xs font-bold",
+                              !dayIsToday && isSunday && "text-destructive/60",
+                              !dayIsToday && !isSunday && "text-foreground"
+                            )}>
+                              {day.getDate()}
+                            </span>
+                            {dayMeetings.length > 0 && (
+                              <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4">{dayMeetings.length}</Badge>
                             )}
                           </div>
-                        )}
-                      </div>
+                          
+                          {holiday && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center gap-0.5 mb-0.5">
+                                  <PartyPopper className="h-2.5 w-2.5 text-destructive/60 shrink-0" />
+                                  <span className="text-[9px] text-destructive/70 font-medium truncate leading-tight">{holiday}</span>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-xs">
+                                <p className="font-semibold">Feriado: {holiday}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                          
+                          <div className="space-y-0.5">
+                            {dayMeetings.slice(0, 3).map(m => (
+                              <Tooltip key={m.id}>
+                                <TooltipTrigger asChild>
+                                  <div className={cn(
+                                    "rounded px-1 py-0.5 text-[9px] leading-tight truncate border-l-2",
+                                    m.status === 'completed' ? 'bg-success/10 border-success text-foreground' : 'bg-primary/10 border-primary text-foreground'
+                                  )}>
+                                    <span className="font-medium">{m.meeting_time.slice(0, 5)}</span>{' '}
+                                    <span className="text-muted-foreground">{m.title}</span>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="right" className="text-xs max-w-[200px]">
+                                  <p className="font-semibold">{m.title}</p>
+                                  {m.client_name && <p className="text-muted-foreground">{m.client_name}</p>}
+                                  <p className="text-muted-foreground">{m.meeting_time.slice(0, 5)} — {m.duration_minutes}min</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            ))}
+                            {dayMeetings.length > 3 && (
+                              <span className="text-[9px] text-muted-foreground font-medium px-1">+{dayMeetings.length - 3} mais</span>
+                            )}
+                          </div>
+                          
+                          {dayMeetings.length === 0 && !holiday && (
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Plus className="h-3.5 w-3.5 text-muted-foreground/30" />
+                            </div>
+                          )}
+                        </div>
+                      </TooltipProvider>
                     );
-                  },
-                  IconLeft: () => <ChevronLeft className="h-4 w-4" />,
-                  IconRight: () => <ChevronRight className="h-4 w-4" />,
-                }}
-              />
-              <div className="mt-2 px-2 flex items-center gap-3 text-[10px] text-muted-foreground">
-                <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-primary" /> Agendada</div>
-                <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-success" /> Realizada</div>
+                  })}
+                </div>
+                <div className="mt-3 px-2 flex items-center gap-4 text-[10px] text-muted-foreground flex-wrap">
+                  <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-primary" /> Agendada</div>
+                  <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-success" /> Realizada</div>
+                  <div className="flex items-center gap-1"><PartyPopper className="h-3 w-3 text-destructive/60" /> Feriado</div>
+                  <span className="ml-auto text-muted-foreground/60">Clique em um dia para ver detalhes</span>
+                </div>
               </div>
               </>
               ) : (
