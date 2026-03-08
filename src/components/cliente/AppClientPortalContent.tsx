@@ -995,7 +995,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                     {mockupRequest ? (
                       <CheckCircle2 className="h-5 w-5 text-green-400 mt-0.5 shrink-0" />
                     ) : (
-                      <Circle className="h-5 w-5 text-white/30 mt-0.5 shrink-0" />
+                      <Circle className="h-5 w-5 text-white/50 mt-0.5 shrink-0" />
                     )}
                     <div className="flex-1">
                       <p className={`text-sm font-medium ${mockupRequest ? 'text-green-400' : ''}`}>
