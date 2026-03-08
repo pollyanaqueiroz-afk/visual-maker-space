@@ -1146,6 +1146,7 @@ export default function SchedulingPage() {
           )}
 
 
+          {calendarView === 'month' && (
           <AnimatePresence mode="wait">
             {selectedDate && (
               <motion.div
