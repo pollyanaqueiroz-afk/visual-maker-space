@@ -19,7 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
-import { format } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // ── Step-by-step guides ──
@@ -1067,6 +1067,69 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                     </div>
                   </div>
                 ));
+              })()}
+              {/* Store validation/approval cards for phases 2 and 4 */}
+              {(faseNum === 2 || faseNum === 4) && (() => {
+                const plat = plataforma || (cliente.plataforma === 'apple' ? 'apple' : 'google');
+                const prevFaseNum = faseNum === 2 ? 1 : 3;
+                const prevFase = fases.find((f: any) => f.numero === prevFaseNum && (f.plataforma === plat || (!isParallelFlow && f.plataforma === cliente.plataforma)));
+                const prevFaseDone = prevFase?.status === 'concluida';
+                const currentFase = fases.find((f: any) => f.numero === faseNum && (f.plataforma === plat || (!isParallelFlow && f.plataforma === cliente.plataforma)));
+                const isDone = currentFase?.status === 'concluida';
+                const startDate = currentFase?.data_inicio ? new Date(currentFase.data_inicio) : (prevFaseDone && prevFase?.data_conclusao ? new Date(prevFase.data_conclusao) : null);
+                const isGoogle = plat === 'google';
+                const diasUteis = faseNum === 2 ? (isGoogle ? 3 : 7) : (isGoogle ? 4 : 10);
+                const label = isGoogle ? 'Google Play' : 'App Store';
+                const emojiPlat = isGoogle ? '🤖' : '🍎';
+                const waitingText = faseNum === 2 ? 'Aguardando análise' : 'Aguardando aprovação';
+                const diasLabel = faseNum === 2 ? (isGoogle ? '1–3' : '5–7') : (isGoogle ? '2–4' : '5–10');
+                const prevFaseLabel = faseNum === 2 ? '"Primeiros Passos"' : '"Criação e Submissão"';
+                const footerText = faseNum === 2
+                  ? '⏳ Esta etapa depende exclusivamente da análise da loja. Você será notificado assim que houver retorno.'
+                  : '⏳ Esta etapa depende exclusivamente da aprovação da loja. Você será notificado assim que houver retorno.';
+
+                return (
+                  <div className="mt-3 pt-3 border-t border-white/10">
+                    <div className={`rounded-lg p-4 ${isDone
+                      ? 'bg-green-500/10 border border-green-500/20'
+                      : isGoogle ? 'bg-blue-500/10 border border-blue-500/20' : 'bg-purple-500/10 border border-purple-500/20'
+                    }`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">{emojiPlat}</span>
+                          <span className="text-xs font-medium">
+                            {isDone ? `${label} — Aprovado` : `${label} — ${waitingText}`}
+                          </span>
+                        </div>
+                        <Badge variant="outline" className={`text-[10px] ${isDone
+                          ? 'border-green-500/30 text-green-400'
+                          : isGoogle ? 'border-blue-500/30 text-blue-400' : 'border-purple-500/30 text-purple-400'
+                        }`}>
+                          {isDone ? '✅ Aprovado' : `${diasLabel} dias úteis`}
+                        </Badge>
+                      </div>
+                      {!isDone && startDate && (
+                        <div className="mt-2 space-y-1">
+                          <p className={`text-[10px] ${isGoogle ? 'text-blue-400/70' : 'text-purple-400/70'}`}>
+                            📆 Previsão máxima: <span className="font-semibold">{format(addBusinessDays(startDate, diasUteis), 'dd/MM/yyyy')}</span>
+                          </p>
+                          <Progress value={Math.min(Math.round((differenceInDays(new Date(), startDate) / diasUteis) * 100), 95)} className="h-1.5" />
+                        </div>
+                      )}
+                      {isDone && currentFase?.data_conclusao && (
+                        <p className="text-[10px] text-green-400/70 mt-2">
+                          ✅ Concluído em {format(new Date(currentFase.data_conclusao), "dd/MM/yyyy 'às' HH:mm")}
+                        </p>
+                      )}
+                      {!startDate && !isDone && (
+                        <p className="text-[10px] text-white/30 mt-2">
+                          📅 A previsão será calculada após a conclusão de {prevFaseLabel}
+                        </p>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-white/30 text-center mt-2">{footerText}</p>
+                  </div>
+                );
               })()}
             </div>
           ) : fase.status !== 'bloqueada' && clientItemsDone && hasInternalPending ? (
