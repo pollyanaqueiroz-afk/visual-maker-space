@@ -31,6 +31,10 @@ interface BriefingImage {
   status: string;
   observations: string | null;
   orientation: string | null;
+  font_suggestion: string | null;
+  element_suggestion: string | null;
+  professional_photo_url: string | null;
+  extra_info: string | null;
   briefing_requests: {
     requester_name: string;
     platform_url: string;
