@@ -939,7 +939,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
               } border-0`}>
                 {progress}%
               </Badge>
-              <button onClick={() => setSelectedTimelineFase(null)} className="text-white/40 hover:text-white text-xs ml-1">✕</button>
+              <button onClick={() => setSelectedTimelineFase(null)} className="text-white/50 hover:text-white text-xs ml-1">✕</button>
             </div>
           </div>
 
