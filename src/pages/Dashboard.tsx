@@ -354,11 +354,58 @@ export default function Dashboard() {
   const inProgressImages = images.filter(i => i.status === 'in_progress').length;
   const completedImages = images.filter(i => i.status === 'completed').length;
   const reviewImages = images.filter(i => i.status === 'review').length;
+  const cancelledImages = images.filter(i => i.status === 'cancelled').length;
   const overdueImages = images.filter(i => isOverdue(i)).length;
   const incompleteImages = images.filter(i => isBriefingIncomplete(i)).length;
   const openClients = new Set(
     images.filter(i => i.status !== 'completed' && i.status !== 'cancelled').map(i => i.platform_url)
   ).size;
+
+  const allClientUrls = useMemo(() => {
+    const urls = new Set<string>();
+    images.forEach(i => urls.add(i.platform_url));
+    return Array.from(urls).sort();
+  }, [images]);
+
+  const handleMockupSolicitation = async () => {
+    if (!mockupClientUrl.trim()) {
+      toast.error('Informe a URL da plataforma do cliente');
+      return;
+    }
+    setMockupSubmitting(true);
+    try {
+      const { data: request, error: reqError } = await supabase.from('briefing_requests').insert({
+        requester_name: user?.email || 'Equipe Interna',
+        requester_email: user?.email || 'interno@curseduca.com',
+        platform_url: mockupClientUrl.trim(),
+        has_trail: false,
+        has_challenge: false,
+        has_community: false,
+        received_at: new Date().toISOString(),
+        submitted_by: user?.email || null,
+      }).select('id').single();
+      if (reqError) throw reqError;
+      const { error: imgError } = await supabase.from('briefing_images').insert({
+        request_id: request.id,
+        image_type: 'app_mockup' as any,
+        sort_order: 0,
+        observations: mockupObservations.trim() || 'Mockup do aplicativo — solicitação interna',
+        status: 'pending' as any,
+      });
+      if (imgError) throw imgError;
+      toast.success('Mockup solicitado! Aparecerá no Kanban como pendente.');
+      setMockupSolicitationOpen(false);
+      setMockupClientUrl('');
+      setMockupObservations('');
+      queryClient.invalidateQueries({ queryKey: ['briefing-images'] });
+      queryClient.invalidateQueries({ queryKey: ['briefing-requests'] });
+    } catch (err: any) {
+      console.error('Erro ao solicitar mockup:', err);
+      toast.error('Erro ao criar solicitação: ' + err.message);
+    } finally {
+      setMockupSubmitting(false);
+    }
+  };
 
   const extractClientName = (url: string) => {
     try {
