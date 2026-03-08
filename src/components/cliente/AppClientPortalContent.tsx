@@ -1394,9 +1394,9 @@ export default function AppClientPortalContent({ clienteId }: Props) {
         /* ── Parallel: fase 0 left, bifurcation to two horizontal tracks ── */
          <div className="space-y-4">
           <div>
-            <div className="flex items-start gap-0 w-full py-3">
+            <div className="flex items-center gap-0 w-full py-3 pb-10">
               {/* Fase 0 + Toggle — aligned to circle center */}
-              <div className="shrink-0 flex items-start gap-0">
+              <div className="shrink-0 flex items-center gap-0">
                 {/* Fase 0 */}
                 <div className="flex flex-col items-center">
                   {(() => {
