@@ -18,7 +18,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const handleSession = async (session: Session | null) => {
-      if (session?.user?.email && !session.user.email.endsWith('@curseduca.com')) {
+      const isClientRoute = window.location.pathname.startsWith('/cliente');
+      if (
+        session?.user?.email &&
+        !session.user.email.endsWith('@curseduca.com') &&
+        !isClientRoute
+      ) {
         await supabase.auth.signOut();
         return;
       }
