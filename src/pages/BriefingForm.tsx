@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -62,6 +63,7 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
   const { user } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(mockupOnly ? 1 : 0);
+  const [slideDir, setSlideDir] = useState<1 | -1>(1);
   const [form, setForm] = useState<BriefingFormData>(initialForm);
   const [additionalInfo, setAdditionalInfo] = useState('');
   const [selections, setSelections] = useState<ArtSelection>({
@@ -346,7 +348,7 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
       toast.error('Selecione pelo menos um tipo de arte');
       return;
     }
-    // Skip step 2 when mockupOnly (go from step 1 directly to step 3)
+    setSlideDir(1);
     if (mockupOnly && step === 1) {
       setStep(3);
     } else {
@@ -356,7 +358,7 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
   };
 
   const prevStep = () => {
-    // Skip step 2 when mockupOnly (go from step 3 back to step 1)
+    setSlideDir(-1);
     if (mockupOnly && step === 3) {
       setStep(1);
     } else {
@@ -497,10 +499,15 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
                 {step === 2 && 'Passo 2 — Escolha as artes'}
                 {step === 3 && 'Passo 3 — Briefing das artes'}
               </h1>
-              {/* Progress bar */}
+              {/* Animated step indicator */}
               <div className="flex gap-2 mt-4">
                 {[1, 2, 3].map(s => (
-                  <div key={s} className={`h-1.5 rounded-full transition-all duration-300 ${s <= step ? 'bg-white w-12' : 'bg-white/30 w-8'}`} />
+                  <motion.div
+                    key={s}
+                    className={`h-1.5 rounded-full ${s <= step ? 'bg-white' : 'bg-white/30'}`}
+                    animate={{ width: s <= step ? 48 : 32 }}
+                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                  />
                 ))}
               </div>
             </>

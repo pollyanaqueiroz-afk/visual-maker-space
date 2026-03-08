@@ -216,11 +216,16 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
       // Brand asset archiving is now handled server-side in the delivery-data edge function
 
       confetti({
-        particleCount: 100,
-        spread: 80,
-        origin: { y: 0.65 },
+        particleCount: 150,
+        spread: 100,
+        origin: { y: 0.6 },
         colors: ['#22c55e', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6'],
       });
+      // Side bursts
+      setTimeout(() => {
+        confetti({ particleCount: 50, angle: 60, spread: 50, origin: { x: 0, y: 0.7 } });
+        confetti({ particleCount: 50, angle: 120, spread: 50, origin: { x: 1, y: 0.7 } });
+      }, 200);
 
       toast.success('Arte aprovada! 🎉');
       setCompletedCount(c => c + 1);
@@ -846,7 +851,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
             transition={{ duration: 0.5, type: 'spring' }}
             className="w-full max-w-md"
           >
-            <div className={`relative overflow-hidden ${cardBgSolid} border rounded-3xl shadow-2xl p-8 text-center space-y-6`}>
+             <div className={`relative overflow-hidden ${cardBgSolid} border rounded-3xl shadow-2xl p-8 text-center space-y-6`}>
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary/60 to-primary rounded-t-3xl" />
               <motion.div
                 initial={{ scale: 0 }}
@@ -863,13 +868,35 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
                   <br />Sua opinião é muito importante para nós!
                 </p>
               </div>
+
+              {/* Gamified counters */}
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { label: 'Revisadas', value: completedCount, emoji: '🎨' },
+                  { label: 'Aprovadas', value: totalApproved + completedCount, emoji: '✅' },
+                  { label: 'Total', value: totalImages, emoji: '📊' },
+                ].map((stat, i) => (
+                  <motion.div
+                    key={stat.label}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 + i * 0.1 }}
+                    className={`rounded-xl ${cardBg} p-3`}
+                  >
+                    <p className="text-2xl">{stat.emoji}</p>
+                    <p className={`text-xl font-extrabold ${textMain}`}>{stat.value}</p>
+                    <p className={`text-[10px] ${textSub}`}>{stat.label}</p>
+                  </motion.div>
+                ))}
+              </div>
+
               <div className="flex gap-3 text-4xl justify-center">
                 {['🎨', '✨', '🚀'].map((emoji, i) => (
                   <motion.span
                     key={i}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 + i * 0.15 }}
+                    transition={{ delay: 0.7 + i * 0.15 }}
                   >
                     {emoji}
                   </motion.span>
@@ -988,10 +1015,38 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
               scale: direction ? 0.85 : 1,
               y: 0,
             }}
-            exit={{ opacity: 0 }}
+            exit={{ opacity: 0, scale: 0.8 }}
             transition={{ duration: 0.35, ease: 'easeOut' }}
-            className="w-full max-w-lg"
+            className="w-full max-w-lg relative"
           >
+            {/* APROVADO / REFAÇÃO overlay during swipe */}
+            <AnimatePresence>
+              {direction === 'right' && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
+                >
+                  <div className="bg-primary/90 text-primary-foreground px-8 py-4 rounded-2xl text-3xl font-extrabold tracking-wider rotate-[-15deg] border-4 border-primary-foreground/30 shadow-2xl">
+                    APROVADO ✓
+                  </div>
+                </motion.div>
+              )}
+              {direction === 'left' && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
+                >
+                  <div className="bg-destructive/90 text-destructive-foreground px-8 py-4 rounded-2xl text-3xl font-extrabold tracking-wider rotate-[15deg] border-4 border-destructive-foreground/30 shadow-2xl">
+                    REFAÇÃO ✗
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <div className={`relative ${cardBgSolid} border rounded-3xl shadow-2xl overflow-hidden`}>
               {/* Top accent */}
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary/60 to-primary z-10" />

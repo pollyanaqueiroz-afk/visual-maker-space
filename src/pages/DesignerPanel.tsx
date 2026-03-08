@@ -12,9 +12,11 @@ import { Separator } from '@/components/ui/separator';
 import { IMAGE_TYPE_LABELS, STATUS_LABELS, STATUS_COLORS } from '@/types/briefing';
 import { Loader2, Clock, ExternalLink, FileImage, Filter, MessageSquare, BarChart3, LogOut, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import CursEducaLayout from '@/components/CursEducaLayout';
 import DesignerFeedback from '@/components/designer/DesignerFeedback';
 import DesignerAnalytics from '@/components/designer/DesignerAnalytics';
+import { useCountUp } from '@/hooks/useCountUp';
 
 interface DesignerImage {
   id: string;
@@ -35,6 +37,31 @@ interface DesignerImage {
     requester_name: string;
     platform_url: string;
   };
+}
+
+function CountdownBadge({ deadline, status }: { deadline: string; status: string }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+
+  const target = new Date(deadline).getTime();
+  const diff = target - now;
+  const isOverdue = diff < 0 && status !== 'completed';
+  const hours = Math.abs(Math.floor(diff / 3600000));
+  const days = Math.floor(hours / 24);
+  const remainHours = hours % 24;
+  const label = days > 0 ? `${days}d ${remainHours}h` : `${hours}h`;
+
+  return (
+    <span className={`inline-flex items-center gap-1 text-sm font-medium ${isOverdue ? 'text-destructive' : diff < 86400000 ? 'text-warning' : ''}`}>
+      <Clock className="h-3 w-3" />
+      <span className={isOverdue ? 'animate-pulse font-bold' : ''}>
+        {isOverdue ? `-${label}` : label}
+      </span>
+    </span>
+  );
 }
 
 export default function DesignerPanel() {
@@ -59,7 +86,6 @@ export default function DesignerPanel() {
     const { data: result, error } = await supabase.functions.invoke('designer-data', {
       body: { email: designerEmail },
     });
-
     if (error) {
       console.error(error);
       setImages([]);
@@ -73,7 +99,7 @@ export default function DesignerPanel() {
 
   const getStatusBadge = (img: DesignerImage) => {
     if (img.revision_count > 0 && img.status === 'in_progress') {
-      return <Badge className="bg-destructive/20 text-destructive border-0">Refação {img.revision_count}</Badge>;
+      return <Badge className="bg-destructive/20 text-destructive border-0 animate-badge-flip">Refação {img.revision_count}</Badge>;
     }
     const label = STATUS_LABELS[img.status as keyof typeof STATUS_LABELS] || img.status;
     const color = STATUS_COLORS[img.status as keyof typeof STATUS_COLORS] || 'bg-muted text-muted-foreground';
@@ -89,6 +115,12 @@ export default function DesignerPanel() {
     sessionStorage.removeItem('designer_email');
     navigate('/designer/login', { replace: true });
   };
+
+  const filtered = images.filter(img => {
+    if (filterStatus === 'all') return true;
+    if (filterStatus === 'revision') return img.revision_count > 0 && img.status === 'in_progress';
+    return img.status === filterStatus;
+  });
 
   return (
     <CursEducaLayout
@@ -108,206 +140,163 @@ export default function DesignerPanel() {
         ) : (
           <Tabs defaultValue="artes" className="w-full">
             <TabsList className="w-full grid grid-cols-3">
-              <TabsTrigger value="artes" className="gap-2">
-                <FileImage className="h-4 w-4" />
-                Minhas Artes
-              </TabsTrigger>
-              <TabsTrigger value="analytics" className="gap-2">
-                <BarChart3 className="h-4 w-4" />
-                Analytics
-              </TabsTrigger>
-              <TabsTrigger value="feedbacks" className="gap-2">
-                <MessageSquare className="h-4 w-4" />
-                Feedbacks
-              </TabsTrigger>
+              <TabsTrigger value="artes" className="gap-2"><FileImage className="h-4 w-4" />Minhas Artes</TabsTrigger>
+              <TabsTrigger value="analytics" className="gap-2"><BarChart3 className="h-4 w-4" />Analytics</TabsTrigger>
+              <TabsTrigger value="feedbacks" className="gap-2"><MessageSquare className="h-4 w-4" />Feedbacks</TabsTrigger>
             </TabsList>
 
             <TabsContent value="artes" className="mt-4">
-              {(() => {
-                const filtered = images.filter(img => {
-                  if (filterStatus === 'all') return true;
-                  if (filterStatus === 'revision') return img.revision_count > 0 && img.status === 'in_progress';
-                  return img.status === filterStatus;
-                });
-                return images.length === 0 ? (
-                  <Card>
-                    <CardContent className="pt-6 text-center">
-                      <FileImage className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                      <p className="text-muted-foreground">Nenhuma arte encontrada para este email.</p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <CardTitle className="text-lg">{filtered.length} de {images.length} arte{images.length !== 1 ? 's' : ''}</CardTitle>
-                        <Select value={filterStatus} onValueChange={setFilterStatus}>
-                          <SelectTrigger className="w-44 h-8 text-xs">
-                            <Filter className="h-3 w-3 mr-1" />
-                            <SelectValue placeholder="Filtrar status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">Todos os status</SelectItem>
-                            {Object.entries(STATUS_LABELS).map(([key, label]) => (
-                              <SelectItem key={key} value={key}>{label}</SelectItem>
-                            ))}
-                            <SelectItem value="revision">Em Refação</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                      {/* Desktop table */}
-                      <div className="hidden md:block">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Tipo de Arte</TableHead>
-                              <TableHead>Cliente</TableHead>
-                              <TableHead>Prazo</TableHead>
-                              <TableHead>Status</TableHead>
-                              <TableHead>Briefing</TableHead>
-                              <TableHead className="text-right">Ação</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {filtered.map(img => (
-                              <TableRow key={img.id}>
-                                <TableCell>
-                                  <div>
-                                    <p className="font-medium">{IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type}</p>
-                                    {img.product_name && <p className="text-xs text-muted-foreground">{img.product_name}</p>}
-                                    {(img as any).extra_info && (
-                                      <div className="mt-1 p-2 rounded bg-blue-500/10 border border-blue-500/20">
-                                         <p className="text-[10px] font-semibold text-blue-400 mb-0.5">📋 Informações do Mooni:</p>
-                                        <p className="text-xs text-muted-foreground whitespace-pre-wrap">{(img as any).extra_info}</p>
-                                      </div>
-                                    )}
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <a href={img.briefing_requests.platform_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
-                                    {img.briefing_requests.requester_name}
-                                    <ExternalLink className="h-3 w-3" />
-                                  </a>
-                                </TableCell>
-                                <TableCell>
-                                  {img.deadline ? (
-                                    <span className={`flex items-center gap-1 text-sm ${isOverdue(img.deadline) && img.status !== 'completed' ? 'text-destructive font-medium' : ''}`}>
-                                      <Clock className="h-3 w-3" />
-                                      {new Date(img.deadline).toLocaleDateString('pt-BR')}
-                                    </span>
-                                  ) : (
-                                    <span className="text-muted-foreground text-sm">—</span>
+              {images.length === 0 ? (
+                <Card>
+                  <CardContent className="pt-6 text-center">
+                    <FileImage className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-muted-foreground">Nenhuma arte encontrada para este email.</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <CardTitle className="text-lg">{filtered.length} de {images.length} arte{images.length !== 1 ? 's' : ''}</CardTitle>
+                      <Select value={filterStatus} onValueChange={setFilterStatus}>
+                        <SelectTrigger className="w-44 h-8 text-xs">
+                          <Filter className="h-3 w-3 mr-1" />
+                          <SelectValue placeholder="Filtrar status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos os status</SelectItem>
+                          {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                            <SelectItem key={key} value={key}>{label}</SelectItem>
+                          ))}
+                          <SelectItem value="revision">Em Refação</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    {/* Desktop table with stagger animation */}
+                    <div className="hidden md:block">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Tipo de Arte</TableHead>
+                            <TableHead>Cliente</TableHead>
+                            <TableHead>Prazo</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Briefing</TableHead>
+                            <TableHead className="text-right">Ação</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filtered.map((img, idx) => (
+                            <motion.tr
+                              key={img.id}
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: idx * 0.04, duration: 0.3 }}
+                              className="border-b transition-colors data-[state=selected]:bg-muted hover:bg-muted/50"
+                            >
+                              <TableCell>
+                                <div>
+                                  <p className="font-medium">{IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type}</p>
+                                  {img.product_name && <p className="text-xs text-muted-foreground">{img.product_name}</p>}
+                                  {img.extra_info && (
+                                    <div className="mt-1 p-2 rounded bg-blue-500/10 border border-blue-500/20">
+                                      <p className="text-[10px] font-semibold text-blue-400 mb-0.5">📋 Informações do Mooni:</p>
+                                      <p className="text-xs text-muted-foreground whitespace-pre-wrap">{img.extra_info}</p>
+                                    </div>
                                   )}
-                                </TableCell>
-                                <TableCell>{getStatusBadge(img)}</TableCell>
-                                <TableCell>
-                                  <Dialog>
-                                    <DialogTrigger asChild>
-                                      <Button variant="ghost" size="sm" className="gap-1 h-7 text-xs">
-                                        <Eye className="h-3 w-3" /> Ver
-                                      </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="max-w-md">
-                                      <DialogHeader>
-                                        <DialogTitle className="flex items-center gap-2">
-                                          <FileImage className="h-5 w-5" />
-                                          {IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type}
-                                          {img.product_name && ` — ${img.product_name}`}
-                                        </DialogTitle>
-                                      </DialogHeader>
-                                      <div className="space-y-3">
-                                        <div className="grid grid-cols-2 gap-3">
-                                          <div>
-                                            <p className="text-xs text-muted-foreground">Cliente</p>
-                                            <p className="text-sm font-medium">{img.briefing_requests.requester_name}</p>
-                                          </div>
-                                          <div>
-                                            <p className="text-xs text-muted-foreground">Prazo</p>
-                                            <p className="text-sm font-medium">{img.deadline ? new Date(img.deadline).toLocaleDateString('pt-BR') : 'Não definido'}</p>
-                                          </div>
-                                        </div>
-                                        <Separator />
-                                        {img.image_text && (
-                                          <div>
-                                            <p className="text-xs font-semibold text-muted-foreground mb-1">Texto da imagem</p>
-                                            <p className="text-sm">{img.image_text}</p>
-                                          </div>
-                                        )}
-                                        {img.font_suggestion && (
-                                          <div>
-                                            <p className="text-xs font-semibold text-muted-foreground mb-1">Sugestão de fonte</p>
-                                            <p className="text-sm">{img.font_suggestion}</p>
-                                          </div>
-                                        )}
-                                        {img.element_suggestion && (
-                                          <div>
-                                            <p className="text-xs font-semibold text-muted-foreground mb-1">Elemento sugerido</p>
-                                            <p className="text-sm">{img.element_suggestion}</p>
-                                          </div>
-                                        )}
-                                        {img.professional_photo_url && (
-                                          <div>
-                                            <p className="text-xs font-semibold text-muted-foreground mb-1">Foto profissional</p>
-                                            <a href={img.professional_photo_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1">
-                                              {img.professional_photo_url} <ExternalLink className="h-3 w-3" />
-                                            </a>
-                                          </div>
-                                        )}
-                                        {img.orientation && (
-                                          <div>
-                                            <p className="text-xs font-semibold text-muted-foreground mb-1">Orientação</p>
-                                            <p className="text-sm">{img.orientation}</p>
-                                          </div>
-                                        )}
-                                        {img.observations && (
-                                          <div>
-                                            <p className="text-xs font-semibold text-muted-foreground mb-1">Observações</p>
-                                            <p className="text-sm">{img.observations}</p>
-                                          </div>
-                                        )}
-                                        {img.extra_info && (
-                                          <div>
-                                            <p className="text-xs font-semibold text-muted-foreground mb-1">📋 Informações do Mooni</p>
-                                            <p className="text-sm whitespace-pre-wrap">{img.extra_info}</p>
-                                          </div>
-                                        )}
-                                        {!img.image_text && !img.font_suggestion && !img.element_suggestion && !img.observations && !img.extra_info && (
-                                          <p className="text-sm text-muted-foreground text-center py-4">Nenhum detalhe de briefing disponível</p>
-                                        )}
-                                      </div>
-                                    </DialogContent>
-                                  </Dialog>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  {img.delivery_token ? (
-                                    <Button size="sm" variant="outline" asChild>
-                                      <Link to={`/delivery/${img.delivery_token}`}>Entregar</Link>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <a href={img.briefing_requests.platform_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
+                                  {img.briefing_requests.requester_name}
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              </TableCell>
+                              <TableCell>
+                                {img.deadline ? (
+                                  <CountdownBadge deadline={img.deadline} status={img.status} />
+                                ) : (
+                                  <span className="text-muted-foreground text-sm">—</span>
+                                )}
+                              </TableCell>
+                              <TableCell>{getStatusBadge(img)}</TableCell>
+                              <TableCell>
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="gap-1 h-7 text-xs">
+                                      <Eye className="h-3 w-3" /> Ver
                                     </Button>
-                                  ) : (
-                                    <span className="text-xs text-muted-foreground">Sem link</span>
-                                  )}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
+                                  </DialogTrigger>
+                                  <DialogContent className="max-w-md">
+                                    <DialogHeader>
+                                      <DialogTitle className="flex items-center gap-2">
+                                        <FileImage className="h-5 w-5" />
+                                        {IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type}
+                                        {img.product_name && ` — ${img.product_name}`}
+                                      </DialogTitle>
+                                    </DialogHeader>
+                                    <div className="space-y-3">
+                                      <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                          <p className="text-xs text-muted-foreground">Cliente</p>
+                                          <p className="text-sm font-medium">{img.briefing_requests.requester_name}</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-xs text-muted-foreground">Prazo</p>
+                                          <p className="text-sm font-medium">{img.deadline ? new Date(img.deadline).toLocaleDateString('pt-BR') : 'Não definido'}</p>
+                                        </div>
+                                      </div>
+                                      <Separator />
+                                      {img.image_text && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Texto da imagem</p><p className="text-sm">{img.image_text}</p></div>}
+                                      {img.font_suggestion && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Sugestão de fonte</p><p className="text-sm">{img.font_suggestion}</p></div>}
+                                      {img.element_suggestion && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Elemento sugerido</p><p className="text-sm">{img.element_suggestion}</p></div>}
+                                      {img.professional_photo_url && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Foto profissional</p><a href={img.professional_photo_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1">{img.professional_photo_url} <ExternalLink className="h-3 w-3" /></a></div>}
+                                      {img.orientation && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Orientação</p><p className="text-sm">{img.orientation}</p></div>}
+                                      {img.observations && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Observações</p><p className="text-sm">{img.observations}</p></div>}
+                                      {img.extra_info && <div><p className="text-xs font-semibold text-muted-foreground mb-1">📋 Informações do Mooni</p><p className="text-sm whitespace-pre-wrap">{img.extra_info}</p></div>}
+                                      {!img.image_text && !img.font_suggestion && !img.element_suggestion && !img.observations && !img.extra_info && (
+                                        <p className="text-sm text-muted-foreground text-center py-4">Nenhum detalhe de briefing disponível</p>
+                                      )}
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {img.delivery_token ? (
+                                  <Button size="sm" variant="outline" asChild>
+                                    <Link to={`/delivery/${img.delivery_token}`}>Entregar</Link>
+                                  </Button>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">Sem link</span>
+                                )}
+                              </TableCell>
+                            </motion.tr>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
 
-                      {/* Mobile cards */}
-                      <div className="md:hidden space-y-3 p-4">
-                        {filtered.map(img => (
-                          <Card key={img.id} className="border">
+                    {/* Mobile cards with stagger */}
+                    <div className="md:hidden space-y-3 p-4">
+                      {filtered.map((img, idx) => (
+                        <motion.div
+                          key={img.id}
+                          initial={{ opacity: 0, y: 12 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.05, duration: 0.3 }}
+                        >
+                          <Card className={`border ${isOverdue(img.deadline) && img.status !== 'completed' ? 'animate-sla-pulse border-destructive/30' : ''}`}>
                             <CardContent className="p-4 space-y-3">
                               <div className="flex justify-between items-start">
                                 <div>
                                   <p className="font-medium">{IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type}</p>
                                   {img.product_name && <p className="text-xs text-muted-foreground">{img.product_name}</p>}
-                                  {(img as any).extra_info && (
+                                  {img.extra_info && (
                                     <div className="mt-1 p-2 rounded bg-blue-500/10 border border-blue-500/20">
                                       <p className="text-[10px] font-semibold text-blue-400 mb-0.5">📋 Informações do Mooni:</p>
-                                      <p className="text-xs text-muted-foreground whitespace-pre-wrap">{(img as any).extra_info}</p>
+                                      <p className="text-xs text-muted-foreground whitespace-pre-wrap">{img.extra_info}</p>
                                     </div>
                                   )}
                                 </div>
@@ -315,12 +304,7 @@ export default function DesignerPanel() {
                               </div>
                               <div className="flex justify-between text-sm">
                                 <span className="text-muted-foreground">{img.briefing_requests.requester_name}</span>
-                                {img.deadline && (
-                                  <span className={`flex items-center gap-1 ${isOverdue(img.deadline) && img.status !== 'completed' ? 'text-destructive font-medium' : ''}`}>
-                                    <Clock className="h-3 w-3" />
-                                    {new Date(img.deadline).toLocaleDateString('pt-BR')}
-                                  </span>
-                                )}
+                                {img.deadline && <CountdownBadge deadline={img.deadline} status={img.status} />}
                               </div>
                               {(img.image_text || img.observations || img.font_suggestion || img.element_suggestion) && (
                                 <div className="space-y-1 p-2 rounded-lg bg-muted/30 border border-border">
@@ -337,12 +321,12 @@ export default function DesignerPanel() {
                               )}
                             </CardContent>
                           </Card>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })()}
+                        </motion.div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             <TabsContent value="analytics" className="mt-4">
