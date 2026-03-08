@@ -463,17 +463,18 @@ export default function AplicativosPage() {
     return cols;
   }, [activeClientes, kanbanFilter, clientesComFaseAtrasada]);
 
-  // Internal pendencies grouped by client
+  // Internal pendencies grouped by client (exclude cancelled)
   const internalPendencies = useMemo(() => {
+    const activeClienteIds = new Set(activeClientes.map(c => c.id));
     const clientMap = new Map<string, typeof allChecklist>();
-    allChecklist.forEach(item => {
+    allChecklist.filter(item => activeClienteIds.has(item.cliente_id)).forEach(item => {
       const existing = clientMap.get(item.cliente_id) || [];
       existing.push(item);
       clientMap.set(item.cliente_id, existing);
     });
 
     return Array.from(clientMap.entries()).map(([clienteId, items]) => {
-      const cliente = clientes.find(c => c.id === clienteId);
+      const cliente = activeClientes.find(c => c.id === clienteId);
       return { clienteId, cliente, items };
     }).filter(g => {
       if (!g.cliente) return false;
