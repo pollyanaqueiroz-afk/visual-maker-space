@@ -1218,26 +1218,24 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     }));
 
     return (
-      <div className="flex items-center gap-0 pb-8">
-        <div className="shrink-0 w-36 flex items-center justify-end pr-3 gap-1.5">
-          <span className="text-base">{emoji}</span>
-          <span className="text-white text-sm font-bold">{plataforma === 'google' ? 'Google Play' : 'Apple'}</span>
-        </div>
+      <div className="flex items-center gap-2 pb-8">
+        <span className="shrink-0 text-base">{emoji}</span>
+        <span className="shrink-0 text-white text-sm font-bold min-w-[85px]">{plataforma === 'google' ? 'Google Play' : 'Apple'}</span>
         <div className="relative flex items-center flex-1 min-w-0 pt-2 pb-10">
           {/* Connecting line */}
-          <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-1.5 bg-white/15 rounded-full" />
+          <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-1.5 bg-white/15 rounded-full z-0" />
           {/* Progress line */}
           {(() => {
             const completedCount = trackFases.filter(({ fase }) => fase?.status === 'concluida').length;
             const progressWidth = trackFases.length > 1 ? `${(completedCount / (trackFases.length - 1)) * 100}%` : '0%';
-            return <div className="absolute top-1/2 -translate-y-1/2 left-0 h-1.5 bg-green-500 rounded-full transition-all duration-500" style={{ width: progressWidth }} />;
+            return <div className="absolute top-1/2 -translate-y-1/2 left-0 h-1.5 bg-green-500 rounded-full transition-all duration-500 z-0" style={{ width: progressWidth }} />;
           })()}
-          <div className="relative flex w-full px-4">
+          <div className="relative flex w-full px-4 z-10">
             {trackFases.map(({ num, fase }) => {
               const status = fase?.status || 'bloqueada';
               const isSelected = selectedTimelineFase?.fase === num && selectedTimelineFase?.plataforma === plataforma;
               return (
-                <div key={num} className="flex-1 flex flex-col items-center relative z-10">
+                <div key={num} className="flex-1 flex flex-col items-center relative">
                   <button
                     onClick={() => setSelectedTimelineFase(isSelected ? null : { fase: num, plataforma })}
                     className={`relative flex flex-col items-center cursor-pointer hover:scale-105 transition-all ${status === 'bloqueada' ? 'opacity-60' : ''} ${isSelected ? 'scale-110' : ''}`}
