@@ -243,13 +243,18 @@ Deno.serve(async (req) => {
               .limit(1);
 
             if (deliveries && deliveries.length > 0) {
-              await supabase.from("brand_assets").insert({
-                file_url: deliveries[0].file_url,
-                platform_url: platformUrl,
-                briefing_image_id: image_id,
-                source: "approved_delivery",
-                file_name: `${imgData.image_type}${imgData.product_name ? ` — ${imgData.product_name}` : ""}`,
-              });
+              try {
+                await supabase.from("brand_assets").insert({
+                  file_url: deliveries[0].file_url,
+                  platform_url: platformUrl,
+                  briefing_image_id: image_id,
+                  source: "approved_delivery",
+                  file_name: `${imgData.image_type}${imgData.product_name ? ` — ${imgData.product_name}` : ""}`,
+                });
+              } catch (assetErr) {
+                // Ignore duplicate - idempotent operation
+                console.log("Brand asset already exists or insert failed:", assetErr);
+              }
             }
           }
         }
