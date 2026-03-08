@@ -531,7 +531,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
 
   // ── Loading ──
   if (isLoading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-white/40" /></div>;
-  if (!cliente) return <div className="text-center py-12 text-white/50">Dados não encontrados</div>;
+  if (!cliente) return <div className="text-center py-12 text-white/60">Dados não encontrados</div>;
 
   // ── Timeline circle renderer ──
   const renderCircle = (faseNum: number, fase: any, plataforma?: string) => {
