@@ -204,17 +204,14 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
 
     try {
       await supabase.functions.invoke('delivery-data', {
-        body: { action: 'update_status', image_id: currentImage.id, status: 'completed' },
-      });
-
-      await supabase
-        .from('briefing_reviews')
-        .insert({
-          briefing_image_id: currentImage.id,
-          action: 'approved',
+        body: {
+          action: 'update_status',
+          image_id: currentImage.id,
+          status: 'completed',
           reviewed_by: email,
           reviewer_comments: null,
-        });
+        },
+      });
 
       // Brand asset archiving is now handled server-side in the delivery-data edge function
 
