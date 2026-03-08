@@ -993,10 +993,38 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
               scale: direction ? 0.85 : 1,
               y: 0,
             }}
-            exit={{ opacity: 0 }}
+            exit={{ opacity: 0, scale: 0.8 }}
             transition={{ duration: 0.35, ease: 'easeOut' }}
-            className="w-full max-w-lg"
+            className="w-full max-w-lg relative"
           >
+            {/* APROVADO / REFAÇÃO overlay during swipe */}
+            <AnimatePresence>
+              {direction === 'right' && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
+                >
+                  <div className="bg-primary/90 text-primary-foreground px-8 py-4 rounded-2xl text-3xl font-extrabold tracking-wider rotate-[-15deg] border-4 border-primary-foreground/30 shadow-2xl">
+                    APROVADO ✓
+                  </div>
+                </motion.div>
+              )}
+              {direction === 'left' && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
+                >
+                  <div className="bg-destructive/90 text-destructive-foreground px-8 py-4 rounded-2xl text-3xl font-extrabold tracking-wider rotate-[15deg] border-4 border-destructive-foreground/30 shadow-2xl">
+                    REFAÇÃO ✗
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <div className={`relative ${cardBgSolid} border rounded-3xl shadow-2xl overflow-hidden`}>
               {/* Top accent */}
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary/60 to-primary z-10" />
