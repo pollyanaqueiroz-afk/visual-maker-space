@@ -1280,7 +1280,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             <div className="shrink-0 w-full md:w-64 space-y-2">
               <div>
                 <div className="flex justify-between text-xs mb-1">
-                  <span className="text-white/60">Suas tarefas</span>
+                  <span className="text-white/70">Suas tarefas</span>
                   <span className="font-bold text-white">{clientPctBar}%{clientPctBar === 100 && ' ✅'}</span>
                 </div>
                 <div className="relative h-2 rounded-full bg-white/10 overflow-hidden">
