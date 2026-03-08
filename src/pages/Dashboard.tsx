@@ -1404,6 +1404,92 @@ export default function Dashboard() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Mockup Solicitation Dialog */}
+        <Dialog open={mockupSolicitationOpen} onOpenChange={setMockupSolicitationOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Smartphone className="h-5 w-5 text-primary" />
+                Solicitar Mockup de Aplicativo
+              </DialogTitle>
+              <p className="text-sm text-muted-foreground">
+                Crie uma solicitação de mockup vinculada a um cliente. A arte seguirá o fluxo normal de produção e validação.
+              </p>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="relative">
+                <Label className="text-sm">URL da plataforma do cliente *</Label>
+                <Input
+                  placeholder="https://cliente.curseduca.pro"
+                  value={mockupClientUrl}
+                  onChange={(e) => {
+                    setMockupClientUrl(e.target.value);
+                    const q = e.target.value.toLowerCase();
+                    if (q.length >= 2) {
+                      setMockupClientSuggestions(allClientUrls.filter(u => u.toLowerCase().includes(q)).slice(0, 5));
+                    } else {
+                      setMockupClientSuggestions([]);
+                    }
+                  }}
+                />
+                {mockupClientSuggestions.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 border rounded-md bg-popover shadow-md">
+                    {mockupClientSuggestions.map(url => (
+                      <button
+                        key={url}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-accent truncate"
+                        onClick={() => {
+                          setMockupClientUrl(url);
+                          setMockupClientSuggestions([]);
+                        }}
+                      >
+                        {url}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  A solicitação ficará vinculada a esta URL.
+                </p>
+              </div>
+
+              <div>
+                <Label className="text-sm">Observações para o designer</Label>
+                <Textarea
+                  placeholder="Cores, estilo visual, referências..."
+                  value={mockupObservations}
+                  onChange={(e) => setMockupObservations(e.target.value)}
+                  className="min-h-[80px]"
+                />
+              </div>
+
+              <div className="rounded-lg bg-muted/50 p-3 space-y-1">
+                <p className="text-xs font-semibold text-foreground">O que acontece ao solicitar:</p>
+                <ul className="text-xs text-muted-foreground space-y-0.5">
+                  <li>• Um briefing será criado com tipo "Mockup do Aplicativo"</li>
+                  <li>• Aparecerá na tabela de artes e no Kanban como "Pendente"</li>
+                  <li>• Pode ser alocado para um designer normalmente</li>
+                  <li>• O cliente poderá validar a arte pelo fluxo padrão</li>
+                </ul>
+              </div>
+
+              <div className="flex gap-3 justify-end pt-2">
+                <Button variant="outline" onClick={() => { setMockupSolicitationOpen(false); setMockupClientUrl(''); setMockupObservations(''); }}>
+                  Cancelar
+                </Button>
+                <Button
+                  disabled={mockupSubmitting || !mockupClientUrl.trim()}
+                  onClick={handleMockupSolicitation}
+                  className="gap-2"
+                >
+                  {mockupSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Smartphone className="h-4 w-4" />}
+                  Criar Solicitação
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
   );
 }
