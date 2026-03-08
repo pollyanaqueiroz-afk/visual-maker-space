@@ -943,7 +943,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             </div>
           </div>
 
-          <Progress value={progress} className="h-1.5" />
+          <Progress value={progress} className="h-2" />
 
           {/* Estimate */}
           {showEstimate && fase.duracao_dias_estimada && (
