@@ -427,7 +427,8 @@ export default function Dashboard() {
       if (!img) return false;
       return (img.platform_url || '').toLowerCase().includes(q) ||
         (img.requester_name || '').toLowerCase().includes(q) ||
-        (img.product_name || '').toLowerCase().includes(q);
+        (img.product_name || '').toLowerCase().includes(q) ||
+        (img.assigned_email || '').toLowerCase().includes(q);
     });
   })();
 
@@ -439,7 +440,8 @@ export default function Dashboard() {
       if (!img) return false;
       return (img.platform_url || '').toLowerCase().includes(q) ||
         (img.requester_name || '').toLowerCase().includes(q) ||
-        (img.product_name || '').toLowerCase().includes(q);
+        (img.product_name || '').toLowerCase().includes(q) ||
+        (img.assigned_email || '').toLowerCase().includes(q);
     });
   })();
 
