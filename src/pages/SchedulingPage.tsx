@@ -349,7 +349,7 @@ export default function SchedulingPage() {
       };
 
       if (editingId) {
-        const { error } = await (supabase.from('meetings' as any).update(payload).eq('id', editingId) as any);
+        const { error } = await supabase.from('meetings').update(payload).eq('id', editingId);
         if (error) throw error;
         toast.success('Reunião atualizada!');
       } else {
