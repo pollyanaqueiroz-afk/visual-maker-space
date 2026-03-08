@@ -1218,7 +1218,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     }));
 
     return (
-      <div className="flex items-center gap-0">
+      <div className="flex items-center gap-0 pb-8">
         <div className="shrink-0 w-36 flex items-center justify-end pr-3 gap-1.5">
           <span className="text-base">{emoji}</span>
           <span className="text-white text-sm font-bold">{plataforma === 'google' ? 'Google Play' : 'Apple'}</span>
