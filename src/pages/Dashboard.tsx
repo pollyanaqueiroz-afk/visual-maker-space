@@ -106,6 +106,18 @@ export default function Dashboard() {
   const canAssign = hasPermission('briefings.assign') || isGerenteImpl || canManage;
   const canChangeAssignee = hasPermission('briefings.change_assignee') || isGerenteImpl || canManage;
   const queryClient = useQueryClient();
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterType, setFilterType] = useState<string>('all');
+  const [filterClient, setFilterClient] = useState<string>('all');
+  const [filterOverdue, setFilterOverdue] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
+  const [mooniBlockDialogOpen, setMooniBlockDialogOpen] = useState(false);
+  const [mooniBlockClientName, setMooniBlockClientName] = useState('');
+  const topScrollRef = useRef<HTMLDivElement>(null);
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+  const topScrollInnerRef = useRef<HTMLDivElement>(null);
 
   const { data: images = [], isLoading: loadingImages } = useQuery({
     queryKey: ['briefing-images'],
