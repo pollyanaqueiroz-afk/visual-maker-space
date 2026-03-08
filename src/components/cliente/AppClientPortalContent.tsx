@@ -1328,7 +1328,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                       const f0 = fases.find((f: any) => f.numero === 0);
                       const s = f0?.status || 'bloqueada';
                       return s === 'concluida' ? <CheckCircle2 className="h-6 w-6 text-green-400" /> :
-                        s === 'bloqueada' ? <Lock className="h-5 w-5 text-white/30" /> :
+                        s === 'bloqueada' ? <Lock className="h-5 w-5 text-white/50" /> :
                         s === 'atrasada' ? <AlertTriangle className="h-5 w-5 text-red-400" /> :
                         <span className="text-sm font-bold text-primary">0</span>;
                     })()}
