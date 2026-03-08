@@ -1273,33 +1273,41 @@ export default function AppClientPortalContent({ clienteId }: Props) {
                 <button onClick={() => setSelectedTimelineFase(
                   selectedTimelineFase?.fase === 0 && !selectedTimelineFase?.plataforma ? null : { fase: 0 }
                 )}>
-                  <div className={`relative flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors ${
+                  <div className={`relative flex items-center justify-center w-12 h-12 rounded-full transition-colors ${
                     (() => {
                       const f0 = fases.find((f: any) => f.numero === 0);
                       const s = f0?.status || 'bloqueada';
-                      return s === 'concluida' ? 'bg-green-500/20 border-green-500' :
-                        s === 'em_andamento' ? 'bg-[#1E293B] border-primary' :
-                        s === 'atrasada' ? 'bg-red-500/10 border-red-500' :
-                        'bg-white/5 border-white/10';
+                      return s === 'concluida' ? 'bg-green-500/30 ring-2 ring-green-500/50' :
+                        s === 'em_andamento' ? 'bg-primary/30 ring-2 ring-primary' :
+                        s === 'atrasada' ? 'bg-red-500/30 ring-2 ring-red-500/50' :
+                        'bg-white/10';
                     })()
                   } ${selectedTimelineFase?.fase === 0 && !selectedTimelineFase?.plataforma ? 'ring-2 ring-primary/50' : ''}`}>
                     {(() => {
                       const f0 = fases.find((f: any) => f.numero === 0);
                       const s = f0?.status || 'bloqueada';
-                      return s === 'concluida' ? <CheckCircle2 className="h-4 w-4 text-green-400" /> :
-                        s === 'bloqueada' ? <Lock className="h-3.5 w-3.5 text-white/20" /> :
-                        s === 'atrasada' ? <AlertTriangle className="h-3.5 w-3.5 text-red-400" /> :
-                        <span className="text-xs font-bold text-primary">0</span>;
+                      return s === 'concluida' ? <CheckCircle2 className="h-5 w-5 text-green-400" /> :
+                        s === 'bloqueada' ? <Lock className="h-4 w-4 text-white/30" /> :
+                        s === 'atrasada' ? <AlertTriangle className="h-4 w-4 text-red-400" /> :
+                        <span className="text-sm font-bold text-primary">0</span>;
                     })()}
                   </div>
                 </button>
-                <p className="text-[8px] mt-1 text-center leading-tight text-white/40 max-w-[55px]">Pré-<br/>Requisitos</p>
+                <p className={`text-[9px] mt-1 text-center leading-tight max-w-[60px] ${
+                  (() => {
+                    const f0 = fases.find((f: any) => f.numero === 0);
+                    const s = f0?.status || 'bloqueada';
+                    return s === 'concluida' ? 'text-green-400/80' :
+                      s === 'em_andamento' ? 'text-primary font-semibold' :
+                      'text-white/30';
+                  })()
+                }`}>Pré-<br/>Requisitos</p>
               </div>
 
               {/* Bifurcation connector */}
               <div className="flex flex-col items-start shrink-0 self-center">
-                <div className="w-6 border-b-2 border-l-2 border-white/10 h-5 rounded-bl-lg" />
-                <div className="w-6 border-t-2 border-l-2 border-white/10 h-5 rounded-tl-lg" />
+                <div className="w-6 border-b-2 border-l-2 border-white/20 h-5 rounded-bl-lg" />
+                <div className="w-6 border-t-2 border-l-2 border-white/20 h-5 rounded-tl-lg" />
               </div>
 
               {/* Two tracks stacked */}
