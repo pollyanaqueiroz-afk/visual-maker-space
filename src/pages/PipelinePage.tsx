@@ -54,12 +54,17 @@ function RunStatusBadge({ status }: { status: string }) {
 }
 
 // ── KPI Card ──
-function KpiCard({ icon: Icon, label, value, subtitle, bg, iconColor, loading }: {
+function KpiCard({ icon: Icon, label, value, subtitle, bg, iconColor, loading, onClick }: {
   icon: React.ElementType; label: string; value: string | number;
   subtitle?: string; bg: string; iconColor: string; loading: boolean;
+  onClick?: () => void;
 }) {
   return (
-    <Card className="border-0 shadow-sm" style={{ backgroundColor: bg }}>
+    <Card
+      className={`border-0 shadow-sm transition-all duration-200 ${onClick ? 'cursor-pointer hover:scale-[1.03] hover:shadow-md ring-0 hover:ring-2 hover:ring-primary/20' : ''}`}
+      style={{ backgroundColor: bg }}
+      onClick={onClick}
+    >
       <CardContent className="flex items-center gap-4 p-5">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: `${iconColor}20` }}>
           <Icon className="h-5 w-5" style={{ color: iconColor }} />
@@ -70,6 +75,7 @@ function KpiCard({ icon: Icon, label, value, subtitle, bg, iconColor, loading }:
             <p className="text-2xl font-bold tracking-tight">{value}</p>
           )}
           {subtitle && !loading && <p className="text-[11px] text-muted-foreground mt-0.5">{subtitle}</p>}
+          {onClick && !loading && <p className="text-[10px] text-primary/60 mt-0.5">Clique para ver detalhes →</p>}
         </div>
       </CardContent>
     </Card>
