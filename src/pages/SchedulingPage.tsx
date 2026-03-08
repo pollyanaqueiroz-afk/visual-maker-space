@@ -1411,9 +1411,32 @@ export default function SchedulingPage() {
                               </div>
                             )}
                             {m.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{m.description}</p>}
-                            {m.reschedule_reason && (
-                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
-                                <RefreshCw className="h-3 w-3" /><span>Reagendado: {m.reschedule_reason}</span>
+                            {(rescheduleHistory[m.id]?.length > 0 || m.reschedule_reason) && (
+                              <div className="mt-1 space-y-1">
+                                <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                                  <RefreshCw className="h-3 w-3" />
+                                  <span>Histórico de reagendamentos ({rescheduleHistory[m.id]?.length || 1})</span>
+                                </div>
+                                {rescheduleHistory[m.id]?.length > 0 ? (
+                                  <div className="ml-4 space-y-1 border-l-2 border-muted pl-3">
+                                    {rescheduleHistory[m.id].slice(0, 3).map((r, idx) => (
+                                      <div key={idx} className="text-[10px] text-muted-foreground">
+                                        <span className="font-medium text-foreground/70">
+                                          {format(parseISO(r.previous_date), 'dd/MM')} {r.previous_time?.slice(0,5)} → {format(parseISO(r.new_date), 'dd/MM')} {r.new_time?.slice(0,5)}
+                                        </span>
+                                        <span className="ml-1.5">— {r.reason}</span>
+                                        <span className="ml-1.5 text-muted-foreground/50">({format(parseISO(r.created_at), 'dd/MM/yy')})</span>
+                                      </div>
+                                    ))}
+                                    {rescheduleHistory[m.id].length > 3 && (
+                                      <p className="text-[10px] text-muted-foreground/50">+{rescheduleHistory[m.id].length - 3} mais</p>
+                                    )}
+                                  </div>
+                                ) : m.reschedule_reason ? (
+                                  <div className="ml-4 text-[10px] text-muted-foreground border-l-2 border-muted pl-3">
+                                    {m.reschedule_reason}
+                                  </div>
+                                ) : null}
                               </div>
                             )}
                             {m.status === 'completed' && (
