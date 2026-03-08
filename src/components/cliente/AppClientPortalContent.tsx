@@ -1191,7 +1191,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           </AnimatePresence>
 
           {/* Two tracks */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="flex flex-col md:flex-row gap-6">
             {renderTrack('google', 'Google Play', '🤖', 'border-blue-500/20 bg-blue-500/5')}
             {renderTrack('apple', 'Apple', '🍎', 'border-purple-500/20 bg-purple-500/5')}
           </div>
