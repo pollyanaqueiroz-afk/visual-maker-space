@@ -361,7 +361,13 @@ export default function ClienteHome() {
         </motion.div>
 
         {/* Artes status */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.18, type: 'spring', stiffness: 100, damping: 14 }}
+          whileHover={{ scale: 1.015, rotateX: 2, rotateY: 1 }}
+          style={{ perspective: 800 }}
+        >
           <Card className="bg-[#1E293B] border-white/10 cursor-pointer hover:border-white/20 transition-colors"
             onClick={() => navigate('/cliente/artes')}>
             <CardContent className="p-4 flex items-center gap-4">
