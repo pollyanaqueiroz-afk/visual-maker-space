@@ -1221,19 +1221,27 @@ export default function Dashboard() {
               </Card>
             </div>
 
-            {/* Full review history */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Histórico de Revisões</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  Histórico de Revisões
+                  <Badge variant="outline" className="text-xs">{filteredReviews.length}</Badge>
+                  {reviewSearch && filteredReviews.length !== reviews.length && (
+                    <span className="text-xs text-muted-foreground font-normal">de {reviews.length}</span>
+                  )}
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                {reviews.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">Nenhuma revisão registrada</p>
+                {filteredReviews.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    {reviewSearch ? `Nenhuma revisão encontrada para "${reviewSearch}"` : 'Nenhuma revisão registrada'}
+                  </p>
                 ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Data</TableHead>
+                        <TableHead>Cliente</TableHead>
                         <TableHead>Arte</TableHead>
                         <TableHead>Ação</TableHead>
                         <TableHead>Revisor</TableHead>
@@ -1241,11 +1249,19 @@ export default function Dashboard() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {reviews.slice(0, 50).map(rev => {
+                      {filteredReviews.slice(0, 50).map(rev => {
                         const img = images.find(i => i.id === rev.briefing_image_id);
                         return (
                           <TableRow key={rev.id}>
                             <TableCell className="text-sm">{new Date(rev.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                            <TableCell className="text-sm">
+                              {img ? (
+                                <div>
+                                  <p className="font-medium text-xs">{img.requester_name || '—'}</p>
+                                  <p className="text-[10px] text-muted-foreground truncate max-w-[150px]">{img.platform_url || ''}</p>
+                                </div>
+                              ) : '—'}
+                            </TableCell>
                             <TableCell className="text-sm">
                               {img ? imageLabel(img) : rev.briefing_image_id.slice(0, 8)}
                             </TableCell>
