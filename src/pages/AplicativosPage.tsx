@@ -194,14 +194,14 @@ export default function AplicativosPage() {
     },
   });
 
-  const handleMuninSave = async () => {
-    if (!muninText.trim() || !muninItemId) return;
-    setMuninSaving(true);
+  const handleMooniSave = async () => {
+    if (!mooniText.trim() || !mooniItemId) return;
+    setMooniSaving(true);
     try {
       const { data: requests } = await supabase
         .from('briefing_requests')
         .select('id, briefing_images(id, image_type)')
-        .eq('platform_url', muninClientEmpresa);
+        .eq('platform_url', mooniClientEmpresa);
 
       const mockupImageIds = (requests || [])
         .flatMap((r: any) => r.briefing_images || [])
@@ -210,7 +210,7 @@ export default function AplicativosPage() {
 
       for (const imgId of mockupImageIds) {
         await supabase.from('briefing_images')
-          .update({ extra_info: muninText.trim() })
+          .update({ extra_info: mooniText.trim() })
           .eq('id', imgId);
       }
 
@@ -218,21 +218,21 @@ export default function AplicativosPage() {
         feito: true,
         feito_em: new Date().toISOString(),
         feito_por: 'equipe_interna',
-        dados_preenchidos: muninText.trim(),
-      }).eq('id', muninItemId);
+        dados_preenchidos: mooniText.trim(),
+      }).eq('id', mooniItemId);
 
       queryClient.invalidateQueries({ queryKey: ['app-checklist-full'] });
       queryClient.invalidateQueries({ queryKey: ['app-checklist-counts'] });
       queryClient.invalidateQueries({ queryKey: ['app-fases-all'] });
       queryClient.invalidateQueries({ queryKey: ['app-clientes'] });
-      setMuninDialogOpen(false);
-      setMuninText('');
-      setMuninItemId(null);
-      toast.success('Munin criado com sucesso! As informações foram enviadas para as artes de mockup. ✅');
+      setMooniDialogOpen(false);
+      setMooniText('');
+      setMooniItemId(null);
+      toast.success('Mooni criado com sucesso! As informações foram enviadas para as artes de mockup. ✅');
     } catch (e: any) {
-      toast.error(e.message || 'Erro ao salvar Munin');
+      toast.error(e.message || 'Erro ao salvar Mooni');
     } finally {
-      setMuninSaving(false);
+      setMooniSaving(false);
     }
   };
 
