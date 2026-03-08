@@ -562,8 +562,8 @@ export default function AppClientPortalContent({ clienteId }: Props) {
           {/* Active glow effects */}
           {isActive && (
             <>
-              <div className="absolute -inset-3 rounded-full bg-primary/15 animate-ping" style={{ animationDuration: '3s' }} />
-              <div className="absolute -inset-2 rounded-full bg-primary/10 animate-pulse" />
+              <div className="absolute -inset-3 rounded-full bg-blue-500/20 animate-ping" style={{ animationDuration: '3s' }} />
+              <div className="absolute -inset-2 rounded-full bg-blue-500/10 animate-pulse" />
             </>
           )}
           {/* Progress ring */}
