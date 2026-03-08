@@ -64,7 +64,7 @@ export default function GlobalAnalytics() {
       const [imgResult, delResult, revResult] = await Promise.all([
         supabase
           .from('briefing_images')
-          .select('id, status, deadline, created_at, revision_count, price_per_art, image_type, assigned_email')
+          .select('id, status, deadline, created_at, revision_count, price_per_art, image_type, assigned_email, briefing_requests!inner(platform_url, requester_name)')
           .order('created_at', { ascending: true }),
         supabase
           .from('briefing_deliveries')
