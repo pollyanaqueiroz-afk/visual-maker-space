@@ -227,6 +227,26 @@ export default function Dashboard() {
     }
   };
 
+  const deleteImage = async (id: string, label: string) => {
+    if (!canManage) return;
+    if (!confirm(`Excluir arte "${label}"?`)) return;
+    const { error } = await supabase.from('briefing_images').delete().eq('id', id);
+    if (error) { toast.error('Erro ao excluir'); return; }
+    // Audit
+    await (supabase.from('briefing_reviews' as any).insert({ briefing_image_id: id, action: 'deleted', reviewed_by: user?.email || 'admin', reviewer_comments: `Arte excluída por ${user?.email}` }) as any);
+    toast.success('Arte excluída');
+    fetchData();
+  };
+
+  const revertApproval = async (id: string, targetStatus: RequestStatus) => {
+    if (!canManage) return;
+    const { error } = await supabase.from('briefing_images').update({ status: targetStatus } as any).eq('id', id);
+    if (error) { toast.error('Erro ao reverter'); return; }
+    await (supabase.from('briefing_reviews' as any).insert({ briefing_image_id: id, action: `reverted_to_${targetStatus}`, reviewed_by: user?.email || 'admin', reviewer_comments: `Status revertido para ${STATUS_LABELS[targetStatus]} por ${user?.email}` }) as any);
+    toast.success(`Status revertido para ${STATUS_LABELS[targetStatus]}`);
+    fetchData();
+  };
+
   const handleBulkStatusChange = async (status: RequestStatus) => {
     const ids = Array.from(selectedIds);
     const { error } = await supabase
