@@ -423,6 +423,22 @@ export default function Dashboard() {
     return Array.from(urls).sort();
   }, [images]);
 
+  const designerWorkload = useMemo(() => {
+    const map: Record<string, { email: string; pending: number; inProgress: number; review: number; completed: number; overdue: number; totalActive: number }> = {};
+    images.filter(i => i.assigned_email).forEach(img => {
+      const email = img.assigned_email!;
+      if (!map[email]) map[email] = { email, pending: 0, inProgress: 0, review: 0, completed: 0, overdue: 0, totalActive: 0 };
+      if (img.status === 'pending') { map[email].pending++; map[email].totalActive++; }
+      if (img.status === 'in_progress') { map[email].inProgress++; map[email].totalActive++; }
+      if (img.status === 'review') { map[email].review++; map[email].totalActive++; }
+      if (img.status === 'completed') map[email].completed++;
+      if (isOverdue(img)) map[email].overdue++;
+    });
+    return Object.values(map).sort((a, b) => b.totalActive - a.totalActive);
+  }, [images]);
+
+  const overloadedDesigners = designerWorkload.filter(d => d.totalActive > 5);
+
   const handleMockupSolicitation = async () => {
     if (!mockupClientUrl.trim()) {
       toast.error('Informe a URL da plataforma do cliente');
