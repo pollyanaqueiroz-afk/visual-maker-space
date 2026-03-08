@@ -1142,6 +1142,7 @@ export default function Dashboard() {
                 </span>
               )}
             </div>
+            <div className="grid md:grid-cols-2 gap-6">
               {/* Revisions by designer */}
               <Card>
                 <CardHeader>
