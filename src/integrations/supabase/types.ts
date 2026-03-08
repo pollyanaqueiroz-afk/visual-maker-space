@@ -1519,6 +1519,7 @@ export type Database = {
         | "gerente_cs"
         | "gerente_implantacao"
         | "cliente"
+        | "analista_implantacao"
       image_type:
         | "login"
         | "banner_vitrine"
@@ -1669,6 +1670,7 @@ export const Constants = {
         "gerente_cs",
         "gerente_implantacao",
         "cliente",
+        "analista_implantacao",
       ],
       image_type: [
         "login",
