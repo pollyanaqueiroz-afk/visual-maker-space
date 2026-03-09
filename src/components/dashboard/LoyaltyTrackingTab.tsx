@@ -156,7 +156,7 @@ export default function LoyaltyTrackingTab() {
   const chartData = useMemo(() => {
     const monthMap: Record<string, { sum: number; count: number }> = {};
     for (const m of meetings) {
-      if (m.loyalty_index == null) continue;
+      if (m.loyalty_index == null || m.loyalty_index === 0) continue;
       const key = m.meeting_date.slice(0, 7);
       if (!monthMap[key]) monthMap[key] = { sum: 0, count: 0 };
       monthMap[key].sum += m.loyalty_index;

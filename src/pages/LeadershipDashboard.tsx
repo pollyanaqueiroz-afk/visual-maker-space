@@ -185,7 +185,7 @@ export default function LeadershipDashboard() {
   const loyaltyByPersonClient = useMemo(() => {
     const map: Record<string, { uid: string; url: string; clientName: string; sum: number; count: number }> = {};
     for (const m of filtered) {
-      if (!m.loyalty_index || !m.client_url || !m.created_by) continue;
+      if (!m.loyalty_index || m.loyalty_index === 0 || !m.client_url || !m.created_by) continue;
       const key = `${m.created_by}::${m.client_url}`;
       if (!map[key]) map[key] = { uid: m.created_by, url: m.client_url, clientName: m.client_name || '', sum: 0, count: 0 };
       map[key].sum += m.loyalty_index;

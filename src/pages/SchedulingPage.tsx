@@ -1543,27 +1543,35 @@ export default function SchedulingPage() {
               </div>
               <div className="space-y-2">
                 <Label>Índice de Fidelidade *</Label>
-                <Select value={confirmForm.loyalty_index} onValueChange={v => setConfirmForm(f => ({ ...f, loyalty_index: v }))}>
-                  <SelectTrigger className={!confirmForm.loyalty_index ? 'text-muted-foreground' : ''}>
-                    <SelectValue placeholder="Selecione de 1 a 4" />
+                <Select value={confirmForm.loyalty_index} onValueChange={v => setConfirmForm(f => ({ ...f, loyalty_index: v, ...(v === '0' ? { loyalty_reason: '' } : {}) }))}>
+                  <SelectTrigger className={confirmForm.loyalty_index === '' ? 'text-muted-foreground' : ''}>
+                    <SelectValue placeholder="Selecione de 1 a 4 ou Reunião Interna" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="1">1 — Muito baixo</SelectItem>
                     <SelectItem value="2">2 — Baixo</SelectItem>
                     <SelectItem value="3">3 — Alto</SelectItem>
                     <SelectItem value="4">4 — Muito alto</SelectItem>
+                    <SelectItem value="0">
+                      <span className="text-muted-foreground">Reunião Interna</span>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
+                {confirmForm.loyalty_index === '0' && (
+                  <p className="text-xs text-muted-foreground">Reuniões internas não impactam o índice de fidelidade do cliente.</p>
+                )}
               </div>
-              <div className="space-y-2">
-                <Label>Motivo do Índice *</Label>
-                <Textarea
-                  value={confirmForm.loyalty_reason}
-                  onChange={e => setConfirmForm(f => ({ ...f, loyalty_reason: e.target.value }))}
-                  placeholder="Explique o motivo pelo qual você atribuiu esse índice..."
-                  rows={3}
-                />
-              </div>
+              {confirmForm.loyalty_index !== '0' && (
+                <div className="space-y-2">
+                  <Label>Motivo do Índice *</Label>
+                  <Textarea
+                    value={confirmForm.loyalty_reason}
+                    onChange={e => setConfirmForm(f => ({ ...f, loyalty_reason: e.target.value }))}
+                    placeholder="Explique o motivo pelo qual você atribuiu esse índice..."
+                    rows={3}
+                  />
+                </div>
+              )}
               <Button className="w-full" onClick={handleConfirmSubmit} disabled={confirmSubmitting}>
                 {confirmSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle className="h-4 w-4 mr-2" />}
                 Confirmar Reunião

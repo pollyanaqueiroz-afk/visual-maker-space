@@ -391,7 +391,9 @@ export default function MeetingsDashboard() {
                     </TableCell>
                     {(activeKPI === 'loyalty' || activeKPI === 'total') && (
                       <TableCell className="text-center">
-                        {m.loyalty_index != null ? (
+                        {m.loyalty_index === 0 ? (
+                          <Badge variant="outline" className="text-[10px] border-muted-foreground/30 text-muted-foreground">Interna</Badge>
+                        ) : m.loyalty_index != null ? (
                           <Badge variant="outline" className={`text-[10px] ${
                             m.loyalty_index >= 3 ? 'border-success/30 text-success' :
                             m.loyalty_index >= 2 ? 'border-warning/30 text-warning' :
