@@ -58,7 +58,6 @@ Deno.serve(async (req) => {
     for (const [path, zipEntry] of Object.entries(zip.files)) {
       if (path.toLowerCase().endsWith("imsmanifest.xml") && !(zipEntry as any).dir) {
         manifestContent = await (zipEntry as any).async("string");
-        // Determine prefix (e.g. if manifest is inside a subfolder)
         const parts = path.split("/");
         if (parts.length > 1) {
           manifestPrefix = parts.slice(0, -1).join("/") + "/";
@@ -74,14 +73,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Parse entry point from manifest - look for first resource href
+    // Parse entry point from manifest
     let entryPoint = "index.html";
-    // Simple regex to find the first resource with an href
     const resourceMatch = manifestContent.match(/<resource[^>]*href="([^"]+)"/i);
     if (resourceMatch) {
       entryPoint = resourceMatch[1];
     } else {
-      // Try to find first file element inside a resource
       const fileMatch = manifestContent.match(/<file[^>]*href="([^"]*\.html?)"/i);
       if (fileMatch) {
         entryPoint = fileMatch[1];
@@ -92,64 +89,98 @@ Deno.serve(async (req) => {
     const packageId = crypto.randomUUID();
     const storagePath = packageId;
 
+    // Build the public base URL for the package directory
+    const publicBaseUrl = `${supabaseUrl}/storage/v1/object/public/scorm-packages/${storagePath}/`;
+
     let fileCount = 0;
     let totalSize = 0;
+
+    // Content type map
+    const contentTypeMap: Record<string, string> = {
+      html: "text/html; charset=utf-8",
+      htm: "text/html; charset=utf-8",
+      css: "text/css",
+      js: "application/javascript",
+      json: "application/json",
+      xml: "application/xml",
+      png: "image/png",
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      gif: "image/gif",
+      svg: "image/svg+xml",
+      mp4: "video/mp4",
+      mp3: "audio/mpeg",
+      wav: "audio/wav",
+      woff: "font/woff",
+      woff2: "font/woff2",
+      ttf: "font/ttf",
+      eot: "application/vnd.ms-fontobject",
+      swf: "application/x-shockwave-flash",
+      pdf: "application/pdf",
+    };
 
     // Upload all files to storage
     const entries = Object.entries(zip.files);
     for (const [path, zipEntry] of entries) {
       if ((zipEntry as any).dir) continue;
 
-      const content = await (zipEntry as any).async("uint8array");
       // Remove manifest prefix to flatten structure
       let relativePath = path;
       if (manifestPrefix && path.startsWith(manifestPrefix)) {
         relativePath = path.slice(manifestPrefix.length);
       }
 
-      const storagFilePath = `${storagePath}/${relativePath}`;
-
-      // Determine content type
+      const storageFilePath = `${storagePath}/${relativePath}`;
       const ext = relativePath.split(".").pop()?.toLowerCase() || "";
-      const contentTypeMap: Record<string, string> = {
-        html: "text/html",
-        htm: "text/html",
-        css: "text/css",
-        js: "application/javascript",
-        json: "application/json",
-        xml: "application/xml",
-        png: "image/png",
-        jpg: "image/jpeg",
-        jpeg: "image/jpeg",
-        gif: "image/gif",
-        svg: "image/svg+xml",
-        mp4: "video/mp4",
-        mp3: "audio/mpeg",
-        wav: "audio/wav",
-        woff: "font/woff",
-        woff2: "font/woff2",
-        ttf: "font/ttf",
-        eot: "application/vnd.ms-fontobject",
-        swf: "application/x-shockwave-flash",
-        pdf: "application/pdf",
-      };
       const contentType = contentTypeMap[ext] || "application/octet-stream";
 
-      const blob = new Blob([content], { type: contentType });
+      // Check if this file is the entry point
+      const isEntryPoint = relativePath === entryPoint;
+
+      let uploadBlob: Blob;
+
+      if (isEntryPoint) {
+        // Read as string, inject <base> tag
+        let htmlText = await (zipEntry as any).async("string");
+
+        // Determine the base href — if entry point is in a subfolder, base should point to package root
+        const baseHref = publicBaseUrl;
+        const baseTag = `<base href="${baseHref}">`;
+
+        if (/<head[^>]*>/i.test(htmlText)) {
+          // Inject <base> right after <head>
+          htmlText = htmlText.replace(/<head([^>]*)>/i, `<head$1>${baseTag}`);
+        } else if (/<html[^>]*>/i.test(htmlText)) {
+          // No <head>, create one after <html>
+          htmlText = htmlText.replace(/<html([^>]*)>/i, `<html$1><head>${baseTag}</head>`);
+        } else {
+          // No <html> either, prepend
+          htmlText = `<head>${baseTag}</head>${htmlText}`;
+        }
+
+        const encoded = new TextEncoder().encode(htmlText);
+        uploadBlob = new Blob([encoded], { type: contentType });
+        totalSize += encoded.length;
+      } else {
+        const content = await (zipEntry as any).async("uint8array");
+        uploadBlob = new Blob([content], { type: contentType });
+        totalSize += content.length;
+      }
+
       const { error: uploadError } = await supabase.storage
         .from("scorm-packages")
-        .upload(storagFilePath, blob, {
+        .upload(storageFilePath, uploadBlob, {
           contentType,
           upsert: true,
+          cacheControl: "public, max-age=31536000",
         });
 
       if (uploadError) {
-        console.error(`Error uploading ${storagFilePath}:`, uploadError);
+        console.error(`Error uploading ${storageFilePath}:`, uploadError);
         continue;
       }
 
       fileCount++;
-      totalSize += content.length;
     }
 
     // Insert record
