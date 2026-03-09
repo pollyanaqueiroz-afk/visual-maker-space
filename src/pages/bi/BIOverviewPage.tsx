@@ -8,10 +8,8 @@ import { motion } from 'framer-motion';
 interface OverviewData {
   total_clientes: number;
   ativos: number;
-  cancelados: number;
   em_implantacao: number;
   em_risco: number;
-  sem_status: number;
   adimplentes: number;
   inadimplentes: number;
   receita_total: number;
@@ -19,6 +17,10 @@ interface OverviewData {
   ticket_medio: number;
   media_dias_sem_login: number;
   media_alunos: number;
+}
+
+interface CanceladosData {
+  total_cancelados: number;
 }
 
 interface StatusItem { status: string; total: number; receita: number; }
