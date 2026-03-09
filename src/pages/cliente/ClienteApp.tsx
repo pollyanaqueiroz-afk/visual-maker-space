@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
+import { useClienteEmail } from '@/hooks/useClienteEmail';
 import { Loader2 } from 'lucide-react';
 import AppClientPortalContent from '@/components/cliente/AppClientPortalContent';
 
@@ -9,16 +9,16 @@ import AppClientPortalContent from '@/components/cliente/AppClientPortalContent'
  * and renders the portal content inline (no separate token needed).
  */
 export default function ClienteApp() {
-  const { user } = useAuth();
+  const email = useClienteEmail();
 
   const { data: cliente, isLoading } = useQuery({
-    queryKey: ['cliente-app-by-email', user?.email],
-    enabled: !!user?.email,
+    queryKey: ['cliente-app-by-email', email],
+    enabled: !!email,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('app_clientes')
         .select('*')
-        .eq('email', user!.email!)
+        .eq('email', email)
         .maybeSingle();
       if (error) throw error;
       return data;

@@ -46,6 +46,7 @@ import ClienteApp from "./pages/cliente/ClienteApp";
 import ClienteSolicitar from "./pages/cliente/ClienteSolicitar";
 import ClienteSolicitarApp from "./pages/cliente/ClienteSolicitarApp";
 import ClienteScorm from "./pages/cliente/ClienteScorm";
+import ClientePreviewWrapper from "./pages/cliente/ClientePreviewWrapper";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -91,6 +92,13 @@ const App = () => (
               <Route path="auditoria" element={<PermissionGuard permission="admin.view"><AuditoriaPage /></PermissionGuard>} />
               <Route path="pipeline" element={<PermissionGuard permission="admin.view"><PipelinePage /></PermissionGuard>} />
               <Route path="processos-implantacao" element={<PermissionGuard permission="carteira.view"><ProcessosImplantacaoPage /></PermissionGuard>} />
+            </Route>
+            {/* CS Client Preview (impersonation) - outside hub layout */}
+            <Route path="/hub/cliente-preview/:clienteId" element={<ClientePreviewWrapper />}>
+              <Route index element={<ClienteHome />} />
+              <Route path="artes" element={<ClienteArtes />} />
+              <Route path="aplicativo" element={<ClienteApp />} />
+              <Route path="scorm" element={<ClienteScorm />} />
             </Route>
             {/* Legacy route redirect */}
             <Route path="/dashboard" element={<Navigate to="/hub/briefings" replace />} />

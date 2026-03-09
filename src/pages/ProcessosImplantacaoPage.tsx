@@ -16,8 +16,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import {
   Search, FileImage, Smartphone, GraduationCap, CheckCircle, Clock,
-  AlertTriangle, XCircle, Loader2, Eye, ExternalLink, Users, ClipboardCheck
+  AlertTriangle, XCircle, Loader2, Eye, ExternalLink, Users, ClipboardCheck, Copy, ShieldCheck
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { format } from 'date-fns';
 
 const IMAGE_TYPE_LABELS: Record<string, string> = {
@@ -71,7 +72,7 @@ export default function ProcessosImplantacaoPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('app_clientes')
-        .select('id, nome, empresa, status, fase_atual, porcentagem_geral, plataforma, data_criacao, prazo_estimado');
+        .select('id, nome, empresa, status, fase_atual, porcentagem_geral, plataforma, data_criacao, prazo_estimado, portal_token');
       if (error) throw error;
       return data || [];
     },
@@ -312,6 +313,7 @@ export default function ProcessosImplantacaoPage() {
                 <TableHead className="text-center">Aplicativo</TableHead>
                 <TableHead className="text-center">SCORM</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
+                <TableHead className="text-center">Portal</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -424,10 +426,38 @@ export default function ProcessosImplantacaoPage() {
                       <Eye className="h-4 w-4" />
                     </Button>
                   </TableCell>
+                  <TableCell className="text-center" onClick={e => e.stopPropagation()}>
+                    {c.app ? (
+                      <div className="flex items-center justify-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          title="Acessar como CS (Modo Preview)"
+                          onClick={() => navigate(`/hub/cliente-preview/${c.app!.id}`)}
+                        >
+                          <ShieldCheck className="h-4 w-4 text-amber-500" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          title="Copiar link do portal do cliente"
+                          onClick={() => {
+                            const url = `${window.location.origin}/app/${c.app!.portal_token}`;
+                            navigator.clipboard.writeText(url);
+                            toast.success('Link do portal copiado!');
+                          }}
+                        >
+                          <Copy className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </div>
+                    ) : <span className="text-xs text-muted-foreground">—</span>}
+                  </TableCell>
                 </TableRow>
               ))}
               {filteredClients.length === 0 && (
-                <TableRow><TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
+                <TableRow><TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
                   {isCS ? 'Nenhum cliente da sua carteira possui processos de implantação ativos' : 'Nenhum cliente encontrado'}
                 </TableCell></TableRow>
               )}
