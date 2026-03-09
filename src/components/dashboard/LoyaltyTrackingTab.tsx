@@ -61,7 +61,7 @@ export default function LoyaltyTrackingTab() {
   }, []);
 
   const clientData = useMemo(() => {
-    const meetingsWithLoyalty = meetings.filter(m => m.loyalty_index != null);
+    const meetingsWithLoyalty = meetings.filter(m => m.loyalty_index != null && m.loyalty_index > 0);
     const map: Record<string, { url: string; name: string; history: { date: string; index: number }[] }> = {};
     for (const m of meetingsWithLoyalty) {
       const url = m.client_url || 'Sem URL';
