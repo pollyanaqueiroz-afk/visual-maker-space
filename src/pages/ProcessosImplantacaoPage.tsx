@@ -426,6 +426,34 @@ export default function ProcessosImplantacaoPage() {
                       <Eye className="h-4 w-4" />
                     </Button>
                   </TableCell>
+                  <TableCell className="text-center" onClick={e => e.stopPropagation()}>
+                    {c.app ? (
+                      <div className="flex items-center justify-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          title="Acessar como CS (Modo Preview)"
+                          onClick={() => navigate(`/hub/cliente-preview/${c.app!.id}`)}
+                        >
+                          <ShieldCheck className="h-4 w-4 text-amber-500" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          title="Copiar link do portal do cliente"
+                          onClick={() => {
+                            const url = `${window.location.origin}/app/${c.app!.portal_token}`;
+                            navigator.clipboard.writeText(url);
+                            toast.success('Link do portal copiado!');
+                          }}
+                        >
+                          <Copy className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </div>
+                    ) : <span className="text-xs text-muted-foreground">—</span>}
+                  </TableCell>
                 </TableRow>
               ))}
               {filteredClients.length === 0 && (
