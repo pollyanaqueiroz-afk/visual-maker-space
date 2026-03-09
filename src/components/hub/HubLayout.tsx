@@ -16,7 +16,7 @@ function SidebarToggleButton() {
   return (
     <button
       onClick={toggleSidebar}
-      className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors cursor-pointer"
+      className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
       aria-label={collapsed ? 'Expandir menu' : 'Recolher menu'}
     >
       {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
@@ -81,7 +81,7 @@ function NotificationBell() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className="relative h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors cursor-pointer">
+        <button className="relative h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer">
           <Bell className="h-4 w-4" />
           {totalBadge > 0 && (
             <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-rose-500 text-[9px] font-bold text-white px-1 shadow-lg shadow-red-500/30 animate-pulse">
@@ -90,25 +90,25 @@ function NotificationBell() {
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0 bg-card border-border/30 shadow-2xl" align="end">
-        <div className="p-3 border-b border-border/20">
-          <h3 className="text-sm font-semibold">Notificações</h3>
+      <PopoverContent className="w-80 p-0 bg-white border-gray-200 shadow-2xl" align="end">
+        <div className="p-3 border-b border-gray-100">
+          <h3 className="text-sm font-semibold text-gray-900">Notificações</h3>
           {slaAlerts > 0 && (
-            <p className="text-[10px] text-destructive mt-0.5">⚠️ {slaAlerts} arte(s) com prazo vencido</p>
+            <p className="text-[10px] text-red-600 mt-0.5">⚠️ {slaAlerts} arte(s) com prazo vencido</p>
           )}
         </div>
         <div className="max-h-80 overflow-y-auto">
           {notifications.length === 0 && slaAlerts === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">Nenhuma notificação</p>
+            <p className="text-sm text-gray-400 text-center py-6">Nenhuma notificação</p>
           ) : notifications.map((n: any) => (
             <div
               key={n.id}
-              className="p-3 border-b border-border/10 hover:bg-white/[0.03] cursor-pointer transition-colors"
+              className="p-3 border-b border-gray-50 hover:bg-gray-50 cursor-pointer transition-colors"
               onClick={() => markAsRead(n.id)}
             >
-              <p className="text-sm font-medium">{n.titulo}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{n.mensagem}</p>
-              <p className="text-[10px] text-muted-foreground mt-1">
+              <p className="text-sm font-medium text-gray-900">{n.titulo}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{n.mensagem}</p>
+              <p className="text-[10px] text-gray-400 mt-1">
                 {n.agendado_para ? format(new Date(n.agendado_para), "dd/MM 'às' HH:mm") : ''}
               </p>
             </div>
@@ -126,23 +126,27 @@ interface Props {
 export default function HubLayout({ children }: Props) {
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full dark bg-background text-foreground">
-        <HubSidebar />
+      <div className="min-h-screen flex w-full bg-[#F8FAFC]">
+        {/* Sidebar stays dark */}
+        <div className="dark">
+          <HubSidebar />
+        </div>
+        {/* Content area is light */}
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 flex items-center border-b border-border/30 px-4 gap-3 bg-card/50 backdrop-blur-sm sticky top-0 z-40">
+          <header className="h-14 flex items-center border-b border-gray-200 px-4 gap-3 bg-white/80 backdrop-blur-sm sticky top-0 z-40">
             <SidebarToggleButton />
             <div className="flex-1" />
 
             {/* Search placeholder */}
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border/30 text-muted-foreground text-sm cursor-pointer hover:bg-muted/80 transition-colors">
+            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 border border-gray-200 text-gray-500 text-sm cursor-pointer hover:bg-gray-200/70 transition-colors">
               <Search className="h-3.5 w-3.5" />
               <span>Buscar...</span>
-              <kbd className="ml-4 text-[10px] bg-background/50 px-1.5 py-0.5 rounded border border-border/30">⌘K</kbd>
+              <kbd className="ml-4 text-[10px] bg-white px-1.5 py-0.5 rounded border border-gray-200">⌘K</kbd>
             </div>
 
             <NotificationBell />
           </header>
-          <main className="flex-1 p-6 min-w-0">
+          <main className="flex-1 p-6 min-w-0 text-gray-900">
             {children}
           </main>
         </div>
