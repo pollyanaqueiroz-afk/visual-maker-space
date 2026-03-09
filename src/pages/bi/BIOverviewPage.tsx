@@ -8,10 +8,8 @@ import { motion } from 'framer-motion';
 interface OverviewData {
   total_clientes: number;
   ativos: number;
-  cancelados: number;
   em_implantacao: number;
   em_risco: number;
-  sem_status: number;
   adimplentes: number;
   inadimplentes: number;
   receita_total: number;
@@ -19,6 +17,10 @@ interface OverviewData {
   ticket_medio: number;
   media_dias_sem_login: number;
   media_alunos: number;
+}
+
+interface CanceladosData {
+  total_cancelados: number;
 }
 
 interface StatusItem { status: string; total: number; receita: number; }
@@ -58,16 +60,17 @@ export default function BIOverviewPage({ csEmail }: { csEmail?: string }) {
   const { data, loading, error } = useDashboardBI<OverviewData>('overview', csEmail);
   const { data: statusData, loading: l2 } = useDashboardBI<StatusItem[]>('status', csEmail);
   const { data: receitaData, loading: l3 } = useDashboardBI<ReceitaItem[]>('receita_por_status', csEmail);
+  const { data: canceladosData, loading: l4 } = useDashboardBI<CanceladosData>('cancelados', csEmail);
 
-  if (loading || l2 || l3) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  if (loading || l2 || l3 || l4) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   if (error || !data) return <div className="text-destructive p-4">Erro: {error}</div>;
 
   const kpiRow1 = [
-    { label: 'Total Clientes', raw: data.total_clientes, formatted: formatNumber(data.total_clientes), icon: Users, color: 'bg-muted text-foreground', extra: data.sem_status > 0 ? `+${data.sem_status} sem status` : undefined },
+    { label: 'Total Clientes Ativos', raw: data.total_clientes, formatted: formatNumber(data.total_clientes), icon: Users, color: 'bg-muted text-foreground' },
     { label: 'Ativos', raw: data.ativos, formatted: formatNumber(data.ativos), icon: UserCheck, color: 'bg-success/10 text-success' },
     { label: 'Em Risco', raw: data.em_risco, formatted: formatNumber(data.em_risco), icon: AlertTriangle, color: 'bg-warning/10 text-warning' },
     { label: 'Em Implantação', raw: data.em_implantacao, formatted: formatNumber(data.em_implantacao), icon: Construction, color: 'bg-info/10 text-info' },
-    { label: 'Cancelados', raw: data.cancelados, formatted: formatNumber(data.cancelados), icon: UserX, color: 'bg-destructive/10 text-destructive' },
+    { label: 'Cancelados', raw: canceladosData?.total_cancelados ?? 0, formatted: formatNumber(canceladosData?.total_cancelados ?? 0), icon: UserX, color: 'bg-destructive/10 text-destructive' },
   ];
 
   const kpiRow2 = [
@@ -99,7 +102,7 @@ export default function BIOverviewPage({ csEmail }: { csEmail?: string }) {
       {/* Row 1 */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {kpiRow1.map((k, i) => (
-          <AnimatedKPI key={k.label} label={k.label} rawValue={k.raw} formatted={k.formatted} icon={k.icon} color={k.color} extra={k.extra} delay={i * 0.08} />
+          <AnimatedKPI key={k.label} label={k.label} rawValue={k.raw} formatted={k.formatted} icon={k.icon} color={k.color} delay={i * 0.08} />
         ))}
       </div>
 
