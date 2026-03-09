@@ -66,11 +66,11 @@ export default function BIOverviewPage({ csEmail }: { csEmail?: string }) {
   if (error || !data) return <div className="text-destructive p-4">Erro: {error}</div>;
 
   const kpiRow1 = [
-    { label: 'Total Clientes', raw: data.total_clientes, formatted: formatNumber(data.total_clientes), icon: Users, color: 'bg-muted text-foreground', extra: data.sem_status > 0 ? `+${data.sem_status} sem status` : undefined },
+    { label: 'Total Clientes Ativos', raw: data.total_clientes, formatted: formatNumber(data.total_clientes), icon: Users, color: 'bg-muted text-foreground' },
     { label: 'Ativos', raw: data.ativos, formatted: formatNumber(data.ativos), icon: UserCheck, color: 'bg-success/10 text-success' },
     { label: 'Em Risco', raw: data.em_risco, formatted: formatNumber(data.em_risco), icon: AlertTriangle, color: 'bg-warning/10 text-warning' },
     { label: 'Em Implantação', raw: data.em_implantacao, formatted: formatNumber(data.em_implantacao), icon: Construction, color: 'bg-info/10 text-info' },
-    { label: 'Cancelados', raw: data.cancelados, formatted: formatNumber(data.cancelados), icon: UserX, color: 'bg-destructive/10 text-destructive' },
+    { label: 'Cancelados', raw: canceladosData?.total_cancelados ?? 0, formatted: formatNumber(canceladosData?.total_cancelados ?? 0), icon: UserX, color: 'bg-destructive/10 text-destructive' },
   ];
 
   const kpiRow2 = [
