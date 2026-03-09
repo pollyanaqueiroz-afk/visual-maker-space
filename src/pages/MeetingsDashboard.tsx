@@ -206,7 +206,7 @@ export default function MeetingsDashboard() {
     return Object.values(map).sort((a, b) => b.total - a.total);
   }, [filtered]);
 
-  const LOYALTY_COLORS = ['hsl(var(--destructive))', 'hsl(var(--warning, 30 90% 50%))', 'hsl(var(--info))', 'hsl(var(--success))'];
+  const LOYALTY_COLORS = ['hsl(var(--destructive))', 'hsl(var(--warning, 30 90% 50%))', 'hsl(var(--info))', 'hsl(var(--success))', 'hsl(var(--muted-foreground))'];
 
   if (loading) {
     return (
