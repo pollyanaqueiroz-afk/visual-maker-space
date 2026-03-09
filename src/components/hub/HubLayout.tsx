@@ -91,10 +91,10 @@ function NotificationBell() {
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0 bg-white border-gray-200 shadow-2xl" align="end">
-        <div className="p-3 border-b border-border/20">
-          <h3 className="text-sm font-semibold">Notificações</h3>
+        <div className="p-3 border-b border-gray-100">
+          <h3 className="text-sm font-semibold text-gray-900">Notificações</h3>
           {slaAlerts > 0 && (
-            <p className="text-[10px] text-destructive mt-0.5">⚠️ {slaAlerts} arte(s) com prazo vencido</p>
+            <p className="text-[10px] text-red-600 mt-0.5">⚠️ {slaAlerts} arte(s) com prazo vencido</p>
           )}
         </div>
         <div className="max-h-80 overflow-y-auto">
