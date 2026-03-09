@@ -467,11 +467,12 @@ export default function SchedulingPage() {
 
   const handleConfirmSubmit = async () => {
     if (!confirmingMeeting) return;
-    if (!confirmForm.loyalty_index) {
+    if (confirmForm.loyalty_index === '') {
       toast.error('Selecione o índice de fidelidade');
       return;
     }
-    if (!confirmForm.loyalty_reason.trim()) {
+    const isInternal = confirmForm.loyalty_index === '0';
+    if (!isInternal && !confirmForm.loyalty_reason.trim()) {
       toast.error('Preencha o motivo do índice de fidelidade');
       return;
     }
