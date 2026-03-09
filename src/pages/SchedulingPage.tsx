@@ -1366,7 +1366,8 @@ export default function SchedulingPage() {
               {filteredMeetings.map((m, i) => {
                 const config = STATUS_CONFIG[m.status] || STATUS_CONFIG.scheduled;
                 const isPast = isBefore(parseISO(m.meeting_date), new Date()) && m.status === 'scheduled';
-                const hasLoyalty = !!m.loyalty_index;
+                const hasLoyalty = m.loyalty_index != null;
+                const isInternalMeeting = m.loyalty_index === 0;
                 const hasMinutes = !!m.minutes_url;
                 const hasRecording = !!m.recording_url;
                 return (
