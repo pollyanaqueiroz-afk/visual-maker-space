@@ -126,23 +126,27 @@ interface Props {
 export default function HubLayout({ children }: Props) {
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full dark bg-background text-foreground">
-        <HubSidebar />
+      <div className="min-h-screen flex w-full bg-[#F8FAFC]">
+        {/* Sidebar stays dark */}
+        <div className="dark">
+          <HubSidebar />
+        </div>
+        {/* Content area is light */}
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 flex items-center border-b border-border/30 px-4 gap-3 bg-card/50 backdrop-blur-sm sticky top-0 z-40">
+          <header className="h-14 flex items-center border-b border-gray-200 px-4 gap-3 bg-white/80 backdrop-blur-sm sticky top-0 z-40">
             <SidebarToggleButton />
             <div className="flex-1" />
 
             {/* Search placeholder */}
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border/30 text-muted-foreground text-sm cursor-pointer hover:bg-muted/80 transition-colors">
+            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 border border-gray-200 text-gray-500 text-sm cursor-pointer hover:bg-gray-200/70 transition-colors">
               <Search className="h-3.5 w-3.5" />
               <span>Buscar...</span>
-              <kbd className="ml-4 text-[10px] bg-background/50 px-1.5 py-0.5 rounded border border-border/30">⌘K</kbd>
+              <kbd className="ml-4 text-[10px] bg-white px-1.5 py-0.5 rounded border border-gray-200">⌘K</kbd>
             </div>
 
             <NotificationBell />
           </header>
-          <main className="flex-1 p-6 min-w-0">
+          <main className="flex-1 p-6 min-w-0 text-gray-900">
             {children}
           </main>
         </div>
