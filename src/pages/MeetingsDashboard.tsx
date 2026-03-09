@@ -106,7 +106,7 @@ export default function MeetingsDashboard() {
     const completed = filtered.filter(m => m.status === 'completed').length;
     const scheduled = filtered.filter(m => m.status === 'scheduled').length;
     const cancelled = filtered.filter(m => m.status === 'cancelled').length;
-    const withLoyalty = filtered.filter(m => m.loyalty_index != null);
+    const withLoyalty = filtered.filter(m => m.loyalty_index != null && m.loyalty_index > 0);
     const avgLoyalty = withLoyalty.length > 0
       ? (withLoyalty.reduce((s, m) => s + (m.loyalty_index || 0), 0) / withLoyalty.length).toFixed(1)
       : '—';
