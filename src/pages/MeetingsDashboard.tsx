@@ -106,7 +106,7 @@ export default function MeetingsDashboard() {
     const completed = filtered.filter(m => m.status === 'completed').length;
     const scheduled = filtered.filter(m => m.status === 'scheduled').length;
     const cancelled = filtered.filter(m => m.status === 'cancelled').length;
-    const withLoyalty = filtered.filter(m => m.loyalty_index != null);
+    const withLoyalty = filtered.filter(m => m.loyalty_index != null && m.loyalty_index > 0);
     const avgLoyalty = withLoyalty.length > 0
       ? (withLoyalty.reduce((s, m) => s + (m.loyalty_index || 0), 0) / withLoyalty.length).toFixed(1)
       : '—';
@@ -183,11 +183,13 @@ export default function MeetingsDashboard() {
         dist[m.loyalty_index - 1]++;
       }
     }
+    const internalCount = filtered.filter(m => m.loyalty_index === 0).length;
     return [
       { name: '1 — Muito baixo', value: dist[0] },
       { name: '2 — Baixo', value: dist[1] },
       { name: '3 — Alto', value: dist[2] },
       { name: '4 — Muito alto', value: dist[3] },
+      ...(internalCount > 0 ? [{ name: 'Internas', value: internalCount }] : []),
     ];
   }, [filtered]);
 
@@ -204,7 +206,7 @@ export default function MeetingsDashboard() {
     return Object.values(map).sort((a, b) => b.total - a.total);
   }, [filtered]);
 
-  const LOYALTY_COLORS = ['hsl(var(--destructive))', 'hsl(var(--warning, 30 90% 50%))', 'hsl(var(--info))', 'hsl(var(--success))'];
+  const LOYALTY_COLORS = ['hsl(var(--destructive))', 'hsl(var(--warning, 30 90% 50%))', 'hsl(var(--info))', 'hsl(var(--success))', 'hsl(var(--muted-foreground))'];
 
   if (loading) {
     return (
@@ -389,7 +391,9 @@ export default function MeetingsDashboard() {
                     </TableCell>
                     {(activeKPI === 'loyalty' || activeKPI === 'total') && (
                       <TableCell className="text-center">
-                        {m.loyalty_index != null ? (
+                        {m.loyalty_index === 0 ? (
+                          <Badge variant="outline" className="text-[10px] border-muted-foreground/30 text-muted-foreground">Interna</Badge>
+                        ) : m.loyalty_index != null ? (
                           <Badge variant="outline" className={`text-[10px] ${
                             m.loyalty_index >= 3 ? 'border-success/30 text-success' :
                             m.loyalty_index >= 2 ? 'border-warning/30 text-warning' :

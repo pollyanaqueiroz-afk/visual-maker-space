@@ -127,7 +127,7 @@ export default function LeadershipDashboard() {
     const completed = filtered.filter(m => m.status === 'completed').length;
     const scheduled = filtered.filter(m => m.status === 'scheduled').length;
     const cancelled = filtered.filter(m => m.status === 'cancelled').length;
-    const withLoyalty = filtered.filter(m => m.loyalty_index != null);
+    const withLoyalty = filtered.filter(m => m.loyalty_index != null && m.loyalty_index > 0);
     const avgLoyalty = withLoyalty.length > 0
       ? (withLoyalty.reduce((s, m) => s + (m.loyalty_index || 0), 0) / withLoyalty.length).toFixed(1)
       : '—';
@@ -146,7 +146,7 @@ export default function LeadershipDashboard() {
       if (m.status === 'completed') map[uid].completed++;
       else if (m.status === 'scheduled') map[uid].scheduled++;
       else if (m.status === 'cancelled') map[uid].cancelled++;
-      if (m.loyalty_index) {
+      if (m.loyalty_index && m.loyalty_index > 0) {
         map[uid].avgLoyalty += m.loyalty_index;
         map[uid].loyaltyCount++;
       }
@@ -185,7 +185,7 @@ export default function LeadershipDashboard() {
   const loyaltyByPersonClient = useMemo(() => {
     const map: Record<string, { uid: string; url: string; clientName: string; sum: number; count: number }> = {};
     for (const m of filtered) {
-      if (!m.loyalty_index || !m.client_url || !m.created_by) continue;
+      if (!m.loyalty_index || m.loyalty_index === 0 || !m.client_url || !m.created_by) continue;
       const key = `${m.created_by}::${m.client_url}`;
       if (!map[key]) map[key] = { uid: m.created_by, url: m.client_url, clientName: m.client_name || '', sum: 0, count: 0 };
       map[key].sum += m.loyalty_index;

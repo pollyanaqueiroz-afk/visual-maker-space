@@ -61,7 +61,7 @@ export default function LoyaltyTrackingTab() {
   }, []);
 
   const clientData = useMemo(() => {
-    const meetingsWithLoyalty = meetings.filter(m => m.loyalty_index != null);
+    const meetingsWithLoyalty = meetings.filter(m => m.loyalty_index != null && m.loyalty_index > 0);
     const map: Record<string, { url: string; name: string; history: { date: string; index: number }[] }> = {};
     for (const m of meetingsWithLoyalty) {
       const url = m.client_url || 'Sem URL';
@@ -91,8 +91,9 @@ export default function LoyaltyTrackingTab() {
   }, [clientData]);
 
   const adherenceStats = useMemo(() => {
-    const completed = meetings.filter(m => m.status === 'completed');
-    const withLoyalty = completed.filter(m => m.loyalty_index != null);
+    const completedAll = meetings.filter(m => m.status === 'completed');
+    const completed = completedAll.filter(m => m.loyalty_index !== 0);
+    const withLoyalty = completed.filter(m => m.loyalty_index != null && m.loyalty_index > 0);
     const withoutLoyalty = completed.filter(m => m.loyalty_index == null);
     const rate = completed.length > 0 ? Math.round((withLoyalty.length / completed.length) * 100) : 0;
 
@@ -155,7 +156,7 @@ export default function LoyaltyTrackingTab() {
   const chartData = useMemo(() => {
     const monthMap: Record<string, { sum: number; count: number }> = {};
     for (const m of meetings) {
-      if (m.loyalty_index == null) continue;
+      if (m.loyalty_index == null || m.loyalty_index === 0) continue;
       const key = m.meeting_date.slice(0, 7);
       if (!monthMap[key]) monthMap[key] = { sum: 0, count: 0 };
       monthMap[key].sum += m.loyalty_index;

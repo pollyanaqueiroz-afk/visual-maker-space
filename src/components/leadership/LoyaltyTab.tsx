@@ -49,7 +49,7 @@ export default function LoyaltyTab({ filtered, profileMap }: LoyaltyTabProps) {
     return p?.display_name || p?.email || uid.slice(0, 8);
   };
 
-  const withLoyalty = useMemo(() => filtered.filter(m => m.loyalty_index != null), [filtered]);
+  const withLoyalty = useMemo(() => filtered.filter(m => m.loyalty_index != null && m.loyalty_index > 0), [filtered]);
 
   // Global KPIs
   const kpis = useMemo(() => {

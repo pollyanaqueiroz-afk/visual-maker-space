@@ -467,11 +467,12 @@ export default function SchedulingPage() {
 
   const handleConfirmSubmit = async () => {
     if (!confirmingMeeting) return;
-    if (!confirmForm.loyalty_index) {
+    if (confirmForm.loyalty_index === '') {
       toast.error('Selecione o índice de fidelidade');
       return;
     }
-    if (!confirmForm.loyalty_reason.trim()) {
+    const isInternal = confirmForm.loyalty_index === '0';
+    if (!isInternal && !confirmForm.loyalty_reason.trim()) {
       toast.error('Preencha o motivo do índice de fidelidade');
       return;
     }
@@ -482,7 +483,7 @@ export default function SchedulingPage() {
         minutes_url: confirmForm.minutes_url || null,
         recording_url: confirmForm.recording_url || null,
         loyalty_index: Number(confirmForm.loyalty_index),
-        loyalty_reason: confirmForm.loyalty_reason,
+        loyalty_reason: isInternal ? 'Reunião Interna' : confirmForm.loyalty_reason,
       }).eq('id', confirmingMeeting.id);
       if (error) throw error;
       toast.success('Reunião confirmada!');
@@ -596,7 +597,7 @@ export default function SchedulingPage() {
   };
 
   const pendingLoyalty = useMemo(() =>
-    meetings.filter(m => m.status === 'completed' && !m.loyalty_index),
+    meetings.filter(m => m.status === 'completed' && m.loyalty_index == null),
     [meetings]
   );
 
@@ -1365,7 +1366,8 @@ export default function SchedulingPage() {
               {filteredMeetings.map((m, i) => {
                 const config = STATUS_CONFIG[m.status] || STATUS_CONFIG.scheduled;
                 const isPast = isBefore(parseISO(m.meeting_date), new Date()) && m.status === 'scheduled';
-                const hasLoyalty = !!m.loyalty_index;
+                const hasLoyalty = m.loyalty_index != null;
+                const isInternalMeeting = m.loyalty_index === 0;
                 const hasMinutes = !!m.minutes_url;
                 const hasRecording = !!m.recording_url;
                 return (
@@ -1448,11 +1450,15 @@ export default function SchedulingPage() {
                                 </div>
                                 {hasLoyalty ? (
                                   <div className="flex items-center gap-3">
-                                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-warning/10">
-                                      <Star className="h-3.5 w-3.5 text-warning" />
-                                      <span className="text-xs font-bold text-foreground">Fidelidade: {m.loyalty_index}/4</span>
-                                    </div>
-                                    {m.loyalty_reason && <span className="text-xs text-muted-foreground line-clamp-1">— {m.loyalty_reason}</span>}
+                                    {isInternalMeeting ? (
+                                      <Badge variant="outline" className="text-[10px] border-muted-foreground/30 text-muted-foreground">Interna</Badge>
+                                    ) : (
+                                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-warning/10">
+                                        <Star className="h-3.5 w-3.5 text-warning" />
+                                        <span className="text-xs font-bold text-foreground">Fidelidade: {m.loyalty_index}/4</span>
+                                      </div>
+                                    )}
+                                    {m.loyalty_reason && !isInternalMeeting && <span className="text-xs text-muted-foreground line-clamp-1">— {m.loyalty_reason}</span>}
                                     <Button variant="ghost" size="sm" className="h-6 text-[10px] text-muted-foreground hover:text-foreground px-2" onClick={() => handleOpenConfirm(m)}><Edit2 className="h-3 w-3 mr-1" /> Editar</Button>
                                   </div>
                                 ) : (
@@ -1537,27 +1543,35 @@ export default function SchedulingPage() {
               </div>
               <div className="space-y-2">
                 <Label>Índice de Fidelidade *</Label>
-                <Select value={confirmForm.loyalty_index} onValueChange={v => setConfirmForm(f => ({ ...f, loyalty_index: v }))}>
-                  <SelectTrigger className={!confirmForm.loyalty_index ? 'text-muted-foreground' : ''}>
-                    <SelectValue placeholder="Selecione de 1 a 4" />
+                <Select value={confirmForm.loyalty_index} onValueChange={v => setConfirmForm(f => ({ ...f, loyalty_index: v, ...(v === '0' ? { loyalty_reason: '' } : {}) }))}>
+                  <SelectTrigger className={confirmForm.loyalty_index === '' ? 'text-muted-foreground' : ''}>
+                    <SelectValue placeholder="Selecione de 1 a 4 ou Reunião Interna" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="1">1 — Muito baixo</SelectItem>
                     <SelectItem value="2">2 — Baixo</SelectItem>
                     <SelectItem value="3">3 — Alto</SelectItem>
                     <SelectItem value="4">4 — Muito alto</SelectItem>
+                    <SelectItem value="0">
+                      <span className="text-muted-foreground">Reunião Interna</span>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
+                {confirmForm.loyalty_index === '0' && (
+                  <p className="text-xs text-muted-foreground">Reuniões internas não impactam o índice de fidelidade do cliente.</p>
+                )}
               </div>
-              <div className="space-y-2">
-                <Label>Motivo do Índice *</Label>
-                <Textarea
-                  value={confirmForm.loyalty_reason}
-                  onChange={e => setConfirmForm(f => ({ ...f, loyalty_reason: e.target.value }))}
-                  placeholder="Explique o motivo pelo qual você atribuiu esse índice..."
-                  rows={3}
-                />
-              </div>
+              {confirmForm.loyalty_index !== '0' && (
+                <div className="space-y-2">
+                  <Label>Motivo do Índice *</Label>
+                  <Textarea
+                    value={confirmForm.loyalty_reason}
+                    onChange={e => setConfirmForm(f => ({ ...f, loyalty_reason: e.target.value }))}
+                    placeholder="Explique o motivo pelo qual você atribuiu esse índice..."
+                    rows={3}
+                  />
+                </div>
+              )}
               <Button className="w-full" onClick={handleConfirmSubmit} disabled={confirmSubmitting}>
                 {confirmSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle className="h-4 w-4 mr-2" />}
                 Confirmar Reunião
