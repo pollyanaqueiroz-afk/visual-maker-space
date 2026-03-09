@@ -146,7 +146,7 @@ export default function LeadershipDashboard() {
       if (m.status === 'completed') map[uid].completed++;
       else if (m.status === 'scheduled') map[uid].scheduled++;
       else if (m.status === 'cancelled') map[uid].cancelled++;
-      if (m.loyalty_index) {
+      if (m.loyalty_index && m.loyalty_index > 0) {
         map[uid].avgLoyalty += m.loyalty_index;
         map[uid].loyaltyCount++;
       }
