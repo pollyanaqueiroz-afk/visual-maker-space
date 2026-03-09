@@ -92,6 +92,13 @@ const App = () => (
               <Route path="auditoria" element={<PermissionGuard permission="admin.view"><AuditoriaPage /></PermissionGuard>} />
               <Route path="pipeline" element={<PermissionGuard permission="admin.view"><PipelinePage /></PermissionGuard>} />
               <Route path="processos-implantacao" element={<PermissionGuard permission="carteira.view"><ProcessosImplantacaoPage /></PermissionGuard>} />
+              {/* CS Client Preview (impersonation) */}
+              <Route path="cliente-preview/:clienteId" element={<ClientePreviewWrapper />}>
+                <Route index element={<ClienteHome />} />
+                <Route path="artes" element={<ClienteArtes />} />
+                <Route path="aplicativo" element={<ClienteApp />} />
+                <Route path="scorm" element={<ClienteScorm />} />
+              </Route>
             </Route>
             {/* Legacy route redirect */}
             <Route path="/dashboard" element={<Navigate to="/hub/briefings" replace />} />
