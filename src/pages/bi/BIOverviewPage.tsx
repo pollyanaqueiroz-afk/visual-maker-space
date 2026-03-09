@@ -60,8 +60,9 @@ export default function BIOverviewPage({ csEmail }: { csEmail?: string }) {
   const { data, loading, error } = useDashboardBI<OverviewData>('overview', csEmail);
   const { data: statusData, loading: l2 } = useDashboardBI<StatusItem[]>('status', csEmail);
   const { data: receitaData, loading: l3 } = useDashboardBI<ReceitaItem[]>('receita_por_status', csEmail);
+  const { data: canceladosData, loading: l4 } = useDashboardBI<CanceladosData>('cancelados', csEmail);
 
-  if (loading || l2 || l3) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  if (loading || l2 || l3 || l4) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   if (error || !data) return <div className="text-destructive p-4">Erro: {error}</div>;
 
   const kpiRow1 = [
