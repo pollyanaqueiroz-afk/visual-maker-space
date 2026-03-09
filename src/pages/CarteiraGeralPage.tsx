@@ -190,57 +190,12 @@ export default function CarteiraGeralPage() {
       setApiTotal(result.total || 0);
       setLoadError(null);
     } catch (err: any) {
-      console.error('API externa falhou, tentando banco local:', err);
-
-      // Fallback: buscar da tabela clients do Supabase
-      try {
-        let query = supabase
-          .from('clients')
-          .select('*', { count: 'exact' })
-          .order('client_name')
-          .range((page - 1) * PER_PAGE, page * PER_PAGE - 1);
-
-        if (searchTerm) {
-          query = query.or(`client_name.ilike.%${searchTerm}%,client_url.ilike.%${searchTerm}%,id_curseduca.ilike.%${searchTerm}%`);
-        }
-
-        const { data: localData, error: localErr, count } = await query;
-
-        if (localErr) throw localErr;
-
-        const mapped = (localData || []).map(c => ({
-          id_curseduca: c.id_curseduca,
-          cliente_nome: c.client_name,
-          status_financeiro: c.status_financeiro === 'Ativa' ? 'ATIVA' : c.status_financeiro,
-          status_financeiro_inadimplencia: c.valor_total_devido && Number(c.valor_total_devido) > 0 ? 'Inadimplente' : 'Adimplente',
-          fatura_total: c.valor_mensal,
-          plano_base_consolidada: c.plano_contratado,
-          cs_atual: c.nome_do_cs_atual,
-          cs_nome: c.nome_do_cs_atual,
-          cs_email_atual: c.email_do_cs_atual || c.e_mail_do_cs_atual,
-          etapa_do_cs: c.tipo_de_cs,
-          plataforma_nome: c.nome_da_plataforma,
-          url_plataforma: c.client_url,
-          data_ultimo_login: c.data_do_ultimo_login,
-          dias_desde_ultimo_login: c.dias_desde_o_ultimo_login,
-          numero_alunos: c.membros_do_mes_atual,
-          player_banda_utilizada_gb: c.banda_utilizada,
-          player_armazenamento_utilizado_gb: c.armazenamento_utilizado,
-          ia_tokens_utilizados: c.token_de_ia_utilizado,
-          certificados_mec_utilizados: c.certificado_mec_utilizado,
-        }));
-
-        setClientRecords(mapped);
-        setApiTotal(count || mapped.length);
-        setApiTotalPages(Math.ceil((count || mapped.length) / PER_PAGE));
-        setLoadError(null);
-
-        toast.info('Dados carregados do banco local (API externa indisponível)');
-      } catch (fallbackErr: any) {
-        console.error('Fallback also failed:', fallbackErr);
-        setLoadError(`API externa: ${err.message}. Fallback: ${fallbackErr.message}`);
-        toast.error(`Erro ao carregar dados: ${err.message}`);
-      }
+      console.error('Erro ao carregar dados da API:', err);
+      setLoadError(err.message);
+      setClientRecords([]);
+      setApiTotal(0);
+      setApiTotalPages(1);
+      toast.error(`Erro ao carregar dados: ${err.message}`);
     } finally {
       setInitialLoading(false);
       setPageLoading(false);
