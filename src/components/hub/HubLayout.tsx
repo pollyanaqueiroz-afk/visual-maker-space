@@ -90,7 +90,7 @@ function NotificationBell() {
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0 bg-card border-border/30 shadow-2xl" align="end">
+      <PopoverContent className="w-80 p-0 bg-white border-gray-200 shadow-2xl" align="end">
         <div className="p-3 border-b border-border/20">
           <h3 className="text-sm font-semibold">Notificações</h3>
           {slaAlerts > 0 && (
