@@ -114,6 +114,7 @@ export default function ClienteHubLayout() {
     path === '/cliente' ? location.pathname === '/cliente' : location.pathname.startsWith(path);
 
   return (
+    <ClienteImpersonationProvider email={null} clienteName={null} clienteId={null}>
     <div className="min-h-screen bg-[#0F172A] text-white dark" style={{ fontFamily: "'Sora', sans-serif" }}>
       {/* Top nav bar */}
       <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0F172A]/95 backdrop-blur-sm">
@@ -219,5 +220,6 @@ export default function ClienteHubLayout() {
         </div>
       </nav>
     </div>
+    </ClienteImpersonationProvider>
   );
 }
