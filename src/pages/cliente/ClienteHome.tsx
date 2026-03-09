@@ -14,6 +14,7 @@ import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import TimelineSection from '@/components/cliente/TimelineSection';
+import { useClienteEmail } from '@/hooks/useClienteEmail';
 
 export default function ClienteHome() {
   const { user } = useAuth();

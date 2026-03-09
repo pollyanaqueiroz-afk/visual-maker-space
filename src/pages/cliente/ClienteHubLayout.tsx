@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { ClienteImpersonationProvider } from '@/contexts/ClienteImpersonation';
+import { useClienteEmail } from '@/hooks/useClienteEmail';
 
 const navItems = [
   { label: 'Home', icon: Home, path: '/cliente' },
