@@ -81,7 +81,7 @@ function NotificationBell() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className="relative h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors cursor-pointer">
+        <button className="relative h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer">
           <Bell className="h-4 w-4" />
           {totalBadge > 0 && (
             <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-rose-500 text-[9px] font-bold text-white px-1 shadow-lg shadow-red-500/30 animate-pulse">
