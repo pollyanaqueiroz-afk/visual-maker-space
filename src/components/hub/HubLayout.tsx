@@ -99,16 +99,16 @@ function NotificationBell() {
         </div>
         <div className="max-h-80 overflow-y-auto">
           {notifications.length === 0 && slaAlerts === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">Nenhuma notificação</p>
+            <p className="text-sm text-gray-400 text-center py-6">Nenhuma notificação</p>
           ) : notifications.map((n: any) => (
             <div
               key={n.id}
-              className="p-3 border-b border-border/10 hover:bg-white/[0.03] cursor-pointer transition-colors"
+              className="p-3 border-b border-gray-50 hover:bg-gray-50 cursor-pointer transition-colors"
               onClick={() => markAsRead(n.id)}
             >
-              <p className="text-sm font-medium">{n.titulo}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{n.mensagem}</p>
-              <p className="text-[10px] text-muted-foreground mt-1">
+              <p className="text-sm font-medium text-gray-900">{n.titulo}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{n.mensagem}</p>
+              <p className="text-[10px] text-gray-400 mt-1">
                 {n.agendado_para ? format(new Date(n.agendado_para), "dd/MM 'às' HH:mm") : ''}
               </p>
             </div>
