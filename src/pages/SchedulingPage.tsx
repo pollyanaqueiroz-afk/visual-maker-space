@@ -483,7 +483,7 @@ export default function SchedulingPage() {
         minutes_url: confirmForm.minutes_url || null,
         recording_url: confirmForm.recording_url || null,
         loyalty_index: Number(confirmForm.loyalty_index),
-        loyalty_reason: confirmForm.loyalty_reason,
+        loyalty_reason: isInternal ? 'Reunião Interna' : confirmForm.loyalty_reason,
       }).eq('id', confirmingMeeting.id);
       if (error) throw error;
       toast.success('Reunião confirmada!');
