@@ -72,7 +72,7 @@ export default function ProcessosImplantacaoPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('app_clientes')
-        .select('id, nome, empresa, status, fase_atual, porcentagem_geral, plataforma, data_criacao, prazo_estimado');
+        .select('id, nome, empresa, status, fase_atual, porcentagem_geral, plataforma, data_criacao, prazo_estimado, portal_token');
       if (error) throw error;
       return data || [];
     },
