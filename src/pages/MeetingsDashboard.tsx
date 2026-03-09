@@ -183,11 +183,13 @@ export default function MeetingsDashboard() {
         dist[m.loyalty_index - 1]++;
       }
     }
+    const internalCount = filtered.filter(m => m.loyalty_index === 0).length;
     return [
       { name: '1 — Muito baixo', value: dist[0] },
       { name: '2 — Baixo', value: dist[1] },
       { name: '3 — Alto', value: dist[2] },
       { name: '4 — Muito alto', value: dist[3] },
+      ...(internalCount > 0 ? [{ name: 'Internas', value: internalCount }] : []),
     ];
   }, [filtered]);
 
