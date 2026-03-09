@@ -102,7 +102,7 @@ export default function BIOverviewPage({ csEmail }: { csEmail?: string }) {
       {/* Row 1 */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {kpiRow1.map((k, i) => (
-          <AnimatedKPI key={k.label} label={k.label} rawValue={k.raw} formatted={k.formatted} icon={k.icon} color={k.color} extra={k.extra} delay={i * 0.08} />
+          <AnimatedKPI key={k.label} label={k.label} rawValue={k.raw} formatted={k.formatted} icon={k.icon} color={k.color} delay={i * 0.08} />
         ))}
       </div>
 
