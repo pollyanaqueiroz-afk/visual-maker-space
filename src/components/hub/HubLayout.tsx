@@ -16,7 +16,7 @@ function SidebarToggleButton() {
   return (
     <button
       onClick={toggleSidebar}
-      className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors cursor-pointer"
+      className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
       aria-label={collapsed ? 'Expandir menu' : 'Recolher menu'}
     >
       {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
