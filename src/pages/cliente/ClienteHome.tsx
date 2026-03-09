@@ -19,7 +19,7 @@ export default function ClienteHome() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const clientEmail = user?.email || '';
+  const clientEmail = useClienteEmail();
 
   // Fetch artes data (for status cards)
   const { data: artesData, isLoading: loadingArtes } = useQuery({
