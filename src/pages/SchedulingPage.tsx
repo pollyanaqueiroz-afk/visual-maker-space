@@ -1450,11 +1450,15 @@ export default function SchedulingPage() {
                                 </div>
                                 {hasLoyalty ? (
                                   <div className="flex items-center gap-3">
-                                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-warning/10">
-                                      <Star className="h-3.5 w-3.5 text-warning" />
-                                      <span className="text-xs font-bold text-foreground">Fidelidade: {m.loyalty_index}/4</span>
-                                    </div>
-                                    {m.loyalty_reason && <span className="text-xs text-muted-foreground line-clamp-1">— {m.loyalty_reason}</span>}
+                                    {isInternalMeeting ? (
+                                      <Badge variant="outline" className="text-[10px] border-muted-foreground/30 text-muted-foreground">Interna</Badge>
+                                    ) : (
+                                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-warning/10">
+                                        <Star className="h-3.5 w-3.5 text-warning" />
+                                        <span className="text-xs font-bold text-foreground">Fidelidade: {m.loyalty_index}/4</span>
+                                      </div>
+                                    )}
+                                    {m.loyalty_reason && !isInternalMeeting && <span className="text-xs text-muted-foreground line-clamp-1">— {m.loyalty_reason}</span>}
                                     <Button variant="ghost" size="sm" className="h-6 text-[10px] text-muted-foreground hover:text-foreground px-2" onClick={() => handleOpenConfirm(m)}><Edit2 className="h-3 w-3 mr-1" /> Editar</Button>
                                   </div>
                                 ) : (
