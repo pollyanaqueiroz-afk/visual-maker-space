@@ -313,6 +313,7 @@ export default function ProcessosImplantacaoPage() {
                 <TableHead className="text-center">Aplicativo</TableHead>
                 <TableHead className="text-center">SCORM</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
+                <TableHead className="text-center">Portal</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
