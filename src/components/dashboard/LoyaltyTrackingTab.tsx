@@ -91,8 +91,9 @@ export default function LoyaltyTrackingTab() {
   }, [clientData]);
 
   const adherenceStats = useMemo(() => {
-    const completed = meetings.filter(m => m.status === 'completed');
-    const withLoyalty = completed.filter(m => m.loyalty_index != null);
+    const completedAll = meetings.filter(m => m.status === 'completed');
+    const completed = completedAll.filter(m => m.loyalty_index !== 0);
+    const withLoyalty = completed.filter(m => m.loyalty_index != null && m.loyalty_index > 0);
     const withoutLoyalty = completed.filter(m => m.loyalty_index == null);
     const rate = completed.length > 0 ? Math.round((withLoyalty.length / completed.length) * 100) : 0;
 
