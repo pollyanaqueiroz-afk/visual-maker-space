@@ -129,8 +129,8 @@ export default function ProcessosImplantacaoPage() {
   // CS list for filter
   const uniqueCS = useMemo(() => {
     const names = allClients
-      .map(c => ({ nome: c.nome_do_cs_atual, email: (c.email_do_cs_atual || c.e_mail_do_cs_atual || '').toLowerCase() }))
-      .filter(c => c.nome && c.email);
+      .map(c => ({ nome: c.cs_atual || '', email: (c.cs_atual || '').toLowerCase() }))
+      .filter(c => c.nome);
     const unique = new Map<string, string>();
     names.forEach(c => { if (!unique.has(c.email)) unique.set(c.email, c.nome!); });
     return Array.from(unique.entries()).map(([email, nome]) => ({ email, nome })).sort((a, b) => a.nome.localeCompare(b.nome));
