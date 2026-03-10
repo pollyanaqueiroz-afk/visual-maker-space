@@ -10,14 +10,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Plus, Trash2, Edit2, Palmtree, Users, Layers, Tag, CalendarDays } from 'lucide-react';
+import { Plus, Trash2, Edit2, Palmtree, Users, Layers, Tag, ChevronDown, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 
 type UserProfile = { user_id: string; email: string | null; display_name: string | null };
 
 type Plano = { id: string; nome: string; created_at: string };
 type Etapa = { id: string; nome: string; created_at: string };
-type CsConfig = { id: string; etapa_id: string; user_email: string; user_name: string | null; peso: number; planos: string[]; ativo: boolean; created_at: string };
+type CsConfig = { id: string; etapa_id: string; plano_id: string | null; user_email: string; user_name: string | null; peso: number; ativo: boolean; created_at: string };
 type Ferias = { id: string; cs_email: string; substituto_email: string; substituto_nome: string | null; data_inicio: string; data_fim: string; motivo: string | null; created_at: string };
 
 export default function CarteirizacaoPage() {
@@ -30,6 +30,7 @@ export default function CarteirizacaoPage() {
   const [csNameQuery, setCsNameQuery] = useState('');
   const [showCsSuggestions, setShowCsSuggestions] = useState(false);
   const csNameRef = useRef<HTMLDivElement>(null);
+  const [expandedPlanos, setExpandedPlanos] = useState<Set<string>>(new Set());
 
   // Dialog states
   const [planoDialog, setPlanoDialog] = useState(false);
@@ -37,7 +38,7 @@ export default function CarteirizacaoPage() {
   const [etapaDialog, setEtapaDialog] = useState(false);
   const [etapaNome, setEtapaNome] = useState('');
   const [csDialog, setCsDialog] = useState(false);
-  const [csForm, setCsForm] = useState({ etapa_id: '', user_email: '', user_name: '', peso: 1, planos: [] as string[] });
+  const [csForm, setCsForm] = useState({ plano_id: '', etapa_id: '', user_email: '', user_name: '', peso: 1 });
   const [editingCs, setEditingCs] = useState<string | null>(null);
   const [feriasDialog, setFeriasDialog] = useState(false);
   const [feriasForm, setFeriasForm] = useState({ cs_email: '', substituto_email: '', substituto_nome: '', data_inicio: '', data_fim: '' });
@@ -63,7 +64,6 @@ export default function CarteirizacaoPage() {
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
         const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/list-users-api`, {
           headers: {
             'Authorization': 'Basic WxYVWSfUJ3kslYCkqlyo5DMdsQHzBA1guEvgAlF86T4CiMqPmPbrVEemby5udFaq',
@@ -96,6 +96,13 @@ export default function CarteirizacaoPage() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  // Expand all plans by default once loaded
+  useEffect(() => {
+    if (planos.length > 0 && expandedPlanos.size === 0) {
+      setExpandedPlanos(new Set(planos.map(p => p.id)));
+    }
+  }, [planos]);
+
   const filteredUsers = userProfiles.filter(u => {
     const q = csNameQuery.toLowerCase();
     if (!q) return true;
@@ -106,6 +113,14 @@ export default function CarteirizacaoPage() {
     setCsForm(f => ({ ...f, user_name: user.display_name || '', user_email: user.email || '' }));
     setCsNameQuery(user.display_name || user.email || '');
     setShowCsSuggestions(false);
+  };
+
+  const togglePlanoExpanded = (id: string) => {
+    setExpandedPlanos(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
   };
 
   // --- Planos ---
@@ -143,29 +158,29 @@ export default function CarteirizacaoPage() {
   };
 
   // --- CS Config ---
-  const openCsDialog = (cs?: CsConfig) => {
+  const openCsDialog = (cs?: CsConfig, presetPlanoId?: string, presetEtapaId?: string) => {
     if (cs) {
       setEditingCs(cs.id);
-      setCsForm({ etapa_id: cs.etapa_id, user_email: cs.user_email, user_name: cs.user_name || '', peso: cs.peso, planos: cs.planos || [] });
+      setCsForm({ plano_id: cs.plano_id || '', etapa_id: cs.etapa_id, user_email: cs.user_email, user_name: cs.user_name || '', peso: cs.peso });
       setCsNameQuery(cs.user_name || cs.user_email);
     } else {
       setEditingCs(null);
-      setCsForm({ etapa_id: etapas[0]?.id || '', user_email: '', user_name: '', peso: 1, planos: [] });
+      setCsForm({ plano_id: presetPlanoId || planos[0]?.id || '', etapa_id: presetEtapaId || etapas[0]?.id || '', user_email: '', user_name: '', peso: 1 });
       setCsNameQuery('');
     }
     setCsDialog(true);
   };
 
   const saveCs = async () => {
-    if (!csForm.etapa_id || !csForm.user_email.trim()) { toast.error('Preencha etapa e e-mail'); return; }
-    const payload = { etapa_id: csForm.etapa_id, user_email: csForm.user_email.trim(), user_name: csForm.user_name.trim() || null, peso: csForm.peso, planos: csForm.planos } as any;
+    if (!csForm.plano_id || !csForm.etapa_id || !csForm.user_email.trim()) { toast.error('Preencha plano, etapa e e-mail'); return; }
+    const payload = { plano_id: csForm.plano_id, etapa_id: csForm.etapa_id, user_email: csForm.user_email.trim(), user_name: csForm.user_name.trim() || null, peso: csForm.peso } as any;
     if (editingCs) {
       const { error } = await supabase.from('carteirizacao_cs').update(payload).eq('id', editingCs);
       if (error) { toast.error('Erro ao atualizar'); return; }
       toast.success('CS atualizado');
     } else {
       const { error } = await supabase.from('carteirizacao_cs').insert(payload);
-      if (error) { toast.error(error.message.includes('duplicate') ? 'CS já atribuído nessa etapa' : 'Erro ao criar'); return; }
+      if (error) { toast.error(error.message.includes('duplicate') ? 'CS já atribuído nessa combinação plano/etapa' : 'Erro ao criar'); return; }
       toast.success('CS adicionado');
     }
     setCsDialog(false);
@@ -209,14 +224,8 @@ export default function CarteirizacaoPage() {
     fetchAll();
   };
 
-  const togglePlanoInCs = (plano: string) => {
-    setCsForm(prev => ({
-      ...prev,
-      planos: prev.planos.includes(plano) ? prev.planos.filter(p => p !== plano) : [...prev.planos, plano],
-    }));
-  };
-
   const getEtapaNome = (id: string) => etapas.find(e => e.id === id)?.nome || '—';
+  const getPlanoNome = (id: string | null) => planos.find(p => p.id === id)?.nome || '—';
 
   const allCsEmails = [...new Set(csConfigs.map(c => c.user_email))];
 
@@ -297,84 +306,126 @@ export default function CarteirizacaoPage() {
         {/* ===== CSs POR CARTEIRA ===== */}
         <TabsContent value="cs" className="space-y-4">
           <div className="flex justify-between items-center">
-            <p className="text-sm text-muted-foreground">Distribua os CSs por etapa de carteira. O peso define a proporção de faturamento que cada CS recebe.</p>
-            <Button size="sm" onClick={() => openCsDialog()} disabled={etapas.length === 0}>
+            <p className="text-sm text-muted-foreground">Para cada plano, defina os CSs responsáveis em cada etapa. O peso define a proporção de faturamento.</p>
+            <Button size="sm" onClick={() => openCsDialog()} disabled={planos.length === 0 || etapas.length === 0}>
               <Plus className="h-4 w-4 mr-1" /> Adicionar CS
             </Button>
           </div>
 
-          {etapas.length === 0 ? (
-            <Card><CardContent className="py-8 text-center text-muted-foreground">Cadastre etapas primeiro na aba "Planos & Etapas".</CardContent></Card>
+          {planos.length === 0 || etapas.length === 0 ? (
+            <Card><CardContent className="py-8 text-center text-muted-foreground">Cadastre planos e etapas primeiro na aba "Planos & Etapas".</CardContent></Card>
           ) : (
-            etapas.map(etapa => {
-              const csForEtapa = csConfigs.filter(c => c.etapa_id === etapa.id);
-              const totalPeso = csForEtapa.filter(c => c.ativo).reduce((s, c) => s + c.peso, 0);
+            planos.map(plano => {
+              const csForPlano = csConfigs.filter(c => c.plano_id === plano.id);
+              const isExpanded = expandedPlanos.has(plano.id);
               return (
-                <Card key={etapa.id}>
-                  <CardHeader className="pb-2">
+                <Card key={plano.id}>
+                  <CardHeader className="pb-2 cursor-pointer" onClick={() => togglePlanoExpanded(plano.id)}>
                     <CardTitle className="text-base flex items-center gap-2">
-                      <Layers className="h-4 w-4 text-primary" />
-                      {etapa.nome}
-                      <Badge variant="secondary" className="ml-2">{csForEtapa.length} CS(s)</Badge>
+                      {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                      <Tag className="h-4 w-4 text-primary" />
+                      {plano.nome}
+                      <Badge variant="secondary" className="ml-2">{csForPlano.length} CS(s)</Badge>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="ml-auto h-7 text-xs"
+                        onClick={(e) => { e.stopPropagation(); openCsDialog(undefined, plano.id); }}
+                      >
+                        <Plus className="h-3 w-3 mr-1" /> CS
+                      </Button>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    {csForEtapa.length === 0 ? (
-                      <p className="text-sm text-muted-foreground py-2">Nenhum CS atribuído.</p>
-                    ) : (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>CS</TableHead>
-                            <TableHead>E-mail</TableHead>
-                            <TableHead>Peso</TableHead>
-                            <TableHead>% Faturamento</TableHead>
-                            <TableHead>Planos</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="w-20">Ações</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {csForEtapa.map(cs => (
-                            <TableRow key={cs.id} className={!cs.ativo ? 'opacity-50' : ''}>
-                              <TableCell className="font-medium">{cs.user_name || '—'}</TableCell>
-                              <TableCell>{cs.user_email}</TableCell>
-                              <TableCell>{cs.peso}</TableCell>
-                              <TableCell>
-                                {totalPeso > 0 && cs.ativo ? `${Math.round((cs.peso / totalPeso) * 100)}%` : '—'}
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex flex-wrap gap-1">
-                                  {cs.planos.length > 0 ? cs.planos.map(p => (
-                                    <Badge key={p} variant="outline" className="text-[10px]">{p}</Badge>
-                                  )) : <span className="text-xs text-muted-foreground">Todos</span>}
+                  {isExpanded && (
+                    <CardContent className="space-y-4">
+                      {etapas.map(etapa => {
+                        const csForEtapa = csForPlano.filter(c => c.etapa_id === etapa.id);
+                        if (csForEtapa.length === 0) {
+                          return (
+                            <div key={etapa.id} className="border border-border/50 rounded-lg p-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <Layers className="h-3.5 w-3.5 text-muted-foreground" />
+                                  <span className="text-sm font-medium text-muted-foreground">{etapa.nome}</span>
                                 </div>
-                              </TableCell>
-                              <TableCell>
-                                <Badge
-                                  variant={cs.ativo ? 'default' : 'secondary'}
-                                  className="cursor-pointer"
-                                  onClick={() => toggleCsAtivo(cs)}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 text-xs"
+                                  onClick={() => openCsDialog(undefined, plano.id, etapa.id)}
                                 >
-                                  {cs.ativo ? 'Ativo' : 'Inativo'}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex gap-1">
-                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openCsDialog(cs)}>
-                                    <Edit2 className="h-3.5 w-3.5" />
-                                  </Button>
-                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteCs(cs.id)}>
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    )}
-                  </CardContent>
+                                  <Plus className="h-3 w-3 mr-1" /> Adicionar CS
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        }
+                        const totalPeso = csForEtapa.filter(c => c.ativo).reduce((s, c) => s + c.peso, 0);
+                        return (
+                          <div key={etapa.id} className="border border-border/50 rounded-lg">
+                            <div className="flex items-center justify-between px-3 py-2 bg-muted/30 rounded-t-lg">
+                              <div className="flex items-center gap-2">
+                                <Layers className="h-3.5 w-3.5 text-primary" />
+                                <span className="text-sm font-medium">{etapa.nome}</span>
+                                <Badge variant="outline" className="text-[10px]">{csForEtapa.length}</Badge>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={() => openCsDialog(undefined, plano.id, etapa.id)}
+                              >
+                                <Plus className="h-3 w-3 mr-1" /> CS
+                              </Button>
+                            </div>
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>CS</TableHead>
+                                  <TableHead>E-mail</TableHead>
+                                  <TableHead>Peso</TableHead>
+                                  <TableHead>% Faturamento</TableHead>
+                                  <TableHead>Status</TableHead>
+                                  <TableHead className="w-20">Ações</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {csForEtapa.map(cs => (
+                                  <TableRow key={cs.id} className={!cs.ativo ? 'opacity-50' : ''}>
+                                    <TableCell className="font-medium">{cs.user_name || '—'}</TableCell>
+                                    <TableCell>{cs.user_email}</TableCell>
+                                    <TableCell>{cs.peso}</TableCell>
+                                    <TableCell>
+                                      {totalPeso > 0 && cs.ativo ? `${Math.round((cs.peso / totalPeso) * 100)}%` : '—'}
+                                    </TableCell>
+                                    <TableCell>
+                                      <Badge
+                                        variant={cs.ativo ? 'default' : 'secondary'}
+                                        className="cursor-pointer"
+                                        onClick={() => toggleCsAtivo(cs)}
+                                      >
+                                        {cs.ativo ? 'Ativo' : 'Inativo'}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                      <div className="flex gap-1">
+                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openCsDialog(cs)}>
+                                          <Edit2 className="h-3.5 w-3.5" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteCs(cs.id)}>
+                                          <Trash2 className="h-3.5 w-3.5" />
+                                        </Button>
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        );
+                      })}
+                    </CardContent>
+                  )}
                 </Card>
               );
             })
@@ -475,14 +526,25 @@ export default function CarteirizacaoPage() {
         <DialogContent>
           <DialogHeader><DialogTitle>{editingCs ? 'Editar CS' : 'Adicionar CS à Carteira'}</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label>Etapa</Label>
-              <Select value={csForm.etapa_id} onValueChange={v => setCsForm(f => ({ ...f, etapa_id: v }))}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
-                  {etapas.map(e => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Plano</Label>
+                <Select value={csForm.plano_id} onValueChange={v => setCsForm(f => ({ ...f, plano_id: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {planos.map(p => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Etapa</Label>
+                <Select value={csForm.etapa_id} onValueChange={v => setCsForm(f => ({ ...f, etapa_id: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {etapas.map(e => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5 relative" ref={csNameRef}>
@@ -523,26 +585,6 @@ export default function CarteirizacaoPage() {
               <Label>Peso (proporção de faturamento)</Label>
               <Input type="number" min={1} value={csForm.peso} onChange={e => setCsForm(f => ({ ...f, peso: parseInt(e.target.value) || 1 }))} />
               <p className="text-xs text-muted-foreground">Um CS com peso 2 recebe o dobro de faturamento que um com peso 1.</p>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Planos atendidos</Label>
-              {planos.length === 0 ? (
-                <p className="text-xs text-muted-foreground">Nenhum plano cadastrado. O CS atenderá todos os clientes.</p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {planos.map(p => (
-                    <Badge
-                      key={p.id}
-                      variant={csForm.planos.includes(p.nome) ? 'default' : 'outline'}
-                      className="cursor-pointer"
-                      onClick={() => togglePlanoInCs(p.nome)}
-                    >
-                      {p.nome}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-              <p className="text-xs text-muted-foreground">Se nenhum plano for selecionado, o CS atende todos.</p>
             </div>
           </div>
           <DialogFooter>
