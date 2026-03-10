@@ -192,8 +192,8 @@ export default function ProcessosImplantacaoPage() {
 
     if (filterCS !== 'all') {
       result = result.filter(c => {
-        const csEmail = (c.email_do_cs_atual || c.e_mail_do_cs_atual || '').toLowerCase();
-        return csEmail === filterCS.toLowerCase();
+        const csVal = (c.cs_atual || '').toLowerCase();
+        return csVal === filterCS.toLowerCase();
       });
     }
 
