@@ -377,6 +377,15 @@ export default function SchedulingPage() {
         ...(isRescheduling ? { reschedule_reason: form.reschedule_reason, status: 'scheduled' } : {}),
       };
 
+      // Build ISO start/end for Google Calendar API
+      const startISO = `${form.meeting_date}T${form.meeting_time}:00`;
+      const startDate = new Date(startISO);
+      const endDate = new Date(startDate.getTime() + form.duration_minutes * 60000);
+      const endISO = `${form.meeting_date}T${String(endDate.getHours()).padStart(2,'0')}:${String(endDate.getMinutes()).padStart(2,'0')}:00`;
+      const attendeesArr = payload.participants.length > 0
+        ? payload.participants
+        : (form.client_email ? [form.client_email] : []);
+
       if (editingId) {
         const { error } = await supabase.from('meetings').update(payload).eq('id', editingId);
         if (error) throw error;
