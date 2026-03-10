@@ -26,6 +26,10 @@ export default function CarteirizacaoPage() {
   const [csConfigs, setCsConfigs] = useState<CsConfig[]>([]);
   const [ferias, setFerias] = useState<Ferias[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userProfiles, setUserProfiles] = useState<UserProfile[]>([]);
+  const [csNameQuery, setCsNameQuery] = useState('');
+  const [showCsSuggestions, setShowCsSuggestions] = useState(false);
+  const csNameRef = useRef<HTMLDivElement>(null);
 
   // Dialog states
   const [planoDialog, setPlanoDialog] = useState(false);
