@@ -200,6 +200,12 @@ export default function SchedulingPage() {
   const [csatMap, setCsatMap] = useState<Record<string, { score: number | null; responded: boolean }>>({});
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [filterCs, setFilterCs] = useState<string>('all');
+  const [detailMeeting, setDetailMeeting] = useState<Meeting | null>(null);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [detailNotes, setDetailNotes] = useState('');
+  const [detailFunilStatus, setDetailFunilStatus] = useState('');
+  const [detailFunilNotas, setDetailFunilNotas] = useState('');
+  const [detailSaving, setDetailSaving] = useState(false);
 
   const fetchMeetings = async () => {
     const { data, error } = await supabase
@@ -570,6 +576,92 @@ export default function SchedulingPage() {
     else fetchMeetings();
   };
 
+  // Sync Google Calendar events into DB (upsert, no deletes)
+  const handleSyncCalendar = async () => {
+    try {
+      const events = await syncCalendar(100);
+      if (!events || events.length === 0) {
+        toast.info('Nenhum evento encontrado no Google Calendar');
+        return;
+      }
+
+      // Get existing gcal_event_ids from DB
+      const { data: existingMeetings } = await supabase
+        .from('meetings')
+        .select('gcal_event_id')
+        .not('gcal_event_id', 'is', null);
+
+      const existingIds = new Set(
+        (existingMeetings || []).map((m: any) => m.gcal_event_id).filter(Boolean)
+      );
+
+      const newEvents = events.filter(e => !existingIds.has(e.event_id));
+
+      if (newEvents.length === 0) {
+        toast.success('Tudo sincronizado! Nenhum evento novo.');
+        return;
+      }
+
+      // Insert only new events
+      const inserts = newEvents.map(e => {
+        const startDate = new Date(e.start);
+        const endDate = new Date(e.end);
+        const durationMin = Math.round((endDate.getTime() - startDate.getTime()) / 60000);
+        return {
+          title: e.summary || 'Sem título',
+          description: e.description || null,
+          meeting_date: format(startDate, 'yyyy-MM-dd'),
+          meeting_time: format(startDate, 'HH:mm'),
+          duration_minutes: durationMin > 0 ? durationMin : 30,
+          meeting_url: e.hangout_link || null,
+          gcal_event_id: e.event_id,
+          status: 'scheduled' as const,
+          participants: e.attendees?.map(a => a.email) || [],
+          client_email: e.attendees?.[0]?.email || null,
+        };
+      });
+
+      const { error } = await supabase.from('meetings').insert(inserts as any);
+      if (error) {
+        toast.error('Erro ao importar: ' + error.message);
+      } else {
+        toast.success(`${newEvents.length} nova(s) reunião(ões) importada(s)!`);
+        fetchMeetings();
+      }
+    } catch (err: any) {
+      toast.error('Erro na sincronização: ' + err.message);
+    }
+  };
+
+  // Detail dialog handlers
+  const handleOpenDetail = (m: Meeting) => {
+    setDetailMeeting(m);
+    setDetailNotes(m.notes || '');
+    setDetailFunilStatus(m.funil_status || '');
+    setDetailFunilNotas(m.funil_notas || '');
+    setDetailDialogOpen(true);
+  };
+
+  const handleSaveDetail = async () => {
+    if (!detailMeeting) return;
+    setDetailSaving(true);
+    try {
+      const { error } = await supabase.from('meetings').update({
+        notes: detailNotes || null,
+        funil_status: detailFunilStatus || null,
+        funil_notas: detailFunilNotas || null,
+      }).eq('id', detailMeeting.id);
+      if (error) throw error;
+      toast.success('Detalhes salvos!');
+      setDetailDialogOpen(false);
+      fetchMeetings();
+    } catch (err: any) {
+      toast.error('Erro: ' + err.message);
+    } finally {
+      setDetailSaving(false);
+    }
+  };
+
   // Count meetings by reason
   const reasonCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -759,7 +851,7 @@ export default function SchedulingPage() {
           <p className="text-sm text-muted-foreground">Gerencie reuniões e calls com clientes</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => syncCalendar()} disabled={calendarSyncing}>
+          <Button variant="outline" onClick={handleSyncCalendar} disabled={calendarSyncing}>
             <RefreshCw className={cn("h-4 w-4 mr-2", calendarSyncing && "animate-spin")} />
             {calendarSyncing ? 'Sincronizando...' : 'Sincronizar'}
           </Button>
@@ -1351,24 +1443,19 @@ export default function SchedulingPage() {
                             return (
                               <div key={slot} className="space-y-0.5">
                                 {exactStartMeetings.map(meetingInSlot => (
-                                  <Tooltip key={meetingInSlot.id}>
-                                    <TooltipTrigger asChild>
-                                      <div className={cn(
-                                        "flex items-center gap-1.5 px-2 py-1.5 rounded-lg cursor-pointer transition-all",
-                                        meetingInSlot.status === 'completed' ? 'bg-success/8 hover:bg-success/15 border border-success/20' : 'bg-primary/8 hover:bg-primary/15 border border-primary/20'
-                                      )}>
-                                        <span className="w-10 text-right text-[10px] tabular-nums font-medium text-foreground/70 mr-1">{slot}</span>
-                                        <div className={cn("w-1 h-4 rounded-full shrink-0", meetingInSlot.status === 'completed' ? 'bg-success' : 'bg-primary')} />
-                                        <span className="text-xs font-medium text-foreground truncate flex-1">{meetingInSlot.title}</span>
-                                        <span className="text-[10px] text-muted-foreground shrink-0">{meetingInSlot.duration_minutes}min</span>
-                                      </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="right" className="text-xs">
-                                      <p className="font-semibold">{meetingInSlot.title}</p>
-                                      {meetingInSlot.client_name && <p className="text-muted-foreground">{meetingInSlot.client_name}</p>}
-                                      <p className="text-muted-foreground">{slot} — {meetingInSlot.duration_minutes}min</p>
-                                    </TooltipContent>
-                                  </Tooltip>
+                                  <div
+                                    key={meetingInSlot.id}
+                                    className={cn(
+                                      "flex items-center gap-1.5 px-2 py-1.5 rounded-lg cursor-pointer transition-all",
+                                      meetingInSlot.status === 'completed' ? 'bg-success/8 hover:bg-success/15 border border-success/20' : 'bg-primary/8 hover:bg-primary/15 border border-primary/20'
+                                    )}
+                                    onClick={() => handleOpenDetail(meetingInSlot)}
+                                  >
+                                    <span className="w-10 text-right text-[10px] tabular-nums font-medium text-foreground/70 mr-1">{slot}</span>
+                                    <div className={cn("w-1 h-4 rounded-full shrink-0", meetingInSlot.status === 'completed' ? 'bg-success' : 'bg-primary')} />
+                                    <span className="text-xs font-medium text-foreground truncate flex-1">{meetingInSlot.title}</span>
+                                    <span className="text-[10px] text-muted-foreground shrink-0">{meetingInSlot.duration_minutes}min</span>
+                                  </div>
                                 ))}
                               </div>
                             );
@@ -1705,6 +1792,151 @@ export default function SchedulingPage() {
                 {confirmSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle className="h-4 w-4 mr-2" />}
                 Confirmar Reunião
               </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Meeting Detail Dialog */}
+      <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5 text-primary" />
+              Detalhes da Reunião
+            </DialogTitle>
+          </DialogHeader>
+          {detailMeeting && (
+            <div className="space-y-4 pt-2">
+              {/* Meeting info */}
+              <div className="p-3 rounded-lg bg-muted/50 border border-border space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-foreground">{detailMeeting.title}</h3>
+                  <Badge className={cn('text-[10px] px-2 py-0', (STATUS_CONFIG[detailMeeting.status] || STATUS_CONFIG.scheduled).color)}>
+                    {(STATUS_CONFIG[detailMeeting.status] || STATUS_CONFIG.scheduled).label}
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <CalendarDays className="h-3 w-3" />
+                    {format(parseISO(detailMeeting.meeting_date), "dd/MM/yyyy")}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="h-3 w-3" />
+                    {detailMeeting.meeting_time.slice(0, 5)} · {detailMeeting.duration_minutes}min
+                  </div>
+                  {detailMeeting.client_name && (
+                    <div className="flex items-center gap-1.5">
+                      <User className="h-3 w-3" />
+                      {detailMeeting.client_name}
+                    </div>
+                  )}
+                  {detailMeeting.client_email && (
+                    <div className="flex items-center gap-1.5 text-primary">
+                      {detailMeeting.client_email}
+                    </div>
+                  )}
+                  {detailMeeting.meeting_reason && (
+                    <div className="col-span-2">
+                      <Badge variant="outline" className="text-[10px]">{detailMeeting.meeting_reason}</Badge>
+                    </div>
+                  )}
+                </div>
+                {detailMeeting.description && (
+                  <p className="text-xs text-muted-foreground border-t border-border pt-2 mt-2">{detailMeeting.description}</p>
+                )}
+                {detailMeeting.meeting_url && (
+                  <a href={detailMeeting.meeting_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline">
+                    <Video className="h-3 w-3" /> Link da reunião
+                  </a>
+                )}
+              </div>
+
+              {/* Loyalty info */}
+              {detailMeeting.loyalty_index != null && (
+                <div className="p-3 rounded-lg bg-warning/5 border border-warning/20 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Star className="h-4 w-4 text-warning" />
+                    <span className="text-sm font-semibold">Fidelidade: {detailMeeting.loyalty_index === 0 ? 'Interna' : `${detailMeeting.loyalty_index}/4`}</span>
+                  </div>
+                  {detailMeeting.loyalty_reason && detailMeeting.loyalty_index !== 0 && (
+                    <p className="text-xs text-muted-foreground">{detailMeeting.loyalty_reason}</p>
+                  )}
+                </div>
+              )}
+
+              {/* CSAT */}
+              {csatMap[detailMeeting.id] && (
+                <div className="p-3 rounded-lg bg-muted/30 border border-border">
+                  {csatMap[detailMeeting.id].responded ? (
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4 text-success" />
+                      <span className="text-sm font-bold text-success">CSAT: {csatMap[detailMeeting.id].score}/10</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">CSAT enviado · Aguardando resposta</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Editable: Notes */}
+              <div className="space-y-2">
+                <Label>Anotações da Reunião</Label>
+                <Textarea
+                  value={detailNotes}
+                  onChange={e => setDetailNotes(e.target.value)}
+                  placeholder="O que foi conversado, decisões tomadas..."
+                  rows={3}
+                />
+              </div>
+
+              {/* Editable: Churn Risk */}
+              <div className="p-3 rounded-lg border border-destructive/20 bg-destructive/5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 text-destructive" />
+                  <span className="text-sm font-semibold text-foreground">Risco de Churn</span>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Status do Funil</Label>
+                  <Select value={detailFunilStatus} onValueChange={setDetailFunilStatus}>
+                    <SelectTrigger className={!detailFunilStatus ? 'text-muted-foreground' : ''}>
+                      <SelectValue placeholder="Selecione o status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Sem risco</SelectItem>
+                      <SelectItem value="risco_critico">🔴 Risco Crítico</SelectItem>
+                      <SelectItem value="em_tratamento">🟡 Em Tratamento</SelectItem>
+                      <SelectItem value="resolvido">🟢 Resolvido</SelectItem>
+                      <SelectItem value="cancelou">⚫ Cancelou</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Notas sobre o risco</Label>
+                  <Textarea
+                    value={detailFunilNotas}
+                    onChange={e => setDetailFunilNotas(e.target.value)}
+                    placeholder="Motivo do risco, ações tomadas..."
+                    rows={2}
+                  />
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-2 pt-2">
+                <Button className="flex-1" onClick={handleSaveDetail} disabled={detailSaving}>
+                  {detailSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle className="h-4 w-4 mr-2" />}
+                  Salvar
+                </Button>
+                {canEdit && (
+                  <Button variant="outline" onClick={() => { setDetailDialogOpen(false); handleEdit(detailMeeting); }}>
+                    <Edit2 className="h-4 w-4 mr-2" /> Editar Reunião
+                  </Button>
+                )}
+              </div>
             </div>
           )}
         </DialogContent>
