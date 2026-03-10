@@ -46,6 +46,8 @@ export default function GestaoGerencialPage() {
   const [search, setSearch] = useState('');
   const [saving, setSaving] = useState(false);
   const [pendingSubordinates, setPendingSubordinates] = useState<Set<string>>(new Set());
+  const [sortKey, setSortKey] = useState<'name' | 'email' | 'role' | 'members'>('name');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   const fetchData = useCallback(async () => {
     setLoading(true);
