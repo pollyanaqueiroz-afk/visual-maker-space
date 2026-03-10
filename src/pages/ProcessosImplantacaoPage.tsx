@@ -59,8 +59,8 @@ export default function ProcessosImplantacaoPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('clients')
-        .select('id, client_name, client_url, id_curseduca, email_do_cliente, nome_do_cs_atual, email_do_cs_atual, e_mail_do_cs_atual, plano_contratado, data_do_fechamento_do_contrato, status_financeiro, membros_do_mes_atual, dias_desde_o_ultimo_login')
-        .order('client_name');
+        .select('id, cliente, id_curseduca, cs_atual, plano')
+        .order('cliente');
       if (error) throw error;
       return data || [];
     },
@@ -129,8 +129,8 @@ export default function ProcessosImplantacaoPage() {
   // CS list for filter
   const uniqueCS = useMemo(() => {
     const names = allClients
-      .map(c => ({ nome: c.nome_do_cs_atual, email: (c.email_do_cs_atual || c.e_mail_do_cs_atual || '').toLowerCase() }))
-      .filter(c => c.nome && c.email);
+      .map(c => ({ nome: c.cs_atual || '', email: (c.cs_atual || '').toLowerCase() }))
+      .filter(c => c.nome);
     const unique = new Map<string, string>();
     names.forEach(c => { if (!unique.has(c.email)) unique.set(c.email, c.nome!); });
     return Array.from(unique.entries()).map(([email, nome]) => ({ email, nome })).sort((a, b) => a.nome.localeCompare(b.nome));
@@ -139,7 +139,7 @@ export default function ProcessosImplantacaoPage() {
   // Consolidate by client_url
   const consolidatedData = useMemo(() => {
     return allClients.map(client => {
-      const url = client.client_url;
+      const url = client.id_curseduca;
 
       const clientBriefings = briefingImages.filter((img: any) => img.briefing_requests?.platform_url === url);
       const briefingTotal = clientBriefings.length;
@@ -192,18 +192,16 @@ export default function ProcessosImplantacaoPage() {
 
     if (filterCS !== 'all') {
       result = result.filter(c => {
-        const csEmail = (c.email_do_cs_atual || c.e_mail_do_cs_atual || '').toLowerCase();
-        return csEmail === filterCS.toLowerCase();
+        const csVal = (c.cs_atual || '').toLowerCase();
+        return csVal === filterCS.toLowerCase();
       });
     }
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(c =>
-        (c.client_name || '').toLowerCase().includes(q) ||
-        (c.client_url || '').toLowerCase().includes(q) ||
-        (c.id_curseduca || '').toLowerCase().includes(q) ||
-        (c.email_do_cliente || '').toLowerCase().includes(q)
+        (c.cliente || '').toLowerCase().includes(q) ||
+        (c.id_curseduca || '').toLowerCase().includes(q)
       );
     }
 
@@ -216,8 +214,8 @@ export default function ProcessosImplantacaoPage() {
 
   // KPIs - based on CS filter
   const baseList = filterCS !== 'all' ? consolidatedData.filter(c => {
-    const csEmail = (c.email_do_cs_atual || c.e_mail_do_cs_atual || '').toLowerCase();
-    return csEmail === filterCS.toLowerCase();
+    const csVal = (c.cs_atual || '').toLowerCase();
+    return csVal === filterCS.toLowerCase();
   }) : consolidatedData;
   const totalWithProcess = baseList.filter(c => c.hasAnyProcess).length;
   const totalWithBriefing = baseList.filter(c => c.hasOpenBriefing).length;
@@ -225,7 +223,7 @@ export default function ProcessosImplantacaoPage() {
   const totalWithScorm = baseList.filter(c => c.hasScorm).length;
 
   // Detail
-  const selectedClient = selectedClientUrl ? consolidatedData.find(c => c.client_url === selectedClientUrl) : null;
+  const selectedClient = selectedClientUrl ? consolidatedData.find(c => c.id_curseduca === selectedClientUrl) : null;
   const selectedBriefings = selectedClientUrl ? briefingImages.filter((img: any) => img.briefing_requests?.platform_url === selectedClientUrl) : [];
   const selectedAppFases = selectedClient?.app ? allFases.filter(f => f.cliente_id === selectedClient.app!.id) : [];
 
@@ -321,20 +319,20 @@ export default function ProcessosImplantacaoPage() {
                 <TableRow
                   key={c.id}
                   className={`cursor-pointer hover:bg-muted/30 ${c.isOverdue ? 'bg-destructive/5 border-l-4 border-destructive' : ''}`}
-                  onClick={() => setSelectedClientUrl(c.client_url)}
+                  onClick={() => setSelectedClientUrl(c.id_curseduca)}
                 >
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {c.isOverdue && <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />}
                       <div>
-                        <p className={`font-medium text-sm ${c.isOverdue ? 'text-destructive' : ''}`}>{c.client_name || c.client_url}</p>
-                        <p className="text-xs text-muted-foreground">{c.client_url}</p>
+                         <p className={`font-medium text-sm ${c.isOverdue ? 'text-destructive' : ''}`}>{c.cliente || c.id_curseduca}</p>
+                         <p className="text-xs text-muted-foreground">{c.id_curseduca}</p>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell><span className="text-xs font-mono text-muted-foreground">{c.id_curseduca || '—'}</span></TableCell>
-                  <TableCell><span className="text-sm text-muted-foreground">{c.nome_do_cs_atual || '—'}</span></TableCell>
-                  <TableCell><span className="text-xs text-muted-foreground">{c.plano_contratado || '—'}</span></TableCell>
+                   <TableCell><span className="text-sm text-muted-foreground">{c.cs_atual || '—'}</span></TableCell>
+                   <TableCell><span className="text-xs text-muted-foreground">{c.plano || '—'}</span></TableCell>
 
                   {/* Design column - enhanced */}
                   <TableCell className="text-center">
@@ -422,7 +420,7 @@ export default function ProcessosImplantacaoPage() {
                     ) : <span className="text-xs text-muted-foreground">—</span>}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={e => { e.stopPropagation(); setSelectedClientUrl(c.client_url); }}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={e => { e.stopPropagation(); setSelectedClientUrl(c.id_curseduca); }}>
                       <Eye className="h-4 w-4" />
                     </Button>
                   </TableCell>
@@ -472,14 +470,12 @@ export default function ProcessosImplantacaoPage() {
           {selectedClient && (
             <>
               <DialogHeader>
-                <DialogTitle className="text-lg">{selectedClient.client_name || selectedClient.client_url}</DialogTitle>
-                <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                  <span>{selectedClient.client_url}</span>
-                  {selectedClient.id_curseduca && <span>ID: {selectedClient.id_curseduca}</span>}
-                  {selectedClient.nome_do_cs_atual && <span>CS: {selectedClient.nome_do_cs_atual}</span>}
-                  {selectedClient.plano_contratado && <span>Plano: {selectedClient.plano_contratado}</span>}
-                  {selectedClient.email_do_cliente && <span>{selectedClient.email_do_cliente}</span>}
-                </div>
+                 <DialogTitle className="text-lg">{selectedClient.cliente || selectedClient.id_curseduca}</DialogTitle>
+                 <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                   <span>{selectedClient.id_curseduca}</span>
+                   {selectedClient.cs_atual && <span>CS: {selectedClient.cs_atual}</span>}
+                   {selectedClient.plano && <span>Plano: {selectedClient.plano}</span>}
+                 </div>
               </DialogHeader>
 
               <Tabs defaultValue="briefing" className="mt-4">
