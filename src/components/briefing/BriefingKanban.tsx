@@ -217,19 +217,45 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
 
   const handleKanbanDrop = async () => {
     if (!pendingDrop) return;
-    const { requestId, toStatus } = pendingDrop;
+    const { requestId, toStatus, isAdjustment } = pendingDrop;
     try {
-      const targetImages = images.filter(i => i.request_id === requestId && i.status !== 'completed');
-      for (const img of targetImages) {
-        await supabase.from('briefing_images').update({ status: toStatus } as any).eq('id', img.id);
+      if (isAdjustment) {
+        // Update adjustment status
+        const newStatus = toStatus === 'in_progress' ? 'in_progress' : toStatus;
+        await supabase.from('briefing_adjustments').update({ status: newStatus } as any).eq('id', requestId);
+        queryClient.invalidateQueries({ queryKey: ['briefing-adjustments-kanban'] });
+        queryClient.invalidateQueries({ queryKey: ['briefing-adjustments'] });
+      } else {
+        const targetImages = images.filter(i => i.request_id === requestId && i.status !== 'completed');
+        for (const img of targetImages) {
+          await supabase.from('briefing_images').update({ status: toStatus } as any).eq('id', img.id);
+        }
+        queryClient.invalidateQueries({ queryKey: ['briefing-images'] });
       }
-      queryClient.invalidateQueries({ queryKey: ['briefing-images'] });
       toast.success(`Solicitação movida para "${KANBAN_COLUMNS.find(c => c.key === toStatus)?.label}"`);
     } catch (err: any) {
       toast.error('Erro ao mover: ' + err.message);
     }
     setDropConfirmOpen(false);
     setPendingDrop(null);
+  };
+
+  const handleSaveAdjustment = async () => {
+    if (!editingAdjustment) return;
+    try {
+      const updates: any = {};
+      if (adjDesignerEmail.trim()) updates.assigned_email = adjDesignerEmail.trim();
+      if (adjDeadline) updates.deadline = adjDeadline;
+      if (adjDesignerEmail.trim() && editingAdjustment.status === 'pending') updates.status = 'allocated';
+      
+      await supabase.from('briefing_adjustments').update(updates).eq('id', editingAdjustment.id);
+      queryClient.invalidateQueries({ queryKey: ['briefing-adjustments-kanban'] });
+      queryClient.invalidateQueries({ queryKey: ['briefing-adjustments'] });
+      toast.success('Ajuste atualizado!');
+      setEditingAdjustment(null);
+    } catch (err: any) {
+      toast.error('Erro: ' + err.message);
+    }
   };
 
   const handleCancelRequest = async () => {
