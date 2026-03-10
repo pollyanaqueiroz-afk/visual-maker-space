@@ -200,6 +200,12 @@ export default function SchedulingPage() {
   const [csatMap, setCsatMap] = useState<Record<string, { score: number | null; responded: boolean }>>({});
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [filterCs, setFilterCs] = useState<string>('all');
+  const [detailMeeting, setDetailMeeting] = useState<Meeting | null>(null);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [detailNotes, setDetailNotes] = useState('');
+  const [detailFunilStatus, setDetailFunilStatus] = useState('');
+  const [detailFunilNotas, setDetailFunilNotas] = useState('');
+  const [detailSaving, setDetailSaving] = useState(false);
 
   const fetchMeetings = async () => {
     const { data, error } = await supabase
