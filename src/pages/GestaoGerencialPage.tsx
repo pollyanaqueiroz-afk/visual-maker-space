@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { Users, Search, UserCheck, ChevronRight, X } from 'lucide-react';
+import { Users, Search, UserCheck, ChevronRight, X, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -46,6 +46,8 @@ export default function GestaoGerencialPage() {
   const [search, setSearch] = useState('');
   const [saving, setSaving] = useState(false);
   const [pendingSubordinates, setPendingSubordinates] = useState<Set<string>>(new Set());
+  const [sortKey, setSortKey] = useState<'name' | 'email' | 'role' | 'members'>('name');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -83,13 +85,36 @@ export default function GestaoGerencialPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const managers = users.filter(u => u.roles.some(r => MANAGER_ROLES.includes(r)));
+  const managersRaw = users.filter(u => u.roles.some(r => MANAGER_ROLES.includes(r)));
   const nonManagerUsers = users.filter(u => !u.roles.some(r => MANAGER_ROLES.includes(r)));
 
   const getSubordinates = (managerId: string) => {
     const subIds = assignments.filter(a => a.manager_id === managerId).map(a => a.user_id);
     return users.filter(u => subIds.includes(u.id));
   };
+
+  const toggleSort = (key: typeof sortKey) => {
+    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortKey(key); setSortDir('asc'); }
+  };
+
+  const SortIcon = ({ col }: { col: typeof sortKey }) => {
+    if (sortKey !== col) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-40" />;
+    return sortDir === 'asc'
+      ? <ArrowUp className="h-3 w-3 ml-1" />
+      : <ArrowDown className="h-3 w-3 ml-1" />;
+  };
+
+  const managers = [...managersRaw].sort((a, b) => {
+    const dir = sortDir === 'asc' ? 1 : -1;
+    switch (sortKey) {
+      case 'name': return dir * a.display_name.localeCompare(b.display_name);
+      case 'email': return dir * a.email.localeCompare(b.email);
+      case 'role': return dir * (a.roles.join(',').localeCompare(b.roles.join(',')));
+      case 'members': return dir * (getSubordinates(a.id).length - getSubordinates(b.id).length);
+      default: return 0;
+    }
+  });
 
   const openManagerDialog = (manager: UserInfo) => {
     setSelectedManager(manager);
@@ -182,10 +207,18 @@ export default function GestaoGerencialPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>E-mail</TableHead>
-                  <TableHead>Perfil</TableHead>
-                  <TableHead className="text-center">Membros vinculados</TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('name')}>
+                    <span className="inline-flex items-center">Nome <SortIcon col="name" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('email')}>
+                    <span className="inline-flex items-center">E-mail <SortIcon col="email" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('role')}>
+                    <span className="inline-flex items-center">Perfil <SortIcon col="role" /></span>
+                  </TableHead>
+                  <TableHead className="text-center cursor-pointer select-none" onClick={() => toggleSort('members')}>
+                    <span className="inline-flex items-center justify-center">Membros vinculados <SortIcon col="members" /></span>
+                  </TableHead>
                   <TableHead className="w-10" />
                 </TableRow>
               </TableHeader>
