@@ -152,9 +152,7 @@ export default function GestaoGerencialPage() {
     return (
       <div className="p-6 space-y-6">
         <Skeleton className="h-8 w-64" />
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map(i => <Skeleton key={i} className="h-48" />)}
-        </div>
+        <Skeleton className="h-64 w-full" />
       </div>
     );
   }
@@ -179,55 +177,68 @@ export default function GestaoGerencialPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {managers.map(manager => {
-            const subs = getSubordinates(manager.id);
-            return (
-              <Card
-                key={manager.id}
-                className="cursor-pointer hover:border-primary/40 transition-colors group"
-                onClick={() => openManagerDialog(manager)}
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base font-semibold truncate">
-                      {manager.display_name}
-                    </CardTitle>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                  <p className="text-xs text-muted-foreground truncate">{manager.email}</p>
-                  <div className="flex gap-1 flex-wrap mt-1">
-                    {manager.roles.map(r => (
-                      <Badge key={r} variant="secondary" className="text-[10px]">
-                        {roleLabelMap[r] || r}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <UserCheck className="h-4 w-4" />
-                    <span>{subs.length} membro{subs.length !== 1 ? 's' : ''} vinculado{subs.length !== 1 ? 's' : ''}</span>
-                  </div>
-                  {subs.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {subs.slice(0, 5).map(s => (
-                        <Badge key={s.id} variant="outline" className="text-[10px] font-normal">
-                          {s.display_name}
-                        </Badge>
-                      ))}
-                      {subs.length > 5 && (
-                        <Badge variant="outline" className="text-[10px] font-normal">
-                          +{subs.length - 5}
-                        </Badge>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>E-mail</TableHead>
+                  <TableHead>Perfil</TableHead>
+                  <TableHead className="text-center">Membros vinculados</TableHead>
+                  <TableHead className="w-10" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {managers.map(manager => {
+                  const subs = getSubordinates(manager.id);
+                  return (
+                    <TableRow
+                      key={manager.id}
+                      className="cursor-pointer group"
+                      onClick={() => openManagerDialog(manager)}
+                    >
+                      <TableCell className="font-medium">{manager.display_name}</TableCell>
+                      <TableCell className="text-muted-foreground">{manager.email}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-1 flex-wrap">
+                          {manager.roles.map(r => (
+                            <Badge key={r} variant="secondary" className="text-[10px]">
+                              {roleLabelMap[r] || r}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                          <UserCheck className="h-4 w-4" />
+                          <span>{subs.length}</span>
+                        </div>
+                        {subs.length > 0 && (
+                          <div className="mt-1 flex flex-wrap gap-1 justify-center">
+                            {subs.slice(0, 3).map(s => (
+                              <Badge key={s.id} variant="outline" className="text-[10px] font-normal">
+                                {s.display_name}
+                              </Badge>
+                            ))}
+                            {subs.length > 3 && (
+                              <Badge variant="outline" className="text-[10px] font-normal">
+                                +{subs.length - 3}
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       )}
 
       {/* Dialog to assign subordinates */}
