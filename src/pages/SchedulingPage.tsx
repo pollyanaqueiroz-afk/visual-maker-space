@@ -1325,7 +1325,7 @@ export default function SchedulingPage() {
                         {ALL_SLOTS.map(slot => {
                           const dateStr = format(selectedDate, 'yyyy-MM-dd');
                           const dayMeetings = meetingsByDate[dateStr] || [];
-                          const meetingInSlot = dayMeetings.find(m => {
+                          const meetingsInSlot = dayMeetings.filter(m => {
                             if (m.status === 'cancelled') return false;
                             const [h, min] = m.meeting_time.split(':').map(Number);
                             const startMin = h * 60 + min;
@@ -1334,10 +1334,11 @@ export default function SchedulingPage() {
                             const slotStart = sh * 60 + sm;
                             return slotStart >= startMin && slotStart < endMin;
                           });
-                          const isBusy = !!meetingInSlot;
-                          const isExactStart = meetingInSlot && meetingInSlot.meeting_time.slice(0, 5) === slot;
+                          const isBusy = meetingsInSlot.length > 0;
+                          const exactStartMeetings = meetingsInSlot.filter(m => m.meeting_time.slice(0, 5) === slot);
+                          const hasExactStart = exactStartMeetings.length > 0;
 
-                          if (isBusy && !isExactStart) {
+                          if (isBusy && !hasExactStart) {
                             return (
                               <div key={slot} className="flex items-center h-6 px-2 text-[10px] text-muted-foreground/40">
                                 <span className="w-10 text-right mr-2 tabular-nums">{slot}</span>
@@ -1346,26 +1347,30 @@ export default function SchedulingPage() {
                             );
                           }
 
-                          if (isBusy && isExactStart) {
+                          if (hasExactStart) {
                             return (
-                              <Tooltip key={slot}>
-                                <TooltipTrigger asChild>
-                                  <div className={cn(
-                                    "flex items-center gap-1.5 px-2 py-1.5 rounded-lg cursor-pointer transition-all",
-                                    meetingInSlot.status === 'completed' ? 'bg-success/8 hover:bg-success/15 border border-success/20' : 'bg-primary/8 hover:bg-primary/15 border border-primary/20'
-                                  )}>
-                                    <span className="w-10 text-right text-[10px] tabular-nums font-medium text-foreground/70 mr-1">{slot}</span>
-                                    <div className={cn("w-1 h-4 rounded-full shrink-0", meetingInSlot.status === 'completed' ? 'bg-success' : 'bg-primary')} />
-                                    <span className="text-xs font-medium text-foreground truncate flex-1">{meetingInSlot.title}</span>
-                                    <span className="text-[10px] text-muted-foreground shrink-0">{meetingInSlot.duration_minutes}min</span>
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent side="right" className="text-xs">
-                                  <p className="font-semibold">{meetingInSlot.title}</p>
-                                  {meetingInSlot.client_name && <p className="text-muted-foreground">{meetingInSlot.client_name}</p>}
-                                  <p className="text-muted-foreground">{slot} — {meetingInSlot.duration_minutes}min</p>
-                                </TooltipContent>
-                              </Tooltip>
+                              <div key={slot} className="space-y-0.5">
+                                {exactStartMeetings.map(meetingInSlot => (
+                                  <Tooltip key={meetingInSlot.id}>
+                                    <TooltipTrigger asChild>
+                                      <div className={cn(
+                                        "flex items-center gap-1.5 px-2 py-1.5 rounded-lg cursor-pointer transition-all",
+                                        meetingInSlot.status === 'completed' ? 'bg-success/8 hover:bg-success/15 border border-success/20' : 'bg-primary/8 hover:bg-primary/15 border border-primary/20'
+                                      )}>
+                                        <span className="w-10 text-right text-[10px] tabular-nums font-medium text-foreground/70 mr-1">{slot}</span>
+                                        <div className={cn("w-1 h-4 rounded-full shrink-0", meetingInSlot.status === 'completed' ? 'bg-success' : 'bg-primary')} />
+                                        <span className="text-xs font-medium text-foreground truncate flex-1">{meetingInSlot.title}</span>
+                                        <span className="text-[10px] text-muted-foreground shrink-0">{meetingInSlot.duration_minutes}min</span>
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="right" className="text-xs">
+                                      <p className="font-semibold">{meetingInSlot.title}</p>
+                                      {meetingInSlot.client_name && <p className="text-muted-foreground">{meetingInSlot.client_name}</p>}
+                                      <p className="text-muted-foreground">{slot} — {meetingInSlot.duration_minutes}min</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                ))}
+                              </div>
                             );
                           }
 
