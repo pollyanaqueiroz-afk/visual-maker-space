@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,8 @@ import { toast } from 'sonner';
 import { Plus, Trash2, Edit2, Palmtree, Users, Layers, Tag, CalendarDays } from 'lucide-react';
 import { format } from 'date-fns';
 
+type UserProfile = { user_id: string; email: string | null; display_name: string | null };
+
 type Plano = { id: string; nome: string; created_at: string };
 type Etapa = { id: string; nome: string; created_at: string };
 type CsConfig = { id: string; etapa_id: string; user_email: string; user_name: string | null; peso: number; planos: string[]; ativo: boolean; created_at: string };
@@ -24,6 +26,10 @@ export default function CarteirizacaoPage() {
   const [csConfigs, setCsConfigs] = useState<CsConfig[]>([]);
   const [ferias, setFerias] = useState<Ferias[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userProfiles, setUserProfiles] = useState<UserProfile[]>([]);
+  const [csNameQuery, setCsNameQuery] = useState('');
+  const [showCsSuggestions, setShowCsSuggestions] = useState(false);
+  const csNameRef = useRef<HTMLDivElement>(null);
 
   // Dialog states
   const [planoDialog, setPlanoDialog] = useState(false);
@@ -52,6 +58,55 @@ export default function CarteirizacaoPage() {
   };
 
   useEffect(() => { fetchAll(); }, []);
+
+  // Fetch user profiles for autocomplete via edge function
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/list-users-api`, {
+          headers: {
+            'Authorization': 'Basic WxYVWSfUJ3kslYCkqlyo5DMdsQHzBA1guEvgAlF86T4CiMqPmPbrVEemby5udFaq',
+            'Content-Type': 'application/json',
+          },
+        });
+        if (res.ok) {
+          const json = await res.json();
+          setUserProfiles((json.users || []).map((u: any) => ({
+            user_id: u.id,
+            email: u.email,
+            display_name: u.display_name,
+          })));
+        }
+      } catch (e) {
+        console.error('Failed to fetch users for autocomplete', e);
+      }
+    };
+    fetchProfiles();
+  }, []);
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (csNameRef.current && !csNameRef.current.contains(e.target as Node)) {
+        setShowCsSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const filteredUsers = userProfiles.filter(u => {
+    const q = csNameQuery.toLowerCase();
+    if (!q) return true;
+    return (u.display_name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q));
+  });
+
+  const selectUser = (user: UserProfile) => {
+    setCsForm(f => ({ ...f, user_name: user.display_name || '', user_email: user.email || '' }));
+    setCsNameQuery(user.display_name || user.email || '');
+    setShowCsSuggestions(false);
+  };
 
   // --- Planos ---
   const addPlano = async () => {
@@ -92,9 +147,11 @@ export default function CarteirizacaoPage() {
     if (cs) {
       setEditingCs(cs.id);
       setCsForm({ etapa_id: cs.etapa_id, user_email: cs.user_email, user_name: cs.user_name || '', peso: cs.peso, planos: cs.planos || [] });
+      setCsNameQuery(cs.user_name || cs.user_email);
     } else {
       setEditingCs(null);
       setCsForm({ etapa_id: etapas[0]?.id || '', user_email: '', user_name: '', peso: 1, planos: [] });
+      setCsNameQuery('');
     }
     setCsDialog(true);
   };
@@ -428,9 +485,34 @@ export default function CarteirizacaoPage() {
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 relative" ref={csNameRef}>
                 <Label>Nome do CS</Label>
-                <Input value={csForm.user_name} onChange={e => setCsForm(f => ({ ...f, user_name: e.target.value }))} placeholder="Nome" />
+                <Input
+                  value={csNameQuery}
+                  onChange={e => {
+                    setCsNameQuery(e.target.value);
+                    setCsForm(f => ({ ...f, user_name: e.target.value }));
+                    setShowCsSuggestions(true);
+                  }}
+                  onFocus={() => setShowCsSuggestions(true)}
+                  placeholder="Buscar por nome..."
+                  autoComplete="off"
+                />
+                {showCsSuggestions && filteredUsers.length > 0 && (
+                  <div className="absolute z-50 top-full left-0 right-0 mt-1 max-h-48 overflow-auto rounded-md border bg-popover shadow-md">
+                    {filteredUsers.slice(0, 10).map(u => (
+                      <button
+                        key={u.user_id}
+                        type="button"
+                        className="flex flex-col w-full px-3 py-2 text-left hover:bg-accent text-sm"
+                        onClick={() => selectUser(u)}
+                      >
+                        <span className="font-medium">{u.display_name || u.email}</span>
+                        {u.display_name && <span className="text-xs text-muted-foreground">{u.email}</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label>E-mail</Label>
