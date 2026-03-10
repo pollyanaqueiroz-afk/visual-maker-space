@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.process-scorm]
 verify_jwt = false
+
+[functions.list-clients-api]
+verify_jwt = false
