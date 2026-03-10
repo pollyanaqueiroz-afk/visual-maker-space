@@ -170,6 +170,7 @@ export default function SchedulingPage() {
   const canCreate = hasPermission('agendamento.create');
   const canEdit = hasPermission('agendamento.edit');
   const canDelete = hasPermission('agendamento.delete');
+  const { sync: syncCalendar, syncing: calendarSyncing, createEvent: createCalendarEvent, updateEvent: updateCalendarEvent, deleteEvent: deleteCalendarEvent } = useReunioes();
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
