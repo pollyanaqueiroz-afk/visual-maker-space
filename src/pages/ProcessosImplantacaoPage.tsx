@@ -223,7 +223,7 @@ export default function ProcessosImplantacaoPage() {
   const totalWithScorm = baseList.filter(c => c.hasScorm).length;
 
   // Detail
-  const selectedClient = selectedClientUrl ? consolidatedData.find(c => c.client_url === selectedClientUrl) : null;
+  const selectedClient = selectedClientUrl ? consolidatedData.find(c => c.id_curseduca === selectedClientUrl) : null;
   const selectedBriefings = selectedClientUrl ? briefingImages.filter((img: any) => img.briefing_requests?.platform_url === selectedClientUrl) : [];
   const selectedAppFases = selectedClient?.app ? allFases.filter(f => f.cliente_id === selectedClient.app!.id) : [];
 
