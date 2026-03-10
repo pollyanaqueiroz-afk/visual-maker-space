@@ -470,14 +470,12 @@ export default function ProcessosImplantacaoPage() {
           {selectedClient && (
             <>
               <DialogHeader>
-                <DialogTitle className="text-lg">{selectedClient.client_name || selectedClient.client_url}</DialogTitle>
-                <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                  <span>{selectedClient.client_url}</span>
-                  {selectedClient.id_curseduca && <span>ID: {selectedClient.id_curseduca}</span>}
-                  {selectedClient.nome_do_cs_atual && <span>CS: {selectedClient.nome_do_cs_atual}</span>}
-                  {selectedClient.plano_contratado && <span>Plano: {selectedClient.plano_contratado}</span>}
-                  {selectedClient.email_do_cliente && <span>{selectedClient.email_do_cliente}</span>}
-                </div>
+                 <DialogTitle className="text-lg">{selectedClient.cliente || selectedClient.id_curseduca}</DialogTitle>
+                 <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                   <span>{selectedClient.id_curseduca}</span>
+                   {selectedClient.cs_atual && <span>CS: {selectedClient.cs_atual}</span>}
+                   {selectedClient.plano && <span>Plano: {selectedClient.plano}</span>}
+                 </div>
               </DialogHeader>
 
               <Tabs defaultValue="briefing" className="mt-4">
