@@ -130,9 +130,11 @@ export default function CarteirizacaoPage() {
     if (cs) {
       setEditingCs(cs.id);
       setCsForm({ etapa_id: cs.etapa_id, user_email: cs.user_email, user_name: cs.user_name || '', peso: cs.peso, planos: cs.planos || [] });
+      setCsNameQuery(cs.user_name || cs.user_email);
     } else {
       setEditingCs(null);
       setCsForm({ etapa_id: etapas[0]?.id || '', user_email: '', user_name: '', peso: 1, planos: [] });
+      setCsNameQuery('');
     }
     setCsDialog(true);
   };
