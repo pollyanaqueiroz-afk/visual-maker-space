@@ -42,6 +42,7 @@ interface DesignerImage {
     platform_url: string;
   };
   _source?: 'briefing' | 'adjustment';
+  _adjustment_id?: string;
 }
 
 interface ReferenceImage {
