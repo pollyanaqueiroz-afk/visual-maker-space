@@ -360,15 +360,15 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
 
       {/* Edit card dialog */}
       <Dialog open={!!editingCard} onOpenChange={(v) => { if (!v) setEditingCard(null); }}>
-        <DialogContent className="max-w-lg max-h-[85vh] flex flex-col overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
           {editingCard && (
             <>
-              <DialogHeader>
+              <DialogHeader className="shrink-0">
                 <DialogTitle>{editingCard.requesterName || extractClientName(editingCard.platformUrl)}</DialogTitle>
                 <p className="text-xs text-muted-foreground">{editingCard.platformUrl}</p>
               </DialogHeader>
 
-              <ScrollArea className="flex-1 pr-4">
+              <div className="flex-1 min-h-0 overflow-y-auto pr-2">
                 <div className="space-y-4 pb-4">
                   <div className="flex items-center gap-2 flex-wrap">
                     <Badge variant="secondary">
