@@ -10,6 +10,7 @@ const TEST_USERS = [
   { email: "cassio@curseduca.com", password: "visao360", display_name: "Cassio", role: "admin" },
   { email: "carlos@curseduca.com", password: "visao360", display_name: "Carlos", role: "cs" },
   { email: "cliente.teste@curseduca.com", password: "cliente123", display_name: "Cliente Teste", role: "cliente" },
+  { email: "cassio@stackanalytics.com.br", password: "123456", display_name: "Cassio Stack", role: "admin" },
 ];
 
 Deno.serve(async (req) => {
