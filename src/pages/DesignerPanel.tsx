@@ -555,12 +555,12 @@ export default function DesignerPanel() {
                                 </Dialog>
                               </TableCell>
                               <TableCell className="text-right">
-                                {img._source === 'adjustment' && img.professional_photo_url ? (
-                                  <Button size="sm" variant="outline" asChild>
-                                    <a href={img.professional_photo_url} target="_blank" rel="noopener noreferrer" className="gap-1">
-                                      <Image className="h-3 w-3" /> Abrir
-                                    </a>
-                                  </Button>
+                                {img._source === 'adjustment' ? (
+                                  img.status === 'completed' || img.status === 'review' ? (
+                                    <Badge variant="secondary" className="text-xs">Entregue</Badge>
+                                  ) : (
+                                    <AdjustmentDeliveryDialog img={img} designerEmail={email} onDelivered={() => loadData(email)} />
+                                  )
                                 ) : img.delivery_token ? (
                                   <Button size="sm" variant="outline" asChild>
                                     <Link to={`/delivery/${img.delivery_token}`}>Entregar</Link>
