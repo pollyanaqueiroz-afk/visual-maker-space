@@ -71,3 +71,6 @@ verify_jwt = false
 
 [functions.list-clients-api]
 verify_jwt = false
+
+[functions.list-data-api]
+verify_jwt = false
