@@ -686,16 +686,19 @@ export default function SchedulingPage() {
       if (!map[m.meeting_date]) map[m.meeting_date] = [];
       map[m.meeting_date].push(m);
     });
+    console.log('[Agendamento] meetingsByDate keys:', Object.keys(map), 'total meetings:', meetings.length, 'filtered:', filtered.length, 'filterCs:', filterCs);
     return map;
   }, [meetings, filterCs]);
 
   const filteredMeetings = useMemo(() => {
     let list = meetings;
+    if (filterCs !== 'all') list = list.filter(m => m.created_by === filterCs);
     if (filterStatus !== 'all') list = list.filter(m => m.status === filterStatus);
     if (filterReason !== 'all') list = list.filter(m => m.meeting_reason === filterReason);
     if (selectedDate) list = list.filter(m => isSameDay(parseISO(m.meeting_date), selectedDate));
+    console.log('[Agendamento] filteredMeetings:', list.length, 'selectedDate:', selectedDate ? format(selectedDate, 'yyyy-MM-dd') : 'none');
     return list;
-  }, [meetings, filterStatus, filterReason, selectedDate]);
+  }, [meetings, filterStatus, filterReason, selectedDate, filterCs]);
 
   const daysWithMeetings = useMemo(() => {
     return meetings
