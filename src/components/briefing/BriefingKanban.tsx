@@ -394,16 +394,18 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
                         <p className="text-sm font-semibold truncate inline">{isAdj ? extractClientName(card.platformUrl) : (card.requesterName || 'Sem nome')}</p>
                         <p className="text-[10px] text-muted-foreground truncate">{isAdj ? card.requesterName : extractClientName(card.platformUrl)}</p>
                       </div>
-                      {card.slaOverdue && <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5 animate-pulse" />}
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Badge variant="outline" className="text-[9px] px-1.5 py-0 font-medium">
+                          📅 {format(new Date(card.createdAt), 'dd/MM')}
+                        </Badge>
+                        {card.slaOverdue && <AlertTriangle className="h-3.5 w-3.5 text-destructive mt-0.5 animate-pulse" />}
+                      </div>
                     </div>
 
                     {isAdj ? (
                       <div className="mt-2">
                         <Badge variant="outline" className="text-[9px] px-1 py-0">Ajuste</Badge>
                         <p className="text-[10px] text-muted-foreground mt-1">{card.totalImages} ajuste{card.totalImages !== 1 ? 's' : ''}</p>
-                        <p className="text-[10px] text-muted-foreground">
-                          {format(new Date(card.createdAt), 'dd/MM/yyyy')}
-                        </p>
                         {card.assignedDesigners.length > 0 && (
                           <p className="text-[10px] text-muted-foreground truncate mt-0.5">{card.assignedDesigners[0]}</p>
                         )}
