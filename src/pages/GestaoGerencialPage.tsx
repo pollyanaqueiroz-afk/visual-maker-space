@@ -300,7 +300,7 @@ export default function GestaoGerencialPage() {
                               </Badge>
                             ))}
                             {otherManagerUser && !checked && (
-                              <span className="text-[10px] text-amber-600">
+                              <span className="text-[10px] text-destructive">
                                 Vinculado a {otherManagerUser.display_name}
                               </span>
                             )}
