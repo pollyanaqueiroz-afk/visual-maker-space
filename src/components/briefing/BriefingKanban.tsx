@@ -331,12 +331,13 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
                 const requestId = e.dataTransfer.getData('requestId');
                 const fromStatus = e.dataTransfer.getData('fromStatus');
                 const name = e.dataTransfer.getData('cardName');
+                const isAdj = e.dataTransfer.getData('isAdjustment') === 'true';
                 if (fromStatus === col.key) return;
                 if (!VALID_TRANSITIONS[fromStatus]?.includes(col.key)) {
                   toast.error(`Não é possível mover de "${KANBAN_COLUMNS.find(c => c.key === fromStatus)?.label}" para "${col.label}"`);
                   return;
                 }
-                setPendingDrop({ requestId, name, fromStatus, toStatus: col.key });
+                setPendingDrop({ requestId, name, fromStatus, toStatus: col.key, isAdjustment: isAdj });
                 setDropConfirmOpen(true);
               }}
             >
