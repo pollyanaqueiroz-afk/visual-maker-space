@@ -18,8 +18,6 @@ import { toast } from 'sonner';
 import { AlertTriangle, AlertCircle, Send, Wrench } from 'lucide-react';
 import { format } from 'date-fns';
 import AssignBriefingDialog from '@/components/briefing/AssignBriefingDialog';
-import { format } from 'date-fns';
-import AssignBriefingDialog from '@/components/briefing/AssignBriefingDialog';
 
 interface ImageWithRequest {
   id: string;
