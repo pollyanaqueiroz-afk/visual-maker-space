@@ -4,10 +4,13 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import TablePagination from '@/components/carteira/TablePagination';
 import { TableSkeleton } from '@/components/ui/TableSkeleton';
-import { Search, Pencil, Check, X } from 'lucide-react';
+import { Search, Pencil, X, ArrowRightLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Client = {
@@ -41,6 +44,16 @@ export default function ClientesTab() {
   const [userProfiles, setUserProfiles] = useState<UserProfile[]>([]);
   const [saving, setSaving] = useState(false);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  // Bulk move state
+  const [bulkDialog, setBulkDialog] = useState(false);
+  const [bulkMode, setBulkMode] = useState<'plano' | 'cs'>('plano');
+  const [bulkSource, setBulkSource] = useState('');
+  const [bulkTargetQuery, setBulkTargetQuery] = useState('');
+  const [bulkTargetName, setBulkTargetName] = useState('');
+  const [showBulkSuggestions, setShowBulkSuggestions] = useState(false);
+  const [bulkSaving, setBulkSaving] = useState(false);
+  const bulkSugRef = useRef<HTMLDivElement>(null);
 
   const fetchClients = async () => {
     setLoading(true);
@@ -84,21 +97,23 @@ export default function ClientesTab() {
   // Close suggestions on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node)) {
-        setShowSuggestions(false);
-      }
+      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node)) setShowSuggestions(false);
+      if (bulkSugRef.current && !bulkSugRef.current.contains(e.target as Node)) setShowBulkSuggestions(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const filteredUsers = useMemo(() => {
-    const q = editQuery.toLowerCase();
+  const filterUsersFor = (query: string) => {
+    const q = query.toLowerCase();
     if (!q) return userProfiles.slice(0, 10);
     return userProfiles.filter(u =>
       u.display_name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q)
     ).slice(0, 10);
-  }, [editQuery, userProfiles]);
+  };
+
+  const filteredUsers = useMemo(() => filterUsersFor(editQuery), [editQuery, userProfiles]);
+  const bulkFilteredUsers = useMemo(() => filterUsersFor(bulkTargetQuery), [bulkTargetQuery, userProfiles]);
 
   const startEdit = (client: Client) => {
     setEditingId(client.id);
@@ -114,20 +129,91 @@ export default function ClientesTab() {
 
   const selectUser = async (clientId: string, displayName: string) => {
     setSaving(true);
+    const client = clients.find(c => c.id === clientId);
+    const oldCs = client?.cs_atual || null;
     const { error } = await supabase
       .from('clients')
-      .update({ cs_atual: displayName } as any)
+      .update({ cs_atual: displayName, cs_anterior: oldCs } as any)
       .eq('id', clientId);
     if (error) {
       toast.error('Erro ao atualizar CS');
     } else {
       toast.success('CS atualizado');
-      setClients(prev => prev.map(c => c.id === clientId ? { ...c, cs_atual: displayName } : c));
+      setClients(prev => prev.map(c => c.id === clientId ? { ...c, cs_atual: displayName, cs_anterior: oldCs } : c));
     }
     setSaving(false);
-    setEditingId(null);
-    setEditQuery('');
-    setShowSuggestions(false);
+    cancelEdit();
+  };
+
+  // Bulk move
+  const openBulkDialog = () => {
+    setBulkMode('plano');
+    setBulkSource('');
+    setBulkTargetQuery('');
+    setBulkTargetName('');
+    setBulkDialog(true);
+  };
+
+  const bulkSourceOptions = useMemo(() => {
+    if (bulkMode === 'plano') return planos;
+    return csAtuais;
+  }, [bulkMode, clients]);
+
+  const executeBulkMove = async () => {
+    if (!bulkSource || !bulkTargetName) {
+      toast.error('Selecione a origem e o novo CS');
+      return;
+    }
+
+    setBulkSaving(true);
+
+    // Find affected clients
+    const affected = clients.filter(c => {
+      if (bulkMode === 'plano') return c.plano === bulkSource;
+      return c.cs_atual === bulkSource;
+    });
+
+    if (affected.length === 0) {
+      toast.error('Nenhum cliente encontrado com esse filtro');
+      setBulkSaving(false);
+      return;
+    }
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    // Process in batches of 50
+    for (let i = 0; i < affected.length; i += 50) {
+      const batch = affected.slice(i, i + 50);
+      const ids = batch.map(c => c.id);
+
+      // For each client, cs_anterior = old cs_atual
+      // We need to update individually to set cs_anterior correctly per client
+      for (const client of batch) {
+        const { error } = await supabase
+          .from('clients')
+          .update({ cs_atual: bulkTargetName, cs_anterior: client.cs_atual } as any)
+          .eq('id', client.id);
+        if (error) {
+          errorCount++;
+        } else {
+          successCount++;
+        }
+      }
+    }
+
+    // Update local state
+    setClients(prev => prev.map(c => {
+      const isAffected = affected.find(a => a.id === c.id);
+      if (isAffected) {
+        return { ...c, cs_anterior: c.cs_atual, cs_atual: bulkTargetName };
+      }
+      return c;
+    }));
+
+    toast.success(`${successCount} clientes movidos para ${bulkTargetName}${errorCount > 0 ? ` (${errorCount} erros)` : ''}`);
+    setBulkSaving(false);
+    setBulkDialog(false);
   };
 
   // Extract unique values for filters
@@ -155,6 +241,15 @@ export default function ClientesTab() {
   const currentPage = Math.min(page, totalPages);
   const paged = filtered.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
 
+  // Count affected for preview
+  const bulkAffectedCount = useMemo(() => {
+    if (!bulkSource) return 0;
+    return clients.filter(c => {
+      if (bulkMode === 'plano') return c.plano === bulkSource;
+      return c.cs_atual === bulkSource;
+    }).length;
+  }, [bulkSource, bulkMode, clients]);
+
   useEffect(() => { setPage(1); }, [search, filterPlano, filterCsAtual, filterCsAnterior]);
 
   const formatFatura = (v: string | null) => {
@@ -168,7 +263,7 @@ export default function ClientesTab() {
 
   return (
     <div className="space-y-4">
-      {/* Filters */}
+      {/* Filters + Bulk action */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -206,6 +301,9 @@ export default function ClientesTab() {
             {csAnteriores.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Button variant="outline" size="sm" className="h-9 gap-1.5" onClick={openBulkDialog}>
+          <ArrowRightLeft className="h-3.5 w-3.5" /> Mover em lote
+        </Button>
       </div>
 
       <Card>
@@ -309,6 +407,91 @@ export default function ClientesTab() {
           />
         </CardContent>
       </Card>
+
+      {/* Bulk Move Dialog */}
+      <Dialog open={bulkDialog} onOpenChange={setBulkDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Mover Clientes em Lote</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>Mover por</Label>
+              <Select value={bulkMode} onValueChange={v => { setBulkMode(v as any); setBulkSource(''); }}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="plano">Plano</SelectItem>
+                  <SelectItem value="cs">CS Atual</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>{bulkMode === 'plano' ? 'Selecione o plano' : 'Selecione o CS atual'}</Label>
+              <Select value={bulkSource} onValueChange={setBulkSource}>
+                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                <SelectContent>
+                  {bulkSourceOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              {bulkSource && (
+                <p className="text-xs text-muted-foreground">
+                  <Badge variant="secondary" className="mr-1">{bulkAffectedCount}</Badge>
+                  clientes serão movidos
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1.5 relative" ref={bulkSugRef}>
+              <Label>Novo CS responsável</Label>
+              <Input
+                value={bulkTargetQuery}
+                onChange={e => {
+                  setBulkTargetQuery(e.target.value);
+                  setBulkTargetName('');
+                  setShowBulkSuggestions(true);
+                }}
+                onFocus={() => setShowBulkSuggestions(true)}
+                placeholder="Buscar por nome..."
+                autoComplete="off"
+              />
+              {bulkTargetName && (
+                <Badge variant="default" className="mt-1">{bulkTargetName}</Badge>
+              )}
+              {showBulkSuggestions && bulkFilteredUsers.length > 0 && !bulkTargetName && (
+                <div className="absolute z-50 top-full left-0 right-0 mt-1 max-h-48 overflow-auto rounded-md border bg-popover shadow-md">
+                  {bulkFilteredUsers.map(u => (
+                    <button
+                      key={u.user_id}
+                      type="button"
+                      className="flex flex-col w-full px-3 py-2 text-left hover:bg-accent text-sm"
+                      onClick={() => {
+                        const name = u.display_name || u.email || '';
+                        setBulkTargetName(name);
+                        setBulkTargetQuery(name);
+                        setShowBulkSuggestions(false);
+                      }}
+                    >
+                      <span className="font-medium">{u.display_name || u.email}</span>
+                      {u.display_name && <span className="text-xs text-muted-foreground">{u.email}</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
+              <strong>Nota:</strong> O CS Anterior será automaticamente preenchido com o valor que estava no CS Atual antes da movimentação.
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkDialog(false)} disabled={bulkSaving}>Cancelar</Button>
+            <Button onClick={executeBulkMove} disabled={bulkSaving || !bulkSource || !bulkTargetName}>
+              {bulkSaving ? 'Movendo...' : `Mover ${bulkAffectedCount} clientes`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -248,7 +248,7 @@ export default function CarteirizacaoPage() {
           <TabsTrigger value="cs" className="gap-1.5"><Users className="h-3.5 w-3.5" /> CSs por Carteira</TabsTrigger>
           <TabsTrigger value="jornada" className="gap-1.5"><Map className="h-3.5 w-3.5" /> Jornada</TabsTrigger>
           <TabsTrigger value="clientes" className="gap-1.5"><BookOpen className="h-3.5 w-3.5" /> Clientes</TabsTrigger>
-          <TabsTrigger value="ferias" className="gap-1.5"><Palmtree className="h-3.5 w-3.5" /> Férias</TabsTrigger>
+          <TabsTrigger value="ferias" className="gap-1.5">Férias</TabsTrigger>
         </TabsList>
 
         {/* ===== PLANOS & ETAPAS ===== */}
