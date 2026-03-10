@@ -59,6 +59,38 @@ export default function CarteirizacaoPage() {
 
   useEffect(() => { fetchAll(); }, []);
 
+  // Fetch user profiles for autocomplete
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      const { data } = await supabase.from('profiles').select('user_id, email, display_name');
+      if (data) setUserProfiles(data as UserProfile[]);
+    };
+    fetchProfiles();
+  }, []);
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (csNameRef.current && !csNameRef.current.contains(e.target as Node)) {
+        setShowCsSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const filteredUsers = userProfiles.filter(u => {
+    const q = csNameQuery.toLowerCase();
+    if (!q) return true;
+    return (u.display_name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q));
+  });
+
+  const selectUser = (user: UserProfile) => {
+    setCsForm(f => ({ ...f, user_name: user.display_name || '', user_email: user.email || '' }));
+    setCsNameQuery(user.display_name || user.email || '');
+    setShowCsSuggestions(false);
+  };
+
   // --- Planos ---
   const addPlano = async () => {
     if (!planoNome.trim()) return;
