@@ -932,7 +932,7 @@ export type Database = {
           etapa_id: string
           id: string
           peso: number
-          planos: string[]
+          plano_id: string | null
           user_email: string
           user_name: string | null
         }
@@ -942,7 +942,7 @@ export type Database = {
           etapa_id: string
           id?: string
           peso?: number
-          planos?: string[]
+          plano_id?: string | null
           user_email: string
           user_name?: string | null
         }
@@ -952,7 +952,7 @@ export type Database = {
           etapa_id?: string
           id?: string
           peso?: number
-          planos?: string[]
+          plano_id?: string | null
           user_email?: string
           user_name?: string | null
         }
@@ -962,6 +962,13 @@ export type Database = {
             columns: ["etapa_id"]
             isOneToOne: false
             referencedRelation: "carteirizacao_etapas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carteirizacao_cs_plano_id_fkey"
+            columns: ["plano_id"]
+            isOneToOne: false
+            referencedRelation: "carteirizacao_planos"
             referencedColumns: ["id"]
           },
         ]
