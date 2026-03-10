@@ -83,6 +83,42 @@ Deno.serve(async (req) => {
       );
     }
 
+    if (endpoint === "reunioes") {
+      const action = url.searchParams.get("action");
+      if (!action) {
+        return new Response(JSON.stringify({ error: "Missing action parameter" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const reunioesUrl = new URL("https://us-central1-curseduca-inc-ia.cloudfunctions.net/hub-reunioes");
+      reunioesUrl.searchParams.set("action", action);
+      const maxResults = url.searchParams.get("max_results");
+      if (maxResults) reunioesUrl.searchParams.set("max_results", maxResults);
+
+      const reunioesFetchOpts: RequestInit = {
+        method: req.method === "POST" ? "POST" : "GET",
+        headers: {
+          Authorization: `Basic ${basicAuth}`,
+          "Content-Type": "application/json",
+        },
+      };
+
+      if (req.method === "POST") {
+        const body = await req.text();
+        if (body) reunioesFetchOpts.body = body;
+      }
+
+      const reunioesRes = await fetchWithRetry(reunioesUrl.toString(), reunioesFetchOpts);
+      const reunioesBody = await reunioesRes.text();
+
+      return new Response(reunioesBody, {
+        status: reunioesRes.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Default: summary endpoint
     const csEmailSummary = url.searchParams.get("cs_email_atual") || "";
     let summaryUrl = API_URL;
