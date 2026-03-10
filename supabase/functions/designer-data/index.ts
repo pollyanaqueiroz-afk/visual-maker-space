@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
     // Fetch images assigned to this designer
     const { data: images, error: imgErr } = await supabase
       .from("briefing_images")
-      .select("id, image_type, product_name, deadline, status, revision_count, delivery_token, price_per_art, created_at, extra_info, image_text, font_suggestion, element_suggestion, orientation, observations, professional_photo_url, briefing_requests!inner(requester_name, platform_url)")
+      .select("id, image_type, product_name, deadline, status, revision_count, delivery_token, price_per_art, created_at, request_id, extra_info, image_text, font_suggestion, element_suggestion, orientation, observations, professional_photo_url, briefing_requests!inner(requester_name, platform_url)")
       .eq("assigned_email", cleanEmail)
       .order("created_at", { ascending: false });
 
