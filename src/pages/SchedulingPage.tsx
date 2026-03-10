@@ -1280,9 +1280,39 @@ export default function SchedulingPage() {
                 <Card className="border-border/60">
                   <CardHeader className="pb-2 pt-3 px-4">
                     <CardTitle className="text-sm flex items-center justify-between">
-                      <span className="flex items-center gap-2">
+                      <span className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => {
+                            const prev = addDays(selectedDate!, -1);
+                            setSelectedDate(prev);
+                            if (!isSameMonth(prev, calendarMonth)) setCalendarMonth(startOfMonth(prev));
+                          }}
+                        >
+                          <ChevronLeft className="h-3.5 w-3.5" />
+                        </Button>
                         <Clock className="h-3.5 w-3.5 text-primary" />
-                        {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
+                        <span
+                          className="cursor-pointer hover:text-primary transition-colors"
+                          onClick={() => { setSelectedDate(new Date()); setCalendarMonth(startOfMonth(new Date())); }}
+                          title="Voltar para hoje"
+                        >
+                          {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => {
+                            const next = addDays(selectedDate!, 1);
+                            setSelectedDate(next);
+                            if (!isSameMonth(next, calendarMonth)) setCalendarMonth(startOfMonth(next));
+                          }}
+                        >
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        </Button>
                       </span>
                       <Badge variant="outline" className="text-[10px] font-normal">
                         {availableSlots.length}/{ALL_SLOTS.length} livres
