@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { Plus, Upload, Trash2, Send, Eye, Clock, UserCheck, CheckCircle, Loader2, ExternalLink } from 'lucide-react';
+import { Plus, Upload, Trash2, Send, Eye, Clock, UserCheck, CheckCircle, Loader2, ExternalLink, Copy, Mail, Edit2, Save, Link2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
