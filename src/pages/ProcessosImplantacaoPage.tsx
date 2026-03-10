@@ -214,8 +214,8 @@ export default function ProcessosImplantacaoPage() {
 
   // KPIs - based on CS filter
   const baseList = filterCS !== 'all' ? consolidatedData.filter(c => {
-    const csEmail = (c.email_do_cs_atual || c.e_mail_do_cs_atual || '').toLowerCase();
-    return csEmail === filterCS.toLowerCase();
+    const csVal = (c.cs_atual || '').toLowerCase();
+    return csVal === filterCS.toLowerCase();
   }) : consolidatedData;
   const totalWithProcess = baseList.filter(c => c.hasAnyProcess).length;
   const totalWithBriefing = baseList.filter(c => c.hasOpenBriefing).length;
