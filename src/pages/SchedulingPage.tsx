@@ -1364,13 +1364,53 @@ export default function SchedulingPage() {
         {/* Meeting list */}
         <div className="space-y-4 lg:col-span-12">
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <h2 className="text-lg font-semibold text-foreground">
-              {selectedDate
-                ? isToday(selectedDate)
-                  ? 'Reuniões de Hoje'
-                  : `Reuniões — ${format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}`
-                : 'Todas as reuniões'}
-            </h2>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => {
+                  const prev = addDays(selectedDate || new Date(), -1);
+                  setSelectedDate(prev);
+                  if (!isSameMonth(prev, calendarMonth)) setCalendarMonth(startOfMonth(prev));
+                }}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <h2
+                className="text-lg font-semibold text-foreground cursor-pointer hover:text-primary transition-colors"
+                onClick={() => { setSelectedDate(new Date()); setCalendarMonth(startOfMonth(new Date())); }}
+                title="Voltar para hoje"
+              >
+                {selectedDate
+                  ? isToday(selectedDate)
+                    ? 'Reuniões de Hoje'
+                    : `Reuniões — ${format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}`
+                  : 'Todas as reuniões'}
+              </h2>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => {
+                  const next = addDays(selectedDate || new Date(), 1);
+                  setSelectedDate(next);
+                  if (!isSameMonth(next, calendarMonth)) setCalendarMonth(startOfMonth(next));
+                }}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              {selectedDate && !isToday(selectedDate) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-[11px] ml-1"
+                  onClick={() => { setSelectedDate(new Date()); setCalendarMonth(startOfMonth(new Date())); }}
+                >
+                  Hoje
+                </Button>
+              )}
+            </div>
             <div className="flex items-center gap-2 flex-wrap">
               <Select value={filterStatus} onValueChange={setFilterStatus}>
                 <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
