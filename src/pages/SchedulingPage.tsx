@@ -436,7 +436,8 @@ export default function SchedulingPage() {
           // If Google Calendar fails, still save locally
         }
 
-        const { error } = await supabase.from('meetings').insert(payload);
+        const insertPayload = gcalEventId ? { ...payload, gcal_event_id: gcalEventId } : payload;
+        const { error } = await supabase.from('meetings').insert(insertPayload as any);
         if (error) throw error;
 
         // Send invite email if checkbox is checked and client email exists
