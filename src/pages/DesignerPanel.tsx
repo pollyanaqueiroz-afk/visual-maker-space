@@ -697,13 +697,31 @@ function BatchDeliveryDialog({ group, designerEmail, onDelivered }: { group: Ima
 
             {matchResults.length > 0 && (
               <div className="space-y-2">
-                {/* Warning banner for unmatched items */}
-                {matchResults.some(r => !r.file) && (
-                  <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-500/30 bg-amber-500/5">
-                    <span className="text-amber-600 text-lg mt-0.5">⚠️</span>
+                {/* Warning banners */}
+                {matchResults.some(r => !r.file || r.confidence === 'none') && (
+                  <div className="flex items-start gap-2 p-3 rounded-lg border border-destructive/30 bg-destructive/5">
+                    <span className="text-lg mt-0.5">❌</span>
                     <div>
-                      <p className="text-sm font-medium text-amber-700">Correspondência parcial</p>
-                      <p className="text-xs text-amber-600/80">Não foi possível identificar automaticamente a correspondência para alguns arquivos. Selecione manualmente abaixo.</p>
+                      <p className="text-sm font-medium">Arquivos sem correspondência</p>
+                      <p className="text-xs text-muted-foreground">Não foi possível identificar correspondência. Selecione manualmente.</p>
+                    </div>
+                  </div>
+                )}
+                {matchResults.some(r => r.confidence === 'partial') && (
+                  <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-500/30 bg-amber-500/5">
+                    <span className="text-lg mt-0.5">⚠️</span>
+                    <div>
+                      <p className="text-sm font-medium text-amber-700">Correspondência sugerida — confirme</p>
+                      <p className="text-xs text-amber-600/80">Foram encontradas correspondências parciais. Verifique se estão corretas ou altere manualmente.</p>
+                    </div>
+                  </div>
+                )}
+                {matchResults.some(r => r.confidence === 'low') && !matchResults.some(r => r.confidence === 'partial') && (
+                  <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-500/30 bg-amber-500/5">
+                    <span className="text-lg mt-0.5">🔍</span>
+                    <div>
+                      <p className="text-sm font-medium text-amber-700">Múltiplas possibilidades encontradas</p>
+                      <p className="text-xs text-amber-600/80">O arquivo pode corresponder a várias solicitações do mesmo tipo. Escolha a correta.</p>
                     </div>
                   </div>
                 )}
@@ -713,18 +731,22 @@ function BatchDeliveryDialog({ group, designerEmail, onDelivered }: { group: Ima
                   {matchResults.map((r, idx) => {
                     const artLabel = getArtLabel(r.image);
                     const needsManual = !r.file || r.confidence === 'low' || r.confidence === 'none';
+                    const needsConfirm = r.confidence === 'partial';
                     return (
-                      <div key={idx} className={`flex items-center gap-2 p-2.5 text-xs ${needsManual ? 'bg-amber-500/5' : ''}`}>
+                      <div key={idx} className={`flex items-center gap-2 p-2.5 text-xs ${needsManual ? 'bg-destructive/5' : needsConfirm ? 'bg-amber-500/5' : ''}`}>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{artLabel}</p>
+                          {needsConfirm && r.file && (
+                            <p className="text-[10px] text-amber-600 mt-0.5">Sugestão: {r.file.name} — confirme ou altere</p>
+                          )}
                         </div>
                         <div className="shrink-0">
-                          {needsManual || showManualMatch ? (
+                          {needsManual || needsConfirm || showManualMatch ? (
                             <Select
                               value={r.file?.name || ''}
                               onValueChange={(v) => handleManualAssign(idx, v)}
                             >
-                              <SelectTrigger className="h-7 w-48 text-[11px]">
+                              <SelectTrigger className={`h-7 w-48 text-[11px] ${needsConfirm && r.file ? 'border-amber-500' : ''}`}>
                                 <SelectValue placeholder="Selecionar arquivo..." />
                               </SelectTrigger>
                               <SelectContent>
