@@ -85,13 +85,36 @@ export default function GestaoGerencialPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const managers = users.filter(u => u.roles.some(r => MANAGER_ROLES.includes(r)));
+  const managersRaw = users.filter(u => u.roles.some(r => MANAGER_ROLES.includes(r)));
   const nonManagerUsers = users.filter(u => !u.roles.some(r => MANAGER_ROLES.includes(r)));
 
   const getSubordinates = (managerId: string) => {
     const subIds = assignments.filter(a => a.manager_id === managerId).map(a => a.user_id);
     return users.filter(u => subIds.includes(u.id));
   };
+
+  const toggleSort = (key: typeof sortKey) => {
+    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortKey(key); setSortDir('asc'); }
+  };
+
+  const SortIcon = ({ col }: { col: typeof sortKey }) => {
+    if (sortKey !== col) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-40" />;
+    return sortDir === 'asc'
+      ? <ArrowUp className="h-3 w-3 ml-1" />
+      : <ArrowDown className="h-3 w-3 ml-1" />;
+  };
+
+  const managers = [...managersRaw].sort((a, b) => {
+    const dir = sortDir === 'asc' ? 1 : -1;
+    switch (sortKey) {
+      case 'name': return dir * a.display_name.localeCompare(b.display_name);
+      case 'email': return dir * a.email.localeCompare(b.email);
+      case 'role': return dir * (a.roles.join(',').localeCompare(b.roles.join(',')));
+      case 'members': return dir * (getSubordinates(a.id).length - getSubordinates(b.id).length);
+      default: return 0;
+    }
+  });
 
   const openManagerDialog = (manager: UserInfo) => {
     setSelectedManager(manager);
