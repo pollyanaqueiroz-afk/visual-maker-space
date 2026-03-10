@@ -468,9 +468,34 @@ export default function CarteirizacaoPage() {
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 relative" ref={csNameRef}>
                 <Label>Nome do CS</Label>
-                <Input value={csForm.user_name} onChange={e => setCsForm(f => ({ ...f, user_name: e.target.value }))} placeholder="Nome" />
+                <Input
+                  value={csNameQuery}
+                  onChange={e => {
+                    setCsNameQuery(e.target.value);
+                    setCsForm(f => ({ ...f, user_name: e.target.value }));
+                    setShowCsSuggestions(true);
+                  }}
+                  onFocus={() => setShowCsSuggestions(true)}
+                  placeholder="Buscar por nome..."
+                  autoComplete="off"
+                />
+                {showCsSuggestions && filteredUsers.length > 0 && (
+                  <div className="absolute z-50 top-full left-0 right-0 mt-1 max-h-48 overflow-auto rounded-md border bg-popover shadow-md">
+                    {filteredUsers.slice(0, 10).map(u => (
+                      <button
+                        key={u.user_id}
+                        type="button"
+                        className="flex flex-col w-full px-3 py-2 text-left hover:bg-accent text-sm"
+                        onClick={() => selectUser(u)}
+                      >
+                        <span className="font-medium">{u.display_name || u.email}</span>
+                        {u.display_name && <span className="text-xs text-muted-foreground">{u.email}</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label>E-mail</Label>
