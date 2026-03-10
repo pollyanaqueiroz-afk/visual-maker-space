@@ -621,10 +621,14 @@ export default function DesignerPanel() {
                               </DialogTrigger>
                               <BriefingDetailDialog img={img} referenceImages={referenceImages} brandAssets={brandAssets} />
                             </Dialog>
-                            {img._source === 'adjustment' && img.professional_photo_url ? (
-                              <Button size="sm" className="flex-1 h-8 text-xs" variant="outline" asChild>
-                                <a href={img.professional_photo_url} target="_blank" rel="noopener noreferrer">Abrir Imagem</a>
-                              </Button>
+                            {img._source === 'adjustment' ? (
+                              img.status === 'completed' || img.status === 'review' ? (
+                                <Badge variant="secondary" className="text-xs flex-1 justify-center h-8">Entregue</Badge>
+                              ) : (
+                                <div className="flex-1">
+                                  <AdjustmentDeliveryDialog img={img} designerEmail={email} onDelivered={() => loadData(email)} />
+                                </div>
+                              )
                             ) : img.delivery_token ? (
                               <Button size="sm" className="flex-1 h-8 text-xs" variant="outline" asChild>
                                 <Link to={`/delivery/${img.delivery_token}`}>Entregar</Link>
