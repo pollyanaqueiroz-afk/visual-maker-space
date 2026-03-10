@@ -200,10 +200,8 @@ export default function ProcessosImplantacaoPage() {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(c =>
-        (c.client_name || '').toLowerCase().includes(q) ||
-        (c.client_url || '').toLowerCase().includes(q) ||
-        (c.id_curseduca || '').toLowerCase().includes(q) ||
-        (c.email_do_cliente || '').toLowerCase().includes(q)
+        (c.cliente || '').toLowerCase().includes(q) ||
+        (c.id_curseduca || '').toLowerCase().includes(q)
       );
     }
 
