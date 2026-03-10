@@ -382,59 +382,168 @@ function BatchDeliveryDialog({ group, designerEmail, onDelivered }: { group: Ima
       .trim();
   };
 
+  const tokenize = (str: string): string[] => {
+    return (normalize(str).match(/[a-z0-9]+/g) || []).filter(t => t.length > 1);
+  };
+
   const getArtLabel = (img: DesignerImage) => {
     return (IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type) + (img.product_name ? ` — ${img.product_name}` : '');
   };
 
   const matchFiles = useCallback((selectedFiles: File[]) => {
     setFiles(selectedFiles);
-    const usedFiles = new Set<string>();
+    const usedFileKeys = new Set<string>();
 
-    const results = pendingImages.map(img => {
-      const artName = normalize(
-        (IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type)
-        + ' ' + (img.product_name || '')
-      );
-
-      let bestMatch: File | null = null;
-      let bestScore = 0;
-
-      for (const f of selectedFiles) {
-        if (usedFiles.has(f.name + f.size)) continue;
-        const fileName = normalize(f.name.replace(/\.[^.]+$/, ''));
-
-        // Exact or substring match
-        if (fileName === artName || artName.includes(fileName) || fileName.includes(artName)) {
-          bestMatch = f;
-          bestScore = 3;
-          break;
-        }
-
-        // Token-based matching (split into meaningful chunks)
-        const artTokens = artName.match(/[a-z0-9]+/g) || [];
-        const fileTokens = fileName.match(/[a-z0-9]+/g) || [];
-        const matchingTokens = artTokens.filter(t => fileTokens.some(ft => ft.includes(t) || t.includes(ft)));
-        const score = matchingTokens.length / Math.max(artTokens.length, 1);
-        if (score > bestScore && score >= 0.3) {
-          bestScore = score;
-          bestMatch = f;
-        }
-      }
-
-      if (bestMatch) usedFiles.add(bestMatch.name + bestMatch.size);
-
+    // Pre-compute art info for each pending image
+    const artInfos = pendingImages.map(img => {
+      const typeLabel = IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type;
+      const productName = img.product_name || '';
+      const fullName = typeLabel + ' ' + productName;
       return {
-        image: img,
-        file: bestMatch,
-        confidence: bestScore >= 3 ? 'exact' : bestScore >= 0.5 ? 'high' : bestMatch ? 'low' : 'none',
+        img,
+        typeNorm: normalize(typeLabel),
+        productNorm: normalize(productName),
+        fullNorm: normalize(fullName),
+        typeTokens: tokenize(typeLabel),
+        productTokens: tokenize(productName),
+        fullTokens: tokenize(fullName),
+        hasProduct: !!productName.trim(),
       };
     });
 
+    // Count how many arts share the same type (for ambiguity detection)
+    const typeCountMap: Record<string, number> = {};
+    artInfos.forEach(a => { typeCountMap[a.typeNorm] = (typeCountMap[a.typeNorm] || 0) + 1; });
+
+    // Score each file against each art
+    const fileInfos = selectedFiles.map(f => {
+      const baseName = f.name.replace(/\.[^.]+$/, '');
+      return {
+        file: f,
+        key: f.name + f.size,
+        norm: normalize(baseName),
+        tokens: tokenize(baseName),
+      };
+    });
+
+    // Build a score matrix: [artIdx][fileIdx] = { score, confidence }
+    type MatchScore = { score: number; confidence: 'exact' | 'high' | 'partial' | 'low' | 'none' };
+    const scoreMatrix: MatchScore[][] = artInfos.map(art => {
+      return fileInfos.map(fi => {
+        const fileName = fi.norm;
+        const fileTokens = fi.tokens;
+
+        // Layer 1: Full exact match (type + product)
+        if (fileName === art.fullNorm || art.fullNorm.includes(fileName) || fileName.includes(art.fullNorm)) {
+          return { score: 100, confidence: 'exact' as const };
+        }
+
+        // Layer 2: Product-specific match (when product exists)
+        if (art.hasProduct && art.productTokens.length > 0) {
+          const productMatchCount = art.productTokens.filter(t =>
+            fileTokens.some(ft => ft.includes(t) || t.includes(ft))
+          ).length;
+          const productRatio = productMatchCount / art.productTokens.length;
+
+          const typeMatchCount = art.typeTokens.filter(t =>
+            fileTokens.some(ft => ft.includes(t) || t.includes(ft))
+          ).length;
+          const typeRatio = typeMatchCount / Math.max(art.typeTokens.length, 1);
+
+          // Both type and product match well
+          if (productRatio >= 0.6 && typeRatio >= 0.4) {
+            return { score: 80 + productRatio * 10, confidence: 'exact' as const };
+          }
+
+          // Strong product match alone (type may be implicit from context)
+          if (productRatio >= 0.6) {
+            // But if multiple arts share same type, product match alone is ambiguous
+            const sameTypeArts = artInfos.filter(a =>
+              a.typeNorm === art.typeNorm && a.hasProduct
+            );
+            const otherProductMatches = sameTypeArts.filter(other => {
+              if (other.img.id === art.img.id) return false;
+              const otherProdMatch = other.productTokens.filter(t =>
+                fileTokens.some(ft => ft.includes(t) || t.includes(ft))
+              ).length / other.productTokens.length;
+              return otherProdMatch >= 0.5;
+            });
+            if (otherProductMatches.length > 0) {
+              // Ambiguous: multiple products match this file
+              return { score: 40 + productRatio * 10, confidence: 'partial' as const };
+            }
+            return { score: 70 + productRatio * 10, confidence: 'high' as const };
+          }
+
+          // Partial product match
+          if (productRatio >= 0.3) {
+            return { score: 30 + productRatio * 20, confidence: 'partial' as const };
+          }
+        }
+
+        // Layer 3: Type-only match (no product or generic file name)
+        const typeMatchCount = art.typeTokens.filter(t =>
+          fileTokens.some(ft => ft.includes(t) || t.includes(ft))
+        ).length;
+        const typeRatio = typeMatchCount / Math.max(art.typeTokens.length, 1);
+
+        if (typeRatio >= 0.5) {
+          // If multiple arts share this type, it's ambiguous
+          if (typeCountMap[art.typeNorm] > 1) {
+            return { score: 20 + typeRatio * 10, confidence: 'low' as const };
+          }
+          // Only one art of this type — safe to match
+          return { score: 60 + typeRatio * 10, confidence: 'high' as const };
+        }
+
+        // Layer 4: General token overlap
+        const allMatchCount = art.fullTokens.filter(t =>
+          fileTokens.some(ft => ft.includes(t) || t.includes(ft))
+        ).length;
+        const overallRatio = allMatchCount / Math.max(art.fullTokens.length, 1);
+
+        if (overallRatio >= 0.3) {
+          return { score: 10 + overallRatio * 20, confidence: 'low' as const };
+        }
+
+        return { score: 0, confidence: 'none' as const };
+      });
+    });
+
+    // Greedy assignment: pick best score first, mark used
+    const results: { image: DesignerImage; file: File | null; confidence: string }[] =
+      artInfos.map(a => ({ image: a.img, file: null, confidence: 'none' }));
+
+    // Build flat list of (artIdx, fileIdx, score, confidence), sort desc
+    const candidates: { ai: number; fi: number; score: number; confidence: string }[] = [];
+    scoreMatrix.forEach((row, ai) => {
+      row.forEach((cell, fi) => {
+        if (cell.score > 0) {
+          candidates.push({ ai, fi, score: cell.score, confidence: cell.confidence });
+        }
+      });
+    });
+    candidates.sort((a, b) => b.score - a.score);
+
+    const usedArts = new Set<number>();
+    const usedFiles = new Set<number>();
+
+    for (const c of candidates) {
+      if (usedArts.has(c.ai) || usedFiles.has(c.fi)) continue;
+      results[c.ai] = {
+        image: artInfos[c.ai].img,
+        file: fileInfos[c.fi].file,
+        confidence: c.confidence,
+      };
+      usedArts.add(c.ai);
+      usedFiles.add(c.fi);
+    }
+
     setMatchResults(results);
 
-    // Show manual matching if there are unmatched files
-    const unmatchedCount = results.filter(r => !r.file || r.confidence === 'low').length;
-    if (unmatchedCount > 0 && selectedFiles.length > 0) {
+    // Show manual matching if there are unmatched or low/partial confidence
+    const needsAttention = results.filter(r => !r.file || r.confidence === 'low' || r.confidence === 'partial' || r.confidence === 'none').length;
+    if (needsAttention > 0 && selectedFiles.length > 0) {
       setShowManualMatch(true);
     } else {
       setShowManualMatch(false);
@@ -588,13 +697,31 @@ function BatchDeliveryDialog({ group, designerEmail, onDelivered }: { group: Ima
 
             {matchResults.length > 0 && (
               <div className="space-y-2">
-                {/* Warning banner for unmatched items */}
-                {matchResults.some(r => !r.file) && (
-                  <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-500/30 bg-amber-500/5">
-                    <span className="text-amber-600 text-lg mt-0.5">⚠️</span>
+                {/* Warning banners */}
+                {matchResults.some(r => !r.file || r.confidence === 'none') && (
+                  <div className="flex items-start gap-2 p-3 rounded-lg border border-destructive/30 bg-destructive/5">
+                    <span className="text-lg mt-0.5">❌</span>
                     <div>
-                      <p className="text-sm font-medium text-amber-700">Correspondência parcial</p>
-                      <p className="text-xs text-amber-600/80">Não foi possível identificar automaticamente a correspondência para alguns arquivos. Selecione manualmente abaixo.</p>
+                      <p className="text-sm font-medium">Arquivos sem correspondência</p>
+                      <p className="text-xs text-muted-foreground">Não foi possível identificar correspondência. Selecione manualmente.</p>
+                    </div>
+                  </div>
+                )}
+                {matchResults.some(r => r.confidence === 'partial') && (
+                  <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-500/30 bg-amber-500/5">
+                    <span className="text-lg mt-0.5">⚠️</span>
+                    <div>
+                      <p className="text-sm font-medium text-amber-700">Correspondência sugerida — confirme</p>
+                      <p className="text-xs text-amber-600/80">Foram encontradas correspondências parciais. Verifique se estão corretas ou altere manualmente.</p>
+                    </div>
+                  </div>
+                )}
+                {matchResults.some(r => r.confidence === 'low') && !matchResults.some(r => r.confidence === 'partial') && (
+                  <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-500/30 bg-amber-500/5">
+                    <span className="text-lg mt-0.5">🔍</span>
+                    <div>
+                      <p className="text-sm font-medium text-amber-700">Múltiplas possibilidades encontradas</p>
+                      <p className="text-xs text-amber-600/80">O arquivo pode corresponder a várias solicitações do mesmo tipo. Escolha a correta.</p>
                     </div>
                   </div>
                 )}
@@ -604,18 +731,22 @@ function BatchDeliveryDialog({ group, designerEmail, onDelivered }: { group: Ima
                   {matchResults.map((r, idx) => {
                     const artLabel = getArtLabel(r.image);
                     const needsManual = !r.file || r.confidence === 'low' || r.confidence === 'none';
+                    const needsConfirm = r.confidence === 'partial';
                     return (
-                      <div key={idx} className={`flex items-center gap-2 p-2.5 text-xs ${needsManual ? 'bg-amber-500/5' : ''}`}>
+                      <div key={idx} className={`flex items-center gap-2 p-2.5 text-xs ${needsManual ? 'bg-destructive/5' : needsConfirm ? 'bg-amber-500/5' : ''}`}>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{artLabel}</p>
+                          {needsConfirm && r.file && (
+                            <p className="text-[10px] text-amber-600 mt-0.5">Sugestão: {r.file.name} — confirme ou altere</p>
+                          )}
                         </div>
                         <div className="shrink-0">
-                          {needsManual || showManualMatch ? (
+                          {needsManual || needsConfirm || showManualMatch ? (
                             <Select
                               value={r.file?.name || ''}
                               onValueChange={(v) => handleManualAssign(idx, v)}
                             >
-                              <SelectTrigger className="h-7 w-48 text-[11px]">
+                              <SelectTrigger className={`h-7 w-48 text-[11px] ${needsConfirm && r.file ? 'border-amber-500' : ''}`}>
                                 <SelectValue placeholder="Selecionar arquivo..." />
                               </SelectTrigger>
                               <SelectContent>
