@@ -88,10 +88,37 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
   const queryClient = useQueryClient();
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
   const [dropConfirmOpen, setDropConfirmOpen] = useState(false);
-  const [pendingDrop, setPendingDrop] = useState<{ requestId: string; name: string; fromStatus: string; toStatus: string } | null>(null);
+  const [pendingDrop, setPendingDrop] = useState<{ requestId: string; name: string; fromStatus: string; toStatus: string; isAdjustment?: boolean } | null>(null);
   const [editingCard, setEditingCard] = useState<KanbanCard | null>(null);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [cancelMotivo, setCancelMotivo] = useState('');
+  const [editingAdjustment, setEditingAdjustment] = useState<any>(null);
+  const [adjDesignerEmail, setAdjDesignerEmail] = useState('');
+  const [adjDeadline, setAdjDeadline] = useState('');
+
+  // Fetch adjustment requests for the Kanban
+  const { data: adjustments = [] } = useQuery({
+    queryKey: ['briefing-adjustments-kanban'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('briefing_adjustments')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: adjustmentItems = [] } = useQuery({
+    queryKey: ['briefing-adjustment-items-kanban'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('briefing_adjustment_items')
+        .select('*');
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const kanbanCards = useMemo(() => {
     const requestMap: Record<string, ImageWithRequest[]> = {};
@@ -142,9 +169,41 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
     });
   }, [images]);
 
+  // Build adjustment cards for the "adjustment" column
+  const adjustmentCards: KanbanCard[] = useMemo(() => {
+    return adjustments
+      .filter((a: any) => a.status === 'pending' || a.status === 'allocated')
+      .map((a: any) => {
+        const itemCount = adjustmentItems.filter((i: any) => i.adjustment_id === a.id).length;
+        return {
+          requestId: a.id,
+          platformUrl: a.client_url,
+          requesterName: a.client_email,
+          totalImages: itemCount,
+          pendingImages: itemCount,
+          inProgressImages: 0,
+          reviewImages: 0,
+          completedImages: 0,
+          cancelledImages: 0,
+          status: 'adjustment',
+          assignedDesigners: a.assigned_email ? [a.assigned_email] : [],
+          receivedAt: a.created_at,
+          createdAt: a.created_at,
+          imageTypes: ['adjustment'],
+          slaOverdue: false,
+          _isAdjustment: true,
+          _adjustmentData: a,
+        } as KanbanCard & { _isAdjustment?: boolean; _adjustmentData?: any };
+      });
+  }, [adjustments, adjustmentItems]);
+
   const kanbanColumns = useMemo(() => {
     const cols: Record<string, KanbanCard[]> = {};
     KANBAN_COLUMNS.forEach(c => { cols[c.key] = []; });
+
+    // Add adjustment cards
+    cols['adjustment'] = adjustmentCards;
+
     kanbanCards.forEach(card => {
       if (cols[card.status]) cols[card.status].push(card);
     });
@@ -154,7 +213,7 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
       return new Date(a.receivedAt).getTime() - new Date(b.receivedAt).getTime();
     }));
     return cols;
-  }, [kanbanCards]);
+  }, [kanbanCards, adjustmentCards]);
 
   const handleKanbanDrop = async () => {
     if (!pendingDrop) return;
