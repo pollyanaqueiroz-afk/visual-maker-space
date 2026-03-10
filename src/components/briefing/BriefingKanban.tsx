@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { RequestStatus, STATUS_LABELS, IMAGE_TYPE_LABELS, ImageType } from '@/types/briefing';
 import { Card, CardContent } from '@/components/ui/card';
@@ -15,7 +15,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
-import { AlertTriangle, AlertCircle, Send } from 'lucide-react';
+import { AlertTriangle, AlertCircle, Send, Wrench } from 'lucide-react';
+import { format } from 'date-fns';
+import AssignBriefingDialog from '@/components/briefing/AssignBriefingDialog';
 import { format } from 'date-fns';
 import AssignBriefingDialog from '@/components/briefing/AssignBriefingDialog';
 
