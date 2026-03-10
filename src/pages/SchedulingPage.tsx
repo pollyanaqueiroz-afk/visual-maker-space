@@ -829,6 +829,7 @@ export default function SchedulingPage() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Quick Stats */}
