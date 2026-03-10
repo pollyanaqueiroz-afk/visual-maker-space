@@ -40,6 +40,7 @@ import PipelinePage from "./pages/PipelinePage";
 import ProcessosImplantacaoPage from "./pages/ProcessosImplantacaoPage";
 import GestaoGerencialPage from "./pages/GestaoGerencialPage";
 import AjusteBriefingsPage from "./pages/AjusteBriefingsPage";
+import CarteirizacaoPage from "./pages/CarteirizacaoPage";
 import ClienteLogin from "./pages/cliente/ClienteLogin";
 import ClienteHubLayout from "./pages/cliente/ClienteHubLayout";
 import ClienteHome from "./pages/cliente/ClienteHome";
