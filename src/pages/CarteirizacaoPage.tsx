@@ -438,7 +438,7 @@ export default function CarteirizacaoPage() {
 
         {/* ===== JORNADA VISUAL ===== */}
         <TabsContent value="jornada" className="space-y-4">
-          <JornadaClienteVisual planos={planos} etapas={etapas} csConfigs={csConfigs} />
+          <JornadaClienteVisual planos={planos} etapas={etapas} csConfigs={csConfigs} onRefresh={fetchAll} />
         </TabsContent>
 
         {/* ===== CLIENTES ===== */}
