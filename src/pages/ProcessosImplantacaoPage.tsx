@@ -331,8 +331,8 @@ export default function ProcessosImplantacaoPage() {
                     </div>
                   </TableCell>
                   <TableCell><span className="text-xs font-mono text-muted-foreground">{c.id_curseduca || '—'}</span></TableCell>
-                  <TableCell><span className="text-sm text-muted-foreground">{c.nome_do_cs_atual || '—'}</span></TableCell>
-                  <TableCell><span className="text-xs text-muted-foreground">{c.plano_contratado || '—'}</span></TableCell>
+                   <TableCell><span className="text-sm text-muted-foreground">{c.cs_atual || '—'}</span></TableCell>
+                   <TableCell><span className="text-xs text-muted-foreground">{c.plano || '—'}</span></TableCell>
 
                   {/* Design column - enhanced */}
                   <TableCell className="text-center">
