@@ -325,8 +325,8 @@ export default function ProcessosImplantacaoPage() {
                     <div className="flex items-center gap-2">
                       {c.isOverdue && <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />}
                       <div>
-                        <p className={`font-medium text-sm ${c.isOverdue ? 'text-destructive' : ''}`}>{c.client_name || c.client_url}</p>
-                        <p className="text-xs text-muted-foreground">{c.client_url}</p>
+                         <p className={`font-medium text-sm ${c.isOverdue ? 'text-destructive' : ''}`}>{c.cliente || c.id_curseduca}</p>
+                         <p className="text-xs text-muted-foreground">{c.id_curseduca}</p>
                       </div>
                     </div>
                   </TableCell>
