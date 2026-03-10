@@ -576,6 +576,92 @@ export default function SchedulingPage() {
     else fetchMeetings();
   };
 
+  // Sync Google Calendar events into DB (upsert, no deletes)
+  const handleSyncCalendar = async () => {
+    try {
+      const events = await syncCalendar(100);
+      if (!events || events.length === 0) {
+        toast.info('Nenhum evento encontrado no Google Calendar');
+        return;
+      }
+
+      // Get existing gcal_event_ids from DB
+      const { data: existingMeetings } = await supabase
+        .from('meetings')
+        .select('gcal_event_id')
+        .not('gcal_event_id', 'is', null);
+
+      const existingIds = new Set(
+        (existingMeetings || []).map((m: any) => m.gcal_event_id).filter(Boolean)
+      );
+
+      const newEvents = events.filter(e => !existingIds.has(e.event_id));
+
+      if (newEvents.length === 0) {
+        toast.success('Tudo sincronizado! Nenhum evento novo.');
+        return;
+      }
+
+      // Insert only new events
+      const inserts = newEvents.map(e => {
+        const startDate = new Date(e.start);
+        const endDate = new Date(e.end);
+        const durationMin = Math.round((endDate.getTime() - startDate.getTime()) / 60000);
+        return {
+          title: e.summary || 'Sem título',
+          description: e.description || null,
+          meeting_date: format(startDate, 'yyyy-MM-dd'),
+          meeting_time: format(startDate, 'HH:mm'),
+          duration_minutes: durationMin > 0 ? durationMin : 30,
+          meeting_url: e.hangout_link || null,
+          gcal_event_id: e.event_id,
+          status: 'scheduled' as const,
+          participants: e.attendees?.map(a => a.email) || [],
+          client_email: e.attendees?.[0]?.email || null,
+        };
+      });
+
+      const { error } = await supabase.from('meetings').insert(inserts as any);
+      if (error) {
+        toast.error('Erro ao importar: ' + error.message);
+      } else {
+        toast.success(`${newEvents.length} nova(s) reunião(ões) importada(s)!`);
+        fetchMeetings();
+      }
+    } catch (err: any) {
+      toast.error('Erro na sincronização: ' + err.message);
+    }
+  };
+
+  // Detail dialog handlers
+  const handleOpenDetail = (m: Meeting) => {
+    setDetailMeeting(m);
+    setDetailNotes(m.notes || '');
+    setDetailFunilStatus(m.funil_status || '');
+    setDetailFunilNotas(m.funil_notas || '');
+    setDetailDialogOpen(true);
+  };
+
+  const handleSaveDetail = async () => {
+    if (!detailMeeting) return;
+    setDetailSaving(true);
+    try {
+      const { error } = await supabase.from('meetings').update({
+        notes: detailNotes || null,
+        funil_status: detailFunilStatus || null,
+        funil_notas: detailFunilNotas || null,
+      }).eq('id', detailMeeting.id);
+      if (error) throw error;
+      toast.success('Detalhes salvos!');
+      setDetailDialogOpen(false);
+      fetchMeetings();
+    } catch (err: any) {
+      toast.error('Erro: ' + err.message);
+    } finally {
+      setDetailSaving(false);
+    }
+  };
+
   // Count meetings by reason
   const reasonCounts = useMemo(() => {
     const counts: Record<string, number> = {};
