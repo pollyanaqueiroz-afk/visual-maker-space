@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,10 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { IMAGE_TYPE_LABELS, STATUS_LABELS, STATUS_COLORS } from '@/types/briefing';
-import { Loader2, Clock, ExternalLink, FileImage, Filter, MessageSquare, BarChart3, LogOut, Eye, Globe, Image, Wrench } from 'lucide-react';
+import { Loader2, Clock, ExternalLink, FileImage, Filter, MessageSquare, BarChart3, LogOut, Eye, Globe, Image, Wrench, Upload, Sparkles, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
+import confetti from 'canvas-confetti';
 import CursEducaLayout from '@/components/CursEducaLayout';
 import DesignerFeedback from '@/components/designer/DesignerFeedback';
 import DesignerAnalytics from '@/components/designer/DesignerAnalytics';

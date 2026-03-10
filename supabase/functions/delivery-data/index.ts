@@ -279,6 +279,80 @@ Deno.serve(async (req) => {
       );
     }
 
+    // SUBMIT_ADJUSTMENT: Deliver adjusted art for an adjustment briefing
+    if (action === "submit_adjustment") {
+      const adjustment_id = typeof body.adjustment_id === "string" ? body.adjustment_id.trim().slice(0, 100) : "";
+      if (!adjustment_id || !uuidRegex.test(adjustment_id)) {
+        return new Response(
+          JSON.stringify({ error: "adjustment_id must be a valid UUID" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (!file_url || !delivered_by_email) {
+        return new Response(
+          JSON.stringify({ error: "file_url and delivered_by_email are required" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(delivered_by_email)) {
+        return new Response(
+          JSON.stringify({ error: "delivered_by_email must be a valid email" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Update adjustment with delivery info
+      const { error: updateErr } = await supabase
+        .from("briefing_adjustments")
+        .update({
+          delivery_url: file_url,
+          delivery_comments: comments || null,
+          delivered_by: delivered_by_email,
+          delivered_at: new Date().toISOString(),
+          status: "review",
+        })
+        .eq("id", adjustment_id);
+
+      if (updateErr) throw updateErr;
+
+      // Send email notification to requester
+      try {
+        const { data: adjData } = await supabase
+          .from("briefing_adjustments")
+          .select("client_email, client_url")
+          .eq("id", adjustment_id)
+          .single();
+
+        if (adjData?.client_email) {
+          const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+          if (RESEND_API_KEY) {
+            await fetch("https://api.resend.com/emails", {
+              method: "POST",
+              headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+              body: JSON.stringify({
+                from: "Curseduca Design <noreply@curseduca.com>",
+                to: [adjData.client_email],
+                subject: `🎨 Ajuste de arte concluído — ${adjData.client_url || ""}`,
+                html: `<div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px">
+                  <h2 style="color:#7c3aed;margin-bottom:8px">🎨 Ajuste concluído!</h2>
+                  <p style="color:#555;font-size:15px">O ajuste solicitado para <strong>${adjData.client_url || "seu briefing"}</strong> foi finalizado e está disponível para revisão.</p>
+                  <p style="color:#999;font-size:13px;margin-top:16px">Acesse o Hub para revisar a entrega.</p>
+                </div>`,
+              }),
+            });
+          }
+        }
+      } catch (emailErr) {
+        console.error("Failed to send adjustment delivery email:", emailErr);
+      }
+
+      return new Response(
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     return new Response(
       JSON.stringify({ error: "Unknown action" }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
