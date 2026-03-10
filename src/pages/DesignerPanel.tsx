@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,10 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { IMAGE_TYPE_LABELS, STATUS_LABELS, STATUS_COLORS } from '@/types/briefing';
-import { Loader2, Clock, ExternalLink, FileImage, Filter, MessageSquare, BarChart3, LogOut, Eye, Globe, Image, Wrench } from 'lucide-react';
+import { Loader2, Clock, ExternalLink, FileImage, Filter, MessageSquare, BarChart3, LogOut, Eye, Globe, Image, Wrench, Upload, Sparkles, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
+import confetti from 'canvas-confetti';
 import CursEducaLayout from '@/components/CursEducaLayout';
 import DesignerFeedback from '@/components/designer/DesignerFeedback';
 import DesignerAnalytics from '@/components/designer/DesignerAnalytics';
@@ -38,6 +42,7 @@ interface DesignerImage {
     platform_url: string;
   };
   _source?: 'briefing' | 'adjustment';
+  _adjustment_id?: string;
 }
 
 interface ReferenceImage {
@@ -172,6 +177,156 @@ function BriefingDetailDialog({ img, referenceImages, brandAssets }: { img: Desi
   );
 }
 
+function AdjustmentDeliveryDialog({ img, designerEmail, onDelivered }: { img: DesignerImage; designerEmail: string; onDelivered: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [comments, setComments] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [delivered, setDelivered] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleSubmit = async () => {
+    if (!file || !img._adjustment_id) {
+      toast.error('Selecione um arquivo para entregar');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const filePath = `deliveries/adjustments/${img._adjustment_id}/${Date.now()}.${ext}`;
+      const { error: uploadErr } = await supabase.storage.from('briefing-uploads').upload(filePath, file);
+      if (uploadErr) throw uploadErr;
+      const { data: urlData } = supabase.storage.from('briefing-uploads').getPublicUrl(filePath);
+
+      const { data: result, error: submitErr } = await supabase.functions.invoke('delivery-data', {
+        body: {
+          action: 'submit_adjustment',
+          adjustment_id: img._adjustment_id,
+          file_url: urlData.publicUrl,
+          comments: comments || null,
+          delivered_by_email: designerEmail,
+        },
+      });
+      if (submitErr) throw submitErr;
+      if (result?.error) throw new Error(result.error);
+
+      setDelivered(true);
+      confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+      toast.success('Ajuste entregue com sucesso!');
+      setTimeout(() => {
+        setOpen(false);
+        onDelivered();
+      }, 2000);
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Erro ao entregar: ' + err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const f = e.dataTransfer.files?.[0];
+    if (f) setFile(f);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setFile(null); setComments(''); setDelivered(false); } }}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="default" className="gap-1">
+          <Upload className="h-3 w-3" /> Entregar
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Wrench className="h-5 w-5" /> Entregar Ajuste
+          </DialogTitle>
+        </DialogHeader>
+
+        {delivered ? (
+          <div className="text-center py-6 space-y-3">
+            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200 }}>
+              <CheckCircle2 className="h-12 w-12 text-primary mx-auto" />
+            </motion.div>
+            <p className="text-lg font-bold">Ajuste entregue! 🎉</p>
+            <p className="text-sm text-muted-foreground">O solicitante será notificado.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {img.professional_photo_url && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Imagem de referência</Label>
+                <a href={img.professional_photo_url} target="_blank" rel="noopener noreferrer">
+                  <img src={img.professional_photo_url} alt="Referência" className="mt-1 w-full max-h-32 object-contain rounded-lg border border-border" />
+                </a>
+              </div>
+            )}
+            {img.observations && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Observações do ajuste</Label>
+                <p className="text-sm mt-1">{img.observations}</p>
+              </div>
+            )}
+
+            <Separator />
+
+            <div className="space-y-2">
+              <Label>Arquivo da arte ajustada *</Label>
+              <div
+                className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-all ${dragOver ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={handleDrop}
+              >
+                {file ? (
+                  <div className="space-y-1">
+                    {file.type.startsWith('image/') ? (
+                      <img src={URL.createObjectURL(file)} alt="Preview" className="max-h-28 mx-auto rounded object-contain" />
+                    ) : (
+                      <FileImage className="h-6 w-6 text-primary mx-auto" />
+                    )}
+                    <p className="text-xs font-medium">{file.name}</p>
+                  </div>
+                ) : (
+                  <div>
+                    <Upload className="h-6 w-6 mx-auto mb-1 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">Arraste ou clique para selecionar</p>
+                  </div>
+                )}
+              </div>
+              <input ref={fileInputRef} type="file" className="hidden" accept="image/*,.psd,.ai,.pdf,.svg,.eps,.zip,.rar" onChange={e => setFile(e.target.files?.[0] || null)} />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Comentários (opcional)</Label>
+              <Textarea value={comments} onChange={e => setComments(e.target.value)} placeholder="Observações sobre a entrega..." rows={2} />
+            </div>
+
+            <Button className="w-full" onClick={handleSubmit} disabled={submitting || !file}>
+              <AnimatePresence mode="wait">
+                {submitting ? (
+                  <motion.span key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" /> Enviando...
+                  </motion.span>
+                ) : (
+                  <motion.span key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center">
+                    <Sparkles className="h-4 w-4 mr-2" /> Entregar Ajuste
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </Button>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function DesignerPanel() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -231,6 +386,7 @@ export default function DesignerPanel() {
               platform_url: adj.client_url,
             },
             _source: 'adjustment',
+            _adjustment_id: adj.id,
           });
         });
       }
@@ -399,12 +555,12 @@ export default function DesignerPanel() {
                                 </Dialog>
                               </TableCell>
                               <TableCell className="text-right">
-                                {img._source === 'adjustment' && img.professional_photo_url ? (
-                                  <Button size="sm" variant="outline" asChild>
-                                    <a href={img.professional_photo_url} target="_blank" rel="noopener noreferrer" className="gap-1">
-                                      <Image className="h-3 w-3" /> Abrir
-                                    </a>
-                                  </Button>
+                                {img._source === 'adjustment' ? (
+                                  img.status === 'completed' || img.status === 'review' ? (
+                                    <Badge variant="secondary" className="text-xs">Entregue</Badge>
+                                  ) : (
+                                    <AdjustmentDeliveryDialog img={img} designerEmail={email} onDelivered={() => loadData(email)} />
+                                  )
                                 ) : img.delivery_token ? (
                                   <Button size="sm" variant="outline" asChild>
                                     <Link to={`/delivery/${img.delivery_token}`}>Entregar</Link>
@@ -465,10 +621,14 @@ export default function DesignerPanel() {
                               </DialogTrigger>
                               <BriefingDetailDialog img={img} referenceImages={referenceImages} brandAssets={brandAssets} />
                             </Dialog>
-                            {img._source === 'adjustment' && img.professional_photo_url ? (
-                              <Button size="sm" className="flex-1 h-8 text-xs" variant="outline" asChild>
-                                <a href={img.professional_photo_url} target="_blank" rel="noopener noreferrer">Abrir Imagem</a>
-                              </Button>
+                            {img._source === 'adjustment' ? (
+                              img.status === 'completed' || img.status === 'review' ? (
+                                <Badge variant="secondary" className="text-xs flex-1 justify-center h-8">Entregue</Badge>
+                              ) : (
+                                <div className="flex-1">
+                                  <AdjustmentDeliveryDialog img={img} designerEmail={email} onDelivered={() => loadData(email)} />
+                                </div>
+                              )
                             ) : img.delivery_token ? (
                               <Button size="sm" className="flex-1 h-8 text-xs" variant="outline" asChild>
                                 <Link to={`/delivery/${img.delivery_token}`}>Entregar</Link>
