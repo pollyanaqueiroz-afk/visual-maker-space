@@ -92,6 +92,7 @@ interface ReviewRecord {
 }
 
 function imageLabel(img: { image_type: string; product_name?: string | null; observations?: string | null }): string {
+  if (img.image_type === 'adjustment') return `Ajuste de Briefing${img.observations ? ` — ${img.observations}` : ''}`;
   const base = IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type;
   const suffix = img.observations ? ` — ${img.observations}` : img.product_name ? ` — ${img.product_name}` : '';
   return `${base}${suffix}`;
@@ -151,7 +152,7 @@ export default function Dashboard() {
   const tableScrollRef = useRef<HTMLDivElement>(null);
   const topScrollInnerRef = useRef<HTMLDivElement>(null);
 
-  const { data: images = [], isLoading: loadingImages } = useQuery({
+  const { data: rawImages = [], isLoading: loadingImages } = useQuery({
     queryKey: ['briefing-images'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -170,6 +171,64 @@ export default function Dashboard() {
     },
     staleTime: 30_000,
   });
+
+  // Fetch adjustment data so it merges into KPIs, Artes tab, and designer workload
+  const { data: adjData = { adjustments: [], items: [] } } = useQuery({
+    queryKey: ['briefing-adjustments-merged'],
+    queryFn: async () => {
+      const [adjRes, itemsRes] = await Promise.all([
+        supabase.from('briefing_adjustments').select('*').order('created_at', { ascending: false }),
+        supabase.from('briefing_adjustment_items').select('*'),
+      ]);
+      return { adjustments: adjRes.data || [], items: itemsRes.data || [] };
+    },
+    staleTime: 30_000,
+  });
+
+  // Convert adjustment items into ImageWithRequest-compatible objects
+  const adjustmentImages: ImageWithRequest[] = useMemo(() => {
+    return adjData.items.map((item: any) => {
+      const parent = adjData.adjustments.find((a: any) => a.id === item.adjustment_id);
+      if (!parent) return null;
+      // Map adjustment status to request_status
+      const statusMap: Record<string, RequestStatus> = {
+        pending: 'pending',
+        allocated: 'in_progress',
+        in_progress: 'in_progress',
+        completed: 'completed',
+      };
+      return {
+        id: item.id,
+        image_type: 'adjustment',
+        product_name: null,
+        image_text: item.observations || null,
+        font_suggestion: null,
+        element_suggestion: null,
+        professional_photo_url: item.file_url || null,
+        orientation: null,
+        observations: item.observations || null,
+        extra_info: null,
+        status: (statusMap[parent.status] || 'pending') as RequestStatus,
+        sort_order: 0,
+        created_at: parent.created_at,
+        request_id: parent.id,
+        assigned_email: parent.assigned_email || null,
+        deadline: parent.deadline || null,
+        revision_count: 0,
+        requester_name: parent.client_email || '',
+        requester_email: parent.client_email || '',
+        platform_url: parent.client_url || '',
+        received_at: parent.created_at,
+        submitted_by: 'CS — Ajuste',
+        _isAdjustment: true,
+      } as ImageWithRequest & { _isAdjustment?: boolean };
+    }).filter(Boolean) as ImageWithRequest[];
+  }, [adjData]);
+
+  // Merge regular images + adjustment items into a single array
+  const images: ImageWithRequest[] = useMemo(() => {
+    return [...rawImages, ...adjustmentImages];
+  }, [rawImages, adjustmentImages]);
 
   const { data: requests = [] } = useQuery({
     queryKey: ['briefing-requests'],
@@ -203,6 +262,7 @@ export default function Dashboard() {
     queryClient.invalidateQueries({ queryKey: ['briefing-images'] });
     queryClient.invalidateQueries({ queryKey: ['briefing-requests'] });
     queryClient.invalidateQueries({ queryKey: ['briefing-reviews'] });
+    queryClient.invalidateQueries({ queryKey: ['briefing-adjustments-merged'] });
   };
 
   const [downloadingReport, setDownloadingReport] = useState(false);
@@ -718,7 +778,7 @@ export default function Dashboard() {
           </TabsList>
 
           <TabsContent value="kanban" className="space-y-6">
-            <BriefingKanban images={images} loading={loadingImages} />
+            <BriefingKanban images={rawImages} loading={loadingImages} />
           </TabsContent>
 
           <TabsContent value="artes" className="space-y-6">
