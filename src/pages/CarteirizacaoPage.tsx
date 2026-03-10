@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Plus, Trash2, Edit2, Palmtree, Users, Layers, Tag, ChevronDown, ChevronRight, BookOpen, Map } from 'lucide-react';
+import { Plus, Trash2, Edit2, Palmtree, Users, Layers, Tag, ChevronDown, ChevronRight, BookOpen, Map, ArrowRightLeft, Check, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import JornadaClienteVisual from '@/components/carteirizacao/JornadaClienteVisual';
 import ClientesTab from '@/components/carteirizacao/ClientesTab';
