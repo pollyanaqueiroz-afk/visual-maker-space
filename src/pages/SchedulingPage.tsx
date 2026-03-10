@@ -491,6 +491,11 @@ export default function SchedulingPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Remover esta reunião?')) return;
+    // Try delete from Google Calendar (best-effort)
+    const meeting = meetings.find(m => m.id === id);
+    if ((meeting as any)?.gcal_event_id) {
+      try { await deleteCalendarEvent((meeting as any).gcal_event_id); } catch { /* best-effort */ }
+    }
     const { error } = await supabase.from('meetings').delete().eq('id', id);
     if (error) toast.error('Erro ao remover');
     else { toast.success('Reunião removida'); fetchMeetings(); }
