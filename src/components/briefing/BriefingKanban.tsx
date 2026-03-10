@@ -636,6 +636,88 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Adjustment detail dialog */}
+      <Dialog open={!!editingAdjustment} onOpenChange={(v) => { if (!v) setEditingAdjustment(null); }}>
+        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
+          {editingAdjustment && (
+            <>
+              <DialogHeader className="shrink-0">
+                <DialogTitle className="flex items-center gap-2">
+                  <Wrench className="h-4 w-4" />
+                  Solicitação de Ajuste
+                </DialogTitle>
+                <p className="text-xs text-muted-foreground">{editingAdjustment.client_url}</p>
+              </DialogHeader>
+              <div className="flex-1 min-h-0 overflow-y-auto pr-2 space-y-4">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">E-mail do Cliente</p>
+                    <p className="text-sm">{editingAdjustment.client_email}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">Data da Solicitação</p>
+                    <p className="text-sm">{format(new Date(editingAdjustment.created_at), 'dd/MM/yyyy')}</p>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Items */}
+                <div>
+                  <p className="text-sm font-medium mb-2">
+                    Ajustes ({adjustmentItems.filter((i: any) => i.adjustment_id === editingAdjustment.id).length})
+                  </p>
+                  <div className="space-y-2">
+                    {adjustmentItems
+                      .filter((i: any) => i.adjustment_id === editingAdjustment.id)
+                      .map((item: any) => (
+                        <Card key={item.id}>
+                          <CardContent className="py-2 px-3">
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              <a href={item.file_url} target="_blank" rel="noopener noreferrer">
+                                <img src={item.file_url} alt="" className="w-full h-20 object-cover rounded border hover:opacity-80 transition-opacity" />
+                              </a>
+                              <p className="text-xs whitespace-pre-wrap">{item.observations || 'Sem observações'}</p>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Assign designer + deadline */}
+                <div className="space-y-3">
+                  <p className="text-sm font-medium">Alocar para Produção</p>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Designer Responsável</Label>
+                    <Input
+                      type="email"
+                      placeholder="designer@email.com"
+                      value={adjDesignerEmail}
+                      onChange={(e) => setAdjDesignerEmail(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Prazo de Entrega</Label>
+                    <Input
+                      type="date"
+                      value={adjDeadline}
+                      onChange={(e) => setAdjDeadline(e.target.value)}
+                    />
+                  </div>
+                  <Button onClick={handleSaveAdjustment} className="w-full gap-2">
+                    <Send className="h-4 w-4" />
+                    Salvar e Alocar
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
