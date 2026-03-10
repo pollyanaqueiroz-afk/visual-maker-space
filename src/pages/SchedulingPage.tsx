@@ -402,8 +402,39 @@ export default function SchedulingPage() {
           });
         }
 
+        // Update in Google Calendar (best-effort, uses meeting id as event_id if stored)
+        try {
+          const editingMeeting = meetings.find(m => m.id === editingId);
+          const gcalEventId = (editingMeeting as any)?.gcal_event_id;
+          if (gcalEventId) {
+            await updateCalendarEvent({
+              event_id: gcalEventId,
+              summary: form.title,
+              start: startISO,
+              end: endISO,
+              description: form.description || '',
+              attendees: attendeesArr,
+            });
+          }
+        } catch { /* best-effort */ }
+
         toast.success(isRescheduling ? 'Reunião reagendada!' : 'Reunião atualizada!');
       } else {
+        // Create in Google Calendar first
+        let gcalEventId: string | undefined;
+        try {
+          const calResult = await createCalendarEvent({
+            summary: form.title,
+            start: startISO,
+            end: endISO,
+            description: form.description || '',
+            attendees: attendeesArr,
+          });
+          gcalEventId = calResult?.event_id;
+        } catch {
+          // If Google Calendar fails, still save locally
+        }
+
         const { error } = await supabase.from('meetings').insert(payload);
         if (error) throw error;
 
