@@ -319,7 +319,7 @@ export default function ProcessosImplantacaoPage() {
                 <TableRow
                   key={c.id}
                   className={`cursor-pointer hover:bg-muted/30 ${c.isOverdue ? 'bg-destructive/5 border-l-4 border-destructive' : ''}`}
-                  onClick={() => setSelectedClientUrl(c.client_url)}
+                  onClick={() => setSelectedClientUrl(c.id_curseduca)}
                 >
                   <TableCell>
                     <div className="flex items-center gap-2">
