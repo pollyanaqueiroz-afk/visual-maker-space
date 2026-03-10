@@ -993,32 +993,47 @@ export type Database = {
       }
       carteirizacao_ferias: {
         Row: {
+          clientes_movidos: number | null
           created_at: string
           cs_email: string
           data_fim: string
           data_inicio: string
           id: string
           motivo: string | null
+          movido_ida: boolean
+          movido_ida_em: string | null
+          movido_volta: boolean
+          movido_volta_em: string | null
           substituto_email: string
           substituto_nome: string | null
         }
         Insert: {
+          clientes_movidos?: number | null
           created_at?: string
           cs_email: string
           data_fim: string
           data_inicio: string
           id?: string
           motivo?: string | null
+          movido_ida?: boolean
+          movido_ida_em?: string | null
+          movido_volta?: boolean
+          movido_volta_em?: string | null
           substituto_email: string
           substituto_nome?: string | null
         }
         Update: {
+          clientes_movidos?: number | null
           created_at?: string
           cs_email?: string
           data_fim?: string
           data_inicio?: string
           id?: string
           motivo?: string | null
+          movido_ida?: boolean
+          movido_ida_em?: string | null
+          movido_volta?: boolean
+          movido_volta_em?: string | null
           substituto_email?: string
           substituto_nome?: string | null
         }

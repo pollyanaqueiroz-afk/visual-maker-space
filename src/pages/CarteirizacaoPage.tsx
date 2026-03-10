@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Plus, Trash2, Edit2, Palmtree, Users, Layers, Tag, ChevronDown, ChevronRight, BookOpen, Map } from 'lucide-react';
+import { Plus, Trash2, Edit2, Palmtree, Users, Layers, Tag, ChevronDown, ChevronRight, BookOpen, Map, ArrowRightLeft, Check, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import JornadaClienteVisual from '@/components/carteirizacao/JornadaClienteVisual';
 import ClientesTab from '@/components/carteirizacao/ClientesTab';
@@ -20,7 +20,7 @@ type UserProfile = { user_id: string; email: string | null; display_name: string
 type Plano = { id: string; nome: string; created_at: string };
 type Etapa = { id: string; nome: string; created_at: string };
 type CsConfig = { id: string; etapa_id: string; plano_id: string | null; user_email: string; user_name: string | null; peso: number; ativo: boolean; created_at: string };
-type Ferias = { id: string; cs_email: string; substituto_email: string; substituto_nome: string | null; data_inicio: string; data_fim: string; motivo: string | null; created_at: string };
+type Ferias = { id: string; cs_email: string; substituto_email: string; substituto_nome: string | null; data_inicio: string; data_fim: string; motivo: string | null; created_at: string; movido_ida: boolean; movido_volta: boolean; movido_ida_em: string | null; movido_volta_em: string | null; clientes_movidos: number | null };
 
 export default function CarteirizacaoPage() {
   const [planos, setPlanos] = useState<Plano[]>([]);
@@ -468,6 +468,7 @@ export default function CarteirizacaoPage() {
                       <TableHead>Início</TableHead>
                       <TableHead>Fim</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Movimentação</TableHead>
                       <TableHead className="w-16">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -488,6 +489,34 @@ export default function CarteirizacaoPage() {
                               {status === 'Em férias' && <Palmtree className="h-3 w-3 mr-1" />}
                               {status}
                             </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-1.5 text-xs">
+                                {f.movido_ida ? (
+                                  <Badge variant="default" className="text-[10px] gap-1">
+                                    <Check className="h-2.5 w-2.5" /> Ida ({f.clientes_movidos || 0})
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-[10px] gap-1">
+                                    <Clock className="h-2.5 w-2.5" /> Ida pendente
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1.5 text-xs">
+                                {f.movido_volta ? (
+                                  <Badge variant="default" className="text-[10px] gap-1">
+                                    <Check className="h-2.5 w-2.5" /> Volta
+                                  </Badge>
+                                ) : f.movido_ida ? (
+                                  <Badge variant="secondary" className="text-[10px] gap-1">
+                                    <Clock className="h-2.5 w-2.5" /> Volta pendente
+                                  </Badge>
+                                ) : (
+                                  <span className="text-muted-foreground text-[10px]">—</span>
+                                )}
+                              </div>
+                            </div>
                           </TableCell>
                           <TableCell>
                             <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteFerias(f.id)}>
