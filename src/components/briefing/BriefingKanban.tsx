@@ -348,6 +348,7 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
 
               <div className="space-y-2">
                 {(kanbanColumns[col.key] || []).map(card => {
+                  const isAdj = (card as any)._isAdjustment === true;
                   // Conditional row colors
                   const rowBg = card.slaOverdue
                     ? 'bg-pink-50 dark:bg-pink-950/20'
@@ -357,7 +358,7 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
 
                   // Deadline semaphore
                   const deadlineSemaphore = (() => {
-                    if (card.status === 'completed' || card.status === 'cancelled') return null;
+                    if (card.status === 'completed' || card.status === 'cancelled' || isAdj) return null;
                     const days = Math.floor((Date.now() - new Date(card.receivedAt).getTime()) / (1000 * 60 * 60 * 24));
                     if (days > 7) return { color: 'text-destructive', dot: 'bg-destructive', label: `⚠️ SLA excedido (${days}d)` };
                     if (days > 5) return { color: 'text-amber-600', dot: 'bg-amber-500', label: `${7 - days}d restante(s)` };
@@ -372,19 +373,36 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
                       e.dataTransfer.setData('requestId', card.requestId);
                       e.dataTransfer.setData('fromStatus', card.status);
                       e.dataTransfer.setData('cardName', card.requesterName || card.platformUrl);
+                      e.dataTransfer.setData('isAdjustment', isAdj ? 'true' : 'false');
                       e.dataTransfer.effectAllowed = 'move';
                     }}
                     className={`p-3 cursor-pointer hover:shadow-md transition-shadow border-l-4 ${col.border} ${rowBg} ${col.key !== 'completed' ? 'cursor-grab active:cursor-grabbing' : ''}`}
-                    onClick={() => setEditingCard(card)}
+                    onClick={() => {
+                      if (isAdj) {
+                        const adjData = (card as any)._adjustmentData;
+                        setEditingAdjustment(adjData);
+                        setAdjDesignerEmail(adjData?.assigned_email || '');
+                        setAdjDeadline(adjData?.deadline ? adjData.deadline.split('T')[0] : '');
+                      } else {
+                        setEditingCard(card);
+                      }
+                    }}
                   >
                     <div className="flex items-start justify-between gap-1">
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold truncate">{card.requesterName || 'Sem nome'}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{extractClientName(card.platformUrl)}</p>
+                        {isAdj && <Wrench className="h-3 w-3 text-orange-500 inline mr-1" />}
+                        <p className="text-sm font-semibold truncate inline">{isAdj ? extractClientName(card.platformUrl) : (card.requesterName || 'Sem nome')}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{isAdj ? card.requesterName : extractClientName(card.platformUrl)}</p>
                       </div>
                       {card.slaOverdue && <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5 animate-pulse" />}
                     </div>
 
+                    {isAdj ? (
+                      <div className="mt-2">
+                        <Badge variant="outline" className="text-[9px] px-1 py-0">Ajuste</Badge>
+                        <p className="text-[10px] text-muted-foreground mt-1">{card.totalImages} ajuste{card.totalImages !== 1 ? 's' : ''}</p>
+                      </div>
+                    ) : (
                     <div className="flex flex-wrap gap-1 mt-2">
                       {card.imageTypes.slice(0, 3).map(type => (
                         <Badge key={type} variant="outline" className="text-[9px] px-1 py-0">
