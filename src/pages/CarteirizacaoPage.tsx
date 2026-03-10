@@ -20,7 +20,7 @@ type UserProfile = { user_id: string; email: string | null; display_name: string
 type Plano = { id: string; nome: string; created_at: string };
 type Etapa = { id: string; nome: string; created_at: string };
 type CsConfig = { id: string; etapa_id: string; plano_id: string | null; user_email: string; user_name: string | null; peso: number; ativo: boolean; created_at: string };
-type Ferias = { id: string; cs_email: string; substituto_email: string; substituto_nome: string | null; data_inicio: string; data_fim: string; motivo: string | null; created_at: string };
+type Ferias = { id: string; cs_email: string; substituto_email: string; substituto_nome: string | null; data_inicio: string; data_fim: string; motivo: string | null; created_at: string; movido_ida: boolean; movido_volta: boolean; movido_ida_em: string | null; movido_volta_em: string | null; clientes_movidos: number | null };
 
 export default function CarteirizacaoPage() {
   const [planos, setPlanos] = useState<Plano[]>([]);
