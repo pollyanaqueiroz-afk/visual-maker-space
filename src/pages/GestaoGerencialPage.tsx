@@ -207,10 +207,18 @@ export default function GestaoGerencialPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>E-mail</TableHead>
-                  <TableHead>Perfil</TableHead>
-                  <TableHead className="text-center">Membros vinculados</TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('name')}>
+                    <span className="inline-flex items-center">Nome <SortIcon col="name" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('email')}>
+                    <span className="inline-flex items-center">E-mail <SortIcon col="email" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('role')}>
+                    <span className="inline-flex items-center">Perfil <SortIcon col="role" /></span>
+                  </TableHead>
+                  <TableHead className="text-center cursor-pointer select-none" onClick={() => toggleSort('members')}>
+                    <span className="inline-flex items-center justify-center">Membros vinculados <SortIcon col="members" /></span>
+                  </TableHead>
                   <TableHead className="w-10" />
                 </TableRow>
               </TableHeader>
