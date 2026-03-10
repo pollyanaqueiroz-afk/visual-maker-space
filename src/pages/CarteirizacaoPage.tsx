@@ -468,6 +468,7 @@ export default function CarteirizacaoPage() {
                       <TableHead>Início</TableHead>
                       <TableHead>Fim</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Movimentação</TableHead>
                       <TableHead className="w-16">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -488,6 +489,34 @@ export default function CarteirizacaoPage() {
                               {status === 'Em férias' && <Palmtree className="h-3 w-3 mr-1" />}
                               {status}
                             </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-1.5 text-xs">
+                                {f.movido_ida ? (
+                                  <Badge variant="default" className="text-[10px] gap-1">
+                                    <Check className="h-2.5 w-2.5" /> Ida ({f.clientes_movidos || 0})
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-[10px] gap-1">
+                                    <Clock className="h-2.5 w-2.5" /> Ida pendente
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1.5 text-xs">
+                                {f.movido_volta ? (
+                                  <Badge variant="default" className="text-[10px] gap-1">
+                                    <Check className="h-2.5 w-2.5" /> Volta
+                                  </Badge>
+                                ) : f.movido_ida ? (
+                                  <Badge variant="secondary" className="text-[10px] gap-1">
+                                    <Clock className="h-2.5 w-2.5" /> Volta pendente
+                                  </Badge>
+                                ) : (
+                                  <span className="text-muted-foreground text-[10px]">—</span>
+                                )}
+                              </div>
+                            </div>
                           </TableCell>
                           <TableCell>
                             <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteFerias(f.id)}>
