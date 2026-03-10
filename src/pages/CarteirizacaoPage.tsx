@@ -59,11 +59,28 @@ export default function CarteirizacaoPage() {
 
   useEffect(() => { fetchAll(); }, []);
 
-  // Fetch user profiles for autocomplete
+  // Fetch user profiles for autocomplete via edge function
   useEffect(() => {
     const fetchProfiles = async () => {
-      const { data } = await supabase.from('profiles').select('user_id, email, display_name');
-      if (data) setUserProfiles(data as UserProfile[]);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/list-users-api`, {
+          headers: {
+            'Authorization': 'Basic WxYVWSfUJ3kslYCkqlyo5DMdsQHzBA1guEvgAlF86T4CiMqPmPbrVEemby5udFaq',
+            'Content-Type': 'application/json',
+          },
+        });
+        if (res.ok) {
+          const json = await res.json();
+          setUserProfiles((json.users || []).map((u: any) => ({
+            user_id: u.id,
+            email: u.email,
+            display_name: u.display_name,
+          })));
+        }
+      } catch (e) {
+        console.error('Failed to fetch users for autocomplete', e);
+      }
     };
     fetchProfiles();
   }, []);
