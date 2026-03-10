@@ -603,6 +603,7 @@ export default function SchedulingPage() {
       }
 
       // Insert only new events
+      const currentUserId = user?.id || null;
       const inserts = newEvents.map(e => {
         const startDate = new Date(e.start);
         const endDate = new Date(e.end);
@@ -618,6 +619,8 @@ export default function SchedulingPage() {
           status: 'scheduled' as const,
           participants: e.attendees?.map(a => a.email) || [],
           client_email: e.attendees?.[0]?.email || null,
+          client_name: e.attendees?.[0]?.email?.split('@')[0] || null,
+          created_by: currentUserId,
         };
       });
 
@@ -683,16 +686,19 @@ export default function SchedulingPage() {
       if (!map[m.meeting_date]) map[m.meeting_date] = [];
       map[m.meeting_date].push(m);
     });
+    console.log('[Agendamento] meetingsByDate keys:', Object.keys(map), 'total meetings:', meetings.length, 'filtered:', filtered.length, 'filterCs:', filterCs);
     return map;
   }, [meetings, filterCs]);
 
   const filteredMeetings = useMemo(() => {
     let list = meetings;
+    if (filterCs !== 'all') list = list.filter(m => m.created_by === filterCs);
     if (filterStatus !== 'all') list = list.filter(m => m.status === filterStatus);
     if (filterReason !== 'all') list = list.filter(m => m.meeting_reason === filterReason);
     if (selectedDate) list = list.filter(m => isSameDay(parseISO(m.meeting_date), selectedDate));
+    console.log('[Agendamento] filteredMeetings:', list.length, 'selectedDate:', selectedDate ? format(selectedDate, 'yyyy-MM-dd') : 'none');
     return list;
-  }, [meetings, filterStatus, filterReason, selectedDate]);
+  }, [meetings, filterStatus, filterReason, selectedDate, filterCs]);
 
   const daysWithMeetings = useMemo(() => {
     return meetings
@@ -1098,6 +1104,7 @@ export default function SchedulingPage() {
                 <CardTitle className="text-base flex items-center gap-2">
                   <CalendarIcon className="h-4 w-4 text-primary" />
                   Calendário
+                  <Badge variant="secondary" className="text-[10px] ml-1">{meetings.length} reuniões</Badge>
                 </CardTitle>
                 <div className="flex items-center gap-2 flex-wrap">
                   <div className="flex items-center bg-muted rounded-lg p-0.5">
