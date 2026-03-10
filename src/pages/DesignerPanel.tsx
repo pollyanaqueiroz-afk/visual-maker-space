@@ -1,10 +1,9 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -12,8 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { IMAGE_TYPE_LABELS, STATUS_LABELS, STATUS_COLORS } from '@/types/briefing';
-import { Loader2, Clock, ExternalLink, FileImage, Filter, MessageSquare, BarChart3, LogOut, Eye, Globe, Image, Wrench, Upload, Sparkles, CheckCircle2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Loader2, Clock, ExternalLink, FileImage, Filter, MessageSquare, BarChart3, LogOut, Eye, Globe, Image, Wrench, Upload, Sparkles, CheckCircle2, Package, ChevronDown, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
@@ -37,6 +35,8 @@ interface DesignerImage {
   orientation: string | null;
   observations: string | null;
   professional_photo_url: string | null;
+  created_at?: string;
+  request_id?: string;
   briefing_requests: {
     requester_name: string;
     platform_url: string;
@@ -58,6 +58,18 @@ interface AdjustmentItem {
   file_url: string;
   file_name: string | null;
   observations: string | null;
+}
+
+// Group key = client_url + date
+interface ImageGroup {
+  key: string;
+  clientName: string;
+  platformUrl: string;
+  date: string;
+  dateLabel: string;
+  images: DesignerImage[];
+  pendingCount: number;
+  deliveredCount: number;
 }
 
 function CountdownBadge({ deadline, status }: { deadline: string; status: string }) {
@@ -138,7 +150,6 @@ function BriefingDetailDialog({ img, referenceImages, brandAssets }: { img: Desi
         {img.observations && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Observações</p><p className="text-sm">{img.observations}</p></div>}
         {img.extra_info && <div><p className="text-xs font-semibold text-muted-foreground mb-1">📋 Informações do Mooni</p><p className="text-sm whitespace-pre-wrap">{img.extra_info}</p></div>}
 
-        {/* Reference Images */}
         {imgRefs.length > 0 && (
           <div>
             <p className="text-xs font-semibold text-muted-foreground mb-2">📎 Imagens de Referência ({imgRefs.length})</p>
@@ -155,7 +166,6 @@ function BriefingDetailDialog({ img, referenceImages, brandAssets }: { img: Desi
           </div>
         )}
 
-        {/* Brand Assets */}
         {imgBrandAssets.length > 0 && (
           <div>
             <p className="text-xs font-semibold text-muted-foreground mb-2">🎨 Assets da Marca ({imgBrandAssets.length})</p>
@@ -177,7 +187,8 @@ function BriefingDetailDialog({ img, referenceImages, brandAssets }: { img: Desi
   );
 }
 
-function AdjustmentDeliveryDialog({ img, designerEmail, onDelivered }: { img: DesignerImage; designerEmail: string; onDelivered: () => void }) {
+// Unified delivery dialog for BOTH briefing and adjustment arts
+function DeliveryDialog({ img, designerEmail, onDelivered }: { img: DesignerImage; designerEmail: string; onDelivered: () => void }) {
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [comments, setComments] = useState('');
@@ -186,34 +197,54 @@ function AdjustmentDeliveryDialog({ img, designerEmail, onDelivered }: { img: De
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const isAdjustment = img._source === 'adjustment';
+  const artLabel = isAdjustment
+    ? (img.product_name || 'Ajuste')
+    : (IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type) + (img.product_name ? ` — ${img.product_name}` : '');
+
   const handleSubmit = async () => {
-    if (!file || !img._adjustment_id) {
+    if (!file) {
       toast.error('Selecione um arquivo para entregar');
       return;
     }
     setSubmitting(true);
     try {
       const ext = file.name.split('.').pop();
-      const filePath = `deliveries/adjustments/${img._adjustment_id}/${Date.now()}.${ext}`;
+      const folder = isAdjustment ? `deliveries/adjustments/${img._adjustment_id}` : `deliveries/${img.id}`;
+      const filePath = `${folder}/${Date.now()}.${ext}`;
       const { error: uploadErr } = await supabase.storage.from('briefing-uploads').upload(filePath, file);
       if (uploadErr) throw uploadErr;
       const { data: urlData } = supabase.storage.from('briefing-uploads').getPublicUrl(filePath);
 
-      const { data: result, error: submitErr } = await supabase.functions.invoke('delivery-data', {
-        body: {
-          action: 'submit_adjustment',
-          adjustment_id: img._adjustment_id,
-          file_url: urlData.publicUrl,
-          comments: comments || null,
-          delivered_by_email: designerEmail,
-        },
-      });
-      if (submitErr) throw submitErr;
-      if (result?.error) throw new Error(result.error);
+      if (isAdjustment) {
+        const { data: result, error: submitErr } = await supabase.functions.invoke('delivery-data', {
+          body: {
+            action: 'submit_adjustment',
+            adjustment_id: img._adjustment_id,
+            file_url: urlData.publicUrl,
+            comments: comments || null,
+            delivered_by_email: designerEmail,
+          },
+        });
+        if (submitErr) throw submitErr;
+        if (result?.error) throw new Error(result.error);
+      } else {
+        const { data: result, error: submitErr } = await supabase.functions.invoke('delivery-data', {
+          body: {
+            action: 'submit',
+            image_id: img.id,
+            file_url: urlData.publicUrl,
+            comments: comments || null,
+            delivered_by_email: designerEmail,
+          },
+        });
+        if (submitErr) throw submitErr;
+        if (result?.error) throw new Error(result.error);
+      }
 
       setDelivered(true);
       confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
-      toast.success('Ajuste entregue com sucesso!');
+      toast.success('Arte entregue com sucesso!');
       setTimeout(() => {
         setOpen(false);
         onDelivered();
@@ -236,28 +267,30 @@ function AdjustmentDeliveryDialog({ img, designerEmail, onDelivered }: { img: De
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setFile(null); setComments(''); setDelivered(false); } }}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="default" className="gap-1">
+        <Button size="sm" variant="default" className="gap-1 bg-emerald-600 hover:bg-emerald-700 text-white">
           <Upload className="h-3 w-3" /> Entregar
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Wrench className="h-5 w-5" /> Entregar Ajuste
+            {isAdjustment ? <Wrench className="h-5 w-5" /> : <FileImage className="h-5 w-5" />}
+            Entregar Arte
           </DialogTitle>
+          <p className="text-xs text-muted-foreground">{artLabel}</p>
         </DialogHeader>
 
         {delivered ? (
           <div className="text-center py-6 space-y-3">
             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200 }}>
-              <CheckCircle2 className="h-12 w-12 text-primary mx-auto" />
+              <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto" />
             </motion.div>
-            <p className="text-lg font-bold">Ajuste entregue! 🎉</p>
+            <p className="text-lg font-bold">Arte entregue! 🎉</p>
             <p className="text-sm text-muted-foreground">O solicitante será notificado.</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {img.professional_photo_url && (
+            {isAdjustment && img.professional_photo_url && (
               <div>
                 <Label className="text-xs text-muted-foreground">Imagem de referência</Label>
                 <a href={img.professional_photo_url} target="_blank" rel="noopener noreferrer">
@@ -265,19 +298,17 @@ function AdjustmentDeliveryDialog({ img, designerEmail, onDelivered }: { img: De
                 </a>
               </div>
             )}
-            {img.observations && (
+            {isAdjustment && img.observations && (
               <div>
                 <Label className="text-xs text-muted-foreground">Observações do ajuste</Label>
                 <p className="text-sm mt-1">{img.observations}</p>
               </div>
             )}
 
-            <Separator />
-
             <div className="space-y-2">
-              <Label>Arquivo da arte ajustada *</Label>
+              <Label>Arquivo da arte *</Label>
               <div
-                className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-all ${dragOver ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}
+                className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-all ${dragOver ? 'border-emerald-500 bg-emerald-500/5' : 'border-border hover:border-emerald-500/50'}`}
                 onClick={() => fileInputRef.current?.click()}
                 onDragOver={e => { e.preventDefault(); setDragOver(true); }}
                 onDragLeave={() => setDragOver(false)}
@@ -288,7 +319,7 @@ function AdjustmentDeliveryDialog({ img, designerEmail, onDelivered }: { img: De
                     {file.type.startsWith('image/') ? (
                       <img src={URL.createObjectURL(file)} alt="Preview" className="max-h-28 mx-auto rounded object-contain" />
                     ) : (
-                      <FileImage className="h-6 w-6 text-primary mx-auto" />
+                      <FileImage className="h-6 w-6 text-emerald-500 mx-auto" />
                     )}
                     <p className="text-xs font-medium">{file.name}</p>
                   </div>
@@ -307,7 +338,7 @@ function AdjustmentDeliveryDialog({ img, designerEmail, onDelivered }: { img: De
               <Textarea value={comments} onChange={e => setComments(e.target.value)} placeholder="Observações sobre a entrega..." rows={2} />
             </div>
 
-            <Button className="w-full" onClick={handleSubmit} disabled={submitting || !file}>
+            <Button className="w-full bg-emerald-600 hover:bg-emerald-700" onClick={handleSubmit} disabled={submitting || !file}>
               <AnimatePresence mode="wait">
                 {submitting ? (
                   <motion.span key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center">
@@ -315,7 +346,243 @@ function AdjustmentDeliveryDialog({ img, designerEmail, onDelivered }: { img: De
                   </motion.span>
                 ) : (
                   <motion.span key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center">
-                    <Sparkles className="h-4 w-4 mr-2" /> Entregar Ajuste
+                    <Sparkles className="h-4 w-4 mr-2" /> Entregar Arte
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </Button>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Batch delivery dialog
+function BatchDeliveryDialog({ group, designerEmail, onDelivered }: { group: ImageGroup; designerEmail: string; onDelivered: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
+  const [comments, setComments] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [delivered, setDelivered] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const [matchResults, setMatchResults] = useState<{ image: DesignerImage; file: File | null; confidence: string }[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const pendingImages = group.images.filter(img =>
+    img.status !== 'completed' && img.status !== 'review' && img.status !== 'cancelled'
+  );
+
+  const normalize = (str: string) => {
+    return str
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '')
+      .trim();
+  };
+
+  const matchFiles = useCallback((selectedFiles: File[]) => {
+    setFiles(selectedFiles);
+    const results = pendingImages.map(img => {
+      const artName = normalize(
+        (IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type)
+        + ' ' + (img.product_name || '')
+      );
+
+      let bestMatch: File | null = null;
+      let bestScore = 0;
+
+      for (const f of selectedFiles) {
+        const fileName = normalize(f.name.replace(/\.[^.]+$/, ''));
+        // Check for substring match or similarity
+        if (fileName === artName || artName.includes(fileName) || fileName.includes(artName)) {
+          bestMatch = f;
+          bestScore = 3;
+          break;
+        }
+        // Partial word matching
+        const artWords = artName.split(/\s+/).filter(Boolean);
+        const fileWords = fileName.split(/\s+/).filter(Boolean);
+        const matchingWords = artWords.filter(w => fileWords.some(fw => fw.includes(w) || w.includes(fw)));
+        const score = matchingWords.length / Math.max(artWords.length, 1);
+        if (score > bestScore && score >= 0.3) {
+          bestScore = score;
+          bestMatch = f;
+        }
+      }
+
+      return {
+        image: img,
+        file: bestMatch,
+        confidence: bestScore >= 3 ? 'exact' : bestScore >= 0.5 ? 'high' : bestMatch ? 'low' : 'none',
+      };
+    });
+
+    setMatchResults(results);
+  }, [pendingImages]);
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const fileList = Array.from(e.dataTransfer.files);
+    if (fileList.length > 0) matchFiles(fileList);
+  };
+
+  const handleSubmit = async () => {
+    const toDeliver = matchResults.filter(r => r.file !== null);
+    if (toDeliver.length === 0) {
+      toast.error('Nenhum arquivo corresponde às artes');
+      return;
+    }
+    setSubmitting(true);
+    let successCount = 0;
+    try {
+      for (const item of toDeliver) {
+        if (!item.file) continue;
+        const ext = item.file.name.split('.').pop();
+        const isAdj = item.image._source === 'adjustment';
+        const folder = isAdj ? `deliveries/adjustments/${item.image._adjustment_id}` : `deliveries/${item.image.id}`;
+        const filePath = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2, 6)}.${ext}`;
+        const { error: uploadErr } = await supabase.storage.from('briefing-uploads').upload(filePath, item.file);
+        if (uploadErr) { console.error(uploadErr); continue; }
+        const { data: urlData } = supabase.storage.from('briefing-uploads').getPublicUrl(filePath);
+
+        if (isAdj) {
+          await supabase.functions.invoke('delivery-data', {
+            body: {
+              action: 'submit_adjustment',
+              adjustment_id: item.image._adjustment_id,
+              file_url: urlData.publicUrl,
+              comments: comments || null,
+              delivered_by_email: designerEmail,
+            },
+          });
+        } else {
+          await supabase.functions.invoke('delivery-data', {
+            body: {
+              action: 'submit',
+              image_id: item.image.id,
+              file_url: urlData.publicUrl,
+              comments: comments || null,
+              delivered_by_email: designerEmail,
+            },
+          });
+        }
+        successCount++;
+      }
+
+      setDelivered(true);
+      confetti({ particleCount: 120, spread: 100, origin: { y: 0.5 } });
+      toast.success(`${successCount} arte${successCount > 1 ? 's' : ''} entregue${successCount > 1 ? 's' : ''} com sucesso!`);
+      setTimeout(() => {
+        setOpen(false);
+        onDelivered();
+      }, 2500);
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Erro ao entregar: ' + err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setFiles([]); setComments(''); setDelivered(false); setMatchResults([]); } }}>
+      <DialogTrigger asChild>
+        <Button size="sm" className="gap-1 bg-emerald-600 hover:bg-emerald-700 text-white">
+          <Package className="h-3 w-3" /> Entrega em Lote ({pendingImages.length})
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5" /> Entrega em Lote
+          </DialogTitle>
+          <p className="text-xs text-muted-foreground">{group.clientName} — {group.dateLabel} — {pendingImages.length} arte{pendingImages.length !== 1 ? 's' : ''} pendente{pendingImages.length !== 1 ? 's' : ''}</p>
+        </DialogHeader>
+
+        {delivered ? (
+          <div className="text-center py-8 space-y-3">
+            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200 }}>
+              <CheckCircle2 className="h-14 w-14 text-emerald-500 mx-auto" />
+            </motion.div>
+            <p className="text-lg font-bold">Entrega em lote concluída! 🎉</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Selecione os arquivos das artes</Label>
+              <div
+                className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all ${dragOver ? 'border-emerald-500 bg-emerald-500/5' : 'border-border hover:border-emerald-500/50'}`}
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={handleDrop}
+              >
+                {files.length > 0 ? (
+                  <div className="space-y-1">
+                    <Package className="h-8 w-8 text-emerald-500 mx-auto" />
+                    <p className="text-sm font-medium">{files.length} arquivo{files.length !== 1 ? 's' : ''} selecionado{files.length !== 1 ? 's' : ''}</p>
+                    <p className="text-xs text-muted-foreground">Clique para alterar</p>
+                  </div>
+                ) : (
+                  <div>
+                    <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">Arraste ou clique para selecionar múltiplos arquivos</p>
+                    <p className="text-xs text-muted-foreground mt-1">O sistema fará o de-para automático pelos nomes</p>
+                  </div>
+                )}
+              </div>
+              <input ref={fileInputRef} type="file" className="hidden" multiple accept="image/*,.psd,.ai,.pdf,.svg,.eps,.zip,.rar" onChange={e => {
+                const fileList = Array.from(e.target.files || []);
+                if (fileList.length > 0) matchFiles(fileList);
+              }} />
+            </div>
+
+            {matchResults.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-sm">Correspondência automática</Label>
+                <div className="divide-y divide-border border rounded-lg overflow-hidden">
+                  {matchResults.map((r, idx) => {
+                    const artLabel = (IMAGE_TYPE_LABELS[r.image.image_type as keyof typeof IMAGE_TYPE_LABELS] || r.image.image_type) + (r.image.product_name ? ` — ${r.image.product_name}` : '');
+                    return (
+                      <div key={idx} className="flex items-center gap-2 p-2 text-xs">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{artLabel}</p>
+                        </div>
+                        <div className="shrink-0">
+                          {r.file ? (
+                            <Badge className={r.confidence === 'exact' ? 'bg-emerald-100 text-emerald-700 border-0' : r.confidence === 'high' ? 'bg-blue-100 text-blue-700 border-0' : 'bg-amber-100 text-amber-700 border-0'}>
+                              ✓ {r.file.name.length > 20 ? r.file.name.slice(0, 20) + '…' : r.file.name}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-muted-foreground">Sem match</Badge>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {matchResults.filter(r => r.file).length} de {matchResults.length} correspondência{matchResults.filter(r => r.file).length !== 1 ? 's' : ''} encontrada{matchResults.filter(r => r.file).length !== 1 ? 's' : ''}
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label>Comentários (opcional)</Label>
+              <Textarea value={comments} onChange={e => setComments(e.target.value)} placeholder="Observações gerais sobre a entrega..." rows={2} />
+            </div>
+
+            <Button className="w-full bg-emerald-600 hover:bg-emerald-700" onClick={handleSubmit} disabled={submitting || matchResults.filter(r => r.file).length === 0}>
+              <AnimatePresence mode="wait">
+                {submitting ? (
+                  <motion.span key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" /> Enviando {matchResults.filter(r => r.file).length} arte{matchResults.filter(r => r.file).length !== 1 ? 's' : ''}...
+                  </motion.span>
+                ) : (
+                  <motion.span key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center">
+                    <Sparkles className="h-4 w-4 mr-2" /> Entregar {matchResults.filter(r => r.file).length} arte{matchResults.filter(r => r.file).length !== 1 ? 's' : ''}
                   </motion.span>
                 )}
               </AnimatePresence>
@@ -335,6 +602,7 @@ export default function DesignerPanel() {
   const [brandAssets, setBrandAssets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const storedEmail = sessionStorage.getItem('designer_email');
@@ -355,10 +623,8 @@ export default function DesignerPanel() {
       console.error(error);
       setImages([]);
     } else {
-      // Merge briefing images
-      const briefingImages = ((result?.images || []) as DesignerImage[]).map(img => ({ ...img, _source: 'briefing' as const }));
+      const briefingImages = ((result?.images || []) as any[]).map((img: any) => ({ ...img, _source: 'briefing' as const }));
 
-      // Convert adjustment items into DesignerImage-like entries
       const adjustments = result?.adjustments || [];
       const adjItems = result?.adjustmentItems || [];
       const adjustmentImages: DesignerImage[] = [];
@@ -381,6 +647,8 @@ export default function DesignerPanel() {
             orientation: null,
             observations: item.observations,
             professional_photo_url: item.file_url,
+            created_at: adj.created_at,
+            request_id: adj.id,
             briefing_requests: {
               requester_name: adj.client_email,
               platform_url: adj.client_url,
@@ -412,11 +680,6 @@ export default function DesignerPanel() {
     return <Badge className={`${color} border-0`}>{label}</Badge>;
   };
 
-  const isOverdue = (deadline: string | null) => {
-    if (!deadline) return false;
-    return new Date(deadline) < new Date();
-  };
-
   const handleLogout = () => {
     sessionStorage.removeItem('designer_email');
     navigate('/designer/login', { replace: true });
@@ -432,6 +695,64 @@ export default function DesignerPanel() {
   const getTypeLabel = (img: DesignerImage) => {
     if (img._source === 'adjustment') return 'Ajuste de Briefing';
     return IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type;
+  };
+
+  // Group filtered images by client (platform_url) + date
+  const imageGroups: ImageGroup[] = useMemo(() => {
+    const groupMap: Record<string, ImageGroup> = {};
+
+    filtered.forEach(img => {
+      const platformUrl = img.briefing_requests?.platform_url || 'unknown';
+      const createdAt = img.created_at || '';
+      const date = createdAt ? new Date(createdAt).toISOString().split('T')[0] : 'unknown';
+      const key = `${platformUrl}__${date}`;
+
+      if (!groupMap[key]) {
+        const clientName = img.briefing_requests?.requester_name || platformUrl;
+        const dateObj = createdAt ? new Date(createdAt) : null;
+        const dateLabel = dateObj ? dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : '—';
+
+        groupMap[key] = {
+          key,
+          clientName,
+          platformUrl,
+          date,
+          dateLabel,
+          images: [],
+          pendingCount: 0,
+          deliveredCount: 0,
+        };
+      }
+
+      groupMap[key].images.push(img);
+      if (img.status === 'completed' || img.status === 'review') {
+        groupMap[key].deliveredCount++;
+      } else if (img.status !== 'cancelled') {
+        groupMap[key].pendingCount++;
+      }
+    });
+
+    return Object.values(groupMap).sort((a, b) => b.date.localeCompare(a.date));
+  }, [filtered]);
+
+  const toggleGroup = (key: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  // Auto-expand first group
+  useEffect(() => {
+    if (imageGroups.length > 0 && expandedGroups.size === 0) {
+      setExpandedGroups(new Set([imageGroups[0].key]));
+    }
+  }, [imageGroups.length]);
+
+  const canDeliver = (img: DesignerImage) => {
+    return img.status !== 'completed' && img.status !== 'review' && img.status !== 'cancelled';
   };
 
   return (
@@ -469,177 +790,148 @@ export default function DesignerPanel() {
                   </CardContent>
                 </Card>
               ) : (
-                <Card>
-                  <CardHeader className="pb-3">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <CardTitle className="text-lg">{filtered.length} de {images.length} arte{images.length !== 1 ? 's' : ''}</CardTitle>
-                      <Select value={filterStatus} onValueChange={setFilterStatus}>
-                        <SelectTrigger className="w-48 h-8 text-xs">
-                          <Filter className="h-3 w-3 mr-1" />
-                          <SelectValue placeholder="Filtrar status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Todos os status</SelectItem>
-                          {Object.entries(STATUS_LABELS).map(([key, label]) => (
-                            <SelectItem key={key} value={key}>{label}</SelectItem>
-                          ))}
-                          <SelectItem value="revision">Em Refação</SelectItem>
-                          <SelectItem value="adjustment">Ajustes de Briefing</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    {/* Desktop table */}
-                    <div className="hidden md:block">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Tipo de Arte</TableHead>
-                            <TableHead>Cliente</TableHead>
-                            <TableHead>URL</TableHead>
-                            <TableHead>Prazo</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Briefing</TableHead>
-                            <TableHead className="text-right">Ação</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filtered.map((img, idx) => (
-                            <motion.tr
-                              key={img.id}
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: idx * 0.04, duration: 0.3 }}
-                              className="border-b transition-colors hover:bg-muted/50"
-                            >
-                              <TableCell>
-                                <div>
-                                  <p className="font-medium">{getTypeLabel(img)}</p>
-                                  {img.product_name && <p className="text-xs text-muted-foreground">{img.product_name}</p>}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <span className="text-sm">{img.briefing_requests.requester_name}</span>
-                              </TableCell>
-                              <TableCell>
-                                {img.briefing_requests.platform_url && (
-                                  <a
-                                    href={img.briefing_requests.platform_url.startsWith('http') ? img.briefing_requests.platform_url : `https://${img.briefing_requests.platform_url}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-primary hover:underline flex items-center gap-1 text-xs max-w-[150px] truncate"
-                                    title={img.briefing_requests.platform_url}
-                                  >
-                                    <Globe className="h-3 w-3 shrink-0" />
-                                    {img.briefing_requests.platform_url.replace(/^https?:\/\//, '')}
-                                  </a>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {img.deadline ? (
-                                  <CountdownBadge deadline={img.deadline} status={img.status} />
-                                ) : (
-                                  <span className="text-muted-foreground text-sm">—</span>
-                                )}
-                              </TableCell>
-                              <TableCell>{getStatusBadge(img)}</TableCell>
-                              <TableCell>
-                                <Dialog>
-                                  <DialogTrigger asChild>
-                                    <Button variant="ghost" size="sm" className="gap-1 h-7 text-xs">
-                                      <Eye className="h-3 w-3" /> Ver
-                                    </Button>
-                                  </DialogTrigger>
-                                  <BriefingDetailDialog img={img} referenceImages={referenceImages} brandAssets={brandAssets} />
-                                </Dialog>
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {img._source === 'adjustment' ? (
-                                  img.status === 'completed' || img.status === 'review' ? (
-                                    <Badge variant="secondary" className="text-xs">Entregue</Badge>
-                                  ) : (
-                                    <AdjustmentDeliveryDialog img={img} designerEmail={email} onDelivered={() => loadData(email)} />
-                                  )
-                                ) : img.delivery_token ? (
-                                  <Button size="sm" variant="outline" asChild>
-                                    <Link to={`/delivery/${img.delivery_token}`}>Entregar</Link>
-                                  </Button>
-                                ) : (
-                                  <span className="text-xs text-muted-foreground">Sem link</span>
-                                )}
-                              </TableCell>
-                            </motion.tr>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
+                <div className="space-y-4">
+                  {/* Filter bar */}
+                  <Card>
+                    <CardContent className="py-3 px-4">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-sm font-medium text-muted-foreground">
+                          {filtered.length} arte{filtered.length !== 1 ? 's' : ''} em {imageGroups.length} pedido{imageGroups.length !== 1 ? 's' : ''}
+                        </p>
+                        <Select value={filterStatus} onValueChange={setFilterStatus}>
+                          <SelectTrigger className="w-48 h-8 text-xs">
+                            <Filter className="h-3 w-3 mr-1" />
+                            <SelectValue placeholder="Filtrar status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todos os status</SelectItem>
+                            {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                              <SelectItem key={key} value={key}>{label}</SelectItem>
+                            ))}
+                            <SelectItem value="revision">Em Refação</SelectItem>
+                            <SelectItem value="adjustment">Ajustes de Briefing</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-                    {/* Mobile stacked cards */}
-                    <div className="md:hidden divide-y divide-border">
-                      {filtered.map((img, idx) => (
-                        <motion.div
-                          key={img.id}
-                          initial={{ opacity: 0, y: 12 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.04, duration: 0.3 }}
-                          className={`p-4 space-y-3 ${isOverdue(img.deadline) && img.status !== 'completed' ? 'bg-destructive/5' : ''}`}
-                        >
-                          <div className="flex justify-between items-start gap-2">
-                            <div className="min-w-0 flex-1">
-                              <p className="font-semibold text-sm truncate">{getTypeLabel(img)}</p>
-                              <p className="text-xs text-muted-foreground">{img.briefing_requests.requester_name}</p>
-                              {img.briefing_requests.platform_url && (
-                                <a
-                                  href={img.briefing_requests.platform_url.startsWith('http') ? img.briefing_requests.platform_url : `https://${img.briefing_requests.platform_url}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-[11px] text-primary hover:underline flex items-center gap-1 mt-0.5"
-                                >
-                                  <Globe className="h-3 w-3" />
-                                  {img.briefing_requests.platform_url.replace(/^https?:\/\//, '')}
-                                </a>
-                              )}
-                              {img.product_name && <p className="text-xs text-muted-foreground/70 truncate">{img.product_name}</p>}
-                            </div>
-                            <div className="flex flex-col items-end gap-1 shrink-0">
-                              {getStatusBadge(img)}
-                              {img.deadline && <CountdownBadge deadline={img.deadline} status={img.status} />}
-                            </div>
-                          </div>
-                          {img.observations && (
-                            <div className="space-y-1 p-2 rounded-lg bg-muted/30 border border-border">
-                              <p className="text-xs text-muted-foreground line-clamp-2"><span className="font-medium">Obs:</span> {img.observations}</p>
-                            </div>
-                          )}
-                          <div className="flex gap-2">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button variant="ghost" size="sm" className="flex-1 h-8 text-xs gap-1">
-                                  <Eye className="h-3 w-3" /> Briefing
-                                </Button>
-                              </DialogTrigger>
-                              <BriefingDetailDialog img={img} referenceImages={referenceImages} brandAssets={brandAssets} />
-                            </Dialog>
-                            {img._source === 'adjustment' ? (
-                              img.status === 'completed' || img.status === 'review' ? (
-                                <Badge variant="secondary" className="text-xs flex-1 justify-center h-8">Entregue</Badge>
-                              ) : (
-                                <div className="flex-1">
-                                  <AdjustmentDeliveryDialog img={img} designerEmail={email} onDelivered={() => loadData(email)} />
+                  {/* Grouped cards */}
+                  {imageGroups.map((group) => {
+                    const isExpanded = expandedGroups.has(group.key);
+                    return (
+                      <motion.div
+                        key={group.key}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <Card>
+                          <CardHeader
+                            className="cursor-pointer hover:bg-muted/30 transition-colors py-3 px-4"
+                            onClick={() => toggleGroup(group.key)}
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-3 min-w-0">
+                                {isExpanded ? <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />}
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <p className="font-semibold text-sm">{group.clientName}</p>
+                                    <Badge variant="outline" className="text-[10px]">{group.dateLabel}</Badge>
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    {group.platformUrl && (
+                                      <a
+                                        href={group.platformUrl.startsWith('http') ? group.platformUrl : `https://${group.platformUrl}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-[11px] text-primary hover:underline flex items-center gap-1"
+                                        onClick={e => e.stopPropagation()}
+                                      >
+                                        <Globe className="h-3 w-3" />
+                                        {group.platformUrl.replace(/^https?:\/\//, '')}
+                                      </a>
+                                    )}
+                                  </div>
                                 </div>
-                              )
-                            ) : img.delivery_token ? (
-                              <Button size="sm" className="flex-1 h-8 text-xs" variant="outline" asChild>
-                                <Link to={`/delivery/${img.delivery_token}`}>Entregar</Link>
-                              </Button>
-                            ) : null}
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <Badge variant="secondary" className="text-xs">
+                                  {group.images.length} arte{group.images.length !== 1 ? 's' : ''}
+                                </Badge>
+                                {group.pendingCount > 0 && (
+                                  <Badge className="bg-amber-500/20 text-amber-600 border-0 text-xs">
+                                    {group.pendingCount} pendente{group.pendingCount !== 1 ? 's' : ''}
+                                  </Badge>
+                                )}
+                                {group.deliveredCount > 0 && (
+                                  <Badge className="bg-emerald-500/20 text-emerald-600 border-0 text-xs">
+                                    {group.deliveredCount} entregue{group.deliveredCount !== 1 ? 's' : ''}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </CardHeader>
+
+                          <AnimatePresence>
+                            {isExpanded && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.2 }}
+                                className="overflow-hidden"
+                              >
+                                <CardContent className="pt-0 pb-4">
+                                  <Separator className="mb-3" />
+                                  <div className="space-y-2">
+                                    {group.images.map((img, idx) => (
+                                      <div
+                                        key={img.id}
+                                        className="flex items-center justify-between gap-3 py-2 px-3 rounded-lg hover:bg-muted/30 transition-colors"
+                                      >
+                                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                                          <div className="min-w-0 flex-1">
+                                            <p className="text-sm font-medium truncate">{getTypeLabel(img)}</p>
+                                            {img.product_name && <p className="text-xs text-muted-foreground truncate">{img.product_name}</p>}
+                                          </div>
+                                          {img.deadline && <CountdownBadge deadline={img.deadline} status={img.status} />}
+                                          {getStatusBadge(img)}
+                                        </div>
+                                        <div className="flex items-center gap-1 shrink-0">
+                                          <Dialog>
+                                            <DialogTrigger asChild>
+                                              <Button variant="ghost" size="sm" className="gap-1 h-7 text-xs">
+                                                <Eye className="h-3 w-3" /> Ver
+                                              </Button>
+                                            </DialogTrigger>
+                                            <BriefingDetailDialog img={img} referenceImages={referenceImages} brandAssets={brandAssets} />
+                                          </Dialog>
+                                          {canDeliver(img) ? (
+                                            <DeliveryDialog img={img} designerEmail={email} onDelivered={() => loadData(email)} />
+                                          ) : (img.status === 'completed' || img.status === 'review') ? (
+                                            <Badge variant="secondary" className="text-xs">Entregue</Badge>
+                                          ) : null}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+
+                                  {/* Batch delivery button */}
+                                  {group.pendingCount > 1 && (
+                                    <div className="mt-4 pt-3 border-t border-border flex justify-end">
+                                      <BatchDeliveryDialog group={group} designerEmail={email} onDelivered={() => loadData(email)} />
+                                    </div>
+                                  )}
+                                </CardContent>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </Card>
+                      </motion.div>
+                    );
+                  })}
+                </div>
               )}
             </TabsContent>
 
