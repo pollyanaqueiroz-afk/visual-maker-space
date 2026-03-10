@@ -2,8 +2,6 @@ import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
-const FUNCTION_NAME = 'proxy-hub-reunioes';
-
 export interface CalendarEvent {
   event_id: string;
   summary: string;
@@ -44,8 +42,8 @@ async function apiCall<T = any>(
   extraParams?: Record<string, string>,
 ): Promise<T> {
   const session = (await supabase.auth.getSession()).data.session;
-  const params = new URLSearchParams({ action, ...(extraParams || {}) });
-  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${FUNCTION_NAME}?${params.toString()}`;
+  const params = new URLSearchParams({ endpoint: 'reunioes', action, ...(extraParams || {}) });
+  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-hub-summary?${params.toString()}`;
 
   const options: RequestInit = {
     method,
