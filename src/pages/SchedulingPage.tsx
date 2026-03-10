@@ -61,6 +61,7 @@ function getBrazilianHolidays(year: number): Record<string, string> {
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/hooks/useAuth';
+import { useReunioes } from '@/hooks/useReunioes';
 
 interface TeamMember {
   id: string;
