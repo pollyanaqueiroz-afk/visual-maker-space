@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,13 +10,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { IMAGE_TYPE_LABELS, STATUS_LABELS, STATUS_COLORS } from '@/types/briefing';
-import { Loader2, Clock, ExternalLink, FileImage, Filter, MessageSquare, BarChart3, LogOut, Eye } from 'lucide-react';
+import { Loader2, Clock, ExternalLink, FileImage, Filter, MessageSquare, BarChart3, LogOut, Eye, Globe, Image, Wrench } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import CursEducaLayout from '@/components/CursEducaLayout';
 import DesignerFeedback from '@/components/designer/DesignerFeedback';
 import DesignerAnalytics from '@/components/designer/DesignerAnalytics';
-import { useCountUp } from '@/hooks/useCountUp';
 import { EmptyState } from '@/components/ui/EmptyState';
 
 interface DesignerImage {
@@ -38,6 +37,22 @@ interface DesignerImage {
     requester_name: string;
     platform_url: string;
   };
+  _source?: 'briefing' | 'adjustment';
+}
+
+interface ReferenceImage {
+  id: string;
+  briefing_image_id: string;
+  file_url: string;
+  is_exact_use: boolean;
+}
+
+interface AdjustmentItem {
+  id: string;
+  adjustment_id: string;
+  file_url: string;
+  file_name: string | null;
+  observations: string | null;
 }
 
 function CountdownBadge({ deadline, status }: { deadline: string; status: string }) {
@@ -65,10 +80,104 @@ function CountdownBadge({ deadline, status }: { deadline: string; status: string
   );
 }
 
+function BriefingDetailDialog({ img, referenceImages, brandAssets }: { img: DesignerImage; referenceImages: ReferenceImage[]; brandAssets: any[] }) {
+  const imgRefs = referenceImages.filter(r => r.briefing_image_id === img.id);
+  const platformUrl = img.briefing_requests?.platform_url || '';
+  const imgBrandAssets = brandAssets.filter((a: any) => a.platform_url === platformUrl);
+  const isAdjustment = img._source === 'adjustment';
+
+  return (
+    <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          {isAdjustment ? <Wrench className="h-5 w-5" /> : <FileImage className="h-5 w-5" />}
+          {isAdjustment ? 'Ajuste de Briefing' : (IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type)}
+          {img.product_name && ` — ${img.product_name}`}
+        </DialogTitle>
+      </DialogHeader>
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <p className="text-xs text-muted-foreground">Cliente</p>
+            <p className="text-sm font-medium">{img.briefing_requests.requester_name}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Prazo</p>
+            <p className="text-sm font-medium">{img.deadline ? new Date(img.deadline).toLocaleDateString('pt-BR') : 'Não definido'}</p>
+          </div>
+        </div>
+
+        {platformUrl && (
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">URL do Cliente</p>
+            <a href={platformUrl.startsWith('http') ? platformUrl : `https://${platformUrl}`} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1 break-all">
+              <Globe className="h-3 w-3 shrink-0" /> {platformUrl}
+            </a>
+          </div>
+        )}
+
+        <Separator />
+
+        {img.image_text && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Texto da imagem</p><p className="text-sm">{img.image_text}</p></div>}
+        {img.font_suggestion && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Sugestão de fonte</p><p className="text-sm">{img.font_suggestion}</p></div>}
+        {img.element_suggestion && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Elemento sugerido</p><p className="text-sm">{img.element_suggestion}</p></div>}
+        {img.professional_photo_url && (
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground mb-1">Foto profissional</p>
+            <a href={img.professional_photo_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1">
+              {img.professional_photo_url} <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+        )}
+        {img.orientation && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Orientação</p><p className="text-sm">{img.orientation}</p></div>}
+        {img.observations && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Observações</p><p className="text-sm">{img.observations}</p></div>}
+        {img.extra_info && <div><p className="text-xs font-semibold text-muted-foreground mb-1">📋 Informações do Mooni</p><p className="text-sm whitespace-pre-wrap">{img.extra_info}</p></div>}
+
+        {/* Reference Images */}
+        {imgRefs.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground mb-2">📎 Imagens de Referência ({imgRefs.length})</p>
+            <div className="grid grid-cols-2 gap-2">
+              {imgRefs.map(ref => (
+                <a key={ref.id} href={ref.file_url} target="_blank" rel="noopener noreferrer" className="block group relative rounded-lg overflow-hidden border border-border hover:border-primary transition-colors">
+                  <img src={ref.file_url} alt="Referência" className="w-full h-24 object-cover" loading="lazy" />
+                  {ref.is_exact_use && (
+                    <Badge className="absolute top-1 right-1 text-[10px] bg-primary/90">Uso exato</Badge>
+                  )}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Brand Assets */}
+        {imgBrandAssets.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground mb-2">🎨 Assets da Marca ({imgBrandAssets.length})</p>
+            <div className="flex flex-wrap gap-2">
+              {imgBrandAssets.map((asset: any) => (
+                <a key={asset.id} href={asset.file_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-primary hover:underline px-2 py-1 rounded bg-muted">
+                  <Image className="h-3 w-3" /> {asset.file_name || 'Asset'}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!img.image_text && !img.font_suggestion && !img.element_suggestion && !img.observations && !img.extra_info && imgRefs.length === 0 && (
+          <p className="text-sm text-muted-foreground text-center py-4">Nenhum detalhe de briefing disponível</p>
+        )}
+      </div>
+    </DialogContent>
+  );
+}
+
 export default function DesignerPanel() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [images, setImages] = useState<DesignerImage[]>([]);
+  const [referenceImages, setReferenceImages] = useState<ReferenceImage[]>([]);
+  const [brandAssets, setBrandAssets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
 
@@ -91,7 +200,44 @@ export default function DesignerPanel() {
       console.error(error);
       setImages([]);
     } else {
-      setImages((result?.images || []) as DesignerImage[]);
+      // Merge briefing images
+      const briefingImages = ((result?.images || []) as DesignerImage[]).map(img => ({ ...img, _source: 'briefing' as const }));
+
+      // Convert adjustment items into DesignerImage-like entries
+      const adjustments = result?.adjustments || [];
+      const adjItems = result?.adjustmentItems || [];
+      const adjustmentImages: DesignerImage[] = [];
+
+      for (const adj of adjustments) {
+        const items = adjItems.filter((i: AdjustmentItem) => i.adjustment_id === adj.id);
+        items.forEach((item: AdjustmentItem, idx: number) => {
+          adjustmentImages.push({
+            id: item.id,
+            image_type: 'adjustment',
+            product_name: item.file_name || `Ajuste ${idx + 1}`,
+            deadline: adj.deadline,
+            status: adj.status === 'allocated' ? 'in_progress' : adj.status,
+            revision_count: 0,
+            delivery_token: null,
+            extra_info: null,
+            image_text: null,
+            font_suggestion: null,
+            element_suggestion: null,
+            orientation: null,
+            observations: item.observations,
+            professional_photo_url: item.file_url,
+            briefing_requests: {
+              requester_name: adj.client_email,
+              platform_url: adj.client_url,
+            },
+            _source: 'adjustment',
+          });
+        });
+      }
+
+      setImages([...briefingImages, ...adjustmentImages]);
+      setReferenceImages(result?.referenceImages || []);
+      setBrandAssets(result?.brandAssets || []);
     }
     setLoading(false);
   };
@@ -99,6 +245,9 @@ export default function DesignerPanel() {
   if (!email && !loading) return <Navigate to="/designer/login" replace />;
 
   const getStatusBadge = (img: DesignerImage) => {
+    if (img._source === 'adjustment') {
+      return <Badge className="bg-orange-500/20 text-orange-600 border-0">Ajuste</Badge>;
+    }
     if (img.revision_count > 0 && img.status === 'in_progress') {
       return <Badge className="bg-destructive/20 text-destructive border-0 animate-badge-flip">Refação {img.revision_count}</Badge>;
     }
@@ -119,9 +268,15 @@ export default function DesignerPanel() {
 
   const filtered = images.filter(img => {
     if (filterStatus === 'all') return true;
+    if (filterStatus === 'adjustment') return img._source === 'adjustment';
     if (filterStatus === 'revision') return img.revision_count > 0 && img.status === 'in_progress';
     return img.status === filterStatus;
   });
+
+  const getTypeLabel = (img: DesignerImage) => {
+    if (img._source === 'adjustment') return 'Ajuste de Briefing';
+    return IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type;
+  };
 
   return (
     <CursEducaLayout
@@ -133,7 +288,7 @@ export default function DesignerPanel() {
         </Button>
       }
     >
-      <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+      <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
         {loading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -163,7 +318,7 @@ export default function DesignerPanel() {
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <CardTitle className="text-lg">{filtered.length} de {images.length} arte{images.length !== 1 ? 's' : ''}</CardTitle>
                       <Select value={filterStatus} onValueChange={setFilterStatus}>
-                        <SelectTrigger className="w-44 h-8 text-xs">
+                        <SelectTrigger className="w-48 h-8 text-xs">
                           <Filter className="h-3 w-3 mr-1" />
                           <SelectValue placeholder="Filtrar status" />
                         </SelectTrigger>
@@ -173,18 +328,20 @@ export default function DesignerPanel() {
                             <SelectItem key={key} value={key}>{label}</SelectItem>
                           ))}
                           <SelectItem value="revision">Em Refação</SelectItem>
+                          <SelectItem value="adjustment">Ajustes de Briefing</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </CardHeader>
                   <CardContent className="p-0">
-                    {/* Desktop table with stagger animation */}
+                    {/* Desktop table */}
                     <div className="hidden md:block">
                       <Table>
                         <TableHeader>
                           <TableRow>
                             <TableHead>Tipo de Arte</TableHead>
                             <TableHead>Cliente</TableHead>
+                            <TableHead>URL</TableHead>
                             <TableHead>Prazo</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Briefing</TableHead>
@@ -198,25 +355,30 @@ export default function DesignerPanel() {
                               initial={{ opacity: 0, x: -10 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: idx * 0.04, duration: 0.3 }}
-                              className="border-b transition-colors data-[state=selected]:bg-muted hover:bg-muted/50"
+                              className="border-b transition-colors hover:bg-muted/50"
                             >
                               <TableCell>
                                 <div>
-                                  <p className="font-medium">{IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type}</p>
+                                  <p className="font-medium">{getTypeLabel(img)}</p>
                                   {img.product_name && <p className="text-xs text-muted-foreground">{img.product_name}</p>}
-                                  {img.extra_info && (
-                                    <div className="mt-1 p-2 rounded bg-blue-500/10 border border-blue-500/20">
-                                      <p className="text-[10px] font-semibold text-blue-400 mb-0.5">📋 Informações do Mooni:</p>
-                                      <p className="text-xs text-muted-foreground whitespace-pre-wrap">{img.extra_info}</p>
-                                    </div>
-                                  )}
                                 </div>
                               </TableCell>
                               <TableCell>
-                                <a href={img.briefing_requests.platform_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
-                                  {img.briefing_requests.requester_name}
-                                  <ExternalLink className="h-3 w-3" />
-                                </a>
+                                <span className="text-sm">{img.briefing_requests.requester_name}</span>
+                              </TableCell>
+                              <TableCell>
+                                {img.briefing_requests.platform_url && (
+                                  <a
+                                    href={img.briefing_requests.platform_url.startsWith('http') ? img.briefing_requests.platform_url : `https://${img.briefing_requests.platform_url}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-primary hover:underline flex items-center gap-1 text-xs max-w-[150px] truncate"
+                                    title={img.briefing_requests.platform_url}
+                                  >
+                                    <Globe className="h-3 w-3 shrink-0" />
+                                    {img.briefing_requests.platform_url.replace(/^https?:\/\//, '')}
+                                  </a>
+                                )}
                               </TableCell>
                               <TableCell>
                                 {img.deadline ? (
@@ -233,42 +395,17 @@ export default function DesignerPanel() {
                                       <Eye className="h-3 w-3" /> Ver
                                     </Button>
                                   </DialogTrigger>
-                                  <DialogContent className="max-w-md">
-                                    <DialogHeader>
-                                      <DialogTitle className="flex items-center gap-2">
-                                        <FileImage className="h-5 w-5" />
-                                        {IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type}
-                                        {img.product_name && ` — ${img.product_name}`}
-                                      </DialogTitle>
-                                    </DialogHeader>
-                                    <div className="space-y-3">
-                                      <div className="grid grid-cols-2 gap-3">
-                                        <div>
-                                          <p className="text-xs text-muted-foreground">Cliente</p>
-                                          <p className="text-sm font-medium">{img.briefing_requests.requester_name}</p>
-                                        </div>
-                                        <div>
-                                          <p className="text-xs text-muted-foreground">Prazo</p>
-                                          <p className="text-sm font-medium">{img.deadline ? new Date(img.deadline).toLocaleDateString('pt-BR') : 'Não definido'}</p>
-                                        </div>
-                                      </div>
-                                      <Separator />
-                                      {img.image_text && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Texto da imagem</p><p className="text-sm">{img.image_text}</p></div>}
-                                      {img.font_suggestion && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Sugestão de fonte</p><p className="text-sm">{img.font_suggestion}</p></div>}
-                                      {img.element_suggestion && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Elemento sugerido</p><p className="text-sm">{img.element_suggestion}</p></div>}
-                                      {img.professional_photo_url && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Foto profissional</p><a href={img.professional_photo_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1">{img.professional_photo_url} <ExternalLink className="h-3 w-3" /></a></div>}
-                                      {img.orientation && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Orientação</p><p className="text-sm">{img.orientation}</p></div>}
-                                      {img.observations && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Observações</p><p className="text-sm">{img.observations}</p></div>}
-                                      {img.extra_info && <div><p className="text-xs font-semibold text-muted-foreground mb-1">📋 Informações do Mooni</p><p className="text-sm whitespace-pre-wrap">{img.extra_info}</p></div>}
-                                      {!img.image_text && !img.font_suggestion && !img.element_suggestion && !img.observations && !img.extra_info && (
-                                        <p className="text-sm text-muted-foreground text-center py-4">Nenhum detalhe de briefing disponível</p>
-                                      )}
-                                    </div>
-                                  </DialogContent>
+                                  <BriefingDetailDialog img={img} referenceImages={referenceImages} brandAssets={brandAssets} />
                                 </Dialog>
                               </TableCell>
                               <TableCell className="text-right">
-                                {img.delivery_token ? (
+                                {img._source === 'adjustment' && img.professional_photo_url ? (
+                                  <Button size="sm" variant="outline" asChild>
+                                    <a href={img.professional_photo_url} target="_blank" rel="noopener noreferrer" className="gap-1">
+                                      <Image className="h-3 w-3" /> Abrir
+                                    </a>
+                                  </Button>
+                                ) : img.delivery_token ? (
                                   <Button size="sm" variant="outline" asChild>
                                     <Link to={`/delivery/${img.delivery_token}`}>Entregar</Link>
                                   </Button>
@@ -294,8 +431,19 @@ export default function DesignerPanel() {
                         >
                           <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0 flex-1">
-                              <p className="font-semibold text-sm truncate">{IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type}</p>
+                              <p className="font-semibold text-sm truncate">{getTypeLabel(img)}</p>
                               <p className="text-xs text-muted-foreground">{img.briefing_requests.requester_name}</p>
+                              {img.briefing_requests.platform_url && (
+                                <a
+                                  href={img.briefing_requests.platform_url.startsWith('http') ? img.briefing_requests.platform_url : `https://${img.briefing_requests.platform_url}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[11px] text-primary hover:underline flex items-center gap-1 mt-0.5"
+                                >
+                                  <Globe className="h-3 w-3" />
+                                  {img.briefing_requests.platform_url.replace(/^https?:\/\//, '')}
+                                </a>
+                              )}
                               {img.product_name && <p className="text-xs text-muted-foreground/70 truncate">{img.product_name}</p>}
                             </div>
                             <div className="flex flex-col items-end gap-1 shrink-0">
@@ -303,16 +451,9 @@ export default function DesignerPanel() {
                               {img.deadline && <CountdownBadge deadline={img.deadline} status={img.status} />}
                             </div>
                           </div>
-                          {img.extra_info && (
-                            <div className="p-2 rounded bg-blue-500/10 border border-blue-500/20">
-                              <p className="text-[10px] font-semibold text-blue-400 mb-0.5">📋 Mooni:</p>
-                              <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-3">{img.extra_info}</p>
-                            </div>
-                          )}
-                          {(img.image_text || img.observations) && (
+                          {img.observations && (
                             <div className="space-y-1 p-2 rounded-lg bg-muted/30 border border-border">
-                              {img.image_text && <p className="text-xs text-muted-foreground line-clamp-2"><span className="font-medium">Texto:</span> {img.image_text}</p>}
-                              {img.observations && <p className="text-xs text-muted-foreground line-clamp-2"><span className="font-medium">Obs:</span> {img.observations}</p>}
+                              <p className="text-xs text-muted-foreground line-clamp-2"><span className="font-medium">Obs:</span> {img.observations}</p>
                             </div>
                           )}
                           <div className="flex gap-2">
@@ -322,28 +463,17 @@ export default function DesignerPanel() {
                                   <Eye className="h-3 w-3" /> Briefing
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent className="max-w-md">
-                                <DialogHeader>
-                                  <DialogTitle className="flex items-center gap-2 text-base">
-                                    <FileImage className="h-4 w-4" />
-                                    {IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type}
-                                  </DialogTitle>
-                                </DialogHeader>
-                                <div className="space-y-3 text-sm">
-                                  {img.image_text && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Texto</p><p>{img.image_text}</p></div>}
-                                  {img.font_suggestion && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Fonte</p><p>{img.font_suggestion}</p></div>}
-                                  {img.element_suggestion && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Elemento</p><p>{img.element_suggestion}</p></div>}
-                                  {img.orientation && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Orientação</p><p>{img.orientation}</p></div>}
-                                  {img.observations && <div><p className="text-xs font-semibold text-muted-foreground mb-1">Observações</p><p>{img.observations}</p></div>}
-                                  {img.extra_info && <div><p className="text-xs font-semibold text-muted-foreground mb-1">📋 Mooni</p><p className="whitespace-pre-wrap">{img.extra_info}</p></div>}
-                                </div>
-                              </DialogContent>
+                              <BriefingDetailDialog img={img} referenceImages={referenceImages} brandAssets={brandAssets} />
                             </Dialog>
-                            {img.delivery_token && (
+                            {img._source === 'adjustment' && img.professional_photo_url ? (
+                              <Button size="sm" className="flex-1 h-8 text-xs" variant="outline" asChild>
+                                <a href={img.professional_photo_url} target="_blank" rel="noopener noreferrer">Abrir Imagem</a>
+                              </Button>
+                            ) : img.delivery_token ? (
                               <Button size="sm" className="flex-1 h-8 text-xs" variant="outline" asChild>
                                 <Link to={`/delivery/${img.delivery_token}`}>Entregar</Link>
                               </Button>
-                            )}
+                            ) : null}
                           </div>
                         </motion.div>
                       ))}
