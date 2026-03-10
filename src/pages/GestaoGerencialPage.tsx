@@ -53,23 +53,15 @@ export default function GestaoGerencialPage() {
     setLoading(true);
     try {
       const [usersRes, assignmentsRes] = await Promise.all([
-        supabase.functions.invoke('manage-users', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          body: undefined,
-        }).then(async (res) => {
-          // Fallback: use the edge function with action query param
-          const response = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-users?action=list`,
-            {
-              headers: {
-                Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-                apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-              },
-            }
-          );
-          return response.json();
-        }),
+        fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-users?action=list`,
+          {
+            headers: {
+              Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            },
+          }
+        ).then(r => r.json()),
         supabase.from('user_managers' as any).select('*'),
       ]);
 
