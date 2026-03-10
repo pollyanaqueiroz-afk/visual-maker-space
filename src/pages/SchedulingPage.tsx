@@ -851,7 +851,7 @@ export default function SchedulingPage() {
           <p className="text-sm text-muted-foreground">Gerencie reuniões e calls com clientes</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => syncCalendar()} disabled={calendarSyncing}>
+          <Button variant="outline" onClick={handleSyncCalendar} disabled={calendarSyncing}>
             <RefreshCw className={cn("h-4 w-4 mr-2", calendarSyncing && "animate-spin")} />
             {calendarSyncing ? 'Sincronizando...' : 'Sincronizar'}
           </Button>
