@@ -39,6 +39,10 @@ export default function AjusteBriefingsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [detailAdjustment, setDetailAdjustment] = useState<any>(null);
   const [detailItems, setDetailItems] = useState<any[]>([]);
+  const [editingEmail, setEditingEmail] = useState(false);
+  const [editEmail, setEditEmail] = useState('');
+  const [savingEmail, setSavingEmail] = useState(false);
+  const [resending, setResending] = useState(false);
 
   const { data: adjustments = [], isLoading } = useQuery({
     queryKey: ['briefing-adjustments'],
