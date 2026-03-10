@@ -45,13 +45,13 @@ Deno.serve(async (req) => {
 
     if (imgErr) throw imgErr;
 
-    // Fetch feedbacks (reviews for designer's images)
     const imageIds = (images || []).map((i: any) => i.id);
     let feedbackImages: any[] = [];
     let reviews: any[] = [];
+    let referenceImages: any[] = [];
 
     if (imageIds.length > 0) {
-      const [fbResult, revResult] = await Promise.all([
+      const [fbResult, revResult, refResult] = await Promise.all([
         supabase
           .from("briefing_images")
           .select("id, image_type, product_name, briefing_requests!inner(requester_name)")
@@ -62,9 +62,43 @@ Deno.serve(async (req) => {
           .in("briefing_image_id", imageIds)
           .order("created_at", { ascending: false })
           .limit(100),
+        supabase
+          .from("briefing_reference_images")
+          .select("id, briefing_image_id, file_url, is_exact_use")
+          .in("briefing_image_id", imageIds),
       ]);
       feedbackImages = fbResult.data || [];
       reviews = revResult.data || [];
+      referenceImages = refResult.data || [];
+    }
+
+    // Fetch brand assets for the platform URLs the designer works with
+    const platformUrls = [...new Set((images || []).map((i: any) => i.briefing_requests?.platform_url).filter(Boolean))];
+    let brandAssets: any[] = [];
+    if (platformUrls.length > 0) {
+      const { data: assets } = await supabase
+        .from("brand_assets")
+        .select("id, file_url, file_name, platform_url")
+        .in("platform_url", platformUrls);
+      brandAssets = assets || [];
+    }
+
+    // Fetch adjustment briefings assigned to this designer
+    const { data: adjustments } = await supabase
+      .from("briefing_adjustments")
+      .select("id, client_url, client_email, status, deadline, assigned_email, created_at")
+      .eq("assigned_email", cleanEmail)
+      .in("status", ["allocated", "in_progress"])
+      .order("created_at", { ascending: false });
+
+    let adjustmentItems: any[] = [];
+    if (adjustments && adjustments.length > 0) {
+      const adjIds = adjustments.map((a: any) => a.id);
+      const { data: items } = await supabase
+        .from("briefing_adjustment_items")
+        .select("id, adjustment_id, file_url, file_name, observations")
+        .in("adjustment_id", adjIds);
+      adjustmentItems = items || [];
     }
 
     // Fetch analytics data
@@ -79,6 +113,10 @@ Deno.serve(async (req) => {
         images: images || [],
         feedbackImages,
         reviews,
+        referenceImages,
+        brandAssets,
+        adjustments: adjustments || [],
+        adjustmentItems,
         deliveries: deliveries || [],
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
