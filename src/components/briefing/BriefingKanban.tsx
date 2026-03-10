@@ -44,6 +44,7 @@ interface ImageWithRequest {
 }
 
 const KANBAN_COLUMNS = [
+  { key: 'adjustment', label: 'Solicitação de Ajustes', color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-950/20', border: 'border-l-orange-500' },
   { key: 'pending', label: 'Pendentes', color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-950/20', border: 'border-l-amber-500' },
   { key: 'in_progress', label: 'Em Produção', color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/20', border: 'border-l-blue-500' },
   { key: 'review', label: 'Em Revisão', color: 'text-primary', bg: 'bg-primary/5', border: 'border-l-primary' },
@@ -52,6 +53,7 @@ const KANBAN_COLUMNS = [
 ];
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
+  adjustment: ['in_progress', 'cancelled'],
   pending: ['in_progress', 'cancelled'],
   in_progress: ['review', 'pending', 'cancelled'],
   review: ['completed', 'in_progress', 'cancelled'],
