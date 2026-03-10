@@ -648,6 +648,10 @@ export type Database = {
           created_at: string
           created_by: string | null
           deadline: string | null
+          delivered_at: string | null
+          delivered_by: string | null
+          delivery_comments: string | null
+          delivery_url: string | null
           id: string
           status: string
           updated_at: string
@@ -659,6 +663,10 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deadline?: string | null
+          delivered_at?: string | null
+          delivered_by?: string | null
+          delivery_comments?: string | null
+          delivery_url?: string | null
           id?: string
           status?: string
           updated_at?: string
@@ -670,6 +678,10 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deadline?: string | null
+          delivered_at?: string | null
+          delivered_by?: string | null
+          delivery_comments?: string | null
+          delivery_url?: string | null
           id?: string
           status?: string
           updated_at?: string
