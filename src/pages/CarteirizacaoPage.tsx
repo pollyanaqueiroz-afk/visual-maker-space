@@ -436,6 +436,16 @@ export default function CarteirizacaoPage() {
           )}
         </TabsContent>
 
+        {/* ===== JORNADA VISUAL ===== */}
+        <TabsContent value="jornada" className="space-y-4">
+          <JornadaClienteVisual planos={planos} etapas={etapas} csConfigs={csConfigs} />
+        </TabsContent>
+
+        {/* ===== CLIENTES ===== */}
+        <TabsContent value="clientes" className="space-y-4">
+          <ClientesTab />
+        </TabsContent>
+
         {/* ===== FÉRIAS ===== */}
         <TabsContent value="ferias" className="space-y-4">
           <div className="flex justify-between items-center">
