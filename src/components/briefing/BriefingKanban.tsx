@@ -401,33 +401,42 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
                       <div className="mt-2">
                         <Badge variant="outline" className="text-[9px] px-1 py-0">Ajuste</Badge>
                         <p className="text-[10px] text-muted-foreground mt-1">{card.totalImages} ajuste{card.totalImages !== 1 ? 's' : ''}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {format(new Date(card.createdAt), 'dd/MM/yyyy')}
+                        </p>
+                        {card.assignedDesigners.length > 0 && (
+                          <p className="text-[10px] text-muted-foreground truncate mt-0.5">{card.assignedDesigners[0]}</p>
+                        )}
                       </div>
                     ) : (
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {card.imageTypes.slice(0, 3).map(type => (
-                        <Badge key={type} variant="outline" className="text-[9px] px-1 py-0">
-                          {IMAGE_TYPE_LABELS[type as ImageType] || type}
-                        </Badge>
-                      ))}
-                      {card.imageTypes.length > 3 && (
-                        <Badge variant="outline" className="text-[9px] px-1 py-0">+{card.imageTypes.length - 3}</Badge>
-                      )}
-                    </div>
+                      <>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {card.imageTypes.slice(0, 3).map(type => (
+                            <Badge key={type} variant="outline" className="text-[9px] px-1 py-0">
+                              {IMAGE_TYPE_LABELS[type as ImageType] || type}
+                            </Badge>
+                          ))}
+                          {card.imageTypes.length > 3 && (
+                            <Badge variant="outline" className="text-[9px] px-1 py-0">+{card.imageTypes.length - 3}</Badge>
+                          )}
+                        </div>
 
-                    <Progress value={card.totalImages > 0 ? (card.completedImages / card.totalImages) * 100 : 0} className="h-1.5 mt-2 mb-1" />
+                        <Progress value={card.totalImages > 0 ? (card.completedImages / card.totalImages) * 100 : 0} className="h-1.5 mt-2 mb-1" />
 
-                    <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                      <span>{card.completedImages}/{card.totalImages} artes</span>
-                      {card.assignedDesigners.length > 0 && (
-                        <span className="truncate max-w-[100px]">{card.assignedDesigners[0]}</span>
-                      )}
-                    </div>
+                        <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                          <span>{card.completedImages}/{card.totalImages} artes</span>
+                          {card.assignedDesigners.length > 0 && (
+                            <span className="truncate max-w-[100px]">{card.assignedDesigners[0]}</span>
+                          )}
+                        </div>
 
-                    {deadlineSemaphore && (
-                      <div className={`flex items-center gap-1.5 text-[10px] mt-1 ${deadlineSemaphore.color} font-medium`}>
-                        <span className={`inline-block h-2 w-2 rounded-full ${deadlineSemaphore.dot}`} />
-                        {deadlineSemaphore.label}
-                      </div>
+                        {deadlineSemaphore && (
+                          <div className={`flex items-center gap-1.5 text-[10px] mt-1 ${deadlineSemaphore.color} font-medium`}>
+                            <span className={`inline-block h-2 w-2 rounded-full ${deadlineSemaphore.dot}`} />
+                            {deadlineSemaphore.label}
+                          </div>
+                        )}
+                      </>
                     )}
                   </Card>
                   );
