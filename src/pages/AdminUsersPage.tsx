@@ -341,7 +341,7 @@ export default function AdminUsersPage() {
         ))}
       </div>
 
-      {/* Search + active filter */}
+      {/* Search + role filter */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -352,6 +352,24 @@ export default function AdminUsersPage() {
             className="pl-9"
           />
         </div>
+        <Select value={filterRole || 'all'} onValueChange={(v) => { setFilterRole(v === 'all' ? null : v); setSelectedIds(new Set()); }}>
+          <SelectTrigger className="w-[180px] h-9">
+            <SelectValue placeholder="Filtrar por perfil" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os perfis</SelectItem>
+            {ALL_ROLES.map(r => (
+              <SelectItem key={r.value} value={r.value}>
+                <span className="flex items-center gap-2">
+                  {r.label}
+                  <Badge variant="outline" className={`text-[9px] px-1.5 py-0 ${r.color}`}>
+                    {users.filter(u => u.roles.includes(r.value)).length}
+                  </Badge>
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         {filterRole && (
           <Badge variant="secondary" className="gap-1.5 text-xs cursor-pointer hover:bg-secondary/80" onClick={() => { setFilterRole(null); setSelectedIds(new Set()); }}>
             Filtro: {getRoleConfig(filterRole).label}
