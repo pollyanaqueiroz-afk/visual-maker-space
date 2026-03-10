@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
-const BASE_URL = 'https://us-central1-curseduca-inc-ia.cloudfunctions.net/hub-reunioes';
-const AUTH_HEADER = import.meta.env.VITE_HUB_API_AUTH || 'Basic Y3Vyc2VkdWNhOnZpc2FvMzYwQGN1cnNlZHVjYTIwMjYh';
+const FUNCTION_NAME = 'proxy-hub-reunioes';
 
 export interface CalendarEvent {
   event_id: string;
@@ -43,18 +43,15 @@ async function apiCall<T = any>(
   body?: Record<string, any>,
   extraParams?: Record<string, string>,
 ): Promise<T> {
-  const url = new URL(BASE_URL);
-  url.searchParams.set('action', action);
-  if (extraParams) {
-    for (const [k, v] of Object.entries(extraParams)) {
-      url.searchParams.set(k, v);
-    }
-  }
+  const session = (await supabase.auth.getSession()).data.session;
+  const params = new URLSearchParams({ action, ...(extraParams || {}) });
+  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${FUNCTION_NAME}?${params.toString()}`;
 
   const options: RequestInit = {
     method,
     headers: {
-      Authorization: AUTH_HEADER,
+      Authorization: `Bearer ${session?.access_token || ''}`,
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
       'Content-Type': 'application/json',
     },
   };
@@ -63,7 +60,7 @@ async function apiCall<T = any>(
     options.body = JSON.stringify(body);
   }
 
-  const res = await fetch(url.toString(), options);
+  const res = await fetch(url, options);
   const json = await res.json();
 
   if (!res.ok) {
