@@ -154,10 +154,7 @@ export default function ClientesTab() {
     setBulkDialog(true);
   };
 
-  const bulkSourceOptions = useMemo(() => {
-    if (bulkMode === 'plano') return planos;
-    return csAtuais;
-  }, [bulkMode, clients]);
+  // moved bulkSourceOptions below planos/csAtuais declarations
 
   const executeBulkMove = async () => {
     if (!bulkSource || !bulkTargetName) {
@@ -220,6 +217,11 @@ export default function ClientesTab() {
   const planos = useMemo(() => [...new Set(clients.map(c => c.plano).filter(Boolean))].sort() as string[], [clients]);
   const csAtuais = useMemo(() => [...new Set(clients.map(c => c.cs_atual).filter(Boolean))].sort() as string[], [clients]);
   const csAnteriores = useMemo(() => [...new Set(clients.map(c => c.cs_anterior).filter(Boolean))].sort() as string[], [clients]);
+
+  const bulkSourceOptions = useMemo(() => {
+    if (bulkMode === 'plano') return planos;
+    return csAtuais;
+  }, [bulkMode, planos, csAtuais]);
 
   const filtered = useMemo(() => {
     let result = clients;
