@@ -96,6 +96,7 @@ interface Meeting {
   recording_url: string | null;
   funil_status: string | null;
   funil_notas: string | null;
+  gcal_event_id: string | null;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
@@ -405,10 +406,9 @@ export default function SchedulingPage() {
         // Update in Google Calendar (best-effort, uses meeting id as event_id if stored)
         try {
           const editingMeeting = meetings.find(m => m.id === editingId);
-          const gcalEventId = (editingMeeting as any)?.gcal_event_id;
-          if (gcalEventId) {
+          if (editingMeeting?.gcal_event_id) {
             await updateCalendarEvent({
-              event_id: gcalEventId,
+              event_id: editingMeeting.gcal_event_id,
               summary: form.title,
               start: startISO,
               end: endISO,
@@ -435,7 +435,8 @@ export default function SchedulingPage() {
           // If Google Calendar fails, still save locally
         }
 
-        const { error } = await supabase.from('meetings').insert(payload);
+        const insertPayload = gcalEventId ? { ...payload, gcal_event_id: gcalEventId } : payload;
+        const { error } = await supabase.from('meetings').insert(insertPayload as any);
         if (error) throw error;
 
         // Send invite email if checkbox is checked and client email exists
@@ -493,8 +494,8 @@ export default function SchedulingPage() {
     if (!confirm('Remover esta reunião?')) return;
     // Try delete from Google Calendar (best-effort)
     const meeting = meetings.find(m => m.id === id);
-    if ((meeting as any)?.gcal_event_id) {
-      try { await deleteCalendarEvent((meeting as any).gcal_event_id); } catch { /* best-effort */ }
+    if (meeting?.gcal_event_id) {
+      try { await deleteCalendarEvent(meeting.gcal_event_id); } catch { /* best-effort */ }
     }
     const { error } = await supabase.from('meetings').delete().eq('id', id);
     if (error) toast.error('Erro ao remover');

@@ -1330,6 +1330,7 @@ export type Database = {
           duration_minutes: number
           funil_notas: string | null
           funil_status: string | null
+          gcal_event_id: string | null
           id: string
           loyalty_index: number | null
           loyalty_reason: string | null
@@ -1357,6 +1358,7 @@ export type Database = {
           duration_minutes?: number
           funil_notas?: string | null
           funil_status?: string | null
+          gcal_event_id?: string | null
           id?: string
           loyalty_index?: number | null
           loyalty_reason?: string | null
@@ -1384,6 +1386,7 @@ export type Database = {
           duration_minutes?: number
           funil_notas?: string | null
           funil_status?: string | null
+          gcal_event_id?: string | null
           id?: string
           loyalty_index?: number | null
           loyalty_reason?: string | null
