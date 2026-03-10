@@ -360,7 +360,7 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
 
       {/* Edit card dialog */}
       <Dialog open={!!editingCard} onOpenChange={(v) => { if (!v) setEditingCard(null); }}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-lg max-h-[85vh] flex flex-col overflow-y-auto">
           {editingCard && (
             <>
               <DialogHeader>
