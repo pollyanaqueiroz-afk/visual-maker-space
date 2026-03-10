@@ -139,7 +139,7 @@ export default function ProcessosImplantacaoPage() {
   // Consolidate by client_url
   const consolidatedData = useMemo(() => {
     return allClients.map(client => {
-      const url = client.client_url;
+      const url = client.id_curseduca;
 
       const clientBriefings = briefingImages.filter((img: any) => img.briefing_requests?.platform_url === url);
       const briefingTotal = clientBriefings.length;
