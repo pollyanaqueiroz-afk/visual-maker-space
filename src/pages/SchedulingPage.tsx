@@ -406,10 +406,9 @@ export default function SchedulingPage() {
         // Update in Google Calendar (best-effort, uses meeting id as event_id if stored)
         try {
           const editingMeeting = meetings.find(m => m.id === editingId);
-          const gcalEventId = (editingMeeting as any)?.gcal_event_id;
-          if (gcalEventId) {
+          if (editingMeeting?.gcal_event_id) {
             await updateCalendarEvent({
-              event_id: gcalEventId,
+              event_id: editingMeeting.gcal_event_id,
               summary: form.title,
               start: startISO,
               end: endISO,
