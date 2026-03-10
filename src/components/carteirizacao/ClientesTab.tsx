@@ -154,10 +154,7 @@ export default function ClientesTab() {
     setBulkDialog(true);
   };
 
-  const bulkSourceOptions = useMemo(() => {
-    if (bulkMode === 'plano') return planos;
-    return csAtuais;
-  }, [bulkMode, clients]);
+  // moved bulkSourceOptions below planos/csAtuais declarations
 
   const executeBulkMove = async () => {
     if (!bulkSource || !bulkTargetName) {
