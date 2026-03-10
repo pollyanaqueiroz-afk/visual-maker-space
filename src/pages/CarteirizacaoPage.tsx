@@ -10,8 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Plus, Trash2, Edit2, Palmtree, Users, Layers, Tag, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, Edit2, Palmtree, Users, Layers, Tag, ChevronDown, ChevronRight, BookOpen, Map } from 'lucide-react';
 import { format } from 'date-fns';
+import JornadaClienteVisual from '@/components/carteirizacao/JornadaClienteVisual';
+import ClientesTab from '@/components/carteirizacao/ClientesTab';
 
 type UserProfile = { user_id: string; email: string | null; display_name: string | null };
 
@@ -244,6 +246,8 @@ export default function CarteirizacaoPage() {
         <TabsList>
           <TabsTrigger value="config" className="gap-1.5"><Tag className="h-3.5 w-3.5" /> Planos & Etapas</TabsTrigger>
           <TabsTrigger value="cs" className="gap-1.5"><Users className="h-3.5 w-3.5" /> CSs por Carteira</TabsTrigger>
+          <TabsTrigger value="jornada" className="gap-1.5"><Map className="h-3.5 w-3.5" /> Jornada</TabsTrigger>
+          <TabsTrigger value="clientes" className="gap-1.5"><BookOpen className="h-3.5 w-3.5" /> Clientes</TabsTrigger>
           <TabsTrigger value="ferias" className="gap-1.5"><Palmtree className="h-3.5 w-3.5" /> Férias</TabsTrigger>
         </TabsList>
 
@@ -430,6 +434,16 @@ export default function CarteirizacaoPage() {
               );
             })
           )}
+        </TabsContent>
+
+        {/* ===== JORNADA VISUAL ===== */}
+        <TabsContent value="jornada" className="space-y-4">
+          <JornadaClienteVisual planos={planos} etapas={etapas} csConfigs={csConfigs} />
+        </TabsContent>
+
+        {/* ===== CLIENTES ===== */}
+        <TabsContent value="clientes" className="space-y-4">
+          <ClientesTab />
         </TabsContent>
 
         {/* ===== FÉRIAS ===== */}
