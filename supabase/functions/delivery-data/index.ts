@@ -353,6 +353,54 @@ Deno.serve(async (req) => {
       );
     }
 
+    // RESEND_ADJUSTMENT_NOTIFICATION: Resend email to client about delivered adjustment
+    if (action === "resend_adjustment_notification") {
+      const adjustment_id = typeof body.adjustment_id === "string" ? body.adjustment_id.trim().slice(0, 100) : "";
+      if (!adjustment_id || !uuidRegex.test(adjustment_id)) {
+        return new Response(
+          JSON.stringify({ error: "adjustment_id must be a valid UUID" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const { data: adjData } = await supabase
+        .from("briefing_adjustments")
+        .select("client_email, client_url, delivery_url")
+        .eq("id", adjustment_id)
+        .single();
+
+      if (!adjData?.client_email) {
+        return new Response(
+          JSON.stringify({ error: "Adjustment not found or no client email" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+      if (RESEND_API_KEY) {
+        await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            from: "Curseduca Design <noreply@curseduca.com>",
+            to: [adjData.client_email],
+            subject: `🎨 Ajuste de arte concluído — ${adjData.client_url || ""}`,
+            html: `<div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px">
+              <h2 style="color:#7c3aed;margin-bottom:8px">🎨 Ajuste concluído!</h2>
+              <p style="color:#555;font-size:15px">O ajuste solicitado para <strong>${adjData.client_url || "seu briefing"}</strong> foi finalizado e está disponível para revisão.</p>
+              ${adjData.delivery_url ? `<a href="${adjData.delivery_url}" style="display:inline-block;margin:20px 0;padding:12px 28px;background:#7c3aed;color:#fff;text-decoration:none;border-radius:8px;font-weight:600">Visualizar Arte →</a>` : ''}
+              <p style="color:#999;font-size:13px;margin-top:16px">Acesse o link acima para revisar a entrega.</p>
+            </div>`,
+          }),
+        });
+      }
+
+      return new Response(
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     return new Response(
       JSON.stringify({ error: "Unknown action" }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }

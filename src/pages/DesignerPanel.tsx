@@ -358,7 +358,7 @@ function DeliveryDialog({ img, designerEmail, onDelivered }: { img: DesignerImag
   );
 }
 
-// Batch delivery dialog
+// Batch delivery dialog with manual matching fallback
 function BatchDeliveryDialog({ group, designerEmail, onDelivered }: { group: ImageGroup; designerEmail: string; onDelivered: () => void }) {
   const [open, setOpen] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
@@ -367,6 +367,7 @@ function BatchDeliveryDialog({ group, designerEmail, onDelivered }: { group: Ima
   const [delivered, setDelivered] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [matchResults, setMatchResults] = useState<{ image: DesignerImage; file: File | null; confidence: string }[]>([]);
+  const [showManualMatch, setShowManualMatch] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const pendingImages = group.images.filter(img =>
@@ -381,8 +382,14 @@ function BatchDeliveryDialog({ group, designerEmail, onDelivered }: { group: Ima
       .trim();
   };
 
+  const getArtLabel = (img: DesignerImage) => {
+    return (IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type) + (img.product_name ? ` — ${img.product_name}` : '');
+  };
+
   const matchFiles = useCallback((selectedFiles: File[]) => {
     setFiles(selectedFiles);
+    const usedFiles = new Set<string>();
+
     const results = pendingImages.map(img => {
       const artName = normalize(
         (IMAGE_TYPE_LABELS[img.image_type as keyof typeof IMAGE_TYPE_LABELS] || img.image_type)
@@ -393,23 +400,28 @@ function BatchDeliveryDialog({ group, designerEmail, onDelivered }: { group: Ima
       let bestScore = 0;
 
       for (const f of selectedFiles) {
+        if (usedFiles.has(f.name + f.size)) continue;
         const fileName = normalize(f.name.replace(/\.[^.]+$/, ''));
-        // Check for substring match or similarity
+
+        // Exact or substring match
         if (fileName === artName || artName.includes(fileName) || fileName.includes(artName)) {
           bestMatch = f;
           bestScore = 3;
           break;
         }
-        // Partial word matching
-        const artWords = artName.split(/\s+/).filter(Boolean);
-        const fileWords = fileName.split(/\s+/).filter(Boolean);
-        const matchingWords = artWords.filter(w => fileWords.some(fw => fw.includes(w) || w.includes(fw)));
-        const score = matchingWords.length / Math.max(artWords.length, 1);
+
+        // Token-based matching (split into meaningful chunks)
+        const artTokens = artName.match(/[a-z0-9]+/g) || [];
+        const fileTokens = fileName.match(/[a-z0-9]+/g) || [];
+        const matchingTokens = artTokens.filter(t => fileTokens.some(ft => ft.includes(t) || t.includes(ft)));
+        const score = matchingTokens.length / Math.max(artTokens.length, 1);
         if (score > bestScore && score >= 0.3) {
           bestScore = score;
           bestMatch = f;
         }
       }
+
+      if (bestMatch) usedFiles.add(bestMatch.name + bestMatch.size);
 
       return {
         image: img,
@@ -419,7 +431,38 @@ function BatchDeliveryDialog({ group, designerEmail, onDelivered }: { group: Ima
     });
 
     setMatchResults(results);
+
+    // Show manual matching if there are unmatched files
+    const unmatchedCount = results.filter(r => !r.file || r.confidence === 'low').length;
+    if (unmatchedCount > 0 && selectedFiles.length > 0) {
+      setShowManualMatch(true);
+    } else {
+      setShowManualMatch(false);
+    }
   }, [pendingImages]);
+
+  const handleManualAssign = (imageIdx: number, fileName: string) => {
+    setMatchResults(prev => {
+      const updated = [...prev];
+      if (!fileName) {
+        updated[imageIdx] = { ...updated[imageIdx], file: null, confidence: 'none' };
+      } else {
+        const selectedFile = files.find(f => f.name === fileName);
+        if (selectedFile) {
+          // Remove this file from any other assignment
+          const cleaned = updated.map((r, i) => {
+            if (i !== imageIdx && r.file?.name === fileName) {
+              return { ...r, file: null, confidence: 'none' };
+            }
+            return r;
+          });
+          cleaned[imageIdx] = { ...cleaned[imageIdx], file: selectedFile, confidence: 'manual' };
+          return cleaned;
+        }
+      }
+      return updated;
+    });
+  };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -486,14 +529,18 @@ function BatchDeliveryDialog({ group, designerEmail, onDelivered }: { group: Ima
     }
   };
 
+  // Files not assigned to any art
+  const assignedFileNames = new Set(matchResults.filter(r => r.file).map(r => r.file!.name));
+  const unassignedFiles = files.filter(f => !assignedFileNames.has(f.name));
+
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setFiles([]); setComments(''); setDelivered(false); setMatchResults([]); } }}>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setFiles([]); setComments(''); setDelivered(false); setMatchResults([]); setShowManualMatch(false); } }}>
       <DialogTrigger asChild>
         <Button size="sm" className="gap-1 bg-emerald-600 hover:bg-emerald-700 text-white">
           <Package className="h-3 w-3" /> Entrega em Lote ({pendingImages.length})
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Package className="h-5 w-5" /> Entrega em Lote
@@ -541,31 +588,74 @@ function BatchDeliveryDialog({ group, designerEmail, onDelivered }: { group: Ima
 
             {matchResults.length > 0 && (
               <div className="space-y-2">
-                <Label className="text-sm">Correspondência automática</Label>
+                {/* Warning banner for unmatched items */}
+                {matchResults.some(r => !r.file) && (
+                  <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-500/30 bg-amber-500/5">
+                    <span className="text-amber-600 text-lg mt-0.5">⚠️</span>
+                    <div>
+                      <p className="text-sm font-medium text-amber-700">Correspondência parcial</p>
+                      <p className="text-xs text-amber-600/80">Não foi possível identificar automaticamente a correspondência para alguns arquivos. Selecione manualmente abaixo.</p>
+                    </div>
+                  </div>
+                )}
+
+                <Label className="text-sm">Correspondência dos arquivos</Label>
                 <div className="divide-y divide-border border rounded-lg overflow-hidden">
                   {matchResults.map((r, idx) => {
-                    const artLabel = (IMAGE_TYPE_LABELS[r.image.image_type as keyof typeof IMAGE_TYPE_LABELS] || r.image.image_type) + (r.image.product_name ? ` — ${r.image.product_name}` : '');
+                    const artLabel = getArtLabel(r.image);
+                    const needsManual = !r.file || r.confidence === 'low' || r.confidence === 'none';
                     return (
-                      <div key={idx} className="flex items-center gap-2 p-2 text-xs">
+                      <div key={idx} className={`flex items-center gap-2 p-2.5 text-xs ${needsManual ? 'bg-amber-500/5' : ''}`}>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{artLabel}</p>
                         </div>
                         <div className="shrink-0">
-                          {r.file ? (
-                            <Badge className={r.confidence === 'exact' ? 'bg-emerald-100 text-emerald-700 border-0' : r.confidence === 'high' ? 'bg-blue-100 text-blue-700 border-0' : 'bg-amber-100 text-amber-700 border-0'}>
-                              ✓ {r.file.name.length > 20 ? r.file.name.slice(0, 20) + '…' : r.file.name}
-                            </Badge>
+                          {needsManual || showManualMatch ? (
+                            <Select
+                              value={r.file?.name || ''}
+                              onValueChange={(v) => handleManualAssign(idx, v)}
+                            >
+                              <SelectTrigger className="h-7 w-48 text-[11px]">
+                                <SelectValue placeholder="Selecionar arquivo..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="">Nenhum</SelectItem>
+                                {files.map(f => {
+                                  const isUsedElsewhere = matchResults.some((mr, mi) => mi !== idx && mr.file?.name === f.name);
+                                  return (
+                                    <SelectItem key={f.name} value={f.name} disabled={isUsedElsewhere}>
+                                      {f.name.length > 30 ? f.name.slice(0, 30) + '…' : f.name}
+                                      {isUsedElsewhere && ' (já usado)'}
+                                    </SelectItem>
+                                  );
+                                })}
+                              </SelectContent>
+                            </Select>
                           ) : (
-                            <Badge variant="outline" className="text-muted-foreground">Sem match</Badge>
+                            <Badge className={r.confidence === 'exact' ? 'bg-emerald-100 text-emerald-700 border-0' : r.confidence === 'high' ? 'bg-blue-100 text-blue-700 border-0' : r.confidence === 'manual' ? 'bg-violet-100 text-violet-700 border-0' : 'bg-amber-100 text-amber-700 border-0'}>
+                              ✓ {r.file!.name.length > 20 ? r.file!.name.slice(0, 20) + '…' : r.file!.name}
+                            </Badge>
                           )}
                         </div>
                       </div>
                     );
                   })}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {matchResults.filter(r => r.file).length} de {matchResults.length} correspondência{matchResults.filter(r => r.file).length !== 1 ? 's' : ''} encontrada{matchResults.filter(r => r.file).length !== 1 ? 's' : ''}
-                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">
+                    {matchResults.filter(r => r.file).length} de {matchResults.length} correspondência{matchResults.filter(r => r.file).length !== 1 ? 's' : ''}
+                  </p>
+                  {!showManualMatch && matchResults.every(r => r.file) && (
+                    <Button variant="link" size="sm" className="text-xs h-auto p-0" onClick={() => setShowManualMatch(true)}>
+                      Editar correspondências
+                    </Button>
+                  )}
+                </div>
+                {unassignedFiles.length > 0 && (
+                  <p className="text-[11px] text-muted-foreground">
+                    {unassignedFiles.length} arquivo{unassignedFiles.length !== 1 ? 's' : ''} não atribuído{unassignedFiles.length !== 1 ? 's' : ''}: {unassignedFiles.map(f => f.name).join(', ')}
+                  </p>
+                )}
               </div>
             )}
 

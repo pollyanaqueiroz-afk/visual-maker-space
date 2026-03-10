@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { Plus, Upload, Trash2, Send, Eye, Clock, UserCheck, CheckCircle, Loader2, ExternalLink } from 'lucide-react';
+import { Plus, Upload, Trash2, Send, Eye, Clock, UserCheck, CheckCircle, Loader2, ExternalLink, Copy, Mail, Edit2, Save, Link2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -25,6 +25,7 @@ const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = 
   pending: { label: 'Aguardando Alocação', color: 'bg-amber-500/15 text-amber-600 border-amber-500/20', icon: Clock },
   allocated: { label: 'Alocado para Design', color: 'bg-blue-500/15 text-blue-600 border-blue-500/20', icon: UserCheck },
   in_progress: { label: 'Em Execução', color: 'bg-violet-500/15 text-violet-600 border-violet-500/20', icon: Loader2 },
+  review: { label: 'Em Revisão', color: 'bg-orange-500/15 text-orange-600 border-orange-500/20', icon: Eye },
   completed: { label: 'Concluído', color: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/20', icon: CheckCircle },
 };
 
@@ -38,6 +39,10 @@ export default function AjusteBriefingsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [detailAdjustment, setDetailAdjustment] = useState<any>(null);
   const [detailItems, setDetailItems] = useState<any[]>([]);
+  const [editingEmail, setEditingEmail] = useState(false);
+  const [editEmail, setEditEmail] = useState('');
+  const [savingEmail, setSavingEmail] = useState(false);
+  const [resending, setResending] = useState(false);
 
   const { data: adjustments = [], isLoading } = useQuery({
     queryKey: ['briefing-adjustments'],
@@ -359,7 +364,7 @@ export default function AjusteBriefingsPage() {
       </Dialog>
 
       {/* Detail dialog */}
-      <Dialog open={!!detailAdjustment} onOpenChange={(v) => { if (!v) setDetailAdjustment(null); }}>
+      <Dialog open={!!detailAdjustment} onOpenChange={(v) => { if (!v) { setDetailAdjustment(null); setEditingEmail(false); } }}>
         <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
           {detailAdjustment && (
             <>
@@ -380,7 +385,62 @@ export default function AjusteBriefingsPage() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
                     <p className="text-xs font-medium text-muted-foreground">E-mail do Cliente</p>
-                    <p className="text-sm">{detailAdjustment.client_email}</p>
+                    {editingEmail ? (
+                      <div className="flex items-center gap-2 mt-1">
+                        <Input
+                          type="email"
+                          value={editEmail}
+                          onChange={e => setEditEmail(e.target.value)}
+                          className="h-8 text-sm"
+                          placeholder="novo@email.com"
+                        />
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="h-8 gap-1"
+                          disabled={savingEmail}
+                          onClick={async () => {
+                            if (!editEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editEmail)) {
+                              toast.error('E-mail inválido');
+                              return;
+                            }
+                            setSavingEmail(true);
+                            try {
+                              const { error } = await supabase
+                                .from('briefing_adjustments')
+                                .update({ client_email: editEmail.trim() } as any)
+                                .eq('id', detailAdjustment.id);
+                              if (error) throw error;
+                              setDetailAdjustment({ ...detailAdjustment, client_email: editEmail.trim() });
+                              setEditingEmail(false);
+                              queryClient.invalidateQueries({ queryKey: ['briefing-adjustments'] });
+                              toast.success('E-mail atualizado!');
+                            } catch (err: any) {
+                              toast.error('Erro: ' + err.message);
+                            } finally {
+                              setSavingEmail(false);
+                            }
+                          }}
+                        >
+                          <Save className="h-3 w-3" />
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-8" onClick={() => setEditingEmail(false)}>
+                          Cancelar
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 mt-1">
+                        <p className="text-sm">{detailAdjustment.client_email}</p>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-6 w-6"
+                          onClick={() => { setEditEmail(detailAdjustment.client_email); setEditingEmail(true); }}
+                        >
+                          <Edit2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                   {detailAdjustment.assigned_email && (
                     <div>
@@ -422,13 +482,120 @@ export default function AjusteBriefingsPage() {
                   </div>
                 </div>
 
-                {/* Link to client review when completed */}
-                {detailAdjustment.status === 'completed' && (
-                  <div className="p-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5">
-                    <p className="text-sm font-medium text-emerald-600 mb-1">Artes finalizadas</p>
-                    <p className="text-xs text-muted-foreground">
-                      Encaminhe o link de revisão para o cliente em <strong>{detailAdjustment.client_email}</strong>
-                    </p>
+                {/* Delivery section - shows when designer has delivered */}
+                {(detailAdjustment.status === 'review' || detailAdjustment.status === 'completed') && detailAdjustment.delivery_url && (
+                  <>
+                    <Separator />
+                    <div className="space-y-3">
+                      <p className="text-sm font-medium flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-emerald-500" />
+                        Entrega do Designer
+                      </p>
+                      <Card>
+                        <CardContent className="py-3 px-4 space-y-3">
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground mb-1">Arte Entregue</p>
+                            <a href={detailAdjustment.delivery_url} target="_blank" rel="noopener noreferrer" className="block">
+                              <img
+                                src={detailAdjustment.delivery_url}
+                                alt="Entrega"
+                                className="w-full max-h-48 object-contain rounded-lg border hover:opacity-80 transition-opacity bg-muted"
+                              />
+                            </a>
+                          </div>
+                          {detailAdjustment.delivery_comments && (
+                            <div>
+                              <p className="text-xs font-medium text-muted-foreground mb-1">Comentário do Designer</p>
+                              <p className="text-sm">{detailAdjustment.delivery_comments}</p>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            {detailAdjustment.delivered_by && (
+                              <span>Entregue por: {detailAdjustment.delivered_by}</span>
+                            )}
+                            {detailAdjustment.delivered_at && (
+                              <span>em {format(new Date(detailAdjustment.delivered_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </>
+                )}
+
+                {/* Actions section for review/completed status */}
+                {(detailAdjustment.status === 'review' || detailAdjustment.status === 'completed') && (
+                  <div className="space-y-3 p-3 rounded-lg border border-primary/20 bg-primary/5">
+                    <p className="text-sm font-medium">Ações do Operacional</p>
+                    <div className="flex flex-wrap gap-2">
+                      {/* Generate review link */}
+                      {detailAdjustment.delivery_url && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1"
+                          onClick={() => {
+                            const link = detailAdjustment.delivery_url;
+                            navigator.clipboard.writeText(link);
+                            toast.success('Link da arte copiado!');
+                          }}
+                        >
+                          <Link2 className="h-3 w-3" /> Copiar Link da Arte
+                        </Button>
+                      )}
+
+                      {/* Resend access to client */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1"
+                        disabled={resending}
+                        onClick={async () => {
+                          setResending(true);
+                          try {
+                            const { error } = await supabase.functions.invoke('delivery-data', {
+                              body: {
+                                action: 'resend_adjustment_notification',
+                                adjustment_id: detailAdjustment.id,
+                              },
+                            });
+                            if (error) throw error;
+                            toast.success(`E-mail reenviado para ${detailAdjustment.client_email}`);
+                          } catch (err: any) {
+                            toast.error('Erro ao reenviar: ' + err.message);
+                          } finally {
+                            setResending(false);
+                          }
+                        }}
+                      >
+                        {resending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
+                        Reenviar para Cliente
+                      </Button>
+
+                      {/* Mark as completed if still in review */}
+                      {detailAdjustment.status === 'review' && (
+                        <Button
+                          size="sm"
+                          className="gap-1"
+                          onClick={async () => {
+                            try {
+                              const { error } = await supabase
+                                .from('briefing_adjustments')
+                                .update({ status: 'completed' } as any)
+                                .eq('id', detailAdjustment.id);
+                              if (error) throw error;
+                              setDetailAdjustment({ ...detailAdjustment, status: 'completed' });
+                              queryClient.invalidateQueries({ queryKey: ['briefing-adjustments'] });
+                              toast.success('Ajuste marcado como concluído!');
+                            } catch (err: any) {
+                              toast.error('Erro: ' + err.message);
+                            }
+                          }}
+                        >
+                          <CheckCircle className="h-3 w-3" /> Marcar como Concluído
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
