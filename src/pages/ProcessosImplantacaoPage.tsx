@@ -420,7 +420,7 @@ export default function ProcessosImplantacaoPage() {
                     ) : <span className="text-xs text-muted-foreground">—</span>}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={e => { e.stopPropagation(); setSelectedClientUrl(c.client_url); }}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={e => { e.stopPropagation(); setSelectedClientUrl(c.id_curseduca); }}>
                       <Eye className="h-4 w-4" />
                     </Button>
                   </TableCell>
