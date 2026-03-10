@@ -925,6 +925,116 @@ export type Database = {
           },
         ]
       }
+      carteirizacao_cs: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          etapa_id: string
+          id: string
+          peso: number
+          planos: string[]
+          user_email: string
+          user_name: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          etapa_id: string
+          id?: string
+          peso?: number
+          planos?: string[]
+          user_email: string
+          user_name?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          etapa_id?: string
+          id?: string
+          peso?: number
+          planos?: string[]
+          user_email?: string
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carteirizacao_cs_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "carteirizacao_etapas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      carteirizacao_etapas: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      carteirizacao_ferias: {
+        Row: {
+          created_at: string
+          cs_email: string
+          data_fim: string
+          data_inicio: string
+          id: string
+          motivo: string | null
+          substituto_email: string
+          substituto_nome: string | null
+        }
+        Insert: {
+          created_at?: string
+          cs_email: string
+          data_fim: string
+          data_inicio: string
+          id?: string
+          motivo?: string | null
+          substituto_email: string
+          substituto_nome?: string | null
+        }
+        Update: {
+          created_at?: string
+          cs_email?: string
+          data_fim?: string
+          data_inicio?: string
+          id?: string
+          motivo?: string | null
+          substituto_email?: string
+          substituto_nome?: string | null
+        }
+        Relationships: []
+      }
+      carteirizacao_planos: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
       client_field_definitions: {
         Row: {
           created_at: string | null
