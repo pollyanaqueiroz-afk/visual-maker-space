@@ -386,6 +386,7 @@ export default function DesignerPanel() {
               platform_url: adj.client_url,
             },
             _source: 'adjustment',
+            _adjustment_id: adj.id,
           });
         });
       }
