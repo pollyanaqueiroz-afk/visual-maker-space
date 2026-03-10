@@ -61,6 +61,7 @@ function getBrazilianHolidays(year: number): Record<string, string> {
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/hooks/useAuth';
+import { useReunioes } from '@/hooks/useReunioes';
 
 interface TeamMember {
   id: string;
@@ -169,6 +170,7 @@ export default function SchedulingPage() {
   const canCreate = hasPermission('agendamento.create');
   const canEdit = hasPermission('agendamento.edit');
   const canDelete = hasPermission('agendamento.delete');
+  const { sync: syncCalendar, syncing: calendarSyncing, createEvent: createCalendarEvent, updateEvent: updateCalendarEvent, deleteEvent: deleteCalendarEvent } = useReunioes();
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -375,6 +377,15 @@ export default function SchedulingPage() {
         ...(isRescheduling ? { reschedule_reason: form.reschedule_reason, status: 'scheduled' } : {}),
       };
 
+      // Build ISO start/end for Google Calendar API
+      const startISO = `${form.meeting_date}T${form.meeting_time}:00`;
+      const startDate = new Date(startISO);
+      const endDate = new Date(startDate.getTime() + form.duration_minutes * 60000);
+      const endISO = `${form.meeting_date}T${String(endDate.getHours()).padStart(2,'0')}:${String(endDate.getMinutes()).padStart(2,'0')}:00`;
+      const attendeesArr = payload.participants.length > 0
+        ? payload.participants
+        : (form.client_email ? [form.client_email] : []);
+
       if (editingId) {
         const { error } = await supabase.from('meetings').update(payload).eq('id', editingId);
         if (error) throw error;
@@ -391,8 +402,39 @@ export default function SchedulingPage() {
           });
         }
 
+        // Update in Google Calendar (best-effort, uses meeting id as event_id if stored)
+        try {
+          const editingMeeting = meetings.find(m => m.id === editingId);
+          const gcalEventId = (editingMeeting as any)?.gcal_event_id;
+          if (gcalEventId) {
+            await updateCalendarEvent({
+              event_id: gcalEventId,
+              summary: form.title,
+              start: startISO,
+              end: endISO,
+              description: form.description || '',
+              attendees: attendeesArr,
+            });
+          }
+        } catch { /* best-effort */ }
+
         toast.success(isRescheduling ? 'Reunião reagendada!' : 'Reunião atualizada!');
       } else {
+        // Create in Google Calendar first
+        let gcalEventId: string | undefined;
+        try {
+          const calResult = await createCalendarEvent({
+            summary: form.title,
+            start: startISO,
+            end: endISO,
+            description: form.description || '',
+            attendees: attendeesArr,
+          });
+          gcalEventId = calResult?.event_id;
+        } catch {
+          // If Google Calendar fails, still save locally
+        }
+
         const { error } = await supabase.from('meetings').insert(payload);
         if (error) throw error;
 
@@ -449,6 +491,11 @@ export default function SchedulingPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Remover esta reunião?')) return;
+    // Try delete from Google Calendar (best-effort)
+    const meeting = meetings.find(m => m.id === id);
+    if ((meeting as any)?.gcal_event_id) {
+      try { await deleteCalendarEvent((meeting as any).gcal_event_id); } catch { /* best-effort */ }
+    }
     const { error } = await supabase.from('meetings').delete().eq('id', id);
     if (error) toast.error('Erro ao remover');
     else { toast.success('Reunião removida'); fetchMeetings(); }
@@ -710,7 +757,12 @@ export default function SchedulingPage() {
           <h1 className="text-2xl font-bold text-foreground">Agendamento</h1>
           <p className="text-sm text-muted-foreground">Gerencie reuniões e calls com clientes</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => syncCalendar()} disabled={calendarSyncing}>
+            <RefreshCw className={cn("h-4 w-4 mr-2", calendarSyncing && "animate-spin")} />
+            {calendarSyncing ? 'Sincronizando...' : 'Sincronizar'}
+          </Button>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           {canCreate && (
             <DialogTrigger asChild>
               <Button onClick={() => handleOpenNew()}>
@@ -822,6 +874,7 @@ export default function SchedulingPage() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Quick Stats */}
