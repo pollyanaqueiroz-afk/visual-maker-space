@@ -1104,6 +1104,7 @@ export default function SchedulingPage() {
                 <CardTitle className="text-base flex items-center gap-2">
                   <CalendarIcon className="h-4 w-4 text-primary" />
                   Calendário
+                  <Badge variant="secondary" className="text-[10px] ml-1">{meetings.length} reuniões</Badge>
                 </CardTitle>
                 <div className="flex items-center gap-2 flex-wrap">
                   <div className="flex items-center bg-muted rounded-lg p-0.5">
