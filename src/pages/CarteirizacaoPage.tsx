@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Plus, Trash2, Edit2, Palmtree, Users, Layers, Tag, CalendarDays } from 'lucide-react';
 import { format } from 'date-fns';
+
+type UserProfile = { user_id: string; email: string | null; display_name: string | null };
 
 type Plano = { id: string; nome: string; created_at: string };
 type Etapa = { id: string; nome: string; created_at: string };
