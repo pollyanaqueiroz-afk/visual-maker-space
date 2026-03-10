@@ -1,12 +1,14 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import TablePagination from '@/components/carteira/TablePagination';
 import { TableSkeleton } from '@/components/ui/TableSkeleton';
-import { Search } from 'lucide-react';
+import { Search, Pencil, Check, X } from 'lucide-react';
+import { toast } from 'sonner';
 
 type Client = {
   id: string;
@@ -19,6 +21,8 @@ type Client = {
   data_da_carga: string | null;
 };
 
+type UserProfile = { user_id: string; email: string | null; display_name: string | null };
+
 const PER_PAGE = 50;
 
 export default function ClientesTab() {
@@ -30,28 +34,107 @@ export default function ClientesTab() {
   const [filterCsAnterior, setFilterCsAnterior] = useState('__all__');
   const [page, setPage] = useState(1);
 
+  // Inline edit state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editQuery, setEditQuery] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [userProfiles, setUserProfiles] = useState<UserProfile[]>([]);
+  const [saving, setSaving] = useState(false);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  const fetchClients = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('clients')
+      .select('*')
+      .order('cliente', { ascending: true });
+    if (!error && data) {
+      setClients(data as Client[]);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchClients(); }, []);
+
+  // Fetch user profiles for autocomplete
   useEffect(() => {
-    const fetchClients = async () => {
-      setLoading(true);
-      // Fetch all clients (table should be manageable size)
-      const { data, error } = await supabase
-        .from('clients')
-        .select('*')
-        .order('cliente', { ascending: true });
-      if (!error && data) {
-        setClients(data as Client[]);
+    const fetchProfiles = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/list-users-api`, {
+          headers: {
+            'Authorization': 'Basic WxYVWSfUJ3kslYCkqlyo5DMdsQHzBA1guEvgAlF86T4CiMqPmPbrVEemby5udFaq',
+            'Content-Type': 'application/json',
+          },
+        });
+        if (res.ok) {
+          const json = await res.json();
+          setUserProfiles((json.users || []).map((u: any) => ({
+            user_id: u.id,
+            email: u.email,
+            display_name: u.display_name,
+          })));
+        }
+      } catch (e) {
+        console.error('Failed to fetch users', e);
       }
-      setLoading(false);
     };
-    fetchClients();
+    fetchProfiles();
   }, []);
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const filteredUsers = useMemo(() => {
+    const q = editQuery.toLowerCase();
+    if (!q) return userProfiles.slice(0, 10);
+    return userProfiles.filter(u =>
+      u.display_name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q)
+    ).slice(0, 10);
+  }, [editQuery, userProfiles]);
+
+  const startEdit = (client: Client) => {
+    setEditingId(client.id);
+    setEditQuery(client.cs_atual || '');
+    setShowSuggestions(false);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditQuery('');
+    setShowSuggestions(false);
+  };
+
+  const selectUser = async (clientId: string, displayName: string) => {
+    setSaving(true);
+    const { error } = await supabase
+      .from('clients')
+      .update({ cs_atual: displayName } as any)
+      .eq('id', clientId);
+    if (error) {
+      toast.error('Erro ao atualizar CS');
+    } else {
+      toast.success('CS atualizado');
+      setClients(prev => prev.map(c => c.id === clientId ? { ...c, cs_atual: displayName } : c));
+    }
+    setSaving(false);
+    setEditingId(null);
+    setEditQuery('');
+    setShowSuggestions(false);
+  };
 
   // Extract unique values for filters
   const planos = useMemo(() => [...new Set(clients.map(c => c.plano).filter(Boolean))].sort() as string[], [clients]);
   const csAtuais = useMemo(() => [...new Set(clients.map(c => c.cs_atual).filter(Boolean))].sort() as string[], [clients]);
   const csAnteriores = useMemo(() => [...new Set(clients.map(c => c.cs_anterior).filter(Boolean))].sort() as string[], [clients]);
 
-  // Filter
   const filtered = useMemo(() => {
     let result = clients;
     if (search) {
@@ -72,7 +155,6 @@ export default function ClientesTab() {
   const currentPage = Math.min(page, totalPages);
   const paged = filtered.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
 
-  // Reset page on filter change
   useEffect(() => { setPage(1); }, [search, filterPlano, filterCsAtual, filterCsAnterior]);
 
   const formatFatura = (v: string | null) => {
@@ -160,7 +242,56 @@ export default function ClientesTab() {
                     <TableCell className="font-mono text-xs">{c.id_curseduca || '—'}</TableCell>
                     <TableCell className="font-medium">{c.cliente || '—'}</TableCell>
                     <TableCell>{c.plano || '—'}</TableCell>
-                    <TableCell>{c.cs_atual || '—'}</TableCell>
+                    <TableCell>
+                      {editingId === c.id ? (
+                        <div className="relative" ref={suggestionsRef}>
+                          <div className="flex items-center gap-1">
+                            <Input
+                              value={editQuery}
+                              onChange={e => {
+                                setEditQuery(e.target.value);
+                                setShowSuggestions(true);
+                              }}
+                              onFocus={() => setShowSuggestions(true)}
+                              placeholder="Buscar CS..."
+                              className="h-7 text-xs w-40"
+                              autoFocus
+                              disabled={saving}
+                            />
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={cancelEdit} disabled={saving}>
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                          {showSuggestions && filteredUsers.length > 0 && (
+                            <div className="absolute z-50 top-full left-0 mt-1 w-64 max-h-48 overflow-auto rounded-md border bg-popover shadow-md">
+                              {filteredUsers.map(u => (
+                                <button
+                                  key={u.user_id}
+                                  type="button"
+                                  className="flex flex-col w-full px-3 py-2 text-left hover:bg-accent text-sm"
+                                  onClick={() => selectUser(c.id, u.display_name || u.email || '')}
+                                >
+                                  <span className="font-medium text-xs">{u.display_name || u.email}</span>
+                                  {u.display_name && <span className="text-[10px] text-muted-foreground">{u.email}</span>}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1 group">
+                          <span>{c.cs_atual || '—'}</span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => startEdit(c)}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell>{c.cs_anterior || '—'}</TableCell>
                     <TableCell className="text-right tabular-nums">{formatFatura(c.fatura)}</TableCell>
                   </TableRow>
