@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { RequestStatus, STATUS_LABELS, IMAGE_TYPE_LABELS, ImageType } from '@/types/briefing';
 import { Card, CardContent } from '@/components/ui/card';
@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
-import { AlertTriangle, AlertCircle, Send } from 'lucide-react';
+import { AlertTriangle, AlertCircle, Send, Wrench } from 'lucide-react';
 import { format } from 'date-fns';
 import AssignBriefingDialog from '@/components/briefing/AssignBriefingDialog';
 
@@ -44,6 +44,7 @@ interface ImageWithRequest {
 }
 
 const KANBAN_COLUMNS = [
+  { key: 'adjustment', label: 'Solicitação de Ajustes', color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-950/20', border: 'border-l-orange-500' },
   { key: 'pending', label: 'Pendentes', color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-950/20', border: 'border-l-amber-500' },
   { key: 'in_progress', label: 'Em Produção', color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/20', border: 'border-l-blue-500' },
   { key: 'review', label: 'Em Revisão', color: 'text-primary', bg: 'bg-primary/5', border: 'border-l-primary' },
@@ -52,6 +53,7 @@ const KANBAN_COLUMNS = [
 ];
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
+  adjustment: ['in_progress', 'cancelled'],
   pending: ['in_progress', 'cancelled'],
   in_progress: ['review', 'pending', 'cancelled'],
   review: ['completed', 'in_progress', 'cancelled'],
@@ -86,10 +88,37 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
   const queryClient = useQueryClient();
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
   const [dropConfirmOpen, setDropConfirmOpen] = useState(false);
-  const [pendingDrop, setPendingDrop] = useState<{ requestId: string; name: string; fromStatus: string; toStatus: string } | null>(null);
+  const [pendingDrop, setPendingDrop] = useState<{ requestId: string; name: string; fromStatus: string; toStatus: string; isAdjustment?: boolean } | null>(null);
   const [editingCard, setEditingCard] = useState<KanbanCard | null>(null);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [cancelMotivo, setCancelMotivo] = useState('');
+  const [editingAdjustment, setEditingAdjustment] = useState<any>(null);
+  const [adjDesignerEmail, setAdjDesignerEmail] = useState('');
+  const [adjDeadline, setAdjDeadline] = useState('');
+
+  // Fetch adjustment requests for the Kanban
+  const { data: adjustments = [] } = useQuery({
+    queryKey: ['briefing-adjustments-kanban'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('briefing_adjustments')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: adjustmentItems = [] } = useQuery({
+    queryKey: ['briefing-adjustment-items-kanban'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('briefing_adjustment_items')
+        .select('*');
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const kanbanCards = useMemo(() => {
     const requestMap: Record<string, ImageWithRequest[]> = {};
@@ -140,9 +169,41 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
     });
   }, [images]);
 
+  // Build adjustment cards for the "adjustment" column
+  const adjustmentCards: KanbanCard[] = useMemo(() => {
+    return adjustments
+      .filter((a: any) => a.status === 'pending' || a.status === 'allocated')
+      .map((a: any) => {
+        const itemCount = adjustmentItems.filter((i: any) => i.adjustment_id === a.id).length;
+        return {
+          requestId: a.id,
+          platformUrl: a.client_url,
+          requesterName: a.client_email,
+          totalImages: itemCount,
+          pendingImages: itemCount,
+          inProgressImages: 0,
+          reviewImages: 0,
+          completedImages: 0,
+          cancelledImages: 0,
+          status: 'adjustment',
+          assignedDesigners: a.assigned_email ? [a.assigned_email] : [],
+          receivedAt: a.created_at,
+          createdAt: a.created_at,
+          imageTypes: ['adjustment'],
+          slaOverdue: false,
+          _isAdjustment: true,
+          _adjustmentData: a,
+        } as KanbanCard & { _isAdjustment?: boolean; _adjustmentData?: any };
+      });
+  }, [adjustments, adjustmentItems]);
+
   const kanbanColumns = useMemo(() => {
     const cols: Record<string, KanbanCard[]> = {};
     KANBAN_COLUMNS.forEach(c => { cols[c.key] = []; });
+
+    // Add adjustment cards
+    cols['adjustment'] = adjustmentCards;
+
     kanbanCards.forEach(card => {
       if (cols[card.status]) cols[card.status].push(card);
     });
@@ -152,23 +213,49 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
       return new Date(a.receivedAt).getTime() - new Date(b.receivedAt).getTime();
     }));
     return cols;
-  }, [kanbanCards]);
+  }, [kanbanCards, adjustmentCards]);
 
   const handleKanbanDrop = async () => {
     if (!pendingDrop) return;
-    const { requestId, toStatus } = pendingDrop;
+    const { requestId, toStatus, isAdjustment } = pendingDrop;
     try {
-      const targetImages = images.filter(i => i.request_id === requestId && i.status !== 'completed');
-      for (const img of targetImages) {
-        await supabase.from('briefing_images').update({ status: toStatus } as any).eq('id', img.id);
+      if (isAdjustment) {
+        // Update adjustment status
+        const newStatus = toStatus === 'in_progress' ? 'in_progress' : toStatus;
+        await supabase.from('briefing_adjustments').update({ status: newStatus } as any).eq('id', requestId);
+        queryClient.invalidateQueries({ queryKey: ['briefing-adjustments-kanban'] });
+        queryClient.invalidateQueries({ queryKey: ['briefing-adjustments'] });
+      } else {
+        const targetImages = images.filter(i => i.request_id === requestId && i.status !== 'completed');
+        for (const img of targetImages) {
+          await supabase.from('briefing_images').update({ status: toStatus } as any).eq('id', img.id);
+        }
+        queryClient.invalidateQueries({ queryKey: ['briefing-images'] });
       }
-      queryClient.invalidateQueries({ queryKey: ['briefing-images'] });
       toast.success(`Solicitação movida para "${KANBAN_COLUMNS.find(c => c.key === toStatus)?.label}"`);
     } catch (err: any) {
       toast.error('Erro ao mover: ' + err.message);
     }
     setDropConfirmOpen(false);
     setPendingDrop(null);
+  };
+
+  const handleSaveAdjustment = async () => {
+    if (!editingAdjustment) return;
+    try {
+      const updates: any = {};
+      if (adjDesignerEmail.trim()) updates.assigned_email = adjDesignerEmail.trim();
+      if (adjDeadline) updates.deadline = adjDeadline;
+      if (adjDesignerEmail.trim() && editingAdjustment.status === 'pending') updates.status = 'allocated';
+      
+      await supabase.from('briefing_adjustments').update(updates).eq('id', editingAdjustment.id);
+      queryClient.invalidateQueries({ queryKey: ['briefing-adjustments-kanban'] });
+      queryClient.invalidateQueries({ queryKey: ['briefing-adjustments'] });
+      toast.success('Ajuste atualizado!');
+      setEditingAdjustment(null);
+    } catch (err: any) {
+      toast.error('Erro: ' + err.message);
+    }
   };
 
   const handleCancelRequest = async () => {
@@ -244,12 +331,13 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
                 const requestId = e.dataTransfer.getData('requestId');
                 const fromStatus = e.dataTransfer.getData('fromStatus');
                 const name = e.dataTransfer.getData('cardName');
+                const isAdj = e.dataTransfer.getData('isAdjustment') === 'true';
                 if (fromStatus === col.key) return;
                 if (!VALID_TRANSITIONS[fromStatus]?.includes(col.key)) {
                   toast.error(`Não é possível mover de "${KANBAN_COLUMNS.find(c => c.key === fromStatus)?.label}" para "${col.label}"`);
                   return;
                 }
-                setPendingDrop({ requestId, name, fromStatus, toStatus: col.key });
+                setPendingDrop({ requestId, name, fromStatus, toStatus: col.key, isAdjustment: isAdj });
                 setDropConfirmOpen(true);
               }}
             >
@@ -260,6 +348,7 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
 
               <div className="space-y-2">
                 {(kanbanColumns[col.key] || []).map(card => {
+                  const isAdj = (card as any)._isAdjustment === true;
                   // Conditional row colors
                   const rowBg = card.slaOverdue
                     ? 'bg-pink-50 dark:bg-pink-950/20'
@@ -269,7 +358,7 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
 
                   // Deadline semaphore
                   const deadlineSemaphore = (() => {
-                    if (card.status === 'completed' || card.status === 'cancelled') return null;
+                    if (card.status === 'completed' || card.status === 'cancelled' || isAdj) return null;
                     const days = Math.floor((Date.now() - new Date(card.receivedAt).getTime()) / (1000 * 60 * 60 * 24));
                     if (days > 7) return { color: 'text-destructive', dot: 'bg-destructive', label: `⚠️ SLA excedido (${days}d)` };
                     if (days > 5) return { color: 'text-amber-600', dot: 'bg-amber-500', label: `${7 - days}d restante(s)` };
@@ -284,44 +373,70 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
                       e.dataTransfer.setData('requestId', card.requestId);
                       e.dataTransfer.setData('fromStatus', card.status);
                       e.dataTransfer.setData('cardName', card.requesterName || card.platformUrl);
+                      e.dataTransfer.setData('isAdjustment', isAdj ? 'true' : 'false');
                       e.dataTransfer.effectAllowed = 'move';
                     }}
                     className={`p-3 cursor-pointer hover:shadow-md transition-shadow border-l-4 ${col.border} ${rowBg} ${col.key !== 'completed' ? 'cursor-grab active:cursor-grabbing' : ''}`}
-                    onClick={() => setEditingCard(card)}
+                    onClick={() => {
+                      if (isAdj) {
+                        const adjData = (card as any)._adjustmentData;
+                        setEditingAdjustment(adjData);
+                        setAdjDesignerEmail(adjData?.assigned_email || '');
+                        setAdjDeadline(adjData?.deadline ? adjData.deadline.split('T')[0] : '');
+                      } else {
+                        setEditingCard(card);
+                      }
+                    }}
                   >
                     <div className="flex items-start justify-between gap-1">
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold truncate">{card.requesterName || 'Sem nome'}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{extractClientName(card.platformUrl)}</p>
+                        {isAdj && <Wrench className="h-3 w-3 text-orange-500 inline mr-1" />}
+                        <p className="text-sm font-semibold truncate inline">{isAdj ? extractClientName(card.platformUrl) : (card.requesterName || 'Sem nome')}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{isAdj ? card.requesterName : extractClientName(card.platformUrl)}</p>
                       </div>
                       {card.slaOverdue && <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5 animate-pulse" />}
                     </div>
 
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {card.imageTypes.slice(0, 3).map(type => (
-                        <Badge key={type} variant="outline" className="text-[9px] px-1 py-0">
-                          {IMAGE_TYPE_LABELS[type as ImageType] || type}
-                        </Badge>
-                      ))}
-                      {card.imageTypes.length > 3 && (
-                        <Badge variant="outline" className="text-[9px] px-1 py-0">+{card.imageTypes.length - 3}</Badge>
-                      )}
-                    </div>
-
-                    <Progress value={card.totalImages > 0 ? (card.completedImages / card.totalImages) * 100 : 0} className="h-1.5 mt-2 mb-1" />
-
-                    <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                      <span>{card.completedImages}/{card.totalImages} artes</span>
-                      {card.assignedDesigners.length > 0 && (
-                        <span className="truncate max-w-[100px]">{card.assignedDesigners[0]}</span>
-                      )}
-                    </div>
-
-                    {deadlineSemaphore && (
-                      <div className={`flex items-center gap-1.5 text-[10px] mt-1 ${deadlineSemaphore.color} font-medium`}>
-                        <span className={`inline-block h-2 w-2 rounded-full ${deadlineSemaphore.dot}`} />
-                        {deadlineSemaphore.label}
+                    {isAdj ? (
+                      <div className="mt-2">
+                        <Badge variant="outline" className="text-[9px] px-1 py-0">Ajuste</Badge>
+                        <p className="text-[10px] text-muted-foreground mt-1">{card.totalImages} ajuste{card.totalImages !== 1 ? 's' : ''}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {format(new Date(card.createdAt), 'dd/MM/yyyy')}
+                        </p>
+                        {card.assignedDesigners.length > 0 && (
+                          <p className="text-[10px] text-muted-foreground truncate mt-0.5">{card.assignedDesigners[0]}</p>
+                        )}
                       </div>
+                    ) : (
+                      <>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {card.imageTypes.slice(0, 3).map(type => (
+                            <Badge key={type} variant="outline" className="text-[9px] px-1 py-0">
+                              {IMAGE_TYPE_LABELS[type as ImageType] || type}
+                            </Badge>
+                          ))}
+                          {card.imageTypes.length > 3 && (
+                            <Badge variant="outline" className="text-[9px] px-1 py-0">+{card.imageTypes.length - 3}</Badge>
+                          )}
+                        </div>
+
+                        <Progress value={card.totalImages > 0 ? (card.completedImages / card.totalImages) * 100 : 0} className="h-1.5 mt-2 mb-1" />
+
+                        <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                          <span>{card.completedImages}/{card.totalImages} artes</span>
+                          {card.assignedDesigners.length > 0 && (
+                            <span className="truncate max-w-[100px]">{card.assignedDesigners[0]}</span>
+                          )}
+                        </div>
+
+                        {deadlineSemaphore && (
+                          <div className={`flex items-center gap-1.5 text-[10px] mt-1 ${deadlineSemaphore.color} font-medium`}>
+                            <span className={`inline-block h-2 w-2 rounded-full ${deadlineSemaphore.dot}`} />
+                            {deadlineSemaphore.label}
+                          </div>
+                        )}
+                      </>
                     )}
                   </Card>
                   );
@@ -521,6 +636,88 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Adjustment detail dialog */}
+      <Dialog open={!!editingAdjustment} onOpenChange={(v) => { if (!v) setEditingAdjustment(null); }}>
+        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
+          {editingAdjustment && (
+            <>
+              <DialogHeader className="shrink-0">
+                <DialogTitle className="flex items-center gap-2">
+                  <Wrench className="h-4 w-4" />
+                  Solicitação de Ajuste
+                </DialogTitle>
+                <p className="text-xs text-muted-foreground">{editingAdjustment.client_url}</p>
+              </DialogHeader>
+              <div className="flex-1 min-h-0 overflow-y-auto pr-2 space-y-4">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">E-mail do Cliente</p>
+                    <p className="text-sm">{editingAdjustment.client_email}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">Data da Solicitação</p>
+                    <p className="text-sm">{format(new Date(editingAdjustment.created_at), 'dd/MM/yyyy')}</p>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Items */}
+                <div>
+                  <p className="text-sm font-medium mb-2">
+                    Ajustes ({adjustmentItems.filter((i: any) => i.adjustment_id === editingAdjustment.id).length})
+                  </p>
+                  <div className="space-y-2">
+                    {adjustmentItems
+                      .filter((i: any) => i.adjustment_id === editingAdjustment.id)
+                      .map((item: any) => (
+                        <Card key={item.id}>
+                          <CardContent className="py-2 px-3">
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              <a href={item.file_url} target="_blank" rel="noopener noreferrer">
+                                <img src={item.file_url} alt="" className="w-full h-20 object-cover rounded border hover:opacity-80 transition-opacity" />
+                              </a>
+                              <p className="text-xs whitespace-pre-wrap">{item.observations || 'Sem observações'}</p>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Assign designer + deadline */}
+                <div className="space-y-3">
+                  <p className="text-sm font-medium">Alocar para Produção</p>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Designer Responsável</Label>
+                    <Input
+                      type="email"
+                      placeholder="designer@email.com"
+                      value={adjDesignerEmail}
+                      onChange={(e) => setAdjDesignerEmail(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Prazo de Entrega</Label>
+                    <Input
+                      type="date"
+                      value={adjDeadline}
+                      onChange={(e) => setAdjDeadline(e.target.value)}
+                    />
+                  </div>
+                  <Button onClick={handleSaveAdjustment} className="w-full gap-2">
+                    <Send className="h-4 w-4" />
+                    Salvar e Alocar
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

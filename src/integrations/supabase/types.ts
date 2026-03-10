@@ -605,6 +605,77 @@ export type Database = {
           },
         ]
       }
+      briefing_adjustment_items: {
+        Row: {
+          adjustment_id: string
+          created_at: string
+          file_name: string | null
+          file_url: string
+          id: string
+          observations: string | null
+        }
+        Insert: {
+          adjustment_id: string
+          created_at?: string
+          file_name?: string | null
+          file_url: string
+          id?: string
+          observations?: string | null
+        }
+        Update: {
+          adjustment_id?: string
+          created_at?: string
+          file_name?: string | null
+          file_url?: string
+          id?: string
+          observations?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "briefing_adjustment_items_adjustment_id_fkey"
+            columns: ["adjustment_id"]
+            isOneToOne: false
+            referencedRelation: "briefing_adjustments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      briefing_adjustments: {
+        Row: {
+          assigned_email: string | null
+          client_email: string
+          client_url: string
+          created_at: string
+          created_by: string | null
+          deadline: string | null
+          id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_email?: string | null
+          client_email: string
+          client_url: string
+          created_at?: string
+          created_by?: string | null
+          deadline?: string | null
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_email?: string | null
+          client_email?: string
+          client_url?: string
+          created_at?: string
+          created_by?: string | null
+          deadline?: string | null
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       briefing_deliveries: {
         Row: {
           briefing_image_id: string

@@ -39,6 +39,7 @@ import AuditoriaPage from "./pages/AuditoriaPage";
 import PipelinePage from "./pages/PipelinePage";
 import ProcessosImplantacaoPage from "./pages/ProcessosImplantacaoPage";
 import GestaoGerencialPage from "./pages/GestaoGerencialPage";
+import AjusteBriefingsPage from "./pages/AjusteBriefingsPage";
 import ClienteLogin from "./pages/cliente/ClienteLogin";
 import ClienteHubLayout from "./pages/cliente/ClienteHubLayout";
 import ClienteHome from "./pages/cliente/ClienteHome";
@@ -94,6 +95,7 @@ const App = () => (
               <Route path="auditoria" element={<PermissionGuard permission="admin.view"><AuditoriaPage /></PermissionGuard>} />
               <Route path="pipeline" element={<PermissionGuard permission="admin.view"><PipelinePage /></PermissionGuard>} />
               <Route path="processos-implantacao" element={<PermissionGuard permission="carteira.view"><ProcessosImplantacaoPage /></PermissionGuard>} />
+              <Route path="ajuste-briefings" element={<PermissionGuard permission="briefings.view"><AjusteBriefingsPage /></PermissionGuard>} />
             </Route>
             {/* CS Client Preview (impersonation) - outside hub layout */}
             <Route path="/hub/cliente-preview/:clienteId" element={<ClientePreviewWrapper />}>
