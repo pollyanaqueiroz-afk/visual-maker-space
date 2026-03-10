@@ -712,7 +712,12 @@ export default function SchedulingPage() {
           <h1 className="text-2xl font-bold text-foreground">Agendamento</h1>
           <p className="text-sm text-muted-foreground">Gerencie reuniões e calls com clientes</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => syncCalendar()} disabled={calendarSyncing}>
+            <RefreshCw className={cn("h-4 w-4 mr-2", calendarSyncing && "animate-spin")} />
+            {calendarSyncing ? 'Sincronizando...' : 'Sincronizar'}
+          </Button>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           {canCreate && (
             <DialogTrigger asChild>
               <Button onClick={() => handleOpenNew()}>
