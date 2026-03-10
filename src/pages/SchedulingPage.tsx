@@ -96,6 +96,7 @@ interface Meeting {
   recording_url: string | null;
   funil_status: string | null;
   funil_notas: string | null;
+  gcal_event_id: string | null;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
