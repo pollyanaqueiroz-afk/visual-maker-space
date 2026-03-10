@@ -50,11 +50,11 @@ export default function LoyaltyTrackingTab() {
     (async () => {
       const { data } = await supabase
         .from('clients')
-        .select('client_url, plano_contratado')
-        .not('plano_contratado', 'is', null);
+        .select('id_curseduca, plano')
+        .not('plano', 'is', null);
       if (data) {
         const map: Record<string, string> = {};
-        data.forEach((c: any) => { if (c.client_url && c.plano_contratado) map[c.client_url] = c.plano_contratado; });
+        data.forEach((c: any) => { if (c.id_curseduca && c.plano) map[c.id_curseduca] = c.plano; });
         setClientPlans(map);
       }
     })();
