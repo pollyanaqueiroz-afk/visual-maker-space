@@ -47,6 +47,7 @@ const auditoriaModules = [
 
 const adminModules = [
   { title: 'Usuários e Permissões', url: '/hub/admin/usuarios', icon: Users, permission: 'admin.view', badgeKey: null },
+  { title: 'Gestão Gerencial', url: '/hub/admin/gerencial', icon: Crown, permission: 'admin.view', badgeKey: null },
   { title: 'Permissões por Perfil', url: '/hub/admin/permissoes', icon: ShieldCheck, permission: 'admin.manage_permissions', badgeKey: null },
   { title: 'Campos da Carteira', url: '/hub/admin/campos', icon: Database, permission: 'carteira.manage_fields', badgeKey: null },
   { title: 'Hub do Cliente', url: '/cliente', icon: ExternalLink, permission: 'admin.view', badgeKey: null },
