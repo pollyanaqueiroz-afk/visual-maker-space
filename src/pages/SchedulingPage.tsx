@@ -603,6 +603,7 @@ export default function SchedulingPage() {
       }
 
       // Insert only new events
+      const currentUserId = user?.id || null;
       const inserts = newEvents.map(e => {
         const startDate = new Date(e.start);
         const endDate = new Date(e.end);
@@ -618,6 +619,8 @@ export default function SchedulingPage() {
           status: 'scheduled' as const,
           participants: e.attendees?.map(a => a.email) || [],
           client_email: e.attendees?.[0]?.email || null,
+          client_name: e.attendees?.[0]?.email?.split('@')[0] || null,
+          created_by: currentUserId,
         };
       });
 
