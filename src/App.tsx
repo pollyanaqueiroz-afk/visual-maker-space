@@ -38,6 +38,7 @@ import ChurnUpsellPage from "./pages/ChurnUpsellPage";
 import AuditoriaPage from "./pages/AuditoriaPage";
 import PipelinePage from "./pages/PipelinePage";
 import ProcessosImplantacaoPage from "./pages/ProcessosImplantacaoPage";
+import GestaoGerencialPage from "./pages/GestaoGerencialPage";
 import ClienteLogin from "./pages/cliente/ClienteLogin";
 import ClienteHubLayout from "./pages/cliente/ClienteHubLayout";
 import ClienteHome from "./pages/cliente/ClienteHome";
@@ -83,6 +84,7 @@ const App = () => (
               <Route path="admin/usuarios" element={<PermissionGuard permission="admin.view"><AdminUsersPage /></PermissionGuard>} />
               <Route path="admin/permissoes" element={<PermissionGuard permission="admin.manage_permissions"><PermissionsPage /></PermissionGuard>} />
               <Route path="admin/campos" element={<PermissionGuard permission="carteira.manage_fields"><FieldManagementPage /></PermissionGuard>} />
+              <Route path="admin/gerencial" element={<PermissionGuard permission="admin.view"><GestaoGerencialPage /></PermissionGuard>} />
               <Route path="aplicativos" element={<PermissionGuard permission="aplicativos.view"><AplicativosPage /></PermissionGuard>} />
               <Route path="aplicativos/:clienteId" element={<PermissionGuard permission="aplicativos.view"><AplicativoDetailPage /></PermissionGuard>} />
               <Route path="funil-cancelamento" element={<PermissionGuard permission="funil.view"><FunilCancelamentoPage /></PermissionGuard>} />
