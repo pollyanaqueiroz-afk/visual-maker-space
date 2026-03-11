@@ -485,7 +485,7 @@ export default function AdminUsersPage() {
                                 key={role}
                                 variant="outline"
                                 className={`text-[10px] cursor-pointer hover:opacity-70 transition-opacity ${cfg.color} ${isAdminSelf ? 'cursor-not-allowed opacity-50' : ''}`}
-                                onClick={() => !isAdminSelf && (() => { setAddRoleUser(u); setSelectedRole(''); })()}
+                                onClick={() => !isAdminSelf && (() => { setAddRoleUser(u); setEditingRoles([...u.roles]); })()}
                                 title={isAdminSelf ? 'Não é possível alterar seu próprio admin' : `Clique para alterar perfil`}
                               >
                                 {cfg.label} ✎
