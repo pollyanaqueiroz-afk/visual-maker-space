@@ -557,40 +557,38 @@ export default function AdminUsersPage() {
         </CardContent>
       </Card>
 
-      {/* Add Role Dialog */}
-      <Dialog open={!!addRoleUser} onOpenChange={(v) => { if (!v) setAddRoleUser(null); }}>
+      {/* Edit Roles Dialog */}
+      <Dialog open={!!addRoleUser} onOpenChange={(v) => { if (!v) { setAddRoleUser(null); setEditingRoles([]); } }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>{addRoleUser?.roles.length ? 'Alterar Perfil' : 'Definir Perfil'}</DialogTitle>
+            <DialogTitle>Gerenciar Perfis</DialogTitle>
           </DialogHeader>
           {addRoleUser && (
             <div className="space-y-4 pt-2">
               <p className="text-sm text-muted-foreground">
                 Usuário: <strong>{addRoleUser.display_name || addRoleUser.email}</strong>
               </p>
-              {addRoleUser.roles.length > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  Perfil atual: <Badge variant="outline" className={`text-[10px] ${getRoleConfig(addRoleUser.roles[0]).color}`}>{getRoleConfig(addRoleUser.roles[0]).label}</Badge>
-                </p>
-              )}
-              <Select value={selectedRole} onValueChange={setSelectedRole}>
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Selecione um perfil..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {ALL_ROLES.filter(r => !addRoleUser.roles.includes(r.value)).map(r => (
-                    <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button onClick={handleAddRole} disabled={!selectedRole} className="w-full">
-                {addRoleUser.roles.length > 0 ? 'Alterar Perfil' : 'Definir Perfil'}
+              <div className="space-y-2">
+                {ALL_ROLES.map(r => {
+                  const isSelfAdmin = r.value === 'admin' && addRoleUser.id === user?.id;
+                  return (
+                    <label key={r.value} className={cn("flex items-center gap-3 p-2 rounded-md hover:bg-muted/50 cursor-pointer", isSelfAdmin && "opacity-50 cursor-not-allowed")}>
+                      <Checkbox
+                        checked={editingRoles.includes(r.value)}
+                        onCheckedChange={() => !isSelfAdmin && toggleEditingRole(r.value)}
+                        disabled={isSelfAdmin}
+                      />
+                      <Badge variant="outline" className={`text-[10px] ${r.color}`}>{r.label}</Badge>
+                    </label>
+                  );
+                })}
+              </div>
+              <Button
+                onClick={() => handleSaveRoles(addRoleUser.id, addRoleUser.roles, editingRoles)}
+                className="w-full"
+              >
+                Salvar Perfis
               </Button>
-              {addRoleUser.roles.length > 0 && (
-                <Button variant="outline" onClick={handleRemoveAllRoles} className="w-full text-destructive hover:text-destructive">
-                  Remover Perfil
-                </Button>
-              )}
             </div>
           )}
         </DialogContent>
