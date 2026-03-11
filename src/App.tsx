@@ -54,6 +54,7 @@ import ClienteSolicitarApp from "./pages/cliente/ClienteSolicitarApp";
 import ClienteScorm from "./pages/cliente/ClienteScorm";
 import ClienteMigracao from "./pages/cliente/ClienteMigracao";
 import ClientePreviewWrapper from "./pages/cliente/ClientePreviewWrapper";
+import ClienteMigracaoPublic from "./pages/cliente/ClienteMigracaoPublic";
 
 const queryClient = new QueryClient({
   defaultOptions: {
