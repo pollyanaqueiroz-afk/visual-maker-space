@@ -1609,8 +1609,8 @@ export default function AppClientPortalContent({ clienteId }: Props) {
 
           {/* Per-platform celebrations */}
           {(() => {
-            const googlePublished = getFase(6, 'google')?.status === 'concluida';
-            const applePublished = getFase(6, 'apple')?.status === 'concluida';
+            const googlePublished = getFase(5, 'google')?.status === 'concluida';
+            const applePublished = getFase(5, 'apple')?.status === 'concluida';
             return (
               <>
                 {googlePublished && !applePublished && (
