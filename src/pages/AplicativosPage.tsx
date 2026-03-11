@@ -72,9 +72,12 @@ const FASE_NAMES = [
   'Validação Loja',
   'Criação',
   'Aprovação Lojas',
-  'Teste',
+  '', // F5 removida
   'Publicado ✅',
 ];
+
+// Phases visible in the Kanban (skip phase 5)
+const KANBAN_PHASES = [0, 1, 2, 3, 4, 6];
 
 interface AppCliente {
   id: string;
