@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -72,9 +72,12 @@ const FASE_NAMES = [
   'Validação Loja',
   'Criação',
   'Aprovação Lojas',
-  'Teste',
+  '', // F5 removida
   'Publicado ✅',
 ];
+
+// Phases visible in the Kanban (skip phase 5)
+const KANBAN_PHASES = [0, 1, 2, 3, 4, 6];
 
 interface AppCliente {
   id: string;
@@ -1091,7 +1094,23 @@ export default function AplicativosPage() {
           {isLoading ? (
             <div className="text-center py-12 text-muted-foreground">Carregando...</div>
           ) : (
-            <div className="w-full overflow-x-auto pb-2">
+            <>
+            <div
+              className="overflow-x-auto"
+              style={{ overflowY: 'hidden' }}
+              onScroll={(e) => {
+                const sibling = (e.target as HTMLElement).nextElementSibling as HTMLElement;
+                if (sibling) sibling.scrollLeft = (e.target as HTMLElement).scrollLeft;
+              }}
+            >
+              <div style={{ width: 8 * 280 + 7 * 12, height: 1 }} />
+            </div>
+            <div className="w-full overflow-x-auto pb-2"
+              onScroll={(e) => {
+                const sibling = (e.target as HTMLElement).previousElementSibling as HTMLElement;
+                if (sibling) sibling.scrollLeft = (e.target as HTMLElement).scrollLeft;
+              }}
+            >
               <div className="flex gap-3 pb-2" style={{ minWidth: `${8 * 280 + 7 * 12}px` }}>
                 {FASE_NAMES.map((name, idx) => (
                   <div
@@ -1203,6 +1222,7 @@ export default function AplicativosPage() {
                 </div>
               </div>
             </div>
+            </>
           )}
         </TabsContent>
 

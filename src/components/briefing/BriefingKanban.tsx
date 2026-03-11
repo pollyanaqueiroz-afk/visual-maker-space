@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -86,6 +86,9 @@ interface BriefingKanbanProps {
 
 export default function BriefingKanban({ images, loading = false }: BriefingKanbanProps) {
   const queryClient = useQueryClient();
+  const topScrollRef = useRef<HTMLDivElement>(null);
+  const bottomScrollRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
   const [dropConfirmOpen, setDropConfirmOpen] = useState(false);
   const [pendingDrop, setPendingDrop] = useState<{ requestId: string; name: string; fromStatus: string; toStatus: string; isAdjustment?: boolean } | null>(null);
@@ -317,7 +320,18 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
           </div>
         </div>
       ) : (
-      <div className="overflow-x-auto pb-4">
+      <>
+      <div
+        ref={topScrollRef}
+        className="overflow-x-auto"
+        style={{ overflowY: 'hidden' }}
+        onScroll={() => { if (bottomScrollRef.current && topScrollRef.current) bottomScrollRef.current.scrollLeft = topScrollRef.current.scrollLeft; }}
+      >
+        <div style={{ width: 1100, height: 1 }} />
+      </div>
+      <div ref={bottomScrollRef} className="overflow-x-auto pb-4"
+        onScroll={() => { if (topScrollRef.current && bottomScrollRef.current) topScrollRef.current.scrollLeft = bottomScrollRef.current.scrollLeft; }}
+      >
         <div className="flex gap-4 min-w-[1100px]">
           {KANBAN_COLUMNS.map(col => (
             <div
@@ -451,6 +465,7 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
           ))}
         </div>
       </div>
+      </>
       )}
 
       {/* Drop confirm dialog */}

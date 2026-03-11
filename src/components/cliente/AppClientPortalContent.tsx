@@ -105,7 +105,7 @@ const STEP_BY_STEP: Record<string, string[]> = {
   ],
 };
 
-const FASE_NAMES = ['Pré-Requisitos', 'Primeiros Passos', 'Validação pela Loja', 'Criação e Submissão', 'Aprovação das Lojas', 'Teste do App', 'Publicado 🎉'];
+const FASE_NAMES = ['Pré-Requisitos', 'Primeiros Passos', 'Validação pela Loja', 'Criação e Submissão', 'Aprovação das Lojas', '', 'Publicado 🎉'];
 
 interface Props {
   clienteId: string;
@@ -964,9 +964,9 @@ export default function AppClientPortalContent({ clienteId }: Props) {
             )}
             {renderStepGuide(item.texto, item.id)}
             {item.texto === ADMIN_APPLE_TEXT && (
-              <div className="mt-2 rounded-lg bg-blue-500/10 border border-blue-500/20 p-3 flex items-start gap-2">
+               <div className="mt-2 rounded-lg bg-blue-500/10 border border-blue-500/20 p-3 flex items-start gap-2">
                 <AlertTriangle className="h-4 w-4 text-blue-400 mt-0.5 shrink-0" />
-                <p className="text-xs text-blue-300">Não esqueça de aceitar os termos ao final da página da Apple.</p>
+                <p className="text-xs text-blue-300">Não esqueça de aceitar os termos no início da página da Apple.</p>
               </div>
             )}
             {confirmingItemId === item.id && (
