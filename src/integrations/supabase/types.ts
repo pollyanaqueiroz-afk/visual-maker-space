@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_ajustes: {
+        Row: {
+          client_url: string
+          created_at: string
+          created_by: string | null
+          icone_url: string | null
+          id: string
+          nova_descricao: string | null
+          status: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          client_url: string
+          created_at?: string
+          created_by?: string | null
+          icone_url?: string | null
+          id?: string
+          nova_descricao?: string | null
+          status?: string
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          client_url?: string
+          created_at?: string
+          created_by?: string | null
+          icone_url?: string | null
+          id?: string
+          nova_descricao?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       app_assets: {
         Row: {
           altura: number | null
