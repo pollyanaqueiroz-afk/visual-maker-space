@@ -1689,7 +1689,7 @@ export default function AplicativosPage() {
                   const clienteFases = fases.filter(f => f.cliente_id === c.id);
                   const dataCriacao = new Date(c.data_criacao);
                   ['google', 'apple'].forEach(plat => {
-                    const fase6 = clienteFases.find(f => f.numero === 6 && f.plataforma === plat && f.status === 'concluida' && f.data_conclusao);
+                    const fase6 = clienteFases.find(f => f.numero === 5 && f.plataforma === plat && f.status === 'concluida' && f.data_conclusao);
                     if (fase6) {
                       const dias = Math.round((new Date(fase6.data_conclusao!).getTime() - dataCriacao.getTime()) / (1000 * 60 * 60 * 24));
                       result[plat].totalDias += dias;
