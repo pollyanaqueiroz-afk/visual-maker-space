@@ -519,7 +519,7 @@ export default function AplicativoDetailPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div><label className="text-xs text-muted-foreground">Responsável</label><Input value={clientForm.responsavel_nome} onChange={e => setClientForm(p => ({ ...p, responsavel_nome: e.target.value }))} className="h-8 text-sm" /></div>
+              <div><label className="text-xs text-muted-foreground">Prazo estimado</label><Input type="date" value={clientForm.prazo_estimado} onChange={e => setClientForm(p => ({ ...p, prazo_estimado: e.target.value }))} className="h-8 text-sm" /></div>
               <div><label className="text-xs text-muted-foreground">Prazo estimado</label><Input type="date" value={clientForm.prazo_estimado} onChange={e => setClientForm(p => ({ ...p, prazo_estimado: e.target.value }))} className="h-8 text-sm" /></div>
               <div className="col-span-full"><Button size="sm" onClick={() => saveClientData.mutate()} disabled={saveClientData.isPending}>Salvar dados</Button></div>
             </div>

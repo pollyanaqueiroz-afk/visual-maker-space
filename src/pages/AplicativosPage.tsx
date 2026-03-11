@@ -155,7 +155,7 @@ export default function AplicativosPage() {
   const [dropping, setDropping] = useState(false);
 
   const [form, setForm] = useState({
-    nome: '', url_cliente: '', email: '', whatsapp: '', plataforma: 'ambos', responsavel_nome: '',
+    nome: '', url_cliente: '', email: '', whatsapp: '', plataforma: 'ambos',
   });
 
   // Smart URL matching state
@@ -274,11 +274,6 @@ export default function AplicativosPage() {
         .maybeSingle();
 
       if (existing) {
-        // Update the existing record with responsavel info
-        const { error } = await supabase.from('app_clientes').update({
-          responsavel_nome: form.responsavel_nome || null,
-        }).eq('id', existing.id);
-        if (error) throw error;
         return { linked: true, name: existing.nome, id: existing.id };
       }
 
@@ -288,7 +283,6 @@ export default function AplicativosPage() {
         email: form.email,
         whatsapp: form.whatsapp || null,
         plataforma: form.plataforma,
-        responsavel_nome: form.responsavel_nome || null,
       });
       if (error) throw error;
       return { linked: false };
@@ -299,7 +293,7 @@ export default function AplicativosPage() {
       queryClient.invalidateQueries({ queryKey: ['app-checklist-counts'] });
       queryClient.invalidateQueries({ queryKey: ['app-checklist-full'] });
       setDialogOpen(false);
-      setForm({ nome: '', url_cliente: '', email: '', whatsapp: '', plataforma: 'ambos', responsavel_nome: '' });
+      setForm({ nome: '', url_cliente: '', email: '', whatsapp: '', plataforma: 'ambos' });
       setMatchedClient(null);
       setExistingAppCliente(false);
       if (result?.linked) {
@@ -824,10 +818,6 @@ export default function AplicativosPage() {
                         <SelectItem value="ambos">🍎+🤖 Ambos</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>Responsável</Label>
-                    <Input value={form.responsavel_nome} onChange={e => setForm(p => ({ ...p, responsavel_nome: e.target.value }))} />
                   </div>
                 </div>
                 <div className="flex gap-2">
