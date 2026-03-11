@@ -41,6 +41,8 @@ import ProcessosImplantacaoPage from "./pages/ProcessosImplantacaoPage";
 import GestaoGerencialPage from "./pages/GestaoGerencialPage";
 import AjusteBriefingsPage from "./pages/AjusteBriefingsPage";
 import CarteirizacaoPage from "./pages/CarteirizacaoPage";
+import MigracaoKanbanPage from "./pages/MigracaoKanbanPage";
+import MigracaoAjustesPage from "./pages/MigracaoAjustesPage";
 import ClienteLogin from "./pages/cliente/ClienteLogin";
 import ClienteHubLayout from "./pages/cliente/ClienteHubLayout";
 import ClienteHome from "./pages/cliente/ClienteHome";
@@ -49,6 +51,7 @@ import ClienteApp from "./pages/cliente/ClienteApp";
 import ClienteSolicitar from "./pages/cliente/ClienteSolicitar";
 import ClienteSolicitarApp from "./pages/cliente/ClienteSolicitarApp";
 import ClienteScorm from "./pages/cliente/ClienteScorm";
+import ClienteMigracao from "./pages/cliente/ClienteMigracao";
 import ClientePreviewWrapper from "./pages/cliente/ClientePreviewWrapper";
 
 const queryClient = new QueryClient({
@@ -98,6 +101,8 @@ const App = () => (
               <Route path="pipeline" element={<PermissionGuard permission="admin.view"><PipelinePage /></PermissionGuard>} />
               <Route path="processos-implantacao" element={<PermissionGuard permission="carteira.view"><ProcessosImplantacaoPage /></PermissionGuard>} />
               <Route path="ajuste-briefings" element={<PermissionGuard permission="briefings.view"><AjusteBriefingsPage /></PermissionGuard>} />
+              <Route path="migracao" element={<PermissionGuard permission="migracao.view"><MigracaoKanbanPage /></PermissionGuard>} />
+              <Route path="migracao/ajustes" element={<PermissionGuard permission="migracao.view"><MigracaoAjustesPage /></PermissionGuard>} />
             </Route>
             {/* CS Client Preview (impersonation) - outside hub layout */}
             <Route path="/hub/cliente-preview/:clienteId" element={<ClientePreviewWrapper />}>
@@ -125,6 +130,7 @@ const App = () => (
               <Route path="solicitar" element={<ClienteSolicitar />} />
               <Route path="solicitar-app" element={<ClienteSolicitarApp />} />
               <Route path="scorm" element={<ClienteScorm />} />
+              <Route path="migracao" element={<ClienteMigracao />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

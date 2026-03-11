@@ -2,7 +2,7 @@ import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Home, Palette, Smartphone, LogOut, GraduationCap, Bell, Eye } from 'lucide-react';
+import { Home, Palette, Smartphone, LogOut, GraduationCap, Bell, Eye, ArrowRightLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -15,6 +15,7 @@ const navItems = [
   { label: 'Home', icon: Home, path: '/cliente' },
   { label: 'Artes', icon: Palette, path: '/cliente/artes' },
   { label: 'Aplicativo', icon: Smartphone, path: '/cliente/aplicativo' },
+  { label: 'Migração', icon: ArrowRightLeft, path: '/cliente/migracao' },
   { label: 'SCORM', icon: GraduationCap, path: '/cliente/scorm' },
 ];
 
