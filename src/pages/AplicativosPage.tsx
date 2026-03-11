@@ -1425,7 +1425,17 @@ export default function AplicativosPage() {
                     </div>
                     <CardContent className="p-0">
                       {/* Table header */}
-                      <div className="grid grid-cols-[32px_1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-2 bg-muted/20 border-b border-border text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      <div className="grid grid-cols-[28px_32px_1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-2 bg-muted/20 border-b border-border text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                        <Checkbox
+                          checked={items.every(i => bulkSelectedIds.has(i.id))}
+                          onCheckedChange={(checked) => {
+                            setBulkSelectedIds(prev => {
+                              const next = new Set(prev);
+                              items.forEach(i => { if (checked) next.add(i.id); else next.delete(i.id); });
+                              return next;
+                            });
+                          }}
+                        />
                         <span></span>
                         <span>Tarefa</span>
                         <span>Responsável</span>
