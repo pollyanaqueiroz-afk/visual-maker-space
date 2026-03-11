@@ -275,9 +275,8 @@ export default function AplicativosPage() {
 
       if (existing) {
         // Update the existing record with responsavel info
-        const { error } = await supabase.from('app_clientes').update({
-          responsavel_nome: form.responsavel_nome || null,
-        }).eq('id', existing.id);
+      const { error } = await supabase.from('app_clientes').update({
+      }).eq('id', existing.id);
         if (error) throw error;
         return { linked: true, name: existing.nome, id: existing.id };
       }
