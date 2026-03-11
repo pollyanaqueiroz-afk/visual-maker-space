@@ -1,18 +1,14 @@
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Lock, UserCircle, Sparkles, Users, Palette } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { useCountUp } from '@/hooks/useCountUp';
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Lock, UserCircle, Sparkles, Users, Palette } from "lucide-react";
+import { motion } from "framer-motion";
+import { useCountUp } from "@/hooks/useCountUp";
 
 const Index = () => {
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
       {/* Background image */}
-      <img
-        src="/images/bg-curseduca.png"
-        alt=""
-        className="absolute inset-0 w-full h-full object-cover"
-      />
+      <img src="/images/bg-curseduca.png" alt="" className="absolute inset-0 w-full h-full object-cover" />
       {/* Overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80" />
 
@@ -20,7 +16,7 @@ const Index = () => {
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, ease: 'easeOut' }}
+        transition={{ duration: 0.7, ease: "easeOut" }}
         className="relative z-10 text-center space-y-8 max-w-lg px-6"
       >
         {/* Badge */}
@@ -33,10 +29,8 @@ const Index = () => {
           className="text-4xl sm:text-5xl font-extrabold text-white drop-shadow-lg leading-tight"
           style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
         >
-          Hub{' '}
-          <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
-            Curseduca
-          </span>
+          Hub{" "}
+          <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">Curseduca</span>
         </motion.h1>
 
         <motion.p
@@ -86,7 +80,12 @@ const Index = () => {
           className="flex items-center justify-center gap-8 pt-4"
         >
           <SocialStat icon={<Users className="h-4 w-4 text-emerald-400" />} value={1690} suffix="+" label="clientes" />
-          <SocialStat icon={<Palette className="h-4 w-4 text-emerald-400" />} value={312} suffix="+" label="artes entregues" />
+          <SocialStat
+            icon={<Palette className="h-4 w-4 text-emerald-400" />}
+            value={312}
+            suffix="+"
+            label="artes entregues"
+          />
         </motion.div>
 
         {/* Decorative sparkle */}
@@ -97,7 +96,9 @@ const Index = () => {
           className="flex items-center justify-center gap-2 pt-2"
         >
           <Sparkles className="h-3 w-3 text-emerald-400/50" />
-          <span className="text-white/30 text-xs tracking-widest uppercase">Design · Artes · Aplicativos</span>
+          <span className="text-white/30 text-xs tracking-widest uppercase">
+            Design · Artes · Aplicativos · Migrações
+          </span>
           <Sparkles className="h-3 w-3 text-emerald-400/50" />
         </motion.div>
       </motion.div>
@@ -105,12 +106,25 @@ const Index = () => {
   );
 };
 
-function SocialStat({ icon, value, suffix, label }: { icon: React.ReactNode; value: number; suffix: string; label: string }) {
-  const display = useCountUp({ end: value, duration: 1200, separator: '.' });
+function SocialStat({
+  icon,
+  value,
+  suffix,
+  label,
+}: {
+  icon: React.ReactNode;
+  value: number;
+  suffix: string;
+  label: string;
+}) {
+  const display = useCountUp({ end: value, duration: 1200, separator: "." });
   return (
     <div className="flex items-center gap-2 text-white/70">
       {icon}
-      <span className="font-bold text-white">{display}{suffix}</span>
+      <span className="font-bold text-white">
+        {display}
+        {suffix}
+      </span>
       <span className="text-sm">{label}</span>
     </div>
   );
