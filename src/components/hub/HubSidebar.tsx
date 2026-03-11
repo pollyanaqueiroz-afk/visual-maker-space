@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils';
 const implantacaoModules = [
   { title: 'Gestão de Briefings', url: '/hub/briefings', icon: FileImage, permission: 'briefings.view', badgeKey: 'pendingArts' as const },
   { title: 'Gestão de Aplicativos', url: '/hub/aplicativos', icon: Smartphone, permission: 'aplicativos.view', badgeKey: 'pendingApps' as const },
+  { title: 'Migrações', url: '/hub/migracao', icon: ArrowRightLeft, permission: 'migracao.view', badgeKey: null },
   { title: 'SCORM', url: '/hub/scorm', icon: GraduationCap, permission: 'scorm.view', badgeKey: null },
 ];
 
