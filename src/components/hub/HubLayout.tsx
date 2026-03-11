@@ -138,12 +138,7 @@ export default function HubLayout({ children }: Props) {
             <SidebarToggleButton />
             <div className="flex-1" />
 
-            {/* Search placeholder */}
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 border border-gray-200 text-gray-500 text-sm cursor-pointer hover:bg-gray-200/70 transition-colors">
-              <Search className="h-3.5 w-3.5" />
-              <span>Buscar...</span>
-              <kbd className="ml-4 text-[10px] bg-white px-1.5 py-0.5 rounded border border-gray-200">⌘K</kbd>
-            </div>
+            <GlobalSearch />
 
             <NotificationBell />
           </header>
