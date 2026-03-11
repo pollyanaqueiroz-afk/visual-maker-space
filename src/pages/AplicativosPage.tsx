@@ -72,12 +72,11 @@ const FASE_NAMES = [
   'Validação Loja',
   'Criação',
   'Aprovação Lojas',
-  '', // F5 removida
   'Publicado ✅',
 ];
 
-// Phases visible in the Kanban (skip phase 5)
-const KANBAN_PHASES = [0, 1, 2, 3, 4, 6];
+// Phases visible in the Kanban
+const KANBAN_PHASES = [0, 1, 2, 3, 4, 5];
 
 interface AppCliente {
   id: string;
@@ -396,8 +395,8 @@ export default function AplicativosPage() {
     }
   };
 
-  const totalAbertos = clientes.filter(c => c.fase_atual < 6).length;
-  const totalConcluidos = clientes.filter(c => c.fase_atual >= 6).length;
+  const totalAbertos = clientes.filter(c => c.fase_atual < 5).length;
+  const totalConcluidos = clientes.filter(c => c.fase_atual >= 5).length;
   const atrasados = clientes.filter(c => c.status === 'atrasado').length;
   const slaViolados = fases.filter(f => f.sla_violado).length;
   const fasesAtrasadas = fases.filter(f => f.sla_violado || f.status === 'atrasada').length;
@@ -407,12 +406,12 @@ export default function AplicativosPage() {
   }, [fases]);
 
   const avgProgress = totalAbertos > 0
-    ? Math.round(clientes.filter(c => c.fase_atual < 6).reduce((sum, c) => sum + c.porcentagem_geral, 0) / totalAbertos)
+    ? Math.round(clientes.filter(c => c.fase_atual < 5).reduce((sum, c) => sum + c.porcentagem_geral, 0) / totalAbertos)
     : 0;
 
   // KPI detail lists
   const kpiClientLists = useMemo(() => {
-    const abertos = clientes.filter(c => c.fase_atual < 6);
+    const abertos = clientes.filter(c => c.fase_atual < 5);
     const atrasadosList = clientes.filter(c => c.status === 'atrasado');
     const etapasAtrasadasList = (() => {
       const fasesAtrasadasData = fases.filter(f => f.sla_violado || f.status === 'atrasada');
@@ -421,8 +420,8 @@ export default function AplicativosPage() {
         return c ? { ...c, faseAtrasada: f.numero, plataformaFase: (f as any).plataforma } : null;
       }).filter(Boolean) as (AppCliente & { faseAtrasada: number; plataformaFase?: string })[];
     })();
-    const publicados = clientes.filter(c => c.fase_atual >= 6);
-    const progressoList = clientes.filter(c => c.fase_atual < 6).sort((a, b) => b.porcentagem_geral - a.porcentagem_geral);
+    const publicados = clientes.filter(c => c.fase_atual >= 5);
+    const progressoList = clientes.filter(c => c.fase_atual < 5).sort((a, b) => b.porcentagem_geral - a.porcentagem_geral);
     // Clients needing attention: SLA violated or status atrasado (deduplicated)
     const atencaoIds = new Set<string>();
     const atencaoList: (AppCliente & { motivo: string })[] = [];
@@ -452,12 +451,12 @@ export default function AplicativosPage() {
 
   const columns = useMemo(() => {
     const cols: Record<number, AppCliente[]> = {};
-    for (let i = 0; i <= 6; i++) cols[i] = [];
+    for (let i = 0; i <= 5; i++) cols[i] = [];
     const filtered = kanbanFilter === 'atrasados'
       ? activeClientes.filter(c => clientesComFaseAtrasada.has(c.id) || c.status === 'atrasado')
       : activeClientes;
     filtered.forEach(c => {
-      const fase = Math.min(c.fase_atual, 6);
+      const fase = Math.min(c.fase_atual, 5);
       cols[fase].push(c);
     });
     return cols;
@@ -1444,7 +1443,7 @@ export default function AplicativosPage() {
 
                           // Special rendering for publicacao_url
                           if (isPubUrl) {
-                            const fase6 = fases.find(f => f.cliente_id === clienteId && f.numero === 6 && (f as any).plataforma === item.plataforma);
+                            const fase6 = fases.find(f => f.cliente_id === clienteId && f.numero === 5 && (f as any).plataforma === item.plataforma);
                             const startDate = (fase6 as any)?.data_inicio ? new Date((fase6 as any).data_inicio) : new Date(item.created_at);
                             const deadline = addBusinessDays(startDate, 1);
                             const pubOverdue = !item.feito && new Date() > deadline;
@@ -1643,7 +1642,7 @@ export default function AplicativosPage() {
                     const criadas = clientes.filter(c => { const d = new Date(c.data_criacao); return d >= mStart && d <= mEnd; }).length;
                     const concluidas = clientes.filter(c => {
                       if (c.status !== 'concluido') return false;
-                      const f6 = fases.filter(f => f.cliente_id === c.id && f.numero === 6 && f.status === 'concluida' && f.data_conclusao);
+                      const f6 = fases.filter(f => f.cliente_id === c.id && f.numero === 5 && f.status === 'concluida' && f.data_conclusao);
                       const last = f6.sort((a, b) => new Date(b.data_conclusao!).getTime() - new Date(a.data_conclusao!).getTime())[0];
                       if (!last) return false;
                       const d = new Date(last.data_conclusao!);
@@ -1664,7 +1663,7 @@ export default function AplicativosPage() {
                     const criadas = clientes.filter(c => { const d = new Date(c.data_criacao); return d >= wStart && d <= wEnd; }).length;
                     const concluidas = clientes.filter(c => {
                       if (c.status !== 'concluido') return false;
-                      const f6 = fases.filter(f => f.cliente_id === c.id && f.numero === 6 && f.status === 'concluida' && f.data_conclusao);
+                      const f6 = fases.filter(f => f.cliente_id === c.id && f.numero === 5 && f.status === 'concluida' && f.data_conclusao);
                       const last = f6.sort((a, b) => new Date(b.data_conclusao!).getTime() - new Date(a.data_conclusao!).getTime())[0];
                       if (!last) return false;
                       const d = new Date(last.data_conclusao!);
@@ -1690,7 +1689,7 @@ export default function AplicativosPage() {
                   const clienteFases = fases.filter(f => f.cliente_id === c.id);
                   const dataCriacao = new Date(c.data_criacao);
                   ['google', 'apple'].forEach(plat => {
-                    const fase6 = clienteFases.find(f => f.numero === 6 && f.plataforma === plat && f.status === 'concluida' && f.data_conclusao);
+                    const fase6 = clienteFases.find(f => f.numero === 5 && f.plataforma === plat && f.status === 'concluida' && f.data_conclusao);
                     if (fase6) {
                       const dias = Math.round((new Date(fase6.data_conclusao!).getTime() - dataCriacao.getTime()) / (1000 * 60 * 60 * 24));
                       result[plat].totalDias += dias;
