@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import {
   FileImage, CalendarDays, BarChart3, Briefcase, Crown, Loader2, Sparkles, Rocket,
-  AlertTriangle, Star, CheckCircle, ChevronRight, Smartphone,
+  AlertTriangle, Star, CheckCircle, ChevronRight, Smartphone, ArrowRightLeft,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import PendingItemDialog from '@/components/hub/PendingItemDialog';
