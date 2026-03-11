@@ -343,7 +343,7 @@ function MigrationForm({ projectId, isResubmission }: { projectId: string; isRes
           {/* 1. Club Links */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <Label className="text-white/80">1. Links de cada Club</Label>
+              <Label className="text-white/80">1. Links de cada Club <span className="text-destructive">*</span></Label>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
