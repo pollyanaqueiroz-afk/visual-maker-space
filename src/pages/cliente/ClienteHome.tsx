@@ -500,3 +500,68 @@ export default function ClienteHome() {
     </div>
   );
 }
+
+// ─── Migration Status Card ───────────────────────────────────
+function MigrationStatusCard({ clientEmail, navigate }: { clientEmail: string | null; navigate: (path: string) => void }) {
+  const STATUS_LABELS: Record<string, string> = {
+    waiting_form: 'Aguardando formulário',
+    analysis: 'Em análise',
+    rejected: 'Ajustes solicitados',
+    extraction: 'Extração de dados',
+    in_progress: 'Migração em andamento',
+    completed: 'Concluído',
+  };
+
+  const { data: migrationProject } = useQuery({
+    queryKey: ['cliente-migration-home', clientEmail],
+    enabled: !!clientEmail,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('migration_projects')
+        .select('*')
+        .eq('client_email', clientEmail!)
+        .eq('has_migration', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  if (!migrationProject) return null;
+
+  const statusOrder: Record<string, number> = { waiting_form: 0, analysis: 1, rejected: 1, extraction: 2, in_progress: 3, completed: 4 };
+  const progress = migrationProject.migration_status === 'completed' ? 100 : ((statusOrder[migrationProject.migration_status] || 0) / 4) * 100;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.24, type: 'spring', stiffness: 100, damping: 14 }}
+      whileHover={{ scale: 1.015, rotateX: 2, rotateY: -1 }}
+      style={{ perspective: 800 }}
+    >
+      <Card className="bg-[#1E293B] border-white/10 cursor-pointer hover:border-white/20 transition-colors"
+        onClick={() => navigate('/cliente/migracao')}>
+        <CardContent className="p-4 flex items-center gap-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-500/10">
+            <ArrowRightLeft className="h-5 w-5 text-orange-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <p className="text-xs text-white/50 mb-0.5">Migração</p>
+              {migrationProject.migration_status === 'rejected' && (
+                <Badge variant="destructive" className="text-[10px] ml-1">Ajustes necessários</Badge>
+              )}
+            </div>
+            <p className="text-sm font-medium">
+              {STATUS_LABELS[migrationProject.migration_status] || migrationProject.migration_status}
+            </p>
+            <Progress value={progress} className="h-1.5 bg-white/10 mt-1.5" />
+          </div>
+          <ChevronRight className="h-4 w-4 text-white/30 shrink-0" />
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
