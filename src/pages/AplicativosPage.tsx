@@ -1642,7 +1642,7 @@ export default function AplicativosPage() {
                     const criadas = clientes.filter(c => { const d = new Date(c.data_criacao); return d >= mStart && d <= mEnd; }).length;
                     const concluidas = clientes.filter(c => {
                       if (c.status !== 'concluido') return false;
-                      const f6 = fases.filter(f => f.cliente_id === c.id && f.numero === 6 && f.status === 'concluida' && f.data_conclusao);
+                      const f6 = fases.filter(f => f.cliente_id === c.id && f.numero === 5 && f.status === 'concluida' && f.data_conclusao);
                       const last = f6.sort((a, b) => new Date(b.data_conclusao!).getTime() - new Date(a.data_conclusao!).getTime())[0];
                       if (!last) return false;
                       const d = new Date(last.data_conclusao!);
