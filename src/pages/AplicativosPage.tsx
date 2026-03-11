@@ -1460,7 +1460,8 @@ export default function AplicativosPage() {
                           // Special rendering for alerta_prazo
                           if (item.tipo === 'alerta_prazo') {
                             return (
-                              <div key={item.id} className={`grid grid-cols-[32px_1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-3 items-center ${isDone ? 'opacity-60' : 'bg-destructive/5 border-l-4 border-destructive'}`}>
+                              <div key={item.id} className={`grid grid-cols-[28px_32px_1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-3 items-center ${isDone ? 'opacity-60' : 'bg-destructive/5 border-l-4 border-destructive'}`}>
+                                <Checkbox checked={bulkSelectedIds.has(item.id)} onCheckedChange={(checked) => { setBulkSelectedIds(prev => { const n = new Set(prev); if (checked) n.add(item.id); else n.delete(item.id); return n; }); }} />
                                 <AlertTriangle className={`h-4 w-4 ${isDone ? 'text-muted-foreground' : 'text-destructive'}`} />
                                 <div className="min-w-0">
                                   <p className={`text-sm font-semibold ${isDone ? 'line-through text-muted-foreground' : 'text-destructive'}`}>{item.texto}</p>
