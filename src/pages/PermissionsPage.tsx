@@ -15,6 +15,7 @@ const ROLES = [
   { value: 'analista_implantacao', label: 'Analista Impl.' },
   { value: 'cs', label: 'CS' },
   { value: 'implantacao', label: 'Implantação' },
+  { value: 'migrador', label: 'Migrador' },
   { value: 'designer', label: 'Designer' },
   { value: 'member', label: 'Membro' },
   { value: 'cliente', label: 'Cliente' },

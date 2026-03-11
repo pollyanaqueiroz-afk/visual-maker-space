@@ -1856,6 +1856,7 @@ export type Database = {
         | "gerente_implantacao"
         | "cliente"
         | "analista_implantacao"
+        | "migrador"
       image_type:
         | "login"
         | "banner_vitrine"
@@ -2007,6 +2008,7 @@ export const Constants = {
         "gerente_implantacao",
         "cliente",
         "analista_implantacao",
+        "migrador",
       ],
       image_type: [
         "login",

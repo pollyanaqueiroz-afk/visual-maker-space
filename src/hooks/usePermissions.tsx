@@ -94,7 +94,10 @@ export const PERMISSION_MODULES = [
     label: 'Migração',
     permissions: [
       { key: 'migracao.view', label: 'Visualizar migrações' },
-      { key: 'migracao.manage', label: 'Gerenciar migrações' },
+      { key: 'migracao.manage', label: 'Gerenciar migrações (criar clientes)' },
+      { key: 'migracao.validate', label: 'Validar dados do formulário' },
+      { key: 'migracao.move_cards', label: 'Mover cards no Kanban' },
+      { key: 'migracao.send_feedback', label: 'Enviar devolutiva ao cliente' },
     ],
   },
   {
