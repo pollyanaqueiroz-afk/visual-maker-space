@@ -130,6 +130,7 @@ const App = () => (
               <Route path="solicitar" element={<ClienteSolicitar />} />
               <Route path="solicitar-app" element={<ClienteSolicitarApp />} />
               <Route path="scorm" element={<ClienteScorm />} />
+              <Route path="migracao" element={<ClienteMigracao />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
