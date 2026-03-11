@@ -102,6 +102,7 @@ const App = () => (
               <Route path="pipeline" element={<PermissionGuard permission="admin.view"><PipelinePage /></PermissionGuard>} />
               <Route path="processos-implantacao" element={<PermissionGuard permission="carteira.view"><ProcessosImplantacaoPage /></PermissionGuard>} />
               <Route path="ajuste-briefings" element={<PermissionGuard permission="briefings.view"><AjusteBriefingsPage /></PermissionGuard>} />
+              <Route path="ajuste-aplicativos" element={<PermissionGuard permission="aplicativos.view"><AjusteAplicativosPage /></PermissionGuard>} />
               <Route path="migracao" element={<PermissionGuard permission="migracao.view"><MigracaoKanbanPage /></PermissionGuard>} />
               <Route path="migracao/ajustes" element={<PermissionGuard permission="migracao.view"><MigracaoAjustesPage /></PermissionGuard>} />
             </Route>
