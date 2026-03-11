@@ -474,17 +474,16 @@ export default function AppClientPortalContent({ clienteId }: Props) {
     if (allFase6Done) return '🎉 Seu app está publicado em ambas as lojas!';
 
     if (isParallelFlow) {
-      const googleFase6 = getFase(6, 'google');
-      const appleFase6 = getFase(6, 'apple');
-      if (googleFase6?.status === 'concluida' && appleFase6?.status !== 'concluida') {
+      const googleFase5 = getFase(5, 'google');
+      const appleFase5 = getFase(5, 'apple');
+      if (googleFase5?.status === 'concluida' && appleFase5?.status !== 'concluida') {
         const appleActive = fases.find((f: any) => f.plataforma === 'apple' && f.status === 'em_andamento');
         return `🤖 Google Play publicado! 🎉 · 🍎 Apple na fase ${appleActive?.numero ?? '?'} — ${appleActive?.nome ?? ''}`;
       }
-      if (appleFase6?.status === 'concluida' && googleFase6?.status !== 'concluida') {
+      if (appleFase5?.status === 'concluida' && googleFase5?.status !== 'concluida') {
         const googleActive = fases.find((f: any) => f.plataforma === 'google' && f.status === 'em_andamento');
         return `🍎 App Store publicado! 🎉 · 🤖 Google na fase ${googleActive?.numero ?? '?'} — ${googleActive?.nome ?? ''}`;
       }
-      // Both still in progress
       const googleActive = fases.find((f: any) => f.plataforma === 'google' && f.status === 'em_andamento');
       const appleActive = fases.find((f: any) => f.plataforma === 'apple' && f.status === 'em_andamento');
       if (googleActive && appleActive) {
@@ -492,9 +491,9 @@ export default function AppClientPortalContent({ clienteId }: Props) {
       }
     }
 
-    const singleFase6 = fases.find((f: any) => f.numero === 6);
-    if (singleFase6?.status === 'concluida') return '🎉 Seu app está publicado!';
-    if (cliente?.fase_atual === 5) return '🏁 Última reta! Teste seu app e aprove para publicarmos.';
+    const singleFase5 = fases.find((f: any) => f.numero === 5);
+    if (singleFase5?.status === 'concluida') return '🎉 Seu app está publicado!';
+    if (cliente?.fase_atual === 4) return '🏁 Última reta! Aguardando aprovação das lojas.';
 
     // Client-only progress
     const clientItemsMsg = checklist.filter((i: any) => i.ator === 'cliente' && i.obrigatorio);
