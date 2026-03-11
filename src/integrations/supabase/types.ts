@@ -1466,6 +1466,224 @@ export type Database = {
         }
         Relationships: []
       }
+      migration_clubs: {
+        Row: {
+          club_name: string | null
+          club_url: string
+          created_at: string | null
+          id: string
+          submission_id: string
+        }
+        Insert: {
+          club_name?: string | null
+          club_url: string
+          created_at?: string | null
+          id?: string
+          submission_id: string
+        }
+        Update: {
+          club_name?: string | null
+          club_url?: string
+          created_at?: string | null
+          id?: string
+          submission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "migration_clubs_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "migration_form_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      migration_form_submissions: {
+        Row: {
+          api_basic: string | null
+          api_client_id: string | null
+          api_client_secret: string | null
+          created_at: string | null
+          id: string
+          is_resubmission: boolean | null
+          members_spreadsheet_name: string | null
+          members_spreadsheet_url: string | null
+          project_id: string
+          submitted_at: string | null
+        }
+        Insert: {
+          api_basic?: string | null
+          api_client_id?: string | null
+          api_client_secret?: string | null
+          created_at?: string | null
+          id?: string
+          is_resubmission?: boolean | null
+          members_spreadsheet_name?: string | null
+          members_spreadsheet_url?: string | null
+          project_id: string
+          submitted_at?: string | null
+        }
+        Update: {
+          api_basic?: string | null
+          api_client_id?: string | null
+          api_client_secret?: string | null
+          created_at?: string | null
+          id?: string
+          is_resubmission?: boolean | null
+          members_spreadsheet_name?: string | null
+          members_spreadsheet_url?: string | null
+          project_id?: string
+          submitted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "migration_form_submissions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "migration_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      migration_projects: {
+        Row: {
+          client_email: string
+          client_name: string
+          client_url: string
+          created_at: string | null
+          created_by: string | null
+          cs_observations: string | null
+          cs_responsible: string | null
+          has_app: boolean | null
+          has_design: boolean | null
+          has_migration: boolean | null
+          id: string
+          migration_status: string | null
+          migrator_observations: string | null
+          platform_origin: string
+          portal_token: string | null
+          rejected_tag: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          client_email: string
+          client_name: string
+          client_url: string
+          created_at?: string | null
+          created_by?: string | null
+          cs_observations?: string | null
+          cs_responsible?: string | null
+          has_app?: boolean | null
+          has_design?: boolean | null
+          has_migration?: boolean | null
+          id?: string
+          migration_status?: string | null
+          migrator_observations?: string | null
+          platform_origin?: string
+          portal_token?: string | null
+          rejected_tag?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          client_email?: string
+          client_name?: string
+          client_url?: string
+          created_at?: string | null
+          created_by?: string | null
+          cs_observations?: string | null
+          cs_responsible?: string | null
+          has_app?: boolean | null
+          has_design?: boolean | null
+          has_migration?: boolean | null
+          id?: string
+          migration_status?: string | null
+          migrator_observations?: string | null
+          platform_origin?: string
+          portal_token?: string | null
+          rejected_tag?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      migration_status_history: {
+        Row: {
+          changed_by: string | null
+          created_at: string | null
+          from_status: string | null
+          id: string
+          notes: string | null
+          project_id: string
+          to_status: string
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string | null
+          from_status?: string | null
+          id?: string
+          notes?: string | null
+          project_id: string
+          to_status: string
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string | null
+          from_status?: string | null
+          id?: string
+          notes?: string | null
+          project_id?: string
+          to_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "migration_status_history_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "migration_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      migration_validations: {
+        Row: {
+          created_at: string | null
+          id: string
+          item_key: string
+          observation: string | null
+          project_id: string
+          status: string | null
+          validated_at: string | null
+          validated_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          item_key: string
+          observation?: string | null
+          project_id: string
+          status?: string | null
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          item_key?: string
+          observation?: string | null
+          project_id?: string
+          status?: string | null
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "migration_validations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "migration_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
