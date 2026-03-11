@@ -1266,19 +1266,59 @@ export default function AplicativosPage() {
             </Card>
           </div>
 
-          {/* Unassigned alert */}
-          {unassignedTaskCount > 0 && (
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive/20 shrink-0">
-                <AlertTriangle className="h-4 w-4 text-destructive" />
+          {/* Unassigned alert + Bulk assign */}
+          <div className="flex items-center gap-3">
+            {unassignedTaskCount > 0 && (
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20 flex-1">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive/20 shrink-0">
+                  <AlertTriangle className="h-4 w-4 text-destructive" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-destructive">{unassignedTaskCount} tarefa{unassignedTaskCount > 1 ? 's' : ''} sem responsável atribuído</p>
+                  <p className="text-xs text-destructive/60">Atribua um responsável para garantir rastreabilidade e SLA</p>
+                </div>
+                <Button variant="destructive" size="sm" onClick={() => setFilterResponsavelTask('unassigned')}>Ver tarefas</Button>
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-destructive">{unassignedTaskCount} tarefa{unassignedTaskCount > 1 ? 's' : ''} sem responsável atribuído</p>
-                <p className="text-xs text-destructive/60">Atribua um responsável para garantir rastreabilidade e SLA</p>
+            )}
+            {bulkSelectedIds.size > 0 && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
+                <Badge variant="secondary">{bulkSelectedIds.size} selecionada{bulkSelectedIds.size > 1 ? 's' : ''}</Badge>
+                <Button size="sm" onClick={() => setBulkAssignDialogOpen(true)}>
+                  <UserPen className="h-4 w-4 mr-1" /> Definir Responsável
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setBulkSelectedIds(new Set())}>Limpar</Button>
               </div>
-              <Button variant="destructive" size="sm" onClick={() => setFilterResponsavelTask('unassigned')}>Ver tarefas</Button>
-            </div>
-          )}
+            )}
+          </div>
+
+          {/* Bulk Assign Dialog */}
+          <Dialog open={bulkAssignDialogOpen} onOpenChange={setBulkAssignDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Definir responsável em lote</DialogTitle>
+              </DialogHeader>
+              <p className="text-sm text-muted-foreground">{bulkSelectedIds.size} tarefa{bulkSelectedIds.size > 1 ? 's' : ''} selecionada{bulkSelectedIds.size > 1 ? 's' : ''}</p>
+              <div className="flex gap-3 mt-4">
+                {['Luiz Gustavo', 'Jamerson'].map(nome => (
+                  <Button
+                    key={nome}
+                    className="flex-1"
+                    onClick={async () => {
+                      for (const id of bulkSelectedIds) {
+                        await supabase.from('app_checklist_items').update({ responsavel: nome } as any).eq('id', id);
+                      }
+                      queryClient.invalidateQueries({ queryKey: ['app-checklist-full'] });
+                      toast.success(`${bulkSelectedIds.size} tarefa(s) atribuída(s) a ${nome}`);
+                      setBulkSelectedIds(new Set());
+                      setBulkAssignDialogOpen(false);
+                    }}
+                  >
+                    {nome}
+                  </Button>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <div className="flex items-center gap-3">
             <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
