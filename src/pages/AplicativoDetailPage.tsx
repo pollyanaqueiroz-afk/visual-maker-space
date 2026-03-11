@@ -814,6 +814,32 @@ export default function AplicativoDetailPage() {
                                     )}
                                   </div>
                                 )}
+
+                                {/* Responsible selector */}
+                                {canManage && item.ator !== 'cliente' && (
+                                  <div className="mt-2 flex items-center gap-2">
+                                    <UserPen className="h-3 w-3 text-muted-foreground shrink-0" />
+                                    <Select
+                                      value={item.responsavel || ''}
+                                      onValueChange={async (val) => {
+                                        await supabase.from('app_checklist_items').update({ responsavel: val }).eq('id', item.id);
+                                        invalidateAll();
+                                        toast.success(`Responsável alterado para ${val}`);
+                                      }}
+                                    >
+                                      <SelectTrigger className="h-6 text-[11px] w-40">
+                                        <SelectValue placeholder="Sem responsável" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="Luiz Gustavo">Luiz Gustavo</SelectItem>
+                                        <SelectItem value="Jamerson">Jamerson</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                    {item.responsavel && (
+                                      <span className="text-[10px] text-muted-foreground">{item.responsavel}</span>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           );
