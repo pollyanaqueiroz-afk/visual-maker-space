@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { usePermissions } from '@/hooks/usePermissions';
-import { ArrowLeft, Copy, ExternalLink, Clock, CheckCircle2, Circle, Lock, AlertTriangle, Upload, MessageSquare, Image as ImageIcon, ShieldCheck, RotateCcw, Pencil, XCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Copy, ExternalLink, Clock, CheckCircle2, Circle, Lock, AlertTriangle, Upload, MessageSquare, Image as ImageIcon, ShieldCheck, RotateCcw, Pencil, XCircle, Loader2, UserPen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
