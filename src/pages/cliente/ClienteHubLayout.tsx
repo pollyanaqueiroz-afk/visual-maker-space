@@ -15,6 +15,7 @@ const navItems = [
   { label: 'Home', icon: Home, path: '/cliente' },
   { label: 'Artes', icon: Palette, path: '/cliente/artes' },
   { label: 'Aplicativo', icon: Smartphone, path: '/cliente/aplicativo' },
+  { label: 'Migração', icon: ArrowRightLeft, path: '/cliente/migracao' },
   { label: 'SCORM', icon: GraduationCap, path: '/cliente/scorm' },
 ];
 
