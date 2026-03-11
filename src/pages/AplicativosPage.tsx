@@ -456,7 +456,7 @@ export default function AplicativosPage() {
       ? activeClientes.filter(c => clientesComFaseAtrasada.has(c.id) || c.status === 'atrasado')
       : activeClientes;
     filtered.forEach(c => {
-      const fase = Math.min(c.fase_atual, 6);
+      const fase = Math.min(c.fase_atual, 5);
       cols[fase].push(c);
     });
     return cols;
