@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 import {
   Plus, Search, User, ExternalLink, CheckCircle2, XCircle, Clock,
   AlertTriangle, FileText, Link2, Key, Loader2, ArrowRight, RotateCcw,
-  Copy, ChevronRight, Eye,
+  Copy, ChevronRight, Eye, Share2, MessageCircle,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
