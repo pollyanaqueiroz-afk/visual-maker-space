@@ -298,7 +298,7 @@ export default function AplicativosPage() {
       queryClient.invalidateQueries({ queryKey: ['app-checklist-counts'] });
       queryClient.invalidateQueries({ queryKey: ['app-checklist-full'] });
       setDialogOpen(false);
-      setForm({ nome: '', url_cliente: '', email: '', whatsapp: '', plataforma: 'ambos', responsavel_nome: '' });
+      setForm({ nome: '', url_cliente: '', email: '', whatsapp: '', plataforma: 'ambos' });
       setMatchedClient(null);
       setExistingAppCliente(false);
       if (result?.linked) {
