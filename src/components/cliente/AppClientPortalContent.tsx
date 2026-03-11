@@ -521,8 +521,8 @@ export default function AppClientPortalContent({ clienteId }: Props) {
   // Per-platform celebration
   useEffect(() => {
     if (!isParallelFlow) return;
-    const googleDone = getFase(6, 'google')?.status === 'concluida';
-    const appleDone = getFase(6, 'apple')?.status === 'concluida';
+    const googleDone = getFase(5, 'google')?.status === 'concluida';
+    const appleDone = getFase(5, 'apple')?.status === 'concluida';
     if (googleDone && !appleDone) {
       // Google published first
       confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 }, colors: ['#3b82f6', '#60a5fa'] });
