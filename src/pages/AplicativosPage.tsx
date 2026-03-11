@@ -819,10 +819,6 @@ export default function AplicativosPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label>Responsável</Label>
-                    <Input value={form.responsavel_nome} onChange={e => setForm(p => ({ ...p, responsavel_nome: e.target.value }))} />
-                  </div>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="ghost" onClick={() => setDialogOpen(false)} disabled={createMutation.isPending}>
