@@ -92,7 +92,7 @@ export default function ClienteHome() {
         }
       }
 
-      const FASE_NAMES = ['Pré-Requisitos', 'Primeiros Passos', 'Validação pela Loja', 'Criação e Submissão', 'Aprovação das Lojas', 'Teste do App', 'Publicado'];
+      const FASE_NAMES = ['Pré-Requisitos', 'Primeiros Passos', 'Validação pela Loja', 'Criação e Submissão', 'Aprovação das Lojas', 'Publicado'];
       return allItems.map(i => ({
         ...i,
         source: 'app' as const,
