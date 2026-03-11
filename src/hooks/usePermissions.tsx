@@ -90,6 +90,14 @@ export const PERMISSION_MODULES = [
     ],
   },
   {
+    module: 'migracao',
+    label: 'Migração',
+    permissions: [
+      { key: 'migracao.view', label: 'Visualizar migrações' },
+      { key: 'migracao.manage', label: 'Gerenciar migrações' },
+    ],
+  },
+  {
     module: 'admin',
     label: 'Administração',
     permissions: [
