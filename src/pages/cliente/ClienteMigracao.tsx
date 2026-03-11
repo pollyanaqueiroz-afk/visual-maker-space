@@ -393,7 +393,7 @@ function MigrationForm({ projectId, isResubmission }: { projectId: string; isRes
           {/* 2. Spreadsheet */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <Label className="text-white/80">2. Planilha de membros e progresso</Label>
+              <Label className="text-white/80">2. Planilha de membros e progresso <span className="text-destructive">*</span></Label>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
