@@ -106,48 +106,36 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleAddRole = async () => {
-    if (!addRoleUser || !selectedRole) return;
-    const previousRoles = [...addRoleUser.roles];
+  const handleSaveRoles = async (userId: string, currentRoles: string[], desiredRoles: string[]) => {
+    const toAdd = desiredRoles.filter(r => !currentRoles.includes(r));
+    const toRemove = currentRoles.filter(r => !desiredRoles.includes(r));
     try {
-      for (const r of previousRoles) {
-        await supabase.functions.invoke(`manage-users?action=remove-role`, {
-          body: { user_id: addRoleUser.id, role: r },
+      for (const r of toRemove) {
+        const { error } = await supabase.functions.invoke(`manage-users?action=remove-role`, {
+          body: { user_id: userId, role: r },
         });
+        if (error) throw error;
       }
-      const { error } = await supabase.functions.invoke(`manage-users?action=add-role`, {
-        body: { user_id: addRoleUser.id, role: selectedRole },
-      });
-      if (error) throw error;
-      toast.success(`Perfil alterado para "${getRoleConfig(selectedRole).label}"`);
+      for (const r of toAdd) {
+        const { error } = await supabase.functions.invoke(`manage-users?action=add-role`, {
+          body: { user_id: userId, role: r },
+        });
+        if (error) throw error;
+      }
+      toast.success(`Perfis atualizados (${toAdd.length} adicionados, ${toRemove.length} removidos)`);
       fetchUsers();
     } catch (err: any) {
-      toast.error('Erro ao alterar perfil. Restaurando papéis anteriores...');
-      for (const r of previousRoles) {
-        await supabase.functions.invoke(`manage-users?action=add-role`, {
-          body: { user_id: addRoleUser.id, role: r },
-        }).catch(() => {});
-      }
+      toast.error('Erro ao salvar perfis: ' + (err.message || 'Erro desconhecido'));
       await fetchUsers();
     }
     setAddRoleUser(null);
-    setSelectedRole('');
+    setEditingRoles([]);
   };
 
-  const handleRemoveAllRoles = async () => {
-    if (!addRoleUser) return;
-    try {
-      for (const role of addRoleUser.roles) {
-        await supabase.functions.invoke(`manage-users?action=remove-role`, {
-          body: { user_id: addRoleUser.id, role },
-        });
-      }
-      toast.success('Perfil removido com sucesso');
-      fetchUsers();
-    } catch (err: any) {
-      toast.error('Erro: ' + (err.message || 'Erro desconhecido'));
-    }
-    setAddRoleUser(null);
+  const [editingRoles, setEditingRoles] = useState<string[]>([]);
+
+  const toggleEditingRole = (role: string) => {
+    setEditingRoles(prev => prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]);
   };
 
   const handleBulkAssign = async () => {
@@ -497,7 +485,7 @@ export default function AdminUsersPage() {
                                 key={role}
                                 variant="outline"
                                 className={`text-[10px] cursor-pointer hover:opacity-70 transition-opacity ${cfg.color} ${isAdminSelf ? 'cursor-not-allowed opacity-50' : ''}`}
-                                onClick={() => !isAdminSelf && (() => { setAddRoleUser(u); setSelectedRole(''); })()}
+                                onClick={() => !isAdminSelf && (() => { setAddRoleUser(u); setEditingRoles([...u.roles]); })()}
                                 title={isAdminSelf ? 'Não é possível alterar seu próprio admin' : `Clique para alterar perfil`}
                               >
                                 {cfg.label} ✎
@@ -522,7 +510,7 @@ export default function AdminUsersPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => { setAddRoleUser(u); setSelectedRole(''); }}
+                              onClick={() => { setAddRoleUser(u); setEditingRoles([...u.roles]); }}
                               title="Definir perfil"
                             >
                               <Plus className="h-3.5 w-3.5" />
@@ -569,40 +557,38 @@ export default function AdminUsersPage() {
         </CardContent>
       </Card>
 
-      {/* Add Role Dialog */}
-      <Dialog open={!!addRoleUser} onOpenChange={(v) => { if (!v) setAddRoleUser(null); }}>
+      {/* Edit Roles Dialog */}
+      <Dialog open={!!addRoleUser} onOpenChange={(v) => { if (!v) { setAddRoleUser(null); setEditingRoles([]); } }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>{addRoleUser?.roles.length ? 'Alterar Perfil' : 'Definir Perfil'}</DialogTitle>
+            <DialogTitle>Gerenciar Perfis</DialogTitle>
           </DialogHeader>
           {addRoleUser && (
             <div className="space-y-4 pt-2">
               <p className="text-sm text-muted-foreground">
                 Usuário: <strong>{addRoleUser.display_name || addRoleUser.email}</strong>
               </p>
-              {addRoleUser.roles.length > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  Perfil atual: <Badge variant="outline" className={`text-[10px] ${getRoleConfig(addRoleUser.roles[0]).color}`}>{getRoleConfig(addRoleUser.roles[0]).label}</Badge>
-                </p>
-              )}
-              <Select value={selectedRole} onValueChange={setSelectedRole}>
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Selecione um perfil..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {ALL_ROLES.filter(r => !addRoleUser.roles.includes(r.value)).map(r => (
-                    <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button onClick={handleAddRole} disabled={!selectedRole} className="w-full">
-                {addRoleUser.roles.length > 0 ? 'Alterar Perfil' : 'Definir Perfil'}
+              <div className="space-y-2">
+                {ALL_ROLES.map(r => {
+                  const isSelfAdmin = r.value === 'admin' && addRoleUser.id === user?.id;
+                  return (
+                    <label key={r.value} className={cn("flex items-center gap-3 p-2 rounded-md hover:bg-muted/50 cursor-pointer", isSelfAdmin && "opacity-50 cursor-not-allowed")}>
+                      <Checkbox
+                        checked={editingRoles.includes(r.value)}
+                        onCheckedChange={() => !isSelfAdmin && toggleEditingRole(r.value)}
+                        disabled={isSelfAdmin}
+                      />
+                      <Badge variant="outline" className={`text-[10px] ${r.color}`}>{r.label}</Badge>
+                    </label>
+                  );
+                })}
+              </div>
+              <Button
+                onClick={() => handleSaveRoles(addRoleUser.id, addRoleUser.roles, editingRoles)}
+                className="w-full"
+              >
+                Salvar Perfis
               </Button>
-              {addRoleUser.roles.length > 0 && (
-                <Button variant="outline" onClick={handleRemoveAllRoles} className="w-full text-destructive hover:text-destructive">
-                  Remover Perfil
-                </Button>
-              )}
             </div>
           )}
         </DialogContent>
