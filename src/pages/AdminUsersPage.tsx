@@ -510,7 +510,7 @@ export default function AdminUsersPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => { setAddRoleUser(u); setSelectedRole(''); }}
+                              onClick={() => { setAddRoleUser(u); setEditingRoles([...u.roles]); }}
                               title="Definir perfil"
                             >
                               <Plus className="h-3.5 w-3.5" />
