@@ -38,7 +38,7 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: 'bg-destructive/20 text-destructive',
 };
 
-const FASE_NAMES = ['Pré-Requisitos', 'Primeiros Passos', 'Validação pela Loja', 'Criação e Submissão', 'Aprovação das Lojas', '', 'Publicado'];
+const FASE_NAMES = ['Pré-Requisitos', 'Primeiros Passos', 'Validação pela Loja', 'Criação e Submissão', 'Aprovação das Lojas', 'Publicado'];
 
 export default function ProcessosImplantacaoPage() {
   const navigate = useNavigate();
