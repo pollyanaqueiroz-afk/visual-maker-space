@@ -395,8 +395,8 @@ export default function AplicativosPage() {
     }
   };
 
-  const totalAbertos = clientes.filter(c => c.fase_atual < 6).length;
-  const totalConcluidos = clientes.filter(c => c.fase_atual >= 6).length;
+  const totalAbertos = clientes.filter(c => c.fase_atual < 5).length;
+  const totalConcluidos = clientes.filter(c => c.fase_atual >= 5).length;
   const atrasados = clientes.filter(c => c.status === 'atrasado').length;
   const slaViolados = fases.filter(f => f.sla_violado).length;
   const fasesAtrasadas = fases.filter(f => f.sla_violado || f.status === 'atrasada').length;
