@@ -405,6 +405,9 @@ export default function ClienteHome() {
             </CardContent>
           </Card>
         </motion.div>
+
+        {/* Migration status */}
+        <MigrationStatusCard clientEmail={clientEmail} navigate={navigate} />
       </div>
 
       {/* Pending actions — strong highlight */}
