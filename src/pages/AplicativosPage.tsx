@@ -406,7 +406,7 @@ export default function AplicativosPage() {
   }, [fases]);
 
   const avgProgress = totalAbertos > 0
-    ? Math.round(clientes.filter(c => c.fase_atual < 6).reduce((sum, c) => sum + c.porcentagem_geral, 0) / totalAbertos)
+    ? Math.round(clientes.filter(c => c.fase_atual < 5).reduce((sum, c) => sum + c.porcentagem_geral, 0) / totalAbertos)
     : 0;
 
   // KPI detail lists
