@@ -46,6 +46,11 @@ const auditoriaModules = [
   { title: 'Pipeline', url: '/hub/pipeline', icon: Activity, permission: 'admin.view', badgeKey: null },
 ];
 
+const migracaoModules = [
+  { title: 'Gestão de Migração', url: '/hub/migracao', icon: ArrowRightLeft, permission: 'migracao.view', badgeKey: null },
+  { title: 'Ajustes de Migração', url: '/hub/migracao/ajustes', icon: Construction, permission: 'migracao.view', badgeKey: null },
+];
+
 const adminModules = [
   { title: 'Usuários e Permissões', url: '/hub/admin/usuarios', icon: Users, permission: 'admin.view', badgeKey: null },
   { title: 'Gestão Gerencial', url: '/hub/admin/gerencial', icon: Crown, permission: 'admin.view', badgeKey: null },
