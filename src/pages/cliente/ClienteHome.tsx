@@ -487,7 +487,7 @@ export default function ClienteHome() {
                 <p className="font-medium">Tudo em dia! 🎉</p>
                 <p className="text-sm text-white/40 mt-1">Nenhuma pendência no momento. Que tal solicitar algo novo?</p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md w-full">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-lg w-full">
                 <Card className="bg-white/5 border-white/10 cursor-pointer hover:bg-white/10 transition-colors" onClick={() => navigate('/cliente/solicitar')}>
                   <CardContent className="p-4 text-center">
                     <Palette className="h-8 w-8 text-emerald-400 mx-auto mb-2" />
@@ -500,6 +500,13 @@ export default function ClienteHome() {
                     <Smartphone className="h-8 w-8 text-blue-400 mx-auto mb-2" />
                     <p className="text-sm font-medium text-white">Solicitar App</p>
                     <p className="text-xs text-white/50">Aplicativo mobile</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-white/5 border-white/10 cursor-pointer hover:bg-white/10 transition-colors" onClick={() => navigate('/cliente/migracao')}>
+                  <CardContent className="p-4 text-center">
+                    <ArrowRightLeft className="h-8 w-8 text-orange-400 mx-auto mb-2" />
+                    <p className="text-sm font-medium text-white">Solicitar Migração</p>
+                    <p className="text-xs text-white/50">Migrar dados</p>
                   </CardContent>
                 </Card>
               </div>
