@@ -155,7 +155,7 @@ export default function AplicativosPage() {
   const [dropping, setDropping] = useState(false);
 
   const [form, setForm] = useState({
-    nome: '', url_cliente: '', email: '', whatsapp: '', plataforma: 'ambos', responsavel_nome: '',
+    nome: '', url_cliente: '', email: '', whatsapp: '', plataforma: 'ambos',
   });
 
   // Smart URL matching state
