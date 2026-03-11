@@ -186,6 +186,7 @@ export default function MigracaoKanbanPage() {
             );
           })}
         </div>
+        </>
       )}
 
       <NewClientDialog open={showNewDialog} onClose={() => setShowNewDialog(false)} />

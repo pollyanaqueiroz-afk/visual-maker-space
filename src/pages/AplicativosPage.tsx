@@ -1219,6 +1219,7 @@ export default function AplicativosPage() {
                 </div>
               </div>
             </div>
+            </>
           )}
         </TabsContent>
 
