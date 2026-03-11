@@ -428,7 +428,7 @@ function ProjectDetailSheet({ project, onClose }: { project: MigrationProject; o
     }
   };
 
-  const migrationFormLink = `${window.location.origin}/cliente/migracao`;
+  const migrationFormLink = `${window.location.origin}/migracao/${project.portal_token}`;
   const hasSubmission = submissions.length > 0;
 
   return (
