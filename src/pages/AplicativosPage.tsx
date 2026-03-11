@@ -1555,7 +1555,8 @@ export default function AplicativosPage() {
                           }
 
                           return (
-                            <div key={item.id} className={`grid grid-cols-[32px_1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-3 items-center transition-opacity ${isCompleting ? 'opacity-50' : ''} ${isMooni && !isDone ? 'bg-blue-500/10 border-l-2 border-blue-500' : isPriority && !isDone ? 'bg-destructive/10 border-l-2 border-destructive' : ''}`}>
+                            <div key={item.id} className={`grid grid-cols-[28px_32px_1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-3 items-center transition-opacity ${isCompleting ? 'opacity-50' : ''} ${isMooni && !isDone ? 'bg-blue-500/10 border-l-2 border-blue-500' : isPriority && !isDone ? 'bg-destructive/10 border-l-2 border-destructive' : ''}`}>
+                              <Checkbox checked={bulkSelectedIds.has(item.id)} onCheckedChange={(checked) => { setBulkSelectedIds(prev => { const n = new Set(prev); if (checked) n.add(item.id); else n.delete(item.id); return n; }); }} />
                               {isMooni && !isDone ? (
                                 <FileText className="h-4 w-4 text-blue-400" />
                               ) : (
