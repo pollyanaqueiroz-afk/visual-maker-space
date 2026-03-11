@@ -274,10 +274,6 @@ export default function AplicativosPage() {
         .maybeSingle();
 
       if (existing) {
-        // Update the existing record with responsavel info
-      const { error } = await supabase.from('app_clientes').update({
-      }).eq('id', existing.id);
-        if (error) throw error;
         return { linked: true, name: existing.nome, id: existing.id };
       }
 
@@ -287,7 +283,6 @@ export default function AplicativosPage() {
         email: form.email,
         whatsapp: form.whatsapp || null,
         plataforma: form.plataforma,
-      });
       });
       if (error) throw error;
       return { linked: false };
