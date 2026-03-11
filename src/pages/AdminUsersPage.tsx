@@ -106,33 +106,33 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleAddRole = async () => {
-    if (!addRoleUser || !selectedRole) return;
-    const previousRoles = [...addRoleUser.roles];
+  const handleSaveRoles = async (userId: string, currentRoles: string[], desiredRoles: string[]) => {
+    const toAdd = desiredRoles.filter(r => !currentRoles.includes(r));
+    const toRemove = currentRoles.filter(r => !desiredRoles.includes(r));
     try {
-      for (const r of previousRoles) {
-        await supabase.functions.invoke(`manage-users?action=remove-role`, {
-          body: { user_id: addRoleUser.id, role: r },
+      for (const r of toRemove) {
+        const { error } = await supabase.functions.invoke(`manage-users?action=remove-role`, {
+          body: { user_id: userId, role: r },
         });
+        if (error) throw error;
       }
-      const { error } = await supabase.functions.invoke(`manage-users?action=add-role`, {
-        body: { user_id: addRoleUser.id, role: selectedRole },
-      });
-      if (error) throw error;
-      toast.success(`Perfil alterado para "${getRoleConfig(selectedRole).label}"`);
+      for (const r of toAdd) {
+        const { error } = await supabase.functions.invoke(`manage-users?action=add-role`, {
+          body: { user_id: userId, role: r },
+        });
+        if (error) throw error;
+      }
+      toast.success(`Perfis atualizados (${toAdd.length} adicionados, ${toRemove.length} removidos)`);
       fetchUsers();
     } catch (err: any) {
-      toast.error('Erro ao alterar perfil. Restaurando papéis anteriores...');
-      for (const r of previousRoles) {
-        await supabase.functions.invoke(`manage-users?action=add-role`, {
-          body: { user_id: addRoleUser.id, role: r },
-        }).catch(() => {});
-      }
+      toast.error('Erro ao salvar perfis: ' + (err.message || 'Erro desconhecido'));
       await fetchUsers();
     }
     setAddRoleUser(null);
-    setSelectedRole('');
+    setEditingRoles([]);
   };
+
+  const [editingRoles, setEditingRoles] = useState<string[]>([]);
 
   const handleRemoveAllRoles = async () => {
     if (!addRoleUser) return;
