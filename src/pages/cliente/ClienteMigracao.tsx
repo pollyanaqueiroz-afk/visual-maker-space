@@ -381,9 +381,9 @@ function MigrationForm({ projectId, isResubmission }: { projectId: string; isRes
             <Button variant="outline" size="sm" onClick={addClub} className="text-xs">
               <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar club
             </Button>
-            <div className="p-3 rounded-md bg-amber-500/10 border border-amber-500/20">
-              <p className="text-xs text-amber-300">
-                <strong>Importante:</strong> Em cada club, crie o membro <strong>migracoes@curseduca.com</strong> com permissão <strong>Admin</strong>.
+            <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
+              <p className="text-xs text-destructive">
+                <strong>Obrigatório:</strong> Em cada club, crie o membro <strong>migracoes@curseduca.com</strong> com permissão <strong>Admin</strong>.
               </p>
             </div>
           </div>
