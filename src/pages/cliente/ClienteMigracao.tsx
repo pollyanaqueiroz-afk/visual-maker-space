@@ -72,7 +72,7 @@ export default function ClienteMigracao({ projectOverride }: { projectOverride?:
 
   const rejectedItems = validations.filter(v => v.status === 'rejected');
 
-  if (isLoading) {
+  if (isLoading && !projectOverride) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="h-6 w-6 animate-spin text-white/40" />
