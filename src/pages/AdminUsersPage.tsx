@@ -134,20 +134,8 @@ export default function AdminUsersPage() {
 
   const [editingRoles, setEditingRoles] = useState<string[]>([]);
 
-  const handleRemoveAllRoles = async () => {
-    if (!addRoleUser) return;
-    try {
-      for (const role of addRoleUser.roles) {
-        await supabase.functions.invoke(`manage-users?action=remove-role`, {
-          body: { user_id: addRoleUser.id, role },
-        });
-      }
-      toast.success('Perfil removido com sucesso');
-      fetchUsers();
-    } catch (err: any) {
-      toast.error('Erro: ' + (err.message || 'Erro desconhecido'));
-    }
-    setAddRoleUser(null);
+  const toggleEditingRole = (role: string) => {
+    setEditingRoles(prev => prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]);
   };
 
   const handleBulkAssign = async () => {
