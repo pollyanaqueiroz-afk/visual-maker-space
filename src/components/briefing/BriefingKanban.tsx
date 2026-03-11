@@ -320,7 +320,17 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
           </div>
         </div>
       ) : (
-      <div className="overflow-x-auto pb-4">
+      <div
+        ref={topScrollRef}
+        className="overflow-x-auto"
+        style={{ overflowY: 'hidden' }}
+        onScroll={() => { if (bottomScrollRef.current && topScrollRef.current) bottomScrollRef.current.scrollLeft = topScrollRef.current.scrollLeft; }}
+      >
+        <div style={{ width: 1100, height: 1 }} />
+      </div>
+      <div ref={bottomScrollRef} className="overflow-x-auto pb-4"
+        onScroll={() => { if (topScrollRef.current && bottomScrollRef.current) topScrollRef.current.scrollLeft = bottomScrollRef.current.scrollLeft; }}
+      >
         <div className="flex gap-4 min-w-[1100px]">
           {KANBAN_COLUMNS.map(col => (
             <div

@@ -118,7 +118,22 @@ export default function MigracaoKanbanPage() {
       {isLoading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
       ) : (
-        <div className="flex gap-4 overflow-x-auto pb-4">
+        <div
+          className="overflow-x-auto"
+          style={{ overflowY: 'hidden' }}
+          onScroll={(e) => {
+            const sibling = (e.target as HTMLElement).nextElementSibling as HTMLElement;
+            if (sibling) sibling.scrollLeft = (e.target as HTMLElement).scrollLeft;
+          }}
+        >
+          <div style={{ width: 5 * 280 + 4 * 16, height: 1 }} />
+        </div>
+        <div className="flex gap-4 overflow-x-auto pb-4"
+          onScroll={(e) => {
+            const sibling = (e.target as HTMLElement).previousElementSibling as HTMLElement;
+            if (sibling) sibling.scrollLeft = (e.target as HTMLElement).scrollLeft;
+          }}
+        >
           {KANBAN_COLUMNS.map(col => {
             const cards = filtered.filter(p => col.statuses.includes(p.migration_status));
             // Also include waiting_form in analysis column
