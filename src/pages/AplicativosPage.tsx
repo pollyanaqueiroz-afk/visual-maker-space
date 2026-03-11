@@ -287,7 +287,7 @@ export default function AplicativosPage() {
         email: form.email,
         whatsapp: form.whatsapp || null,
         plataforma: form.plataforma,
-        responsavel_nome: form.responsavel_nome || null,
+      });
       });
       if (error) throw error;
       return { linked: false };
