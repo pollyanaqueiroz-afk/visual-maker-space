@@ -1443,7 +1443,7 @@ export default function AplicativosPage() {
 
                           // Special rendering for publicacao_url
                           if (isPubUrl) {
-                            const fase6 = fases.find(f => f.cliente_id === clienteId && f.numero === 6 && (f as any).plataforma === item.plataforma);
+                            const fase6 = fases.find(f => f.cliente_id === clienteId && f.numero === 5 && (f as any).plataforma === item.plataforma);
                             const startDate = (fase6 as any)?.data_inicio ? new Date((fase6 as any).data_inicio) : new Date(item.created_at);
                             const deadline = addBusinessDays(startDate, 1);
                             const pubOverdue = !item.feito && new Date() > deadline;
