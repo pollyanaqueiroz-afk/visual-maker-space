@@ -1,7 +1,8 @@
 import { ReactNode } from 'react';
 import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { HubSidebar } from './HubSidebar';
-import { PanelLeftClose, PanelLeftOpen, Bell, Search } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, Bell } from 'lucide-react';
+import GlobalSearch from './GlobalSearch';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
