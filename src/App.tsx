@@ -40,6 +40,7 @@ import PipelinePage from "./pages/PipelinePage";
 import ProcessosImplantacaoPage from "./pages/ProcessosImplantacaoPage";
 import GestaoGerencialPage from "./pages/GestaoGerencialPage";
 import AjusteBriefingsPage from "./pages/AjusteBriefingsPage";
+import AjusteAplicativosPage from "./pages/AjusteAplicativosPage";
 import CarteirizacaoPage from "./pages/CarteirizacaoPage";
 import MigracaoKanbanPage from "./pages/MigracaoKanbanPage";
 import MigracaoAjustesPage from "./pages/MigracaoAjustesPage";
