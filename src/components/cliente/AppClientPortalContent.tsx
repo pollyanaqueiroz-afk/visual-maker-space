@@ -466,7 +466,7 @@ export default function AppClientPortalContent({ clienteId }: Props) {
 
   // Per-track: get the fase for display
   const getTrackFases = (plataforma: string) => {
-    return [1, 2, 3, 4, 5, 6].map(num => fases.find((f: any) => f.numero === num && f.plataforma === plataforma));
+    return [1, 2, 3, 4, 5].map(num => fases.find((f: any) => f.numero === num && f.plataforma === plataforma));
   };
 
   // Dynamic message
