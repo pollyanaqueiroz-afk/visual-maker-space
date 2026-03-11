@@ -105,7 +105,7 @@ const STEP_BY_STEP: Record<string, string[]> = {
   ],
 };
 
-const FASE_NAMES = ['Pré-Requisitos', 'Primeiros Passos', 'Validação pela Loja', 'Criação e Submissão', 'Aprovação das Lojas', 'Teste do App', 'Publicado 🎉'];
+const FASE_NAMES = ['Pré-Requisitos', 'Primeiros Passos', 'Validação pela Loja', 'Criação e Submissão', 'Aprovação das Lojas', '', 'Publicado 🎉'];
 
 interface Props {
   clienteId: string;
