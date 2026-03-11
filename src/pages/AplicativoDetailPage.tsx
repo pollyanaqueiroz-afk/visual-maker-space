@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { usePermissions } from '@/hooks/usePermissions';
-import { ArrowLeft, Copy, ExternalLink, Clock, CheckCircle2, Circle, Lock, AlertTriangle, Upload, MessageSquare, Image as ImageIcon, ShieldCheck, RotateCcw, Pencil, XCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Copy, ExternalLink, Clock, CheckCircle2, Circle, Lock, AlertTriangle, Upload, MessageSquare, Image as ImageIcon, ShieldCheck, RotateCcw, Pencil, XCircle, Loader2, UserPen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -811,6 +811,32 @@ export default function AplicativoDetailPage() {
                                       >
                                         <ShieldCheck className="h-3.5 w-3.5 mr-1" /> Validar convites
                                       </Button>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Responsible selector */}
+                                {canManage && item.ator !== 'cliente' && (
+                                  <div className="mt-2 flex items-center gap-2">
+                                    <UserPen className="h-3 w-3 text-muted-foreground shrink-0" />
+                                    <Select
+                                      value={item.responsavel || ''}
+                                      onValueChange={async (val) => {
+                                        await supabase.from('app_checklist_items').update({ responsavel: val }).eq('id', item.id);
+                                        invalidateAll();
+                                        toast.success(`Responsável alterado para ${val}`);
+                                      }}
+                                    >
+                                      <SelectTrigger className="h-6 text-[11px] w-40">
+                                        <SelectValue placeholder="Sem responsável" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="Luiz Gustavo">Luiz Gustavo</SelectItem>
+                                        <SelectItem value="Jamerson">Jamerson</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                    {item.responsavel && (
+                                      <span className="text-[10px] text-muted-foreground">{item.responsavel}</span>
                                     )}
                                   </div>
                                 )}

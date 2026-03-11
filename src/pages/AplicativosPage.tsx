@@ -139,6 +139,8 @@ export default function AplicativosPage() {
   const [pubUrlSaving, setPubUrlSaving] = useState<Set<string>>(new Set());
   const [filterResponsavelTask, setFilterResponsavelTask] = useState('all');
   const [periodView, setPeriodView] = useState<'week' | 'month'>('month');
+  const [bulkSelectedIds, setBulkSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkAssignDialogOpen, setBulkAssignDialogOpen] = useState(false);
 
   // Drag and drop states
   const [dragOverColumn, setDragOverColumn] = useState<number | null>(null);
@@ -1264,19 +1266,59 @@ export default function AplicativosPage() {
             </Card>
           </div>
 
-          {/* Unassigned alert */}
-          {unassignedTaskCount > 0 && (
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive/20 shrink-0">
-                <AlertTriangle className="h-4 w-4 text-destructive" />
+          {/* Unassigned alert + Bulk assign */}
+          <div className="flex items-center gap-3">
+            {unassignedTaskCount > 0 && (
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20 flex-1">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive/20 shrink-0">
+                  <AlertTriangle className="h-4 w-4 text-destructive" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-destructive">{unassignedTaskCount} tarefa{unassignedTaskCount > 1 ? 's' : ''} sem responsável atribuído</p>
+                  <p className="text-xs text-destructive/60">Atribua um responsável para garantir rastreabilidade e SLA</p>
+                </div>
+                <Button variant="destructive" size="sm" onClick={() => setFilterResponsavelTask('unassigned')}>Ver tarefas</Button>
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-destructive">{unassignedTaskCount} tarefa{unassignedTaskCount > 1 ? 's' : ''} sem responsável atribuído</p>
-                <p className="text-xs text-destructive/60">Atribua um responsável para garantir rastreabilidade e SLA</p>
+            )}
+            {bulkSelectedIds.size > 0 && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
+                <Badge variant="secondary">{bulkSelectedIds.size} selecionada{bulkSelectedIds.size > 1 ? 's' : ''}</Badge>
+                <Button size="sm" onClick={() => setBulkAssignDialogOpen(true)}>
+                  <UserPen className="h-4 w-4 mr-1" /> Definir Responsável
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setBulkSelectedIds(new Set())}>Limpar</Button>
               </div>
-              <Button variant="destructive" size="sm" onClick={() => setFilterResponsavelTask('unassigned')}>Ver tarefas</Button>
-            </div>
-          )}
+            )}
+          </div>
+
+          {/* Bulk Assign Dialog */}
+          <Dialog open={bulkAssignDialogOpen} onOpenChange={setBulkAssignDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Definir responsável em lote</DialogTitle>
+              </DialogHeader>
+              <p className="text-sm text-muted-foreground">{bulkSelectedIds.size} tarefa{bulkSelectedIds.size > 1 ? 's' : ''} selecionada{bulkSelectedIds.size > 1 ? 's' : ''}</p>
+              <div className="flex gap-3 mt-4">
+                {['Luiz Gustavo', 'Jamerson'].map(nome => (
+                  <Button
+                    key={nome}
+                    className="flex-1"
+                    onClick={async () => {
+                      for (const id of bulkSelectedIds) {
+                        await supabase.from('app_checklist_items').update({ responsavel: nome } as any).eq('id', id);
+                      }
+                      queryClient.invalidateQueries({ queryKey: ['app-checklist-full'] });
+                      toast.success(`${bulkSelectedIds.size} tarefa(s) atribuída(s) a ${nome}`);
+                      setBulkSelectedIds(new Set());
+                      setBulkAssignDialogOpen(false);
+                    }}
+                  >
+                    {nome}
+                  </Button>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <div className="flex items-center gap-3">
             <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -1383,7 +1425,17 @@ export default function AplicativosPage() {
                     </div>
                     <CardContent className="p-0">
                       {/* Table header */}
-                      <div className="grid grid-cols-[32px_1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-2 bg-muted/20 border-b border-border text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      <div className="grid grid-cols-[28px_32px_1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-2 bg-muted/20 border-b border-border text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                        <Checkbox
+                          checked={items.every(i => bulkSelectedIds.has(i.id))}
+                          onCheckedChange={(checked) => {
+                            setBulkSelectedIds(prev => {
+                              const next = new Set(prev);
+                              items.forEach(i => { if (checked) next.add(i.id); else next.delete(i.id); });
+                              return next;
+                            });
+                          }}
+                        />
                         <span></span>
                         <span>Tarefa</span>
                         <span>Responsável</span>
@@ -1408,7 +1460,8 @@ export default function AplicativosPage() {
                           // Special rendering for alerta_prazo
                           if (item.tipo === 'alerta_prazo') {
                             return (
-                              <div key={item.id} className={`grid grid-cols-[32px_1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-3 items-center ${isDone ? 'opacity-60' : 'bg-destructive/5 border-l-4 border-destructive'}`}>
+                              <div key={item.id} className={`grid grid-cols-[28px_32px_1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-3 items-center ${isDone ? 'opacity-60' : 'bg-destructive/5 border-l-4 border-destructive'}`}>
+                                <Checkbox checked={bulkSelectedIds.has(item.id)} onCheckedChange={(checked) => { setBulkSelectedIds(prev => { const n = new Set(prev); if (checked) n.add(item.id); else n.delete(item.id); return n; }); }} />
                                 <AlertTriangle className={`h-4 w-4 ${isDone ? 'text-muted-foreground' : 'text-destructive'}`} />
                                 <div className="min-w-0">
                                   <p className={`text-sm font-semibold ${isDone ? 'line-through text-muted-foreground' : 'text-destructive'}`}>{item.texto}</p>
@@ -1502,7 +1555,8 @@ export default function AplicativosPage() {
                           }
 
                           return (
-                            <div key={item.id} className={`grid grid-cols-[32px_1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-3 items-center transition-opacity ${isCompleting ? 'opacity-50' : ''} ${isMooni && !isDone ? 'bg-blue-500/10 border-l-2 border-blue-500' : isPriority && !isDone ? 'bg-destructive/10 border-l-2 border-destructive' : ''}`}>
+                            <div key={item.id} className={`grid grid-cols-[28px_32px_1fr_100px_100px_90px_80px_70px] gap-2 px-4 py-3 items-center transition-opacity ${isCompleting ? 'opacity-50' : ''} ${isMooni && !isDone ? 'bg-blue-500/10 border-l-2 border-blue-500' : isPriority && !isDone ? 'bg-destructive/10 border-l-2 border-destructive' : ''}`}>
+                              <Checkbox checked={bulkSelectedIds.has(item.id)} onCheckedChange={(checked) => { setBulkSelectedIds(prev => { const n = new Set(prev); if (checked) n.add(item.id); else n.delete(item.id); return n; }); }} />
                               {isMooni && !isDone ? (
                                 <FileText className="h-4 w-4 text-blue-400" />
                               ) : (

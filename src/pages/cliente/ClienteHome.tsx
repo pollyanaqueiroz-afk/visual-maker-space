@@ -92,7 +92,7 @@ export default function ClienteHome() {
         }
       }
 
-      const FASE_NAMES = ['Pré-Requisitos', 'Primeiros Passos', 'Validação pela Loja', 'Criação e Submissão', 'Aprovação das Lojas', 'Teste do App', 'Publicado'];
+      const FASE_NAMES = ['Pré-Requisitos', 'Primeiros Passos', 'Validação pela Loja', 'Criação e Submissão', 'Aprovação das Lojas', 'Publicado'];
       return allItems.map(i => ({
         ...i,
         source: 'app' as const,
@@ -357,8 +357,8 @@ export default function ClienteHome() {
                   </div>
                   {appCliente ? (
                     <>
-                      <p className="text-sm font-medium">
-                        {appCliente.fase_atual >= 6
+                    <p className="text-sm font-medium">
+                        {appCliente.fase_atual >= 5
                           ? '🎉 Publicado!'
                           : `${appCliente.porcentagem_geral}% concluído`}
                       </p>

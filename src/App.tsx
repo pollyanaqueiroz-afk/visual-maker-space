@@ -54,6 +54,7 @@ import ClienteSolicitarApp from "./pages/cliente/ClienteSolicitarApp";
 import ClienteScorm from "./pages/cliente/ClienteScorm";
 import ClienteMigracao from "./pages/cliente/ClienteMigracao";
 import ClientePreviewWrapper from "./pages/cliente/ClientePreviewWrapper";
+import ClienteMigracaoPublic from "./pages/cliente/ClienteMigracaoPublic";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -123,6 +124,7 @@ const App = () => (
             <Route path="/assets/:platformUrl" element={<ClientAssetsPage />} />
             <Route path="/app/:token" element={<AppClientPortal />} />
             <Route path="/scorm/:id" element={<ScormPlayerPage />} />
+            <Route path="/migracao/:token" element={<ClienteMigracaoPublic />} />
             {/* Client Hub */}
             <Route path="/cliente/login" element={<ClienteLogin />} />
             <Route path="/cliente" element={<ClienteHubLayout />}>

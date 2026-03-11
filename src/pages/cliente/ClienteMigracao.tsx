@@ -34,14 +34,14 @@ const STATUS_ORDER: Record<string, number> = {
   waiting_form: 0, analysis: 1, rejected: 2, extraction: 3, in_progress: 4, completed: 5,
 };
 
-export default function ClienteMigracao() {
+export default function ClienteMigracao({ projectOverride }: { projectOverride?: any } = {}) {
   const clientEmail = useClienteEmail();
   const queryClient = useQueryClient();
 
   // Fetch migration project for this client
-  const { data: project, isLoading } = useQuery({
+  const { data: fetchedProject, isLoading } = useQuery({
     queryKey: ['cliente-migration', clientEmail],
-    enabled: !!clientEmail,
+    enabled: !!clientEmail && !projectOverride,
     queryFn: async () => {
       const { data } = await supabase
         .from('migration_projects')
@@ -54,6 +54,8 @@ export default function ClienteMigracao() {
       return data;
     },
   });
+
+  const project = projectOverride || fetchedProject;
 
   // Fetch validations with rejections
   const { data: validations = [] } = useQuery({
@@ -70,7 +72,7 @@ export default function ClienteMigracao() {
 
   const rejectedItems = validations.filter(v => v.status === 'rejected');
 
-  if (isLoading) {
+  if (isLoading && !projectOverride) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="h-6 w-6 animate-spin text-white/40" />
