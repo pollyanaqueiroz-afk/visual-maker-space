@@ -320,6 +320,7 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
           </div>
         </div>
       ) : (
+      <>
       <div
         ref={topScrollRef}
         className="overflow-x-auto"
