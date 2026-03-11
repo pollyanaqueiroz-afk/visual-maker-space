@@ -451,7 +451,7 @@ export default function AplicativosPage() {
 
   const columns = useMemo(() => {
     const cols: Record<number, AppCliente[]> = {};
-    for (let i = 0; i <= 6; i++) cols[i] = [];
+    for (let i = 0; i <= 5; i++) cols[i] = [];
     const filtered = kanbanFilter === 'atrasados'
       ? activeClientes.filter(c => clientesComFaseAtrasada.has(c.id) || c.status === 'atrasado')
       : activeClientes;
