@@ -411,7 +411,7 @@ export default function AplicativosPage() {
 
   // KPI detail lists
   const kpiClientLists = useMemo(() => {
-    const abertos = clientes.filter(c => c.fase_atual < 6);
+    const abertos = clientes.filter(c => c.fase_atual < 5);
     const atrasadosList = clientes.filter(c => c.status === 'atrasado');
     const etapasAtrasadasList = (() => {
       const fasesAtrasadasData = fases.filter(f => f.sla_violado || f.status === 'atrasada');
@@ -420,8 +420,8 @@ export default function AplicativosPage() {
         return c ? { ...c, faseAtrasada: f.numero, plataformaFase: (f as any).plataforma } : null;
       }).filter(Boolean) as (AppCliente & { faseAtrasada: number; plataformaFase?: string })[];
     })();
-    const publicados = clientes.filter(c => c.fase_atual >= 6);
-    const progressoList = clientes.filter(c => c.fase_atual < 6).sort((a, b) => b.porcentagem_geral - a.porcentagem_geral);
+    const publicados = clientes.filter(c => c.fase_atual >= 5);
+    const progressoList = clientes.filter(c => c.fase_atual < 5).sort((a, b) => b.porcentagem_geral - a.porcentagem_geral);
     // Clients needing attention: SLA violated or status atrasado (deduplicated)
     const atencaoIds = new Set<string>();
     const atencaoList: (AppCliente & { motivo: string })[] = [];
