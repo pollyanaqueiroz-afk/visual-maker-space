@@ -293,7 +293,7 @@ export default function ClienteHome() {
 
       {/* Status cards with 3D hover */}
       <div className="space-y-2">
-        <h2 className="text-lg font-semibold">📊 Status dos seus projetos</h2>
+        <h2 className="text-lg font-semibold">📊 Acompanhe suas artes, aplicativos e migrações</h2>
 
         {/* App status */}
         <motion.div
