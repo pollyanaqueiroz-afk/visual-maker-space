@@ -1091,9 +1091,22 @@ export default function AplicativosPage() {
           {isLoading ? (
             <div className="text-center py-12 text-muted-foreground">Carregando...</div>
           ) : (
-            <KanbanTopScroll targetRef={kanbanScrollRef} minWidth={8 * 280 + 7 * 12} />
-            <div ref={kanbanScrollRef} className="w-full overflow-x-auto pb-2"
-              onScroll={() => { if (kanbanTopScrollRef.current && kanbanScrollRef.current) kanbanTopScrollRef.current.scrollLeft = kanbanScrollRef.current.scrollLeft; }}
+            <>
+            <div
+              className="overflow-x-auto"
+              style={{ overflowY: 'hidden' }}
+              onScroll={(e) => {
+                const sibling = (e.target as HTMLElement).nextElementSibling as HTMLElement;
+                if (sibling) sibling.scrollLeft = (e.target as HTMLElement).scrollLeft;
+              }}
+            >
+              <div style={{ width: 8 * 280 + 7 * 12, height: 1 }} />
+            </div>
+            <div className="w-full overflow-x-auto pb-2"
+              onScroll={(e) => {
+                const sibling = (e.target as HTMLElement).previousElementSibling as HTMLElement;
+                if (sibling) sibling.scrollLeft = (e.target as HTMLElement).scrollLeft;
+              }}
             >
               <div className="flex gap-3 pb-2" style={{ minWidth: `${8 * 280 + 7 * 12}px` }}>
                 {FASE_NAMES.map((name, idx) => (
