@@ -461,8 +461,8 @@ export default function AppClientPortalContent({ clienteId }: Props) {
   };
 
   // Check if all fase6 are done
-  const allFase6Done = fases.filter((f: any) => f.numero === 6).length > 0 &&
-    fases.filter((f: any) => f.numero === 6).every((f: any) => f.status === 'concluida');
+  const allFase6Done = fases.filter((f: any) => f.numero === 5).length > 0 &&
+    fases.filter((f: any) => f.numero === 5).every((f: any) => f.status === 'concluida');
 
   // Per-track: get the fase for display
   const getTrackFases = (plataforma: string) => {
