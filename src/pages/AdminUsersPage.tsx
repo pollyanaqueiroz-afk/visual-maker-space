@@ -30,6 +30,7 @@ const ALL_ROLES = [
   { value: 'gerente_cs', label: 'Gerente CS', color: 'bg-violet-500/10 text-violet-600 border-violet-200' },
   { value: 'implantacao', label: 'Implantação', color: 'bg-amber-500/10 text-amber-600 border-amber-200' },
   { value: 'cs', label: 'CS', color: 'bg-emerald-500/10 text-emerald-600 border-emerald-200' },
+  { value: 'migrador', label: 'Migrador', color: 'bg-orange-500/10 text-orange-500 border-orange-300' },
   { value: 'designer', label: 'Designer', color: 'bg-blue-500/10 text-blue-600 border-blue-200' },
   { value: 'member', label: 'Membro', color: 'bg-secondary text-secondary-foreground border-border' },
   { value: 'cliente', label: 'Cliente', color: 'bg-cyan-500/10 text-cyan-600 border-cyan-200' },
