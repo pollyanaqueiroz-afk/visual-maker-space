@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 import {
   Plus, Search, User, ExternalLink, CheckCircle2, XCircle, Clock,
   AlertTriangle, FileText, Link2, Key, Loader2, ArrowRight, RotateCcw,
-  Copy, ChevronRight, Eye,
+  Copy, ChevronRight, Eye, Share2, MessageCircle,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -467,14 +467,50 @@ function ProjectDetailSheet({ project, onClose }: { project: MigrationProject; o
             {project.has_design && <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">Design</Badge>}
           </div>
 
-          {/* Form Link */}
+          {/* Form Link with share options */}
           {project.has_migration && (
-            <div className="p-3 rounded-lg bg-muted/50 border">
+            <div className="p-3 rounded-lg bg-muted/50 border space-y-2">
               <p className="text-xs text-muted-foreground mb-1">Link do Formulário de Migração</p>
               <div className="flex items-center gap-2">
                 <code className="flex-1 text-xs bg-background p-2 rounded truncate">{migrationFormLink}</code>
                 <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(migrationFormLink); toast.success('Link copiado!'); }}>
                   <Copy className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 text-xs"
+                  onClick={() => {
+                    const msg = encodeURIComponent(
+                      `Olá! Para iniciarmos sua migração para a Curseduca, pedimos que preencha este formulário com as informações necessárias.\n\n${migrationFormLink}`
+                    );
+                    window.open(`https://wa.me/?text=${msg}`, '_blank');
+                  }}
+                >
+                  <MessageCircle className="h-3.5 w-3.5 mr-1.5 text-emerald-500" />
+                  WhatsApp
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 text-xs"
+                  onClick={() => {
+                    if (navigator.share) {
+                      navigator.share({
+                        title: 'Formulário de Migração — Curseduca',
+                        text: 'Olá! Para iniciarmos sua migração para a Curseduca, pedimos que preencha este formulário com as informações necessárias.',
+                        url: migrationFormLink,
+                      }).catch(() => {});
+                    } else {
+                      navigator.clipboard.writeText(migrationFormLink);
+                      toast.success('Link copiado!');
+                    }
+                  }}
+                >
+                  <Share2 className="h-3.5 w-3.5 mr-1.5" />
+                  Compartilhar
                 </Button>
               </div>
             </div>

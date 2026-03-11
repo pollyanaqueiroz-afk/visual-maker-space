@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import {
   FileImage, CalendarDays, BarChart3, Briefcase, Crown, Loader2, Sparkles, Rocket,
-  AlertTriangle, Star, CheckCircle, ChevronRight, Smartphone,
+  AlertTriangle, Star, CheckCircle, ChevronRight, Smartphone, ArrowRightLeft,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import PendingItemDialog from '@/components/hub/PendingItemDialog';
@@ -25,6 +25,7 @@ const quickLinks = [
   { title: 'Agendamento', description: 'Gerencie reuniões', url: '/hub/agendamento', icon: CalendarDays, color: 'text-cyan-400', gradient: 'from-cyan-500/20 to-cyan-500/5' },
   { title: 'Dashboards', description: 'Acompanhe métricas', url: '/hub/dashboards', icon: BarChart3, color: 'text-emerald-400', gradient: 'from-emerald-500/20 to-emerald-500/5' },
   { title: 'Carteira Geral', description: 'Visão dos clientes', url: '/hub/carteira', icon: Briefcase, color: 'text-amber-400', gradient: 'from-amber-500/20 to-amber-500/5' },
+  { title: 'Gestão de Migração', description: 'Migrações de plataformas', url: '/hub/migracao', icon: ArrowRightLeft, color: 'text-orange-400', gradient: 'from-orange-500/20 to-orange-500/5' },
   { title: 'Dashboard Liderança', description: 'Visão do time', url: '/hub/lideranca', icon: Crown, color: 'text-rose-400', gradient: 'from-rose-500/20 to-rose-500/5' },
 ];
 

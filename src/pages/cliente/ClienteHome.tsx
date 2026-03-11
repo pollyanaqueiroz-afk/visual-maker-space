@@ -8,7 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { useNavigate } from 'react-router-dom';
 import {
   CheckCircle, AlertTriangle, Palette, Smartphone, Eye, Upload, FileText,
-  ChevronRight, Loader2, Sparkles, PlusCircle, XCircle, Clock, ArrowRightLeft,
+  ChevronRight, Loader2, Sparkles, PlusCircle, XCircle, Clock, ArrowRightLeft, ArrowRight,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
@@ -246,17 +246,17 @@ export default function ClienteHome() {
       </motion.div>
 
       {/* CTA Buttons */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="grid grid-cols-2 gap-3">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="grid grid-cols-3 gap-3">
         <button
           onClick={() => navigate('/cliente/solicitar')}
-          className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 p-4 text-white shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all hover:scale-[1.01] active:scale-[0.99]"
+          className="flex flex-col items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 p-4 text-white shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all hover:scale-[1.01] active:scale-[0.99]"
         >
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/20">
             <Palette className="h-5 w-5" />
           </div>
-          <div className="flex-1 text-left min-w-0">
-            <p className="font-semibold text-sm">Solicitar Design</p>
-            <p className="text-white/70 text-[10px]">Peça novas artes</p>
+          <div className="text-center min-w-0">
+            <p className="font-semibold text-xs">Solicitar Design</p>
+            <p className="text-white/70 text-[10px]">Peça artes</p>
           </div>
         </button>
 
@@ -271,7 +271,7 @@ export default function ClienteHome() {
           }}
           disabled={!!appCliente || createAppFromBriefing.isPending}
           className={cn(
-            "flex items-center gap-3 rounded-xl p-4 text-white shadow-lg transition-all",
+            "flex flex-col items-center gap-2 rounded-xl p-4 text-white shadow-lg transition-all",
             appCliente
               ? "bg-white/10 opacity-50 cursor-not-allowed shadow-none"
               : "bg-gradient-to-r from-blue-500 to-indigo-500 shadow-blue-500/20 hover:shadow-blue-500/30 hover:scale-[1.01] active:scale-[0.99]"
@@ -280,20 +280,33 @@ export default function ClienteHome() {
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/20">
             <Smartphone className="h-5 w-5" />
           </div>
-          <div className="flex-1 text-left min-w-0">
-            <p className="font-semibold text-sm">
+          <div className="text-center min-w-0">
+            <p className="font-semibold text-xs">
               {appCliente ? 'App solicitado' : createAppFromBriefing.isPending ? 'Criando...' : 'Solicitar App'}
             </p>
             <p className="text-white/70 text-[10px]">
-              {appCliente ? 'Já em andamento' : hasBriefingRequest ? 'Criar a partir do briefing' : 'Crie seu aplicativo'}
+              {appCliente ? 'Em andamento' : 'Crie seu app'}
             </p>
+          </div>
+        </button>
+
+        <button
+          onClick={() => navigate('/cliente/migracao')}
+          className="flex flex-col items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 p-4 text-white shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all hover:scale-[1.01] active:scale-[0.99]"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/20">
+            <ArrowRightLeft className="h-5 w-5" />
+          </div>
+          <div className="text-center min-w-0">
+            <p className="font-semibold text-xs">Solicitar Migração</p>
+            <p className="text-white/70 text-[10px]">Migre dados</p>
           </div>
         </button>
       </motion.div>
 
       {/* Status cards with 3D hover */}
       <div className="space-y-2">
-        <h2 className="text-lg font-semibold">📊 Status dos seus projetos</h2>
+        <h2 className="text-lg font-semibold">📊 Acompanhe suas artes, aplicativos e migrações</h2>
 
         {/* App status */}
         <motion.div
@@ -474,7 +487,7 @@ export default function ClienteHome() {
                 <p className="font-medium">Tudo em dia! 🎉</p>
                 <p className="text-sm text-white/40 mt-1">Nenhuma pendência no momento. Que tal solicitar algo novo?</p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md w-full">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-lg w-full">
                 <Card className="bg-white/5 border-white/10 cursor-pointer hover:bg-white/10 transition-colors" onClick={() => navigate('/cliente/solicitar')}>
                   <CardContent className="p-4 text-center">
                     <Palette className="h-8 w-8 text-emerald-400 mx-auto mb-2" />
@@ -487,6 +500,13 @@ export default function ClienteHome() {
                     <Smartphone className="h-8 w-8 text-blue-400 mx-auto mb-2" />
                     <p className="text-sm font-medium text-white">Solicitar App</p>
                     <p className="text-xs text-white/50">Aplicativo mobile</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-white/5 border-white/10 cursor-pointer hover:bg-white/10 transition-colors" onClick={() => navigate('/cliente/migracao')}>
+                  <CardContent className="p-4 text-center">
+                    <ArrowRightLeft className="h-8 w-8 text-orange-400 mx-auto mb-2" />
+                    <p className="text-sm font-medium text-white">Solicitar Migração</p>
+                    <p className="text-xs text-white/50">Migrar dados</p>
                   </CardContent>
                 </Card>
               </div>
