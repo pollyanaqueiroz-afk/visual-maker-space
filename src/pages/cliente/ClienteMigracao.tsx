@@ -353,7 +353,6 @@ function MigrationForm({ projectId, isResubmission }: { projectId: string; isRes
                     <p className="font-semibold mb-1">Como encontrar:</p>
                     <p>Hotmart → Produtos → Meus Produtos → Hotmart Club</p>
                     <p className="mt-1">Escolha o produto → Usuários → Importar membro → Adicionar membro individual</p>
-                    <p className="mt-1">Crie o membro: <strong>migracoes@curseduca.com</strong> com permissão <strong>Admin</strong></p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -382,6 +381,11 @@ function MigrationForm({ projectId, isResubmission }: { projectId: string; isRes
             <Button variant="outline" size="sm" onClick={addClub} className="text-xs">
               <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar club
             </Button>
+            <div className="p-3 rounded-md bg-amber-500/10 border border-amber-500/20">
+              <p className="text-xs text-amber-300">
+                <strong>Importante:</strong> Em cada club, crie o membro <strong>migracoes@curseduca.com</strong> com permissão <strong>Admin</strong>.
+              </p>
+            </div>
           </div>
 
           <Separator className="bg-white/10" />
