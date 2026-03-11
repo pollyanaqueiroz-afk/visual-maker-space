@@ -422,7 +422,7 @@ function MigrationForm({ projectId, isResubmission }: { projectId: string; isRes
           {/* 3. API Credentials */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <Label className="text-white/80">3. Credenciais da API Hotmart</Label>
+              <Label className="text-white/80">3. Credenciais da API Hotmart <span className="text-destructive">*</span></Label>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
