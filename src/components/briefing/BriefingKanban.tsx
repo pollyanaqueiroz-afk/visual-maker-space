@@ -465,6 +465,7 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
           ))}
         </div>
       </div>
+      </>
       )}
 
       {/* Drop confirm dialog */}
