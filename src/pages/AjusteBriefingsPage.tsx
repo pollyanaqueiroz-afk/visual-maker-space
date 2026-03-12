@@ -115,6 +115,7 @@ export default function AjusteBriefingsPage() {
     setClientUrl('');
     setClientEmail('');
     setItems([{ file: null, filePreview: '', observations: '' }]);
+    setSelectedBriefingImageId('');
   };
 
   const handleSubmit = async () => {
