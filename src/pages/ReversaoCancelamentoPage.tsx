@@ -18,13 +18,14 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGri
 
 const REVERSAO_STATUSES = [
   { value: 'nenhum_contato', label: 'Nenhum Contato', color: 'bg-muted text-muted-foreground' },
+  { value: 'risco_fidelidade', label: 'Risco por Fidelidade', color: 'bg-orange-500/20 text-orange-700 dark:text-orange-400' },
   { value: 'elaboracao_proposta', label: 'Elaboração de Proposta', color: 'bg-blue-500/20 text-blue-700 dark:text-blue-400' },
   { value: 'reuniao_reversao', label: 'Reunião de Reversão', color: 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400' },
   { value: 'cliente_revertido', label: 'Cliente Revertido', color: 'bg-green-500/20 text-green-700 dark:text-green-400' },
   { value: 'cliente_perdido', label: 'Cliente Perdido', color: 'bg-destructive/20 text-destructive' },
 ];
 
-const PIE_COLORS = ['#9ca3af', '#3b82f6', '#eab308', '#22c55e', '#ef4444'];
+const PIE_COLORS = ['#9ca3af', '#f97316', '#3b82f6', '#eab308', '#22c55e', '#ef4444'];
 
 interface ChurnRecord {
   id: string;
@@ -78,17 +79,17 @@ export default function ReversaoCancelamentoPage() {
  * Uses id_curseduca (derived from client_url) as unique key.
  */
 async function syncChurnFromMeetings() {
-  // Fetch meetings with loyalty_index = 1
+  // Fetch meetings with loyalty_index = 1 OR 2
   const { data: meetings } = await supabase
     .from('meetings')
-    .select('id, client_url, client_name, meeting_date, loyalty_reason, created_by')
-    .eq('loyalty_index', 1)
+    .select('id, client_url, client_name, meeting_date, loyalty_reason, created_by, loyalty_index')
+    .in('loyalty_index', [1, 2])
     .eq('status', 'completed')
     .order('meeting_date', { ascending: false });
 
   if (!meetings || meetings.length === 0) return;
 
-  // Deduplicate by client_url
+  // Deduplicate by client_url, keeping most recent
   const seen = new Map<string, any>();
   for (const m of meetings) {
     const key = m.client_url || m.client_name || m.id;
@@ -112,13 +113,14 @@ async function syncChurnFromMeetings() {
     }
   }
 
-  // Insert new ones
+  // Insert new ones — loyalty_index=1 → nenhum_contato, loyalty_index=2 → risco_fidelidade
   const toInsert: any[] = [];
   for (const [key, m] of seen) {
     const idCurseduca = m.client_url || key;
     if (existingKeys.has(idCurseduca)) continue;
 
     const profile = m.created_by ? profileMap.get(m.created_by) : null;
+    const initialStatus = m.loyalty_index === 2 ? 'risco_fidelidade' : 'nenhum_contato';
     toInsert.push({
       id_curseduca: idCurseduca,
       client_name: m.client_name,
@@ -127,7 +129,7 @@ async function syncChurnFromMeetings() {
       loyalty_reason: m.loyalty_reason,
       cs_email: profile?.email || null,
       cs_nome: profile?.name || null,
-      status: 'nenhum_contato',
+      status: initialStatus,
     });
   }
 
@@ -215,7 +217,7 @@ function ReversaoTabelaTab({ refreshKey }: { refreshKey: number }) {
   return (
     <div className="space-y-4">
       {/* Status percentage cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {REVERSAO_STATUSES.map(s => {
           const count = statusCounts[s.value] || 0;
           const pct = total > 0 ? ((count / total) * 100).toFixed(1) : '0.0';
@@ -384,7 +386,7 @@ function ReversaoGraficosTab({ refreshKey }: { refreshKey: number }) {
   return (
     <div className="space-y-6">
       {/* Summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {REVERSAO_STATUSES.map(s => {
           const count = statusCounts[s.value] || 0;
           const pct = total > 0 ? ((count / total) * 100).toFixed(1) : '0.0';
