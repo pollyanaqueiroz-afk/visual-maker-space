@@ -1244,10 +1244,6 @@ export default function SchedulingPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>Link da reunião (Zoom, Meet, etc.)</Label>
-                <Input value={form.meeting_url} onChange={e => setForm(f => ({ ...f, meeting_url: e.target.value }))} placeholder="https://meet.google.com/..." />
-              </div>
               {meetingType === 'client' && (
                 <>
                   <div className="space-y-2">
@@ -2220,7 +2216,7 @@ export default function SchedulingPage() {
                             )}
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
-                            {m.meeting_url && <Button variant="ghost" size="icon" className="h-8 w-8" asChild><a href={m.meeting_url} target="_blank" rel="noopener noreferrer"><Video className="h-4 w-4 text-primary" /></a></Button>}
+                            
                             {m.status === 'scheduled' && <Button variant="ghost" size="icon" className="h-8 w-8" asChild title="Adicionar ao Google Calendar"><a href={buildGoogleCalendarUrl(m)} target="_blank" rel="noopener noreferrer"><CalendarDays className="h-4 w-4 text-success" /></a></Button>}
                             {m.status === 'scheduled' && (
                               <AlertDialog>
@@ -2377,11 +2373,6 @@ export default function SchedulingPage() {
                 </div>
                 {detailMeeting.description && (
                   <p className="text-xs text-muted-foreground border-t border-border pt-2 mt-2">{detailMeeting.description}</p>
-                )}
-                {detailMeeting.meeting_url && (
-                  <a href={detailMeeting.meeting_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline">
-                    <Video className="h-3 w-3" /> Link da reunião
-                  </a>
                 )}
               </div>
 
