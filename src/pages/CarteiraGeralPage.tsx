@@ -178,10 +178,8 @@ export default function CarteiraGeralPage() {
         if (filterStatus !== 'all') {
           query = query.ilike('status', `%${filterStatus}%`);
         }
-        if (filterTipoProduto === 'plano') {
-          query = query.eq('is_plano', true);
-        } else if (filterTipoProduto === 'upsell') {
-          query = query.eq('is_upsell', true);
+        if (filterTipoProduto !== 'all') {
+          query = query.ilike('tipo_produto_master', `%${filterTipoProduto}%`);
         }
         if (filterRecorrencia !== 'all') {
           query = query.ilike('recorrencia_pagamento', `%${filterRecorrencia}%`);
