@@ -176,40 +176,50 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
     });
   }, [images]);
 
-  // Build adjustment cards for the "adjustment" column
-  const adjustmentCards: KanbanCard[] = useMemo(() => {
-    return adjustments
-      .filter((a: any) => a.status === 'pending' || a.status === 'allocated')
-      .map((a: any) => {
-        const itemCount = adjustmentItems.filter((i: any) => i.adjustment_id === a.id).length;
-        return {
-          requestId: a.id,
-          platformUrl: a.client_url,
-          requesterName: a.client_email,
-          totalImages: itemCount,
-          pendingImages: itemCount,
-          inProgressImages: 0,
-          reviewImages: 0,
-          completedImages: 0,
-          cancelledImages: 0,
-          status: 'adjustment',
-          assignedDesigners: a.assigned_email ? [a.assigned_email] : [],
-          receivedAt: a.created_at,
-          createdAt: a.created_at,
-          imageTypes: ['adjustment'],
-          slaOverdue: false,
-          _isAdjustment: true,
-          _adjustmentData: a,
-        } as KanbanCard & { _isAdjustment?: boolean; _adjustmentData?: any };
-      });
+  // Build adjustment cards — place them in their proper status column
+  const adjustmentCards: (KanbanCard & { _isAdjustment?: boolean; _adjustmentData?: any })[] = useMemo(() => {
+    return adjustments.map((a: any) => {
+      const itemCount = adjustmentItems.filter((i: any) => i.adjustment_id === a.id).length;
+      // Map adjustment statuses to kanban columns
+      let kanbanStatus = 'adjustment';
+      if (a.status === 'pending') kanbanStatus = 'adjustment'; // Not allocated
+      else if (a.status === 'allocated') kanbanStatus = 'pending'; // Allocated but not started
+      else if (a.status === 'in_progress') kanbanStatus = 'in_progress';
+      else if (a.status === 'review') kanbanStatus = 'review';
+      else if (a.status === 'revision') kanbanStatus = 'revision';
+      else if (a.status === 'completed') kanbanStatus = 'completed';
+      else if (a.status === 'cancelled') kanbanStatus = 'cancelled';
+
+      return {
+        requestId: a.id,
+        platformUrl: a.client_url,
+        requesterName: a.client_email,
+        totalImages: itemCount,
+        pendingImages: itemCount,
+        inProgressImages: 0,
+        reviewImages: 0,
+        completedImages: 0,
+        cancelledImages: 0,
+        status: kanbanStatus,
+        assignedDesigners: a.assigned_email ? [a.assigned_email] : [],
+        receivedAt: a.created_at,
+        createdAt: a.created_at,
+        imageTypes: ['adjustment'],
+        slaOverdue: false,
+        _isAdjustment: true,
+        _adjustmentData: a,
+      };
+    });
   }, [adjustments, adjustmentItems]);
 
   const kanbanColumns = useMemo(() => {
     const cols: Record<string, KanbanCard[]> = {};
     KANBAN_COLUMNS.forEach(c => { cols[c.key] = []; });
 
-    // Add adjustment cards
-    cols['adjustment'] = adjustmentCards;
+    // Add adjustment cards to their respective columns
+    adjustmentCards.forEach(card => {
+      if (cols[card.status]) cols[card.status].push(card);
+    });
 
     kanbanCards.forEach(card => {
       if (cols[card.status]) cols[card.status].push(card);
