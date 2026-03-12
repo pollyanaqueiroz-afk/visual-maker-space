@@ -1,4 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { CalendarIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,10 +11,13 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import TablePagination from '@/components/carteira/TablePagination';
 import { TableSkeleton } from '@/components/ui/TableSkeleton';
 import { Search, Pencil, Check, X, Users, Plus, Loader2, Filter } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 type ClientRecord = {
   id: string;
@@ -22,6 +28,7 @@ type ClientRecord = {
   telefone_alternativo: string | null;
   plano: string | null;
   cs_atual: string | null;
+  cs_anterior: string | null;
   status_financeiro: string | null;
   status_curseduca: string | null;
   indice_fidelidade: number | null;
@@ -50,7 +57,7 @@ export default function CadastroTab() {
 
   // Inline edit
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editData, setEditData] = useState({ nome: '', email: '', email_alternativo: '', telefone_alternativo: '' });
+  const [editData, setEditData] = useState({ nome: '', email: '', email_alternativo: '', telefone_alternativo: '', cs_atual: '' });
   const [saving, setSaving] = useState(false);
 
   // New client dialog
@@ -60,12 +67,15 @@ export default function CadastroTab() {
 
   // Filters
   const [filterPlano, setFilterPlano] = useState<string>('all');
+  const [filterCsAtual, setFilterCsAtual] = useState<string>('all');
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
 
   const fetchClients = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from('clients')
-      .select('id, id_curseduca, nome, email, email_alternativo, telefone_alternativo, plano, cs_atual, status_financeiro, status_curseduca, indice_fidelidade, data_criacao')
+      .select('id, id_curseduca, nome, email, email_alternativo, telefone_alternativo, plano, cs_atual, cs_anterior, status_financeiro, status_curseduca, indice_fidelidade, data_criacao')
       .order('nome', { ascending: true });
     if (!error && data) {
       setClients(data as ClientRecord[]);
@@ -88,17 +98,38 @@ export default function CadastroTab() {
     if (filterPlano !== 'all') {
       result = result.filter(c => c.plano === filterPlano);
     }
+    if (filterCsAtual !== 'all') {
+      result = result.filter(c => c.cs_atual === filterCsAtual);
+    }
+    if (dateFrom) {
+      const fromStr = format(dateFrom, 'yyyy-MM-dd');
+      result = result.filter(c => c.data_criacao && c.data_criacao.slice(0, 10) >= fromStr);
+    }
+    if (dateTo) {
+      const toStr = format(dateTo, 'yyyy-MM-dd');
+      result = result.filter(c => c.data_criacao && c.data_criacao.slice(0, 10) <= toStr);
+    }
     return result;
-  }, [clients, search, filterPlano]);
+  }, [clients, search, filterPlano, filterCsAtual, dateFrom, dateTo]);
 
   // Unique values for filter dropdowns
   const uniquePlanos = useMemo(() => [...new Set(clients.map(c => c.plano).filter(Boolean))].sort() as string[], [clients]);
+  const uniqueCs = useMemo(() => [...new Set(clients.map(c => c.cs_atual).filter(Boolean))].sort() as string[], [clients]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const currentPage = Math.min(page, totalPages);
   const paged = filtered.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
 
-  useEffect(() => { setPage(1); }, [search, filterPlano]);
+  useEffect(() => { setPage(1); }, [search, filterPlano, filterCsAtual, dateFrom, dateTo]);
+
+  const hasActiveFilters = filterPlano !== 'all' || filterCsAtual !== 'all' || !!dateFrom || !!dateTo;
+
+  const clearFilters = () => {
+    setFilterPlano('all');
+    setFilterCsAtual('all');
+    setDateFrom(undefined);
+    setDateTo(undefined);
+  };
 
   const startEdit = (c: ClientRecord) => {
     setEditingId(c.id);
@@ -107,6 +138,7 @@ export default function CadastroTab() {
       email: c.email || '',
       email_alternativo: c.email_alternativo || '',
       telefone_alternativo: c.telefone_alternativo || '',
+      cs_atual: c.cs_atual || '',
     });
   };
 
@@ -115,14 +147,26 @@ export default function CadastroTab() {
   const saveEdit = async () => {
     if (!editingId) return;
     setSaving(true);
+
+    const currentClient = clients.find(c => c.id === editingId);
+    const csChanged = currentClient && editData.cs_atual !== (currentClient.cs_atual || '');
+
+    const updatePayload: Record<string, any> = {
+      nome: editData.nome || null,
+      email: editData.email || null,
+      email_alternativo: editData.email_alternativo || null,
+      telefone_alternativo: editData.telefone_alternativo || null,
+      cs_atual: editData.cs_atual || null,
+    };
+
+    // If CS changed, store old value in cs_anterior
+    if (csChanged && currentClient?.cs_atual) {
+      updatePayload.cs_anterior = currentClient.cs_atual;
+    }
+
     const { error } = await supabase
       .from('clients')
-      .update({
-        nome: editData.nome || null,
-        email: editData.email || null,
-        email_alternativo: editData.email_alternativo || null,
-        telefone_alternativo: editData.telefone_alternativo || null,
-      })
+      .update(updatePayload)
       .eq('id', editingId);
 
     if (error) {
@@ -131,7 +175,15 @@ export default function CadastroTab() {
       toast.success('Cadastro atualizado');
       setClients(prev => prev.map(c =>
         c.id === editingId
-          ? { ...c, nome: editData.nome || null, email: editData.email || null, email_alternativo: editData.email_alternativo || null, telefone_alternativo: editData.telefone_alternativo || null }
+          ? {
+              ...c,
+              nome: editData.nome || null,
+              email: editData.email || null,
+              email_alternativo: editData.email_alternativo || null,
+              telefone_alternativo: editData.telefone_alternativo || null,
+              cs_atual: editData.cs_atual || null,
+              cs_anterior: csChanged && c.cs_atual ? c.cs_atual : c.cs_anterior,
+            }
           : c
       ));
     }
@@ -152,7 +204,7 @@ export default function CadastroTab() {
     const { data, error } = await supabase
       .from('clients')
       .insert(payload)
-      .select('id, id_curseduca, nome, email, email_alternativo, telefone_alternativo, plano, cs_atual, status_financeiro, status_curseduca, indice_fidelidade, data_criacao')
+      .select('id, id_curseduca, nome, email, email_alternativo, telefone_alternativo, plano, cs_atual, cs_anterior, status_financeiro, status_curseduca, indice_fidelidade, data_criacao')
       .single();
 
     if (error) {
@@ -166,7 +218,7 @@ export default function CadastroTab() {
     setCreating(false);
   };
 
-  if (loading) return <TableSkeleton rows={10} columns={7} />;
+  if (loading) return <TableSkeleton rows={10} columns={8} />;
 
   return (
     <div className="space-y-4">
@@ -201,12 +253,63 @@ export default function CadastroTab() {
             ))}
           </SelectContent>
         </Select>
-        {filterPlano !== 'all' && (
+
+        <Select value={filterCsAtual} onValueChange={setFilterCsAtual}>
+          <SelectTrigger className="h-8 w-[220px] text-xs">
+            <SelectValue placeholder="CS Atual" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os CS</SelectItem>
+            {uniqueCs.map(cs => (
+              <SelectItem key={cs} value={cs}>{cs}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className={cn("h-8 text-xs gap-1.5", dateFrom && "text-foreground")}>
+              <CalendarIcon className="h-3.5 w-3.5" />
+              {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Data início"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={dateFrom}
+              onSelect={setDateFrom}
+              initialFocus
+              className={cn("p-3 pointer-events-auto")}
+              locale={ptBR}
+            />
+          </PopoverContent>
+        </Popover>
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className={cn("h-8 text-xs gap-1.5", dateTo && "text-foreground")}>
+              <CalendarIcon className="h-3.5 w-3.5" />
+              {dateTo ? format(dateTo, "dd/MM/yyyy") : "Data fim"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={dateTo}
+              onSelect={setDateTo}
+              initialFocus
+              className={cn("p-3 pointer-events-auto")}
+              locale={ptBR}
+            />
+          </PopoverContent>
+        </Popover>
+
+        {hasActiveFilters && (
           <Button
             variant="ghost"
             size="sm"
             className="h-8 text-xs text-muted-foreground"
-            onClick={() => setFilterPlano('all')}
+            onClick={clearFilters}
           >
             Limpar filtros
           </Button>
@@ -297,17 +400,18 @@ export default function CadastroTab() {
                 <TableHead className="text-[11px] uppercase">ID Curseduca</TableHead>
                 <TableHead className="text-[11px] uppercase">Nome</TableHead>
                 <TableHead className="text-[11px] uppercase">Email</TableHead>
-                <TableHead className="text-[11px] uppercase">Email Alternativo</TableHead>
-                <TableHead className="text-[11px] uppercase">Telefone Alternativo</TableHead>
+                <TableHead className="text-[11px] uppercase">Email Alt.</TableHead>
+                <TableHead className="text-[11px] uppercase">Telefone Alt.</TableHead>
                 <TableHead className="text-[11px] uppercase">Plano</TableHead>
                 <TableHead className="text-[11px] uppercase">CS Atual</TableHead>
+                <TableHead className="text-[11px] uppercase">Data Criação</TableHead>
                 <TableHead className="w-[80px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {paged.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     Nenhum cliente encontrado.
                   </TableCell>
                 </TableRow>
@@ -330,7 +434,12 @@ export default function CadastroTab() {
                           <Input value={editData.telefone_alternativo} onChange={e => setEditData(p => ({ ...p, telefone_alternativo: e.target.value }))} className="h-7 text-xs w-36" disabled={saving} />
                         </TableCell>
                         <TableCell className="text-xs">{c.plano || '—'}</TableCell>
-                        <TableCell className="text-xs">{c.cs_atual || '—'}</TableCell>
+                        <TableCell>
+                          <Input value={editData.cs_atual} onChange={e => setEditData(p => ({ ...p, cs_atual: e.target.value }))} className="h-7 text-xs w-44" disabled={saving} placeholder="email do CS" />
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {c.data_criacao ? format(new Date(c.data_criacao), 'dd/MM/yyyy') : '—'}
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={saveEdit} disabled={saving}>
@@ -350,6 +459,9 @@ export default function CadastroTab() {
                         <TableCell className="text-xs">{c.telefone_alternativo || '—'}</TableCell>
                         <TableCell className="text-xs">{c.plano || '—'}</TableCell>
                         <TableCell className="text-xs">{c.cs_atual || '—'}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {c.data_criacao ? format(new Date(c.data_criacao), 'dd/MM/yyyy') : '—'}
+                        </TableCell>
                         <TableCell>
                           <Button
                             variant="ghost"
