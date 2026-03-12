@@ -410,6 +410,7 @@ export default function SchedulingPage() {
   const handleEdit = (m: Meeting) => {
     setEditingId(m.id);
     setIsRescheduling(false);
+    setMeetingType(m.client_email || m.client_url ? 'client' : 'internal');
     setForm({
       title: m.title,
       description: m.description || '',
