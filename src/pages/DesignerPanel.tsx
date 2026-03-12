@@ -858,7 +858,7 @@ export default function DesignerPanel() {
             image_type: 'adjustment',
             product_name: item.file_name || `Ajuste ${idx + 1}`,
             deadline: adj.deadline,
-            status: adj.status === 'allocated' ? 'in_progress' : adj.status,
+            status: adj.status === 'allocated' ? 'pending' : adj.status,
             revision_count: 0,
             delivery_token: null,
             extra_info: null,
