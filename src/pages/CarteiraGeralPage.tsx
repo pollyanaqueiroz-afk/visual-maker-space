@@ -21,15 +21,18 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 import ClientDetailSheet from '@/components/carteira/ClientDetailSheet';
 import TablePagination from '@/components/carteira/TablePagination';
+import CadastroTab from '@/components/carteira/CadastroTab';
 import { usePermissions } from '@/hooks/usePermissions';
+import { ClipboardList } from 'lucide-react';
 
 interface ClientRecord {
   [key: string]: any;
 }
 
-type ViewType = 'financeiro' | 'produtos' | 'engajamento';
+type ViewType = 'cadastro' | 'financeiro' | 'produtos' | 'engajamento';
 
 const VIEW_COLUMNS: Record<ViewType, { key: string; label: string }[]> = {
+  cadastro: [],
   financeiro: [
     { key: 'id_curseduca', label: 'ID' },
     { key: 'cliente_nome', label: 'Cliente' },
@@ -69,6 +72,7 @@ const VIEW_COLUMNS: Record<ViewType, { key: string; label: string }[]> = {
 };
 
 const VIEW_TABS: { value: ViewType; label: string; icon: typeof Wallet }[] = [
+  { value: 'cadastro', label: 'Cadastro', icon: ClipboardList },
   { value: 'financeiro', label: 'Financeiro', icon: Wallet },
   { value: 'produtos', label: 'Produtos', icon: Package },
   { value: 'engajamento', label: 'Engajamento', icon: Activity },
@@ -213,6 +217,7 @@ export default function CarteiraGeralPage() {
   }, [search]);
 
   useEffect(() => {
+    if (activeView === 'cadastro') return;
     loadData(apiPage, debouncedSearch, activeView);
   }, [apiPage, debouncedSearch, activeView, csFilter, activeKPI]);
 
@@ -455,7 +460,11 @@ export default function CarteiraGeralPage() {
         </div>
       </Tabs>
 
-      {/* Client Table */}
+      {activeView === 'cadastro' ? (
+        <CadastroTab />
+      ) : (
+      /* Client Table */
+      <>
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -594,6 +603,8 @@ export default function CarteiraGeralPage() {
         open={!!detailId}
         onOpenChange={(open) => { if (!open) setDetailId(null); }}
       />
+      </>
+      )}
 
     </div>
   );
