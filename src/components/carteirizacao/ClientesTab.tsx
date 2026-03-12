@@ -345,7 +345,7 @@ export default function ClientesTab() {
                 paged.map(c => (
                   <TableRow key={c.id}>
                     <TableCell className="font-mono text-xs">{c.id_curseduca || '—'}</TableCell>
-                    <TableCell className="font-medium">{c.cliente || '—'}</TableCell>
+                    <TableCell className="font-medium">{c.nome || '—'}</TableCell>
                     <TableCell>{c.plano || '—'}</TableCell>
                     <TableCell>
                       {editingId === c.id ? (
