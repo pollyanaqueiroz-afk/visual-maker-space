@@ -233,7 +233,7 @@ export default function ClientesTab() {
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(c =>
-        c.cliente?.toLowerCase().includes(q) ||
+        c.nome?.toLowerCase().includes(q) ||
         c.id_curseduca?.toLowerCase().includes(q) ||
         c.cs_atual?.toLowerCase().includes(q)
       );
