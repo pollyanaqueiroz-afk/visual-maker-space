@@ -7,32 +7,43 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { ptBR, enUS } from 'date-fns/locale';
 import { ClienteImpersonationProvider } from '@/contexts/ClienteImpersonation';
 import { useClienteEmail } from '@/hooks/useClienteEmail';
-
-const navItems = [
-  { label: 'Home', icon: Home, path: '/cliente' },
-  { label: 'Artes', icon: Palette, path: '/cliente/artes' },
-  { label: 'Aplicativo', icon: Smartphone, path: '/cliente/aplicativo' },
-  { label: 'Migração', icon: ArrowRightLeft, path: '/cliente/migracao' },
-  { label: 'SCORM', icon: GraduationCap, path: '/cliente/scorm' },
-];
+import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
+import LanguageSwitcher from '@/components/cliente/LanguageSwitcher';
 
 export default function ClienteHubLayout() {
+  return (
+    <LanguageProvider>
+      <ClienteHubLayoutInner />
+    </LanguageProvider>
+  );
+}
+
+function ClienteHubLayoutInner() {
   const { user, loading, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t, language } = useLanguage();
+
+  const navItems = [
+    { label: t('nav.home'), icon: Home, path: '/cliente' },
+    { label: t('nav.arts'), icon: Palette, path: '/cliente/artes' },
+    { label: t('nav.app'), icon: Smartphone, path: '/cliente/aplicativo' },
+    { label: t('nav.migration'), icon: ArrowRightLeft, path: '/cliente/migracao' },
+    { label: t('nav.scorm'), icon: GraduationCap, path: '/cliente/scorm' },
+  ];
 
   const IMAGE_TYPE_LABELS: Record<string, string> = {
-    login: 'Área de Login', banner_vitrine: 'Banner Vitrine', product_cover: 'Capa de Produto',
-    trail_banner: 'Banner de Trilha', challenge_banner: 'Banner de Desafio',
-    community_banner: 'Banner de Comunidade', app_mockup: 'Mockup do Aplicativo',
+    login: t('img.login'), banner_vitrine: t('img.banner_vitrine'), product_cover: t('img.product_cover'),
+    trail_banner: t('img.trail_banner'), challenge_banner: t('img.challenge_banner'),
+    community_banner: t('img.community_banner'), app_mockup: t('img.app_mockup'),
   };
 
   const { data: notifications = [] } = useQuery({
-    queryKey: ['cliente-notifications', user?.email],
+    queryKey: ['cliente-notifications', user?.email, language],
     enabled: !!user?.email,
     queryFn: async () => {
       const { data: reviewArts } = await supabase
@@ -53,7 +64,7 @@ export default function ClienteHubLayout() {
         ...(reviewArts || []).map(a => ({
           id: `art-${a.id}`,
           type: 'review' as const,
-          title: 'Arte pronta para aprovação',
+          title: t('portal.art_ready'),
           description: `${IMAGE_TYPE_LABELS[a.image_type] || a.image_type}${a.product_name ? ` — ${a.product_name}` : ''}`,
           date: a.created_at,
           link: '/cliente/artes',
@@ -104,7 +115,7 @@ export default function ClienteHubLayout() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-white/50" style={{ fontFamily: "'Sora', sans-serif" }}>
-        Carregando...
+        {t('loading')}
       </div>
     );
   }
@@ -114,14 +125,17 @@ export default function ClienteHubLayout() {
   const isActive = (path: string) =>
     path === '/cliente' ? location.pathname === '/cliente' : location.pathname.startsWith(path);
 
+  const dateLocale = language === 'en' ? enUS : ptBR;
+
   return (
     <ClienteImpersonationProvider email={null} clienteName={null} clienteId={null}>
     <div className="min-h-screen bg-[#0F172A] text-white dark" style={{ fontFamily: "'Sora', sans-serif" }}>
       {/* Top nav bar */}
       <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0F172A]/95 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto px-4 flex items-center justify-between h-14">
-          <span className="text-sm font-bold tracking-tight">Portal do Cliente</span>
+          <span className="text-sm font-bold tracking-tight">{t('portal.title')}</span>
           <div className="flex items-center gap-2">
+            <LanguageSwitcher />
             <Popover>
               <PopoverTrigger asChild>
                 <button className="relative p-2 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-colors">
@@ -135,11 +149,11 @@ export default function ClienteHubLayout() {
               </PopoverTrigger>
               <PopoverContent className="w-80 p-0 bg-[#1E293B] border-white/10" align="end" sideOffset={8}>
                 <div className="px-4 py-3 border-b border-white/10">
-                  <p className="text-sm font-semibold text-white">Notificações</p>
+                  <p className="text-sm font-semibold text-white">{t('portal.notifications')}</p>
                 </div>
                 <div className="max-h-72 overflow-y-auto">
                   {notifications.length === 0 ? (
-                    <p className="text-sm text-white/40 text-center py-6">Nenhuma notificação</p>
+                    <p className="text-sm text-white/40 text-center py-6">{t('portal.no_notifications')}</p>
                   ) : (
                     notifications.map(n => (
                       <div
@@ -157,7 +171,7 @@ export default function ClienteHubLayout() {
                           <p className="text-xs font-medium text-white">{n.title}</p>
                           <p className="text-[11px] text-white/50 truncate">{n.description}</p>
                           <p className="text-[10px] text-white/30 mt-0.5">
-                            {formatDistanceToNow(new Date(n.date), { addSuffix: true, locale: ptBR })}
+                            {formatDistanceToNow(new Date(n.date), { addSuffix: true, locale: dateLocale })}
                           </p>
                         </div>
                       </div>
@@ -170,7 +184,7 @@ export default function ClienteHubLayout() {
                       className="text-xs text-primary hover:underline w-full text-center"
                       onClick={() => navigate('/cliente/artes')}
                     >
-                      Ver todas as artes
+                      {t('portal.view_all_arts')}
                     </button>
                   </div>
                 )}
@@ -182,7 +196,7 @@ export default function ClienteHubLayout() {
               onClick={async () => { await signOut(); navigate('/cliente/login'); }}
               className="text-white/50 hover:text-white hover:bg-white/10"
             >
-              <LogOut className="h-4 w-4 mr-1" /> Sair
+              <LogOut className="h-4 w-4 mr-1" /> {t('portal.logout')}
             </Button>
           </div>
         </div>

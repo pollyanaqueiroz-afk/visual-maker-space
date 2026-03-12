@@ -15,12 +15,14 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import TimelineSection from '@/components/cliente/TimelineSection';
 import { useClienteEmail } from '@/hooks/useClienteEmail';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function ClienteHome() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const clientEmail = useClienteEmail();
+  const { t, language } = useLanguage();
 
   // Fetch artes data (for status cards)
   const { data: artesData, isLoading: loadingArtes } = useQuery({
@@ -56,7 +58,6 @@ export default function ClienteHome() {
     queryKey: ['cliente-home-app-pendencies', appCliente?.id],
     enabled: !!appCliente?.id,
     queryFn: async () => {
-      // Only fetch items from the current active phase
       const faseAtual = appCliente!.fase_atual ?? 0;
       const { data, error } = await supabase
         .from('app_checklist_items')
@@ -68,14 +69,12 @@ export default function ClienteHome() {
         .order('ordem');
       if (error) throw error;
 
-      // Also check if there are active phases (em_andamento) to get items from all active phases
       const { data: activeFases } = await supabase
         .from('app_fases')
         .select('numero')
         .eq('cliente_id', appCliente!.id)
         .eq('status', 'em_andamento');
       const activeFaseNums = new Set((activeFases || []).map(f => f.numero));
-      // If current phase items are empty but other phases are active, fetch those too
       let allItems = data || [];
       if (activeFaseNums.size > 0) {
         const otherNums = [...activeFaseNums].filter(n => n !== faseAtual);
@@ -92,11 +91,10 @@ export default function ClienteHome() {
         }
       }
 
-      const FASE_NAMES = ['Pré-Requisitos', 'Primeiros Passos', 'Validação pela Loja', 'Criação e Submissão', 'Aprovação das Lojas', 'Publicado'];
       return allItems.map(i => ({
         ...i,
         source: 'app' as const,
-        subtitle: `Fase ${i.fase_numero} — ${FASE_NAMES[i.fase_numero] || ''}`,
+        subtitle: `${t(`phase.${i.fase_numero}` as any)}`,
       }));
     },
     staleTime: 30_000,
@@ -121,9 +119,9 @@ export default function ClienteHome() {
 
       return (images || []).map(img => ({
         id: img.id,
-        texto: img.observations || img.product_name || (img.image_type === 'app_mockup' ? 'Mockup do Aplicativo' : img.image_type),
+        texto: img.observations || img.product_name || (img.image_type === 'app_mockup' ? t('img.app_mockup') : img.image_type),
         source: 'art' as const,
-        subtitle: 'Aguardando sua aprovação',
+        subtitle: t('pending.awaiting_approval'),
       }));
     },
     staleTime: 30_000,
@@ -175,7 +173,7 @@ export default function ClienteHome() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cliente-app'] });
       queryClient.invalidateQueries({ queryKey: ['cliente-briefing-check'] });
-      toast.success('Projeto de aplicativo criado com sucesso! 🎉');
+      toast.success(language === 'en' ? 'App project created! 🎉' : 'Projeto de aplicativo criado com sucesso! 🎉');
       navigate('/cliente/aplicativo');
     },
     onError: (e: any) => toast.error(e.message),
@@ -189,16 +187,18 @@ export default function ClienteHome() {
 
   const greetingData = () => {
     const h = new Date().getHours();
-    if (h < 12) return { text: 'Bom dia', gif: 'https://media.giphy.com/media/3oriO0OEd9QIDdllqo/giphy.gif' };
-    if (h < 18) return { text: 'Boa tarde', gif: 'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif' };
-    return { text: 'Boa noite', gif: 'https://media.giphy.com/media/3o7abAHdYvZdBNnGZq/giphy.gif' };
+    if (h < 12) return { text: t('greeting.morning'), gif: 'https://media.giphy.com/media/3oriO0OEd9QIDdllqo/giphy.gif' };
+    if (h < 18) return { text: t('greeting.afternoon'), gif: 'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif' };
+    return { text: t('greeting.evening'), gif: 'https://media.giphy.com/media/3o7abAHdYvZdBNnGZq/giphy.gif' };
   };
 
   const { text: greetingText, gif: greetingGif } = greetingData();
 
   const greetingSubtitle = hasRealPendencies
-    ? `Você tem ${allPendencies.length} pendência${allPendencies.length > 1 ? 's' : ''} para resolver`
-    : 'Você está em dia! Nenhuma pendência no momento 🎉';
+    ? allPendencies.length === 1
+      ? t('home.pendencies_singular')
+      : t('home.pendencies_plural', { count: allPendencies.length })
+    : t('home.all_clear');
 
   if (isLoading) {
     return (
@@ -219,7 +219,7 @@ export default function ClienteHome() {
       >
         <motion.img
           src={greetingGif}
-          alt="Saudação"
+          alt={language === 'en' ? 'Greeting' : 'Saudação'}
           className="h-16 w-16 rounded-2xl object-cover shadow-lg ring-2 ring-white/10"
           initial={{ scale: 0, rotate: -20 }}
           animate={{ scale: 1, rotate: 0 }}
@@ -255,8 +255,8 @@ export default function ClienteHome() {
             <Palette className="h-5 w-5" />
           </div>
           <div className="text-center min-w-0">
-            <p className="font-semibold text-xs">Solicitar Design</p>
-            <p className="text-white/70 text-[10px]">Peça artes</p>
+            <p className="font-semibold text-xs">{t('home.request_design')}</p>
+            <p className="text-white/70 text-[10px]">{t('home.request_design_sub')}</p>
           </div>
         </button>
 
@@ -282,10 +282,10 @@ export default function ClienteHome() {
           </div>
           <div className="text-center min-w-0">
             <p className="font-semibold text-xs">
-              {appCliente ? 'App solicitado' : createAppFromBriefing.isPending ? 'Criando...' : 'Solicitar App'}
+              {appCliente ? t('home.app_requested') : createAppFromBriefing.isPending ? t('home.creating') : t('home.request_app')}
             </p>
             <p className="text-white/70 text-[10px]">
-              {appCliente ? 'Em andamento' : 'Crie seu app'}
+              {appCliente ? t('home.in_progress') : t('home.request_app_sub')}
             </p>
           </div>
         </button>
@@ -298,15 +298,15 @@ export default function ClienteHome() {
             <ArrowRightLeft className="h-5 w-5" />
           </div>
           <div className="text-center min-w-0">
-            <p className="font-semibold text-xs">Solicitar Migração</p>
-            <p className="text-white/70 text-[10px]">Migre dados</p>
+            <p className="font-semibold text-xs">{t('home.request_migration')}</p>
+            <p className="text-white/70 text-[10px]">{t('home.request_migration_sub')}</p>
           </div>
         </button>
       </motion.div>
 
       {/* Status cards with 3D hover */}
       <div className="space-y-2">
-        <h2 className="text-lg font-semibold">📊 Acompanhe suas artes, aplicativos e migrações</h2>
+        <h2 className="text-lg font-semibold">{t('home.track_title')}</h2>
 
         {/* App status */}
         <motion.div
@@ -318,23 +318,21 @@ export default function ClienteHome() {
         >
           {appCliente?.status === 'cancelado' ? (
             <Card className="bg-[#1E293B] border-destructive/20 cursor-pointer hover:border-destructive/30 transition-colors"
-              onClick={() => {
-                createAppFromBriefing.mutate();
-              }}>
+              onClick={() => { createAppFromBriefing.mutate(); }}>
               <CardContent className="p-4 flex items-center gap-4">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
                   <XCircle className="h-5 w-5 text-destructive/60" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-destructive/70">Solicitação cancelada</p>
+                  <p className="text-sm font-medium text-destructive/70">{t('app.cancelled')}</p>
                   <p className="text-xs text-white/40 mt-0.5">
-                    {(appCliente as any).motivo_cancelamento || 'Seu fluxo de aplicativo foi cancelado'}
+                    {(appCliente as any).motivo_cancelamento || t('app.cancelled_desc')}
                   </p>
                 </div>
                 <div className="shrink-0">
                   <div className="flex items-center gap-1.5 text-xs text-white/50">
                     <PlusCircle className="h-3.5 w-3.5" />
-                    Solicitar novamente
+                    {t('app.request_again')}
                   </div>
                 </div>
               </CardContent>
@@ -348,10 +346,10 @@ export default function ClienteHome() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <p className="text-xs text-white/50 mb-0.5">Aplicativo</p>
+                    <p className="text-xs text-white/50 mb-0.5">{t('app.title')}</p>
                     {appPendencies.length > 0 && (
                       <Badge variant="destructive" className="text-[10px] ml-1">
-                        {appPendencies.length} pendência{appPendencies.length > 1 ? 's' : ''}
+                        {appPendencies.length} {appPendencies.length > 1 ? t('app.pendencies') : t('app.pendency')}
                       </Badge>
                     )}
                   </div>
@@ -359,13 +357,13 @@ export default function ClienteHome() {
                     <>
                     <p className="text-sm font-medium">
                         {appCliente.fase_atual >= 5
-                          ? '🎉 Publicado!'
-                          : `${appCliente.porcentagem_geral}% concluído`}
+                          ? t('app.published')
+                          : t('app.completed_pct', { pct: appCliente.porcentagem_geral ?? 0 })}
                       </p>
                       <Progress value={appCliente.porcentagem_geral} className="h-1.5 bg-white/10 mt-1.5" />
                     </>
                   ) : (
-                    <p className="text-sm text-white/40">Nenhum projeto de app vinculado</p>
+                    <p className="text-sm text-white/40">{t('app.no_project')}</p>
                   )}
                 </div>
                 <ChevronRight className="h-4 w-4 text-white/30 shrink-0" />
@@ -390,19 +388,19 @@ export default function ClienteHome() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <p className="text-xs text-white/50 mb-0.5">Validação de Artes</p>
+                  <p className="text-xs text-white/50 mb-0.5">{t('art.title')}</p>
                   {artPendencies.length > 0 && (
                     <Badge variant="destructive" className="text-[10px] ml-1">
-                      {artPendencies.length} para aprovar
+                      {t('art.to_approve', { count: artPendencies.length })}
                     </Badge>
                   )}
                 </div>
                 {artesData?.counts?.total > 0 ? (
                   <>
                     <p className="text-sm font-medium">
-                      {artesData.counts.completed || 0} de {artesData.counts.total} aprovadas
+                      {t('art.approved_of', { done: artesData.counts.completed || 0, total: artesData.counts.total })}
                       {(artesData.counts.review || 0) > 0 && (
-                        <span className="text-amber-400 ml-1">• {artesData.counts.review} para validar</span>
+                        <span className="text-amber-400 ml-1">• {t('art.to_validate', { count: artesData.counts.review })}</span>
                       )}
                     </p>
                     <Progress
@@ -411,7 +409,7 @@ export default function ClienteHome() {
                     />
                   </>
                 ) : (
-                  <p className="text-sm text-white/40">Nenhuma arte no momento</p>
+                  <p className="text-sm text-white/40">{t('art.no_arts')}</p>
                 )}
               </div>
               <ChevronRight className="h-4 w-4 text-white/30 shrink-0" />
@@ -434,7 +432,7 @@ export default function ClienteHome() {
           <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
             <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0 animate-pulse" />
             <h3 className="text-sm font-bold text-amber-300">
-              🔔 Ações Pendentes ({allPendencies.length})
+              {t('pending.title', { count: allPendencies.length })}
             </h3>
           </div>
           {allPendencies.map((item, i) => (
@@ -471,7 +469,7 @@ export default function ClienteHome() {
                 <Badge variant="outline" className={`text-[10px] shrink-0 ${
                   item.source === 'app' ? 'border-amber-500/30 text-amber-400' : 'border-purple-500/30 text-purple-400'
                 }`}>
-                  {item.source === 'app' ? 'Aplicativo' : 'Arte'}
+                  {item.source === 'app' ? t('pending.app_badge') : t('pending.art_badge')}
                 </Badge>
                 <ChevronRight className="h-4 w-4 text-white/30 shrink-0" />
               </div>
@@ -484,29 +482,29 @@ export default function ClienteHome() {
             <CardContent className="flex flex-col items-center justify-center py-8 text-center space-y-4">
               <CheckCircle className="h-10 w-10 text-green-500" />
               <div>
-                <p className="font-medium">Tudo em dia! 🎉</p>
-                <p className="text-sm text-white/40 mt-1">Nenhuma pendência no momento. Que tal solicitar algo novo?</p>
+                <p className="font-medium">{t('clear.title')}</p>
+                <p className="text-sm text-white/40 mt-1">{t('clear.subtitle')}</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-lg w-full">
                 <Card className="bg-white/5 border-white/10 cursor-pointer hover:bg-white/10 transition-colors" onClick={() => navigate('/cliente/solicitar')}>
                   <CardContent className="p-4 text-center">
                     <Palette className="h-8 w-8 text-emerald-400 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-white">Solicitar Artes</p>
-                    <p className="text-xs text-white/50">Banners, capas, login</p>
+                    <p className="text-sm font-medium text-white">{t('clear.request_arts')}</p>
+                    <p className="text-xs text-white/50">{t('clear.request_arts_sub')}</p>
                   </CardContent>
                 </Card>
                 <Card className="bg-white/5 border-white/10 cursor-pointer hover:bg-white/10 transition-colors" onClick={() => navigate('/cliente/solicitar-app')}>
                   <CardContent className="p-4 text-center">
                     <Smartphone className="h-8 w-8 text-blue-400 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-white">Solicitar App</p>
-                    <p className="text-xs text-white/50">Aplicativo mobile</p>
+                    <p className="text-sm font-medium text-white">{t('clear.request_app')}</p>
+                    <p className="text-xs text-white/50">{t('clear.request_app_sub')}</p>
                   </CardContent>
                 </Card>
                 <Card className="bg-white/5 border-white/10 cursor-pointer hover:bg-white/10 transition-colors" onClick={() => navigate('/cliente/migracao')}>
                   <CardContent className="p-4 text-center">
                     <ArrowRightLeft className="h-8 w-8 text-orange-400 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-white">Solicitar Migração</p>
-                    <p className="text-xs text-white/50">Migrar dados</p>
+                    <p className="text-sm font-medium text-white">{t('clear.request_migration')}</p>
+                    <p className="text-xs text-white/50">{t('clear.request_migration_sub')}</p>
                   </CardContent>
                 </Card>
               </div>
@@ -523,13 +521,15 @@ export default function ClienteHome() {
 
 // ─── Migration Status Card ───────────────────────────────────
 function MigrationStatusCard({ clientEmail, navigate }: { clientEmail: string | null; navigate: (path: string) => void }) {
-  const STATUS_LABELS: Record<string, string> = {
-    waiting_form: 'Aguardando formulário',
-    analysis: 'Em análise',
-    rejected: 'Ajustes solicitados',
-    extraction: 'Extração de dados',
-    in_progress: 'Migração em andamento',
-    completed: 'Concluído',
+  const { t } = useLanguage();
+
+  const STATUS_KEYS: Record<string, string> = {
+    waiting_form: 'migration.waiting_form',
+    analysis: 'migration.analysis',
+    rejected: 'migration.rejected',
+    extraction: 'migration.extraction',
+    in_progress: 'migration.in_progress',
+    completed: 'migration.completed',
   };
 
   const { data: migrationProject } = useQuery({
@@ -553,6 +553,8 @@ function MigrationStatusCard({ clientEmail, navigate }: { clientEmail: string | 
   const statusOrder: Record<string, number> = { waiting_form: 0, analysis: 1, rejected: 1, extraction: 2, in_progress: 3, completed: 4 };
   const progress = migrationProject.migration_status === 'completed' ? 100 : ((statusOrder[migrationProject.migration_status] || 0) / 4) * 100;
 
+  const statusKey = STATUS_KEYS[migrationProject.migration_status || ''] as any;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
@@ -569,13 +571,13 @@ function MigrationStatusCard({ clientEmail, navigate }: { clientEmail: string | 
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
-              <p className="text-xs text-white/50 mb-0.5">Migração</p>
+              <p className="text-xs text-white/50 mb-0.5">{t('migration.title')}</p>
               {migrationProject.migration_status === 'rejected' && (
-                <Badge variant="destructive" className="text-[10px] ml-1">Ajustes necessários</Badge>
+                <Badge variant="destructive" className="text-[10px] ml-1">{t('migration.adjustments_needed')}</Badge>
               )}
             </div>
             <p className="text-sm font-medium">
-              {STATUS_LABELS[migrationProject.migration_status] || migrationProject.migration_status}
+              {statusKey ? t(statusKey) : (migrationProject.migration_status || '')}
             </p>
             <Progress value={progress} className="h-1.5 bg-white/10 mt-1.5" />
           </div>
