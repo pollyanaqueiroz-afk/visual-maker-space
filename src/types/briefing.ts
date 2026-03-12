@@ -1,4 +1,4 @@
-export type RequestStatus = 'pending' | 'in_progress' | 'review' | 'completed' | 'cancelled';
+export type RequestStatus = 'pending' | 'in_progress' | 'review' | 'completed' | 'revision' | 'cancelled';
 export type ImageType = 'login' | 'banner_vitrine' | 'product_cover' | 'trail_banner' | 'challenge_banner' | 'community_banner' | 'app_mockup';
 
 export interface BriefingRequest {
