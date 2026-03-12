@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
     const reviewer_comments = typeof body.reviewer_comments === "string" ? body.reviewer_comments.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "").slice(0, 2000) : "";
 
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    const validStatuses = ["pending", "in_progress", "review", "completed", "cancelled"];
+    const validStatuses = ["pending", "in_progress", "review", "completed", "revision", "cancelled"];
 
     if (!action) {
       return new Response(
