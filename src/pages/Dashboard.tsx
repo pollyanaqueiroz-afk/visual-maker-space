@@ -341,6 +341,7 @@ export default function Dashboard() {
         pending: 'pending',
         in_progress: 'in_progress',
         review: 'review',
+        revision: 'revision',
         completed: 'completed',
         cancelled: 'cancelled',
       };
