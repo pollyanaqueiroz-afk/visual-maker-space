@@ -176,10 +176,13 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
     setBriefingDetailId(imageId);
     setLoadingDetail(true);
     try {
-      // Use edge function to fetch detail securely
-      const { data: result } = await supabase.functions.invoke('client-review-data', {
-        body: { email, image_id: imageId },
-      });
+      const body: Record<string, string> = { image_id: imageId };
+      if (platformUrlInput) {
+        body.platform_url = platformUrlInput;
+      } else if (email) {
+        body.email = email;
+      }
+      const { data: result } = await supabase.functions.invoke('client-review-data', { body });
       const allImgs = result?.images?.all || [];
       const detail = allImgs.find((i: any) => i.id === imageId);
       setBriefingDetail(detail || null);
@@ -191,11 +194,12 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
   };
 
   const handleLogin = () => {
-    if (!email.trim()) {
-      toast.error('Informe seu email');
+    const url = platformUrlInput.trim();
+    if (!url) {
+      toast.error('Informe a URL da sua plataforma');
       return;
     }
-    fetchImages(email.trim().toLowerCase());
+    fetchImages(undefined, undefined, url);
   };
 
   const currentImage = images[currentIndex];
