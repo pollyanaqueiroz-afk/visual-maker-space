@@ -52,7 +52,7 @@ export default function GlobalSearch() {
     try {
       const q = `%${term}%`;
       const [clients, appClientes, briefings, migrations] = await Promise.all([
-        supabase.from('clients').select('id, cliente, cs_atual, plano').ilike('cliente', q).limit(6),
+        supabase.from('clients').select('id, nome, cs_atual, plano').ilike('nome', q).limit(6),
         supabase.from('app_clientes').select('id, nome, empresa, fase_atual').or(`nome.ilike.${q},empresa.ilike.${q}`).limit(6),
         supabase.from('briefing_requests').select('id, requester_name, platform_url').or(`requester_name.ilike.${q},platform_url.ilike.${q}`).limit(6),
         supabase.from('migration_projects').select('id, client_name, client_url').or(`client_name.ilike.${q},client_url.ilike.${q}`).limit(6),
@@ -60,7 +60,7 @@ export default function GlobalSearch() {
 
       const items: SearchResult[] = [
         ...(clients.data || []).map(c => ({
-          id: c.id, label: c.cliente || 'Sem nome', sublabel: `${c.plano || ''} · CS: ${c.cs_atual || '—'}`,
+          id: c.id, label: c.nome || 'Sem nome', sublabel: `${c.plano || ''} · CS: ${c.cs_atual || '—'}`,
           icon: Briefcase, path: `/hub/carteira/${c.id}`, group: 'Carteira',
         })),
         ...(appClientes.data || []).map(c => ({

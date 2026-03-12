@@ -16,12 +16,17 @@ import { toast } from 'sonner';
 type Client = {
   id: string;
   id_curseduca: string | null;
-  cliente: string | null;
+  nome: string | null;
   cs_atual: string | null;
   cs_anterior: string | null;
-  fatura: string | null;
   plano: string | null;
-  data_da_carga: string | null;
+  email: string | null;
+  status_financeiro: string | null;
+  status_curseduca: string | null;
+  indice_fidelidade: number | null;
+  email_alternativo: string | null;
+  telefone_alternativo: string | null;
+  data_criacao: string | null;
 };
 
 type UserProfile = { user_id: string; email: string | null; display_name: string | null };
@@ -60,7 +65,7 @@ export default function ClientesTab() {
     const { data, error } = await supabase
       .from('clients')
       .select('*')
-      .order('cliente', { ascending: true });
+      .order('nome', { ascending: true });
     if (!error && data) {
       setClients(data as Client[]);
     }
@@ -228,7 +233,7 @@ export default function ClientesTab() {
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(c =>
-        c.cliente?.toLowerCase().includes(q) ||
+        c.nome?.toLowerCase().includes(q) ||
         c.id_curseduca?.toLowerCase().includes(q) ||
         c.cs_atual?.toLowerCase().includes(q)
       );
@@ -254,12 +259,6 @@ export default function ClientesTab() {
 
   useEffect(() => { setPage(1); }, [search, filterPlano, filterCsAtual, filterCsAnterior]);
 
-  const formatFatura = (v: string | null) => {
-    if (!v) return '—';
-    const n = parseFloat(v);
-    if (isNaN(n)) return v;
-    return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  };
 
   if (loading) return <TableSkeleton rows={10} columns={7} />;
 
@@ -322,11 +321,11 @@ export default function ClientesTab() {
             <TableHeader>
               <TableRow>
                 <TableHead>ID Curseduca</TableHead>
-                <TableHead>Cliente</TableHead>
+                <TableHead>Nome</TableHead>
                 <TableHead>Plano</TableHead>
                 <TableHead>CS Atual</TableHead>
                 <TableHead>CS Anterior</TableHead>
-                <TableHead className="text-right">Fatura</TableHead>
+                <TableHead>Status Financeiro</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -340,7 +339,7 @@ export default function ClientesTab() {
                 paged.map(c => (
                   <TableRow key={c.id}>
                     <TableCell className="font-mono text-xs">{c.id_curseduca || '—'}</TableCell>
-                    <TableCell className="font-medium">{c.cliente || '—'}</TableCell>
+                    <TableCell className="font-medium">{c.nome || '—'}</TableCell>
                     <TableCell>{c.plano || '—'}</TableCell>
                     <TableCell>
                       {editingId === c.id ? (
@@ -393,7 +392,7 @@ export default function ClientesTab() {
                       )}
                     </TableCell>
                     <TableCell>{c.cs_anterior || '—'}</TableCell>
-                    <TableCell className="text-right tabular-nums">{formatFatura(c.fatura)}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{c.status_financeiro || '—'}</TableCell>
                   </TableRow>
                 ))
               )}

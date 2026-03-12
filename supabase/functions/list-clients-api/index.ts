@@ -41,13 +41,13 @@ Deno.serve(async (req) => {
     let query = supabase.from("clients").select("*", { count: "exact" });
 
     if (search) {
-      query = query.or(`cliente.ilike.%${search}%,id_curseduca.ilike.%${search}%`);
+      query = query.or(`nome.ilike.%${search}%,id_curseduca.ilike.%${search}%`);
     }
     if (csAtual) {
       query = query.eq("cs_atual", csAtual);
     }
 
-    const { data, count, error } = await query.range(from, to).order("cliente", { ascending: true });
+    const { data, count, error } = await query.range(from, to).order("nome", { ascending: true });
 
     if (error) throw error;
 

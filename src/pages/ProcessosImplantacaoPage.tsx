@@ -59,8 +59,8 @@ export default function ProcessosImplantacaoPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('clients')
-        .select('id, cliente, id_curseduca, cs_atual, plano')
-        .order('cliente');
+        .select('id, nome, id_curseduca, cs_atual, plano')
+        .order('nome');
       if (error) throw error;
       return data || [];
     },
@@ -200,7 +200,7 @@ export default function ProcessosImplantacaoPage() {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(c =>
-        (c.cliente || '').toLowerCase().includes(q) ||
+        (c.nome || '').toLowerCase().includes(q) ||
         (c.id_curseduca || '').toLowerCase().includes(q)
       );
     }
@@ -325,7 +325,7 @@ export default function ProcessosImplantacaoPage() {
                     <div className="flex items-center gap-2">
                       {c.isOverdue && <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />}
                       <div>
-                         <p className={`font-medium text-sm ${c.isOverdue ? 'text-destructive' : ''}`}>{c.cliente || c.id_curseduca}</p>
+                         <p className={`font-medium text-sm ${c.isOverdue ? 'text-destructive' : ''}`}>{c.nome || c.id_curseduca}</p>
                          <p className="text-xs text-muted-foreground">{c.id_curseduca}</p>
                       </div>
                     </div>
@@ -470,7 +470,7 @@ export default function ProcessosImplantacaoPage() {
           {selectedClient && (
             <>
               <DialogHeader>
-                 <DialogTitle className="text-lg">{selectedClient.cliente || selectedClient.id_curseduca}</DialogTitle>
+                 <DialogTitle className="text-lg">{selectedClient.nome || selectedClient.id_curseduca}</DialogTitle>
                  <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                    <span>{selectedClient.id_curseduca}</span>
                    {selectedClient.cs_atual && <span>CS: {selectedClient.cs_atual}</span>}
