@@ -496,7 +496,7 @@ export default function CarteiraGeralPage() {
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
             <Users className="h-4 w-4" />
-            Clientes ({activeKPI ? filteredRecords.length : apiTotal})
+            {activeView === 'financeiro' ? 'Assinaturas' : 'Clientes'} ({activeKPI ? filteredRecords.length : apiTotal})
             {activeKPI && (
               <Badge variant="outline" className="text-[10px] ml-1">
                 {activeKPI === 'adimplentes' ? 'Adimplentes' :
