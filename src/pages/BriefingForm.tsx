@@ -266,21 +266,64 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
   };
 
   const handleSubmit = async () => {
-    if (!form.requester_name || !form.requester_email || !form.platform_url) {
-      toast.error('Preencha todos os campos obrigatórios do solicitante');
-      setStep(2);
+    // Specific field validation
+    const missingFields: string[] = [];
+    if (!form.requester_name) missingFields.push('Nome completo');
+    if (!form.requester_email) missingFields.push('Email');
+    if (!form.platform_url) missingFields.push('URL da Plataforma');
+
+    if (missingFields.length > 0) {
+      toast.error(`Campos obrigatórios não preenchidos: ${missingFields.join(', ')}`, {
+        description: 'Volte ao Passo 1 para completar seus dados.',
+        duration: 6000,
+      });
+      setStep(1);
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.requester_email)) {
+      toast.error('O email informado é inválido', {
+        description: `"${form.requester_email}" não é um formato de email válido.`,
+        duration: 5000,
+      });
+      setStep(1);
       return;
     }
 
     if (!mockupOnly && !form.brand_file && !form.brand_drive_link) {
-      toast.error('Envie o arquivo de identidade visual ou informe o link do Google Drive');
-      setStep(2);
+      toast.error('Identidade visual não enviada', {
+        description: 'Envie o arquivo de identidade visual ou informe o link do Google Drive no Passo 1.',
+        duration: 6000,
+      });
+      setStep(1);
       return;
     }
 
-    if (selections.product_covers && form.product_covers.some(c => !c.orientation)) {
-      toast.error('Selecione a orientação (horizontal/vertical) em todas as capas de produto');
-      return;
+    if (selections.product_covers) {
+      const coversWithoutOrientation = form.product_covers
+        .map((c, i) => (!c.orientation ? `Capa ${i + 1}` : null))
+        .filter(Boolean);
+      if (coversWithoutOrientation.length > 0) {
+        toast.error('Orientação não selecionada', {
+          description: `Selecione a orientação (horizontal/vertical) em: ${coversWithoutOrientation.join(', ')}`,
+          duration: 6000,
+        });
+        return;
+      }
+    }
+
+    if (selections.product_covers) {
+      const coversWithoutName = form.product_covers
+        .map((c, i) => (!c.product_name ? `Capa ${i + 1}` : null))
+        .filter(Boolean);
+      if (coversWithoutName.length > 0) {
+        toast.error('Nome do produto não preenchido', {
+          description: `Informe o nome do produto/módulo em: ${coversWithoutName.join(', ')}`,
+          duration: 6000,
+        });
+        return;
+      }
     }
 
     setSubmitting(true);
