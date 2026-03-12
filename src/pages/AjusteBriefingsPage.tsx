@@ -649,25 +649,23 @@ export default function AjusteBriefingsPage() {
                 )}
 
                 {/* Actions section for review/completed status */}
-                {(detailAdjustment.status === 'review' || detailAdjustment.status === 'completed') && (
+                {(detailAdjustment.status === 'review' || detailAdjustment.status === 'completed') && detailAdjustment.delivery_url && (
                   <div className="space-y-3 p-3 rounded-lg border border-primary/20 bg-primary/5">
                     <p className="text-sm font-medium">Ações do Operacional</p>
                     <div className="flex flex-wrap gap-2">
                       {/* Generate review link */}
-                      {detailAdjustment.delivery_url && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="gap-1"
-                          onClick={() => {
-                            const link = detailAdjustment.delivery_url;
-                            navigator.clipboard.writeText(link);
-                            toast.success('Link da arte copiado!');
-                          }}
-                        >
-                          <Link2 className="h-3 w-3" /> Copiar Link da Arte
-                        </Button>
-                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1"
+                        onClick={() => {
+                          const link = detailAdjustment.delivery_url;
+                          navigator.clipboard.writeText(link);
+                          toast.success('Link da arte copiado!');
+                        }}
+                      >
+                        <Link2 className="h-3 w-3" /> Copiar Link da Arte
+                      </Button>
 
                       {/* Resend access to client */}
                       <Button
@@ -720,43 +718,47 @@ export default function AjusteBriefingsPage() {
                           <CheckCircle className="h-3 w-3" /> Marcar como Concluído
                         </Button>
                       )}
-                      {isAdmin && (
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          className="gap-1"
-                          disabled={deleting}
-                          onClick={async () => {
-                            if (!confirm('Tem certeza que deseja excluir esta solicitação e todos os seus itens?')) return;
-                            setDeleting(true);
-                            try {
-                              // Delete items first
-                              await supabase
-                                .from('briefing_adjustment_items')
-                                .delete()
-                                .eq('adjustment_id', detailAdjustment.id);
-                              // Delete adjustment
-                              const { error } = await supabase
-                                .from('briefing_adjustments')
-                                .delete()
-                                .eq('id', detailAdjustment.id);
-                              if (error) throw error;
-                              toast.success('Solicitação excluída!');
-                              setDetailAdjustment(null);
-                              queryClient.invalidateQueries({ queryKey: ['briefing-adjustments'] });
-                              queryClient.invalidateQueries({ queryKey: ['briefing-adjustment-items'] });
-                            } catch (err: any) {
-                              toast.error('Erro ao excluir: ' + err.message);
-                            } finally {
-                              setDeleting(false);
-                            }
-                          }}
-                        >
-                          {deleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
-                          Excluir
-                        </Button>
-                      )}
                     </div>
+                  </div>
+                )}
+
+                {/* Admin delete - always visible */}
+                {isAdmin && (
+                  <div className="pt-2">
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="gap-1 w-full"
+                      disabled={deleting}
+                      onClick={async () => {
+                        if (!confirm('Tem certeza que deseja excluir esta solicitação e todos os seus itens?')) return;
+                        setDeleting(true);
+                        try {
+                          // Delete items first
+                          await supabase
+                            .from('briefing_adjustment_items')
+                            .delete()
+                            .eq('adjustment_id', detailAdjustment.id);
+                          // Delete adjustment
+                          const { error } = await supabase
+                            .from('briefing_adjustments')
+                            .delete()
+                            .eq('id', detailAdjustment.id);
+                          if (error) throw error;
+                          toast.success('Solicitação excluída!');
+                          setDetailAdjustment(null);
+                          queryClient.invalidateQueries({ queryKey: ['briefing-adjustments'] });
+                          queryClient.invalidateQueries({ queryKey: ['briefing-adjustment-items'] });
+                        } catch (err: any) {
+                          toast.error('Erro ao excluir: ' + err.message);
+                        } finally {
+                          setDeleting(false);
+                        }
+                      }}
+                    >
+                      {deleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
+                      Excluir Solicitação
+                    </Button>
                   </div>
                 )}
               </div>
