@@ -217,6 +217,7 @@ export default function CarteiraGeralPage() {
   }, [search]);
 
   useEffect(() => {
+    if (activeView === 'cadastro') return;
     loadData(apiPage, debouncedSearch, activeView);
   }, [apiPage, debouncedSearch, activeView, csFilter, activeKPI]);
 
