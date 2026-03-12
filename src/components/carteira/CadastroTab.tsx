@@ -359,7 +359,7 @@ export default function CadastroTab() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs">CS Atual</Label>
-                <Input value={newForm.cs_atual} onChange={e => setNewForm(p => ({ ...p, cs_atual: e.target.value }))} placeholder="email do CS" />
+                <Input value={newForm.cs_atual} onChange={e => setNewForm(p => ({ ...p, cs_atual: e.target.value }))} placeholder="email do CS" disabled={!isAdmin} title={!isAdmin ? 'Apenas administradores podem definir o CS' : ''} />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Status Financeiro</Label>
