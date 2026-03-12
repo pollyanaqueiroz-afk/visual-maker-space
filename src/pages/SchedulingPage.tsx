@@ -237,7 +237,7 @@ export default function SchedulingPage() {
 
   // Onboarding Coletivo state
   const [onboardingOpen, setOnboardingOpen] = useState(false);
-  const [onboardingForm, setOnboardingForm] = useState({ title: '', date: '', time: '10:00', duration: 60 });
+  const [onboardingForm, setOnboardingForm] = useState({ title: '', date: '', time: '10:00', duration: 60, participantsText: '' });
   const [onboardingMediators, setOnboardingMediators] = useState<string[]>([]);
   const [onboardingMediatorSearch, setOnboardingMediatorSearch] = useState('');
   const [onboardingSubmitting, setOnboardingSubmitting] = useState(false);
@@ -281,7 +281,10 @@ export default function SchedulingPage() {
       meeting_date: onboardingForm.date,
       meeting_time: onboardingForm.time,
       duration_minutes: onboardingForm.duration,
-      participants: onboardingMediators,
+      participants: [
+        ...onboardingMediators,
+        ...onboardingForm.participantsText.split(';').map(s => s.trim()).filter(Boolean),
+      ],
       status: 'scheduled',
       meeting_reason: 'Passagem de bastão Closer <> Onboarding',
       created_by: user?.id,
@@ -296,7 +299,7 @@ export default function SchedulingPage() {
     }
     toast.success('Onboarding coletivo criado!');
     setOnboardingOpen(false);
-    setOnboardingForm({ title: '', date: '', time: '10:00', duration: 60 });
+    setOnboardingForm({ title: '', date: '', time: '10:00', duration: 60, participantsText: '' });
     setOnboardingMediators([]);
     fetchMeetings();
   };
@@ -1157,7 +1160,7 @@ export default function SchedulingPage() {
           {canCreate && (
             <Dialog open={onboardingOpen} onOpenChange={setOnboardingOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" onClick={() => { setOnboardingOpen(true); setOnboardingForm({ title: '', date: format(new Date(), 'yyyy-MM-dd'), time: '10:00', duration: 60 }); setOnboardingMediators([]); }}>
+                <Button variant="outline" onClick={() => { setOnboardingOpen(true); setOnboardingForm({ title: '', date: format(new Date(), 'yyyy-MM-dd'), time: '10:00', duration: 60, participantsText: '' }); setOnboardingMediators([]); }}>
                   <Users className="h-4 w-4 mr-2" /> Onboarding Coletivo
                 </Button>
               </DialogTrigger>
@@ -1242,6 +1245,15 @@ export default function SchedulingPage() {
                         })}
                       </div>
                     )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Participantes <span className="text-muted-foreground text-xs">(separar por ;)</span></Label>
+                    <Textarea
+                      value={onboardingForm.participantsText}
+                      onChange={e => setOnboardingForm(f => ({ ...f, participantsText: e.target.value }))}
+                      placeholder="nome1@email.com; nome2@email.com; ..."
+                      rows={2}
+                    />
                   </div>
                   <Button onClick={handleOnboardingSubmit} disabled={onboardingSubmitting} className="w-full">
                     {onboardingSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
