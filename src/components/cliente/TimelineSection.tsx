@@ -20,7 +20,8 @@ const IMAGE_TYPE_LABELS: Record<string, string> = {
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   completed: { label: 'Aprovada', className: 'border-green-500/30 text-green-400' },
   review: { label: '👀 Validar', className: 'border-amber-500/30 text-amber-400 bg-amber-500/10' },
-  in_progress: { label: 'Em produção', className: 'border-blue-500/30 text-blue-400' },
+  in_progress: { label: 'Em Produção', className: 'border-blue-500/30 text-blue-400' },
+  revision: { label: 'Em Refação', className: 'border-orange-500/30 text-orange-400' },
   cancelled: { label: 'Cancelada', className: 'border-destructive/30 text-destructive' },
   pending: { label: 'Pendente', className: 'border-white/20 text-white/50' },
 };
