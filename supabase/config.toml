@@ -77,3 +77,9 @@ verify_jwt = false
 
 [functions.manage-data-api]
 verify_jwt = false
+
+[functions.trigger-manus-migration]
+verify_jwt = false
+
+[functions.manus-webhook]
+verify_jwt = false

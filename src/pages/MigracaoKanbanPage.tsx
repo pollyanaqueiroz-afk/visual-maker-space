@@ -637,9 +637,12 @@ function ProjectDetailSheet({ project, onClose }: { project: MigrationProject; o
           )}
 
           {/* Status Actions */}
+          {(project.migration_status === 'extraction' || project.migration_status === 'in_progress') && (
+            <ManusIntegrationSection project={project} onStatusChange={() => { queryClient.invalidateQueries({ queryKey: ['migration-projects'] }); onClose(); }} />
+          )}
           {project.migration_status === 'extraction' && (
             <Button className="w-full" onClick={() => changeStatus.mutate('in_progress')} disabled={changeStatus.isPending}>
-              <ArrowRight className="h-4 w-4 mr-2" /> Avançar para Migração em Andamento
+              <ArrowRight className="h-4 w-4 mr-2" /> Avançar Manualmente
             </Button>
           )}
           {project.migration_status === 'in_progress' && (
