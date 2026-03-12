@@ -10,12 +10,11 @@ import { toast } from 'sonner';
 import { format, parseISO, startOfMonth, endOfMonth, subMonths, isWithinInterval, startOfWeek, endOfWeek, isSameDay, getDay, getISOWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
-  CalendarDays, CheckCircle, XCircle, Clock, TrendingUp, Users, BarChart3, RefreshCw, Heart, Calendar as CalendarIcon,
+  CalendarDays, CheckCircle, XCircle, Clock, TrendingUp, Users, BarChart3, RefreshCw, Calendar as CalendarIcon, LayoutGrid,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line, Legend,
 } from 'recharts';
-import LoyaltyTrackingTab from '@/components/dashboard/LoyaltyTrackingTab';
 import { KpiCard } from '@/components/dashboard/KpiCard';
 
 interface Meeting {
@@ -43,6 +42,262 @@ interface Reschedule {
   reason: string;
   created_at: string;
 }
+
+interface TeamMember {
+  id: string;
+  email: string;
+  display_name: string;
+}
+
+interface AllMeeting extends Meeting {
+  created_by: string;
+}
+
+function OverviewTab() {
+  const [allMeetings, setAllMeetings] = useState<AllMeeting[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [overviewPeriod, setOverviewPeriod] = useState('current');
+
+  useEffect(() => {
+    const fetchAll = async () => {
+      setLoading(true);
+      try {
+        const session = (await supabase.auth.getSession()).data.session;
+        if (!session) return;
+
+        // Fetch all meetings (admin RLS) and team members in parallel
+        const [meetRes, teamRes] = await Promise.all([
+          supabase
+            .from('meetings')
+            .select('id, title, meeting_date, meeting_time, status, client_email, client_name, client_url, meeting_reason, loyalty_index, loyalty_reason, duration_minutes, created_by')
+            .order('meeting_date', { ascending: false })
+            .limit(5000),
+          fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-users?action=list`,
+            {
+              headers: {
+                Authorization: `Bearer ${session.access_token}`,
+                apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+              },
+            }
+          ),
+        ]);
+
+        if (meetRes.data) setAllMeetings(meetRes.data as AllMeeting[]);
+
+        if (teamRes.ok) {
+          const result = await teamRes.json();
+          const users = result.users || result;
+          if (Array.isArray(users)) {
+            setTeamMembers(
+              users
+                .filter((u: any) => u.email?.endsWith('@curseduca.com'))
+                .map((u: any) => ({
+                  id: u.id,
+                  email: u.email || '',
+                  display_name: u.display_name || u.email?.split('@')[0] || u.id,
+                }))
+            );
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAll();
+  }, []);
+
+  const filtered = useMemo(() => {
+    if (overviewPeriod === 'all') return allMeetings;
+    const now = new Date();
+    let start: Date, end: Date;
+    if (overviewPeriod === 'current') {
+      start = startOfMonth(now);
+      end = endOfMonth(now);
+    } else {
+      const prev = subMonths(now, 1);
+      start = startOfMonth(prev);
+      end = endOfMonth(prev);
+    }
+    return allMeetings.filter(m => {
+      const d = parseISO(m.meeting_date);
+      return isWithinInterval(d, { start, end });
+    });
+  }, [allMeetings, overviewPeriod]);
+
+  const csComparison = useMemo(() => {
+    const map: Record<string, {
+      id: string; name: string; email: string;
+      total: number; completed: number; cancelled: number; scheduled: number;
+      totalMinutes: number; uniqueClients: Set<string>;
+      loyaltySum: number; loyaltyCount: number;
+    }> = {};
+
+    for (const m of filtered) {
+      const csId = m.created_by || 'unknown';
+      if (!map[csId]) {
+        const member = teamMembers.find(t => t.id === csId);
+        map[csId] = {
+          id: csId,
+          name: member?.display_name || member?.email?.split('@')[0] || 'Desconhecido',
+          email: member?.email || '',
+          total: 0, completed: 0, cancelled: 0, scheduled: 0,
+          totalMinutes: 0, uniqueClients: new Set(),
+          loyaltySum: 0, loyaltyCount: 0,
+        };
+      }
+      const cs = map[csId];
+      cs.total++;
+      if (m.status === 'completed') { cs.completed++; cs.totalMinutes += m.duration_minutes; }
+      if (m.status === 'cancelled') cs.cancelled++;
+      if (m.status === 'scheduled') cs.scheduled++;
+      if (m.client_email) cs.uniqueClients.add(m.client_email.toLowerCase());
+      if (m.loyalty_index != null) { cs.loyaltySum += m.loyalty_index; cs.loyaltyCount++; }
+    }
+
+    return Object.values(map)
+      .filter(cs => cs.total > 0)
+      .sort((a, b) => b.total - a.total)
+      .map(cs => ({
+        ...cs,
+        uniqueClientsCount: cs.uniqueClients.size,
+        avgLoyalty: cs.loyaltyCount > 0 ? (cs.loyaltySum / cs.loyaltyCount).toFixed(1) : '—',
+        completionRate: cs.total > 0 ? Math.round((cs.completed / cs.total) * 100) : 0,
+        hours: Math.round(cs.totalMinutes / 60),
+      }));
+  }, [filtered, teamMembers]);
+
+  const chartData = useMemo(() =>
+    csComparison.map(cs => ({
+      name: cs.name,
+      Realizadas: cs.completed,
+      Canceladas: cs.cancelled,
+      Agendadas: cs.scheduled,
+    })),
+  [csComparison]);
+
+  if (loading) {
+    return (
+      <TabsContent value="overview">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-pulse text-muted-foreground">Carregando overview...</div>
+        </div>
+      </TabsContent>
+    );
+  }
+
+  return (
+    <TabsContent value="overview" className="space-y-6">
+      {/* Period filter */}
+      <div className="flex justify-end">
+        <Select value={overviewPeriod} onValueChange={setOverviewPeriod}>
+          <SelectTrigger className="w-[180px] h-9 text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="current">Mês atual</SelectItem>
+            <SelectItem value="previous">Mês anterior</SelectItem>
+            <SelectItem value="all">Todo o período</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Totals */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <KpiCard label="Total Reuniões" value={filtered.length} icon={CalendarDays} color="bg-primary/10 text-primary" />
+        <KpiCard label="Realizadas" value={filtered.filter(m => m.status === 'completed').length} icon={CheckCircle} color="bg-success/10 text-success" />
+        <KpiCard label="Canceladas" value={filtered.filter(m => m.status === 'cancelled').length} icon={XCircle} color="bg-destructive/10 text-destructive" />
+        <KpiCard label="CSs Ativos" value={csComparison.length} icon={Users} color="bg-accent text-accent-foreground" />
+      </div>
+
+      {/* Comparison Chart */}
+      {chartData.length > 0 && (
+        <Card className="border-none shadow-[var(--shadow-kpi)]">
+          <CardHeader className="pb-1">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Reuniões por CS
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={chartData} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis type="number" allowDecimals={false} />
+                <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 11 }} />
+                <Tooltip contentStyle={{ borderRadius: 8, border: 'none', boxShadow: 'var(--shadow-elevated)', fontSize: 12 }} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="Realizadas" fill="hsl(var(--success))" radius={[0, 4, 4, 0]} stackId="stack" />
+                <Bar dataKey="Canceladas" fill="hsl(var(--destructive))" radius={[0, 4, 4, 0]} stackId="stack" />
+                <Bar dataKey="Agendadas" fill="hsl(var(--info))" radius={[0, 4, 4, 0]} stackId="stack" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Comparison Table */}
+      <Card className="border-none shadow-[var(--shadow-kpi)]">
+        <CardHeader className="pb-1">
+          <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+            <Users className="h-4 w-4 text-primary" />
+            Comparativo entre CSs
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {csComparison.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">Nenhuma reunião no período</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>CS</TableHead>
+                  <TableHead className="text-center">Total</TableHead>
+                  <TableHead className="text-center">Realizadas</TableHead>
+                  <TableHead className="text-center">Canceladas</TableHead>
+                  <TableHead className="text-center">% Conclusão</TableHead>
+                  <TableHead className="text-center">Horas</TableHead>
+                  <TableHead className="text-center">Clientes</TableHead>
+                  <TableHead className="text-center">Fidelidade Média</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {csComparison.map(cs => (
+                  <TableRow key={cs.id}>
+                    <TableCell>
+                      <div>
+                        <p className="text-sm font-medium">{cs.name}</p>
+                        {cs.email && <p className="text-xs text-muted-foreground">{cs.email}</p>}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center font-semibold">{cs.total}</TableCell>
+                    <TableCell className="text-center">
+                      <Badge className="bg-success/20 text-success border-0 text-[10px]">{cs.completed}</Badge>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge className="bg-destructive/20 text-destructive border-0 text-[10px]">{cs.cancelled}</Badge>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span className={`text-sm font-medium ${cs.completionRate >= 80 ? 'text-success' : cs.completionRate >= 50 ? 'text-warning' : 'text-destructive'}`}>
+                        {cs.completionRate}%
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-center text-sm">{cs.hours}h</TableCell>
+                    <TableCell className="text-center text-sm">{cs.uniqueClientsCount}</TableCell>
+                    <TableCell className="text-center text-sm font-medium">{cs.avgLoyalty}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </TabsContent>
+  );
+}
+
 
 export default function MeetingsDashboard() {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
@@ -233,19 +488,17 @@ export default function MeetingsDashboard() {
         </button>
       </div>
 
-      <Tabs defaultValue="produtividade" className="space-y-4">
+      <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="produtividade" className="flex items-center gap-1.5">
-            <BarChart3 className="h-4 w-4" /> Produtividade
+          <TabsTrigger value="overview" className="flex items-center gap-1.5">
+            <LayoutGrid className="h-4 w-4" /> Overview
           </TabsTrigger>
-          <TabsTrigger value="fidelidade" className="flex items-center gap-1.5">
-            <Heart className="h-4 w-4" /> Fidelidade
+          <TabsTrigger value="produtividade" className="flex items-center gap-1.5">
+            <BarChart3 className="h-4 w-4" /> Produtividade Individual
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="fidelidade">
-          <LoyaltyTrackingTab />
-        </TabsContent>
+        <OverviewTab />
 
         <TabsContent value="produtividade" className="space-y-6">
 
