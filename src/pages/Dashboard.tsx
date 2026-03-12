@@ -1373,7 +1373,7 @@ export default function Dashboard() {
                               {img.status === 'review' && (
                                 <ReviewActionDialog image={img} onReviewed={refreshAll} />
                               )}
-                              <Select value={img.status} onValueChange={v => updateImageStatus(img.id, v as RequestStatus)}>
+                              <Select value={img.status} onValueChange={v => updateImageStatus(img.id, v as RequestStatus, (img as any)._isAdjustment)}>
                                 <SelectTrigger className="w-36 h-8 text-xs">
                                   <SelectValue />
                                 </SelectTrigger>
