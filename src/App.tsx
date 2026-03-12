@@ -97,6 +97,7 @@ const App = () => (
               <Route path="admin/permissoes" element={<PermissionGuard permission="admin.manage_permissions"><PermissionsPage /></PermissionGuard>} />
               <Route path="admin/campos" element={<PermissionGuard permission="carteira.manage_fields"><FieldManagementPage /></PermissionGuard>} />
               <Route path="admin/gerencial" element={<PermissionGuard permission="admin.view"><GestaoGerencialPage /></PermissionGuard>} />
+              <Route path="admin/api-docs" element={<PermissionGuard permission="admin.view"><ApiDocsPage /></PermissionGuard>} />
               <Route path="admin/carteirizacao" element={<PermissionGuard permission="admin.view"><CarteirizacaoPage /></PermissionGuard>} />
               <Route path="aplicativos" element={<PermissionGuard permission="aplicativos.view"><AplicativosPage /></PermissionGuard>} />
               <Route path="aplicativos/:clienteId" element={<PermissionGuard permission="aplicativos.view"><AplicativoDetailPage /></PermissionGuard>} />
