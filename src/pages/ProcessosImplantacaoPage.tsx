@@ -470,7 +470,7 @@ export default function ProcessosImplantacaoPage() {
           {selectedClient && (
             <>
               <DialogHeader>
-                 <DialogTitle className="text-lg">{selectedClient.cliente || selectedClient.id_curseduca}</DialogTitle>
+                 <DialogTitle className="text-lg">{selectedClient.nome || selectedClient.id_curseduca}</DialogTitle>
                  <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                    <span>{selectedClient.id_curseduca}</span>
                    {selectedClient.cs_atual && <span>CS: {selectedClient.cs_atual}</span>}
