@@ -299,7 +299,8 @@ function OverviewTab() {
 }
 
 
-  export default function MeetingsDashboard() {
+export default function MeetingsDashboard() {
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [reschedules, setReschedules] = useState<Reschedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [periodFilter, setPeriodFilter] = useState('current');
