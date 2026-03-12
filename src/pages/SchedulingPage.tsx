@@ -557,26 +557,37 @@ export default function SchedulingPage() {
 
         toast.success(isRescheduling ? 'Reunião reagendada!' : 'Reunião atualizada!');
       } else {
-        // Create in Google Calendar first
-        let gcalEventId: string | undefined;
-        try {
-          const calResult = await createCalendarEvent({
-            summary: form.title,
-            start: startISO,
-            end: endISO,
-            description: form.description || '',
-            attendees: attendeesArr,
-          });
-          gcalEventId = calResult?.event_id;
-        } catch {
-          // If Google Calendar fails, still save locally
+        // Generate recurrence dates
+        const recurrenceDates = generateRecurrenceDates(form.meeting_date, recurrence);
+
+        for (const date of recurrenceDates) {
+          const dateStartISO = `${date}T${form.meeting_time}:00`;
+          const dateStartDt = new Date(dateStartISO);
+          const dateEndDt = new Date(dateStartDt.getTime() + form.duration_minutes * 60000);
+          const dateEndISO = `${date}T${String(dateEndDt.getHours()).padStart(2,'0')}:${String(dateEndDt.getMinutes()).padStart(2,'0')}:00`;
+
+          // Create in Google Calendar first
+          let gcalEventId: string | undefined;
+          try {
+            const calResult = await createCalendarEvent({
+              summary: form.title,
+              start: dateStartISO,
+              end: dateEndISO,
+              description: form.description || '',
+              attendees: attendeesArr,
+            });
+            gcalEventId = calResult?.event_id;
+          } catch {
+            // If Google Calendar fails, still save locally
+          }
+
+          const datePayload = { ...payload, meeting_date: date };
+          const insertPayload = gcalEventId ? { ...datePayload, gcal_event_id: gcalEventId } : datePayload;
+          const { error } = await supabase.from('meetings').insert(insertPayload as any);
+          if (error) throw error;
         }
 
-        const insertPayload = gcalEventId ? { ...payload, gcal_event_id: gcalEventId } : payload;
-        const { error } = await supabase.from('meetings').insert(insertPayload as any);
-        if (error) throw error;
-
-        // Send invite email if checkbox is checked and client email exists
+        // Send invite email for the first occurrence
         if (sendInvite && form.client_email) {
           try {
             const gcalUrl = buildGoogleCalendarUrl({
@@ -605,15 +616,15 @@ export default function SchedulingPage() {
             });
 
             if (inviteData?.email_warning) {
-              toast.success('Reunião agendada! ⚠️ Convite não enviado (domínio não verificado).');
+              toast.success(`${recurrenceDates.length} reunião(ões) agendada(s)! ⚠️ Convite não enviado (domínio não verificado).`);
             } else {
-              toast.success('Reunião agendada e convite enviado!');
+              toast.success(`${recurrenceDates.length} reunião(ões) agendada(s) e convite enviado!`);
             }
           } catch {
-            toast.success('Reunião agendada! ⚠️ Erro ao enviar convite.');
+            toast.success(`${recurrenceDates.length} reunião(ões) agendada(s)! ⚠️ Erro ao enviar convite.`);
           }
         } else {
-          toast.success('Reunião agendada!');
+          toast.success(`${recurrenceDates.length} reunião(ões) agendada(s)!`);
         }
       }
       setDialogOpen(false);
