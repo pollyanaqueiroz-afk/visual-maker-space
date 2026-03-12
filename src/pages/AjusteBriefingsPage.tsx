@@ -540,6 +540,18 @@ export default function AjusteBriefingsPage() {
                   )}
                 </div>
 
+                {/* Linked briefing image */}
+                {detailAdjustment.source_briefing_image_id && (
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                    <LinkIcon className="h-4 w-4 text-primary shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-primary">Vinculado a Arte do Briefing</p>
+                      <p className="text-[11px] text-muted-foreground truncate">ID: {detailAdjustment.source_briefing_image_id.slice(0, 8)}…</p>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] shrink-0">Refação</Badge>
+                  </div>
+                )}
+
                 <Separator />
 
                 <div>
