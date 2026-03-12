@@ -1160,7 +1160,7 @@ export default function SchedulingPage() {
           {canCreate && (
             <Dialog open={onboardingOpen} onOpenChange={setOnboardingOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" onClick={() => { setOnboardingOpen(true); setOnboardingForm({ title: '', date: format(new Date(), 'yyyy-MM-dd'), time: '10:00', duration: 60 }); setOnboardingMediators([]); }}>
+                <Button variant="outline" onClick={() => { setOnboardingOpen(true); setOnboardingForm({ title: '', date: format(new Date(), 'yyyy-MM-dd'), time: '10:00', duration: 60, participantsText: '' }); setOnboardingMediators([]); }}>
                   <Users className="h-4 w-4 mr-2" /> Onboarding Coletivo
                 </Button>
               </DialogTrigger>
