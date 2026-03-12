@@ -2280,12 +2280,12 @@ export default function SchedulingPage() {
               </div>
               <div className="space-y-2">
                 <Label>
-                  Observações {confirmForm.loyalty_stars > 0 && confirmForm.loyalty_stars <= 2 ? '*' : ''}
+                  Motivo {confirmForm.loyalty_stars > 0 && confirmForm.loyalty_stars <= 2 ? '*' : ''}
                 </Label>
                 <Textarea
                   value={confirmForm.observations}
                   onChange={e => setConfirmForm(f => ({ ...f, observations: e.target.value }))}
-                  placeholder={confirmForm.loyalty_stars <= 2 && confirmForm.loyalty_stars > 0 ? 'Explique o motivo do índice baixo...' : 'Observações sobre a reunião (opcional)...'}
+                  placeholder={confirmForm.loyalty_stars <= 2 && confirmForm.loyalty_stars > 0 ? 'Explique o motivo do índice baixo...' : 'Motivo da reunião (opcional)...'}
                   rows={3}
                   className={cn(confirmForm.loyalty_stars > 0 && confirmForm.loyalty_stars <= 2 && "border-destructive/50 focus-visible:ring-destructive/30")}
                 />
