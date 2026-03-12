@@ -1074,7 +1074,7 @@ export default function SchedulingPage() {
           <CardHeader className="pb-2 pt-4 px-4">
             <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground">
               <AlertCircle className="h-4 w-4 text-warning" />
-              {pendingAnnotations.length} {pendingAnnotations.length === 1 ? 'reunião pendente' : 'reuniões pendentes'} de preenchimento de ata
+              {pendingAnnotations.length} {pendingAnnotations.length === 1 ? 'reunião pendente' : 'reuniões pendentes'} de conclusão
             </CardTitle>
             {pendingTotalPages > 1 && (
               <p className="text-[10px] text-muted-foreground">
