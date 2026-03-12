@@ -60,7 +60,6 @@ export default function CadastroTab() {
 
   // Filters
   const [filterPlano, setFilterPlano] = useState<string>('all');
-  const [filterCs, setFilterCs] = useState<string>('all');
 
   const fetchClients = useCallback(async () => {
     setLoading(true);
@@ -89,21 +88,17 @@ export default function CadastroTab() {
     if (filterPlano !== 'all') {
       result = result.filter(c => c.plano === filterPlano);
     }
-    if (filterCs !== 'all') {
-      result = result.filter(c => c.cs_atual === filterCs);
-    }
     return result;
-  }, [clients, search, filterPlano, filterCs]);
+  }, [clients, search, filterPlano]);
 
   // Unique values for filter dropdowns
   const uniquePlanos = useMemo(() => [...new Set(clients.map(c => c.plano).filter(Boolean))].sort() as string[], [clients]);
-  const uniqueCs = useMemo(() => [...new Set(clients.map(c => c.cs_atual).filter(Boolean))].sort() as string[], [clients]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const currentPage = Math.min(page, totalPages);
   const paged = filtered.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
 
-  useEffect(() => { setPage(1); }, [search, filterPlano, filterCs]);
+  useEffect(() => { setPage(1); }, [search, filterPlano]);
 
   const startEdit = (c: ClientRecord) => {
     setEditingId(c.id);
@@ -206,23 +201,12 @@ export default function CadastroTab() {
             ))}
           </SelectContent>
         </Select>
-        <Select value={filterCs} onValueChange={setFilterCs}>
-          <SelectTrigger className="h-8 w-[180px] text-xs">
-            <SelectValue placeholder="CS Atual" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os CS</SelectItem>
-            {uniqueCs.map(cs => (
-              <SelectItem key={cs} value={cs}>{cs}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {(filterPlano !== 'all' || filterCs !== 'all') && (
+        {filterPlano !== 'all' && (
           <Button
             variant="ghost"
             size="sm"
             className="h-8 text-xs text-muted-foreground"
-            onClick={() => { setFilterPlano('all'); setFilterCs('all'); }}
+            onClick={() => setFilterPlano('all')}
           >
             Limpar filtros
           </Button>
