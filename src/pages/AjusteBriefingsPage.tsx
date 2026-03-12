@@ -122,8 +122,8 @@ export default function AjusteBriefingsPage() {
   const handleSubmit = async () => {
     if (!clientUrl.trim()) { toast.error('Informe a URL do cliente'); return; }
     if (!clientEmail.trim()) { toast.error('Informe o e-mail do cliente'); return; }
-    const validItems = items.filter(i => i.file);
-    if (validItems.length === 0) { toast.error('Adicione pelo menos uma imagem'); return; }
+    const validItems = items.filter(i => i.file || i.linkUrl.trim());
+    if (validItems.length === 0) { toast.error('Adicione pelo menos uma imagem ou link'); return; }
 
     setSubmitting(true);
     try {
