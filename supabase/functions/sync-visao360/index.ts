@@ -13,12 +13,13 @@ function mapRecord(r: any): Record<string, string | null> {
   const s = (v: any) => (v == null ? null : String(v));
   return {
     id_curseduca: s(r.id_curseduca),
-    cliente: s(r.cliente_nome),
+    nome: s(r.cliente_nome),
+    email: s(r.email) || null,
     cs_atual: s(r.cs_nome),
     cs_anterior: s(r.cs_nome_anterior) || null,
-    fatura: s(r.fatura_total),
     plano: s(r.plano_base_consolidada),
-    data_da_carga: new Date().toISOString(),
+    status_financeiro: s(r.status_financeiro) || null,
+    status_curseduca: s(r.status_curseduca) || null,
   };
 }
 
