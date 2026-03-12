@@ -77,14 +77,27 @@ export default function CadastroTab() {
   useEffect(() => { fetchClients(); }, [fetchClients]);
 
   const filtered = useMemo(() => {
-    if (!search) return clients;
-    const q = search.toLowerCase();
-    return clients.filter(c =>
-      c.nome?.toLowerCase().includes(q) ||
-      c.email?.toLowerCase().includes(q) ||
-      c.id_curseduca?.toLowerCase().includes(q)
-    );
-  }, [clients, search]);
+    let result = clients;
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter(c =>
+        c.nome?.toLowerCase().includes(q) ||
+        c.email?.toLowerCase().includes(q) ||
+        c.id_curseduca?.toLowerCase().includes(q)
+      );
+    }
+    if (filterPlano !== 'all') {
+      result = result.filter(c => c.plano === filterPlano);
+    }
+    if (filterCs !== 'all') {
+      result = result.filter(c => c.cs_atual === filterCs);
+    }
+    return result;
+  }, [clients, search, filterPlano, filterCs]);
+
+  // Unique values for filter dropdowns
+  const uniquePlanos = useMemo(() => [...new Set(clients.map(c => c.plano).filter(Boolean))].sort() as string[], [clients]);
+  const uniqueCs = useMemo(() => [...new Set(clients.map(c => c.cs_atual).filter(Boolean))].sort() as string[], [clients]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const currentPage = Math.min(page, totalPages);
