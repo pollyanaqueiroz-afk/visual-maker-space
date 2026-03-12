@@ -334,7 +334,7 @@ function MigrationForm({ projectId, isResubmission }: { projectId: string; isRes
     },
   });
 
-  const canSubmit = clubs.some(c => c.url.trim()) && !!apiClientId.trim() && !!apiClientSecret.trim() && !!apiBasic.trim();
+  const canSubmit = clubs.some(c => c.url.trim());
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
@@ -429,7 +429,7 @@ function MigrationForm({ projectId, isResubmission }: { projectId: string; isRes
           {/* 3. API Credentials */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <Label className="text-white/80">3. Credenciais da API Hotmart <span className="text-destructive">*</span></Label>
+              <Label className="text-white/80">3. Credenciais da API Hotmart <span className="text-white/40 text-xs">(opcional)</span></Label>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
