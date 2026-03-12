@@ -357,9 +357,9 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
       }
 
       const { data: request, error } = await supabase.from('briefing_requests').insert({
-        requester_name: form.requester_name,
-        requester_email: form.requester_email,
-        platform_url: form.platform_url,
+        requester_name: requester.requester_name,
+        requester_email: requester.requester_email,
+        platform_url: requester.platform_url,
         has_trail: selections.trail_banner,
         has_challenge: selections.challenge_banner,
         has_community: selections.community_banner,
