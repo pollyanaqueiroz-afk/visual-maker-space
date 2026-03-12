@@ -65,6 +65,8 @@ export default function CadastroTab() {
   const [showNew, setShowNew] = useState(false);
   const [newForm, setNewForm] = useState(EMPTY_FORM);
   const [creating, setCreating] = useState(false);
+  const { hasRole } = usePermissions();
+  const isAdmin = hasRole('admin');
 
   // Filters
   const [filterPlano, setFilterPlano] = useState<string>('all');
