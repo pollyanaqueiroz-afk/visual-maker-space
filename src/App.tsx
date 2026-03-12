@@ -45,6 +45,7 @@ import GestaoGerencialPage from "./pages/GestaoGerencialPage";
 import AjusteBriefingsPage from "./pages/AjusteBriefingsPage";
 import AjusteAplicativosPage from "./pages/AjusteAplicativosPage";
 import CarteirizacaoPage from "./pages/CarteirizacaoPage";
+import ApiDocsPage from "./pages/ApiDocsPage";
 import MigracaoKanbanPage from "./pages/MigracaoKanbanPage";
 import MigracaoAjustesPage from "./pages/MigracaoAjustesPage";
 import MigracaoAnalyticsPage from "./pages/MigracaoAnalyticsPage";
