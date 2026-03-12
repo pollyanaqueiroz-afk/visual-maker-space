@@ -199,6 +199,7 @@ export default function SchedulingPage() {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [meetingType, setMeetingType] = useState<'client' | 'internal'>('client');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [submitting, setSubmitting] = useState(false);
@@ -398,6 +399,7 @@ export default function SchedulingPage() {
     setEditingId(null);
     setIsRescheduling(false);
     setRecurrence({ ...DEFAULT_RECURRENCE });
+    setMeetingType('client');
     setForm({
       ...emptyForm,
       meeting_date: date ? format(date, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
@@ -408,6 +410,7 @@ export default function SchedulingPage() {
   const handleEdit = (m: Meeting) => {
     setEditingId(m.id);
     setIsRescheduling(false);
+    setMeetingType(m.client_email || m.client_url ? 'client' : 'internal');
     setForm({
       title: m.title,
       description: m.description || '',
@@ -1233,13 +1236,33 @@ export default function SchedulingPage() {
                 </Select>
               </div>
               <div className="space-y-2">
+                <Label>Tipo de Reunião *</Label>
+                <Select value={meetingType} onValueChange={v => setMeetingType(v as 'client' | 'internal')}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="client">Com cliente</SelectItem>
+                    <SelectItem value="internal">Interna</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label>Link da reunião (Zoom, Meet, etc.)</Label>
                 <Input value={form.meeting_url} onChange={e => setForm(f => ({ ...f, meeting_url: e.target.value }))} placeholder="https://meet.google.com/..." />
               </div>
-              <div className="space-y-2">
-                <Label>Email do cliente</Label>
-                <Input value={form.client_email} onChange={e => setForm(f => ({ ...f, client_email: e.target.value }))} placeholder="joao@email.com" />
-              </div>
+              {meetingType === 'client' && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Email do cliente</Label>
+                    <Input value={form.client_email} onChange={e => setForm(f => ({ ...f, client_email: e.target.value }))} placeholder="joao@email.com" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>URL da plataforma do cliente</Label>
+                    <Input value={form.client_url} onChange={e => setForm(f => ({ ...f, client_url: e.target.value }))} placeholder="https://cliente.curseduca.pro" />
+                  </div>
+                </>
+              )}
               <div className="space-y-2">
                 <Label>Participantes (separados por vírgula)</Label>
                 <Input value={form.participants} onChange={e => setForm(f => ({ ...f, participants: e.target.value }))} placeholder="ana@email.com, pedro@email.com" />
