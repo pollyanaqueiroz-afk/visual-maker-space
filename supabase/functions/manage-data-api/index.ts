@@ -28,9 +28,10 @@ const ALLOWED_FIELDS: Record<string, string[]> = {
   ],
 };
 
-function sanitizePayload(body: Record<string, unknown>): Record<string, unknown> {
+function sanitizePayload(body: Record<string, unknown>, entity: string): Record<string, unknown> {
+  const allowed = ALLOWED_FIELDS[entity] || [];
   const clean: Record<string, unknown> = {};
-  for (const key of ALLOWED_CLIENT_FIELDS) {
+  for (const key of allowed) {
     if (key in body) {
       clean[key] = body[key];
     }
