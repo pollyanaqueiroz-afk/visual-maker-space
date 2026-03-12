@@ -330,7 +330,7 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
     try {
       let brandFileUrl: string | null = null;
       if (form.brand_file) {
-        brandFileUrl = await uploadFile(form.brand_file, 'brand-files');
+        brandFileUrl = await uploadFile(form.brand_file, 'brand-files', ALLOWED_BRAND_TYPES);
       }
 
       const { data: request, error } = await supabase.from('briefing_requests').insert({
