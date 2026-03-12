@@ -16,12 +16,17 @@ import { toast } from 'sonner';
 type Client = {
   id: string;
   id_curseduca: string | null;
-  cliente: string | null;
+  nome: string | null;
   cs_atual: string | null;
   cs_anterior: string | null;
-  fatura: string | null;
   plano: string | null;
-  data_da_carga: string | null;
+  email: string | null;
+  status_financeiro: string | null;
+  status_curseduca: string | null;
+  indice_fidelidade: number | null;
+  email_alternativo: string | null;
+  telefone_alternativo: string | null;
+  data_criacao: string | null;
 };
 
 type UserProfile = { user_id: string; email: string | null; display_name: string | null };
