@@ -164,7 +164,7 @@ export default function CadastroTab() {
                 </TableRow>
               ) : (
                 paged.map(c => (
-                  <TableRow key={c.id}>
+                  <TableRow key={c.id} className="group">
                     <TableCell className="font-mono text-xs">{c.id_curseduca || '—'}</TableCell>
                     {editingId === c.id ? (
                       <>
