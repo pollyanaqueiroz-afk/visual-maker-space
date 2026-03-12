@@ -36,6 +36,8 @@ import ScormPlayerPage from "./pages/ScormPlayerPage";
 import BIDashboardPage from "./pages/BIDashboardPage";
 import ChurnPage from "./pages/ChurnPage";
 import UpsellPage from "./pages/UpsellPage";
+import ReversaoCancelamentoPage from "./pages/ReversaoCancelamentoPage";
+import ClientesInativosPage from "./pages/ClientesInativosPage";
 import AuditoriaPage from "./pages/AuditoriaPage";
 import PipelinePage from "./pages/PipelinePage";
 import ProcessosImplantacaoPage from "./pages/ProcessosImplantacaoPage";
