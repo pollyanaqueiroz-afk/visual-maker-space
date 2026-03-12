@@ -242,6 +242,9 @@ export default function SchedulingPage() {
   const [onboardingMediatorSearch, setOnboardingMediatorSearch] = useState('');
   const [onboardingSubmitting, setOnboardingSubmitting] = useState(false);
   const [showMediatorDropdown, setShowMediatorDropdown] = useState(false);
+  const [minutesMeetingIds, setMinutesMeetingIds] = useState<Set<string>>(new Set());
+  const [pendingPage, setPendingPage] = useState(1);
+  const PENDING_PER_PAGE = 5;
 
   const filteredMediators = useMemo(() => {
     if (!onboardingMediatorSearch.trim()) return teamMembers;
@@ -340,7 +343,14 @@ export default function SchedulingPage() {
     }
   };
 
-  useEffect(() => { fetchMeetings(); fetchCsatData(); fetchRescheduleHistory(); }, []);
+  const fetchMinutesIds = async () => {
+    const { data } = await supabase.from('meeting_minutes').select('meeting_id');
+    if (data) {
+      setMinutesMeetingIds(new Set(data.map((d: any) => d.meeting_id)));
+    }
+  };
+
+  useEffect(() => { fetchMeetings(); fetchCsatData(); fetchRescheduleHistory(); fetchMinutesIds(); }, []);
 
   // Fetch team members for managers
   useEffect(() => {
@@ -789,6 +799,7 @@ export default function SchedulingPage() {
       setConfirmDialogOpen(false);
       setConfirmingMeeting(null);
       fetchMeetings();
+      fetchMinutesIds();
     } catch (err: any) {
       toast.error('Erro: ' + err.message);
     } finally {
@@ -973,6 +984,27 @@ export default function SchedulingPage() {
     [meetings]
   );
 
+  // Past meetings without meeting_minutes (ata not filled)
+  const pendingAnnotations = useMemo(() => {
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    return meetings
+      .filter(m => {
+        if (m.status === 'cancelled') return false;
+        const d = parseISO(m.meeting_date);
+        if (d > today) return false; // future meeting
+        return !minutesMeetingIds.has(m.id);
+      })
+      .sort((a, b) => b.meeting_date.localeCompare(a.meeting_date));
+  }, [meetings, minutesMeetingIds]);
+
+  const pendingAnnotationsPage = useMemo(() => {
+    const start = (pendingPage - 1) * PENDING_PER_PAGE;
+    return pendingAnnotations.slice(start, start + PENDING_PER_PAGE);
+  }, [pendingAnnotations, pendingPage]);
+
+  const pendingTotalPages = Math.max(1, Math.ceil(pendingAnnotations.length / PENDING_PER_PAGE));
+
   // Meetings past their date still "scheduled" — split by days overdue
   const { pendingConclusion, pendingReschedule } = useMemo(() => {
     const today = new Date();
@@ -1036,17 +1068,22 @@ export default function SchedulingPage() {
 
   return (
     <div className="space-y-6">
-      {/* Pending loyalty - interactive list */}
-      {pendingLoyalty.length > 0 && (
+      {/* Pending annotations - past meetings without ata */}
+      {pendingAnnotations.length > 0 && (
         <Card className="border-warning/40 bg-warning/5">
           <CardHeader className="pb-2 pt-4 px-4">
             <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground">
               <AlertCircle className="h-4 w-4 text-warning" />
-              {pendingLoyalty.length} {pendingLoyalty.length === 1 ? 'reunião pendente' : 'reuniões pendentes'} de índice de fidelidade
+              {pendingAnnotations.length} {pendingAnnotations.length === 1 ? 'reunião pendente' : 'reuniões pendentes'} de preenchimento de ata
             </CardTitle>
+            {pendingTotalPages > 1 && (
+              <p className="text-[10px] text-muted-foreground">
+                Página {pendingPage} de {pendingTotalPages}
+              </p>
+            )}
           </CardHeader>
           <CardContent className="px-4 pb-4 space-y-2">
-            {pendingLoyalty.map(m => (
+            {pendingAnnotationsPage.map(m => (
               <div
                 key={m.id}
                 className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-background border border-border/50 hover:border-warning/40 hover:shadow-sm transition-all cursor-pointer group"
@@ -1054,24 +1091,54 @@ export default function SchedulingPage() {
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-warning/10">
-                    <Star className="h-3.5 w-3.5 text-warning" />
+                    <FileText className="h-3.5 w-3.5 text-warning" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{m.title}</p>
                     <p className="text-xs text-muted-foreground">
-                      {format(parseISO(m.meeting_date), "dd/MM/yyyy")} · {m.client_name || 'Sem cliente'}
+                      {format(parseISO(m.meeting_date), "dd/MM/yyyy")} · {m.meeting_time?.slice(0, 5)} · {m.client_name || 'Sem cliente'}
                     </p>
                   </div>
                 </div>
+                <div className="flex items-center gap-2">
+                  {m.status === 'completed' && m.loyalty_index == null && (
+                    <Badge variant="outline" className="text-[10px] border-warning/30 text-warning">Sem fidelidade</Badge>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs shrink-0 border-warning/30 text-warning hover:bg-warning/10 group-hover:border-warning/60"
+                  >
+                    Preencher
+                  </Button>
+                </div>
+              </div>
+            ))}
+            {pendingTotalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 pt-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-7 text-xs shrink-0 border-warning/30 text-warning hover:bg-warning/10 group-hover:border-warning/60"
+                  className="h-7 text-xs"
+                  disabled={pendingPage <= 1}
+                  onClick={() => setPendingPage(p => p - 1)}
                 >
-                  Preencher
+                  <ChevronLeft className="h-3 w-3" />
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  {pendingPage} / {pendingTotalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs"
+                  disabled={pendingPage >= pendingTotalPages}
+                  onClick={() => setPendingPage(p => p + 1)}
+                >
+                  <ChevronRight className="h-3 w-3" />
                 </Button>
               </div>
-            ))}
+            )}
           </CardContent>
         </Card>
       )}
