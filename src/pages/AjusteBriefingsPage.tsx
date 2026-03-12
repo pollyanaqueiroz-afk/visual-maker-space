@@ -114,34 +114,67 @@ export default function AjusteBriefingsPage() {
 
       if (adjError) throw adjError;
 
-      // Upload files and create items
-      for (const item of validItems) {
-        const file = item.file!;
-        const filePath = `adjustments/${adjustment.id}/${Date.now()}_${file.name}`;
-        const { error: uploadError } = await supabase.storage
-          .from('briefing-uploads')
-          .upload(filePath, file);
+      // Upload files in parallel batches of 5
+      let successCount = 0;
+      let failCount = 0;
+      const BATCH_SIZE = 5;
 
-        if (uploadError) throw uploadError;
+      for (let i = 0; i < validItems.length; i += BATCH_SIZE) {
+        const batch = validItems.slice(i, i + BATCH_SIZE);
+        const results = await Promise.allSettled(
+          batch.map(async (item) => {
+            const file = item.file!;
+            const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+            const filePath = `adjustments/${adjustment.id}/${Date.now()}_${Math.random().toString(36).slice(2)}_${safeName}`;
+            
+            const { error: uploadError } = await supabase.storage
+              .from('briefing-uploads')
+              .upload(filePath, file);
 
-        const { data: urlData } = supabase.storage
-          .from('briefing-uploads')
-          .getPublicUrl(filePath);
+            if (uploadError) {
+              console.error('Upload failed:', file.name, uploadError);
+              throw uploadError;
+            }
 
-        await supabase.from('briefing_adjustment_items').insert({
-          adjustment_id: adjustment.id,
-          file_url: urlData.publicUrl,
-          file_name: file.name,
-          observations: item.observations || null,
-        } as any);
+            const { data: urlData } = supabase.storage
+              .from('briefing-uploads')
+              .getPublicUrl(filePath);
+
+            const { error: insertError } = await supabase.from('briefing_adjustment_items').insert({
+              adjustment_id: adjustment.id,
+              file_url: urlData.publicUrl,
+              file_name: file.name,
+              observations: item.observations || null,
+            } as any);
+
+            if (insertError) {
+              console.error('Insert failed:', file.name, insertError);
+              throw insertError;
+            }
+          })
+        );
+
+        results.forEach(r => {
+          if (r.status === 'fulfilled') successCount++;
+          else failCount++;
+        });
       }
 
-      toast.success('Solicitação de ajuste registrada!');
-      resetForm();
-      setFormOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['briefing-adjustments'] });
-      queryClient.invalidateQueries({ queryKey: ['briefing-adjustment-items'] });
+      if (successCount > 0) {
+        if (failCount > 0) {
+          toast.warning(`${successCount} de ${validItems.length} imagens enviadas. ${failCount} falharam.`);
+        } else {
+          toast.success(`Solicitação registrada com ${successCount} imagem(ns)!`);
+        }
+        resetForm();
+        setFormOpen(false);
+        queryClient.invalidateQueries({ queryKey: ['briefing-adjustments'] });
+        queryClient.invalidateQueries({ queryKey: ['briefing-adjustment-items'] });
+      } else {
+        toast.error('Nenhuma imagem foi enviada com sucesso. Tente novamente.');
+      }
     } catch (err: any) {
+      console.error('Submit error:', err);
       toast.error('Erro ao registrar: ' + err.message);
     } finally {
       setSubmitting(false);
