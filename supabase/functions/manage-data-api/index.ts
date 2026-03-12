@@ -23,7 +23,7 @@ const ALLOWED_FIELDS: Record<string, string[]> = {
     "numero_parcelas_inadimplentes", "numero_parcelas_contrato",
     "recorrencia_pagamento", "is_plano", "tipo_plano", "is_upsell",
     "tipo_upsell", "status", "vigencia_assinatura", "data_criacao",
-    "processed_at",
+    "processed_at", "tipo_produto_master", "nome_plano_master",
   ],
 };
 
