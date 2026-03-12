@@ -7,41 +7,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { format, parseISO, startOfMonth, endOfMonth, subMonths, isWithinInterval } from 'date-fns';
+import { format, parseISO, startOfMonth, endOfMonth, subMonths, isWithinInterval, startOfWeek, endOfWeek, isSameDay, getDay, getISOWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
-  CalendarDays, CheckCircle, XCircle, Clock, Star, TrendingUp, Users, BarChart3, Globe, Heart,
+  CalendarDays, CheckCircle, XCircle, Clock, TrendingUp, Users, BarChart3, RefreshCw, Heart, Calendar as CalendarIcon,
 } from 'lucide-react';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, CartesianGrid,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line, Legend,
 } from 'recharts';
 import LoyaltyTrackingTab from '@/components/dashboard/LoyaltyTrackingTab';
 import { KpiCard } from '@/components/dashboard/KpiCard';
-
-const MEETING_REASONS = [
-  'Passagem de bastão Closer <> Onboarding',
-  'Passagem de bastão Onboarding <> CS',
-  'Apresentação do CS para o cliente',
-  'Reunião interna de definição do escopo implantação',
-  'Negociação',
-  'Inadimplência',
-  'Upsell',
-  'Reversão de Churn',
-  'Renovação',
-  'Definição de implantação',
-  'Follow Up de implantação',
-  'Resolução de problemas proativos',
-  'Encantamento proativo',
-  'Resolução reativa',
-];
-
-const STATUS_COLORS: Record<string, string> = {
-  scheduled: 'hsl(var(--info))',
-  completed: 'hsl(var(--success))',
-  cancelled: 'hsl(var(--destructive))',
-};
-
-const PIE_COLORS = ['hsl(var(--info))', 'hsl(var(--success))', 'hsl(var(--destructive))'];
 
 interface Meeting {
   id: string;
@@ -58,30 +33,48 @@ interface Meeting {
   duration_minutes: number;
 }
 
+interface Reschedule {
+  id: string;
+  meeting_id: string;
+  previous_date: string;
+  previous_time: string;
+  new_date: string;
+  new_time: string;
+  reason: string;
+  created_at: string;
+}
+
 export default function MeetingsDashboard() {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [reschedules, setReschedules] = useState<Reschedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [periodFilter, setPeriodFilter] = useState('current');
   const [activeKPI, setActiveKPI] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('day');
   const { user } = useAuth();
 
-  useEffect(() => {
+  const fetchData = async () => {
     if (!user) return;
-    (async () => {
-      const { data, error } = await supabase
+    setLoading(true);
+    const [meetRes, rescRes] = await Promise.all([
+      supabase
         .from('meetings')
         .select('id, title, meeting_date, meeting_time, status, client_email, client_name, client_url, meeting_reason, loyalty_index, loyalty_reason, duration_minutes, created_by')
         .eq('created_by', user.id)
-        .order('meeting_date', { ascending: false });
-      if (error) {
-        console.error(error);
-        toast.error('Erro ao carregar dados');
-      } else {
-        setMeetings((data || []) as Meeting[]);
-      }
-      setLoading(false);
-    })();
-  }, [user]);
+        .order('meeting_date', { ascending: false }),
+      supabase
+        .from('meeting_reschedules')
+        .select('*')
+        .order('created_at', { ascending: false }),
+    ]);
+    if (meetRes.error) toast.error('Erro ao carregar reuniões');
+    if (rescRes.error) console.error(rescRes.error);
+    setMeetings((meetRes.data || []) as Meeting[]);
+    setReschedules((rescRes.data || []) as Reschedule[]);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchData(); }, [user]);
 
   const filtered = useMemo(() => {
     if (periodFilter === 'all') return meetings;
@@ -101,112 +94,121 @@ export default function MeetingsDashboard() {
     });
   }, [meetings, periodFilter]);
 
+  // Today's meetings
+  const todayMeetings = useMemo(() => {
+    const today = new Date();
+    return meetings.filter(m => isSameDay(parseISO(m.meeting_date), today));
+  }, [meetings]);
+
+  // This week's meetings
+  const thisWeekMeetings = useMemo(() => {
+    const now = new Date();
+    const ws = startOfWeek(now, { weekStartsOn: 1 });
+    const we = endOfWeek(now, { weekStartsOn: 1 });
+    return meetings.filter(m => {
+      const d = parseISO(m.meeting_date);
+      return isWithinInterval(d, { start: ws, end: we });
+    });
+  }, [meetings]);
+
   const stats = useMemo(() => {
     const total = filtered.length;
     const completed = filtered.filter(m => m.status === 'completed').length;
     const scheduled = filtered.filter(m => m.status === 'scheduled').length;
     const cancelled = filtered.filter(m => m.status === 'cancelled').length;
-    const withLoyalty = filtered.filter(m => m.loyalty_index != null && m.loyalty_index > 0);
-    const avgLoyalty = withLoyalty.length > 0
-      ? (withLoyalty.reduce((s, m) => s + (m.loyalty_index || 0), 0) / withLoyalty.length).toFixed(1)
-      : '—';
     const totalMinutes = filtered.filter(m => m.status === 'completed').reduce((s, m) => s + m.duration_minutes, 0);
     const uniqueClients = new Set(filtered.filter(m => m.client_email).map(m => m.client_email!.toLowerCase())).size;
-    return { total, completed, scheduled, cancelled, avgLoyalty, totalMinutes, uniqueClients };
-  }, [filtered]);
+    const meetingIds = new Set(filtered.map(m => m.id));
+    const rescheduleCount = reschedules.filter(r => meetingIds.has(r.meeting_id)).length;
+    const todayTotal = todayMeetings.length;
+    const todayCompleted = todayMeetings.filter(m => m.status === 'completed').length;
+    return { total, completed, scheduled, cancelled, totalMinutes, uniqueClients, rescheduleCount, todayTotal, todayCompleted };
+  }, [filtered, reschedules, todayMeetings]);
 
   const toggleKPI = (kpi: string) => {
     setActiveKPI(prev => prev === kpi ? null : kpi);
   };
 
-  const kpiFilteredMeetings = useMemo(() => {
-    if (!activeKPI) return [];
-    switch (activeKPI) {
-      case 'total':
-        return filtered;
-      case 'completed':
-        return filtered.filter(m => m.status === 'completed');
-      case 'scheduled':
-        return filtered.filter(m => m.status === 'scheduled');
-      case 'cancelled':
-        return filtered.filter(m => m.status === 'cancelled');
-      case 'loyalty':
-        return filtered.filter(m => m.loyalty_index != null).sort((a, b) => (b.loyalty_index || 0) - (a.loyalty_index || 0));
-      case 'hours':
-        return filtered.filter(m => m.status === 'completed' && m.duration_minutes > 0).sort((a, b) => b.duration_minutes - a.duration_minutes);
-      case 'clients':
-        return filtered.filter(m => m.client_email);
-      default:
-        return [];
-    }
-  }, [activeKPI, filtered]);
-
-  const clientsGrouped = useMemo(() => {
-    if (activeKPI !== 'clients') return [];
-    const map: Record<string, { email: string; name: string; url: string; total: number; completed: number; scheduled: number; cancelled: number; meetings: Meeting[] }> = {};
+  // Meetings by day (for chart)
+  const byDay = useMemo(() => {
+    const map: Record<string, { date: string; total: number; completed: number; cancelled: number }> = {};
     for (const m of filtered) {
-      if (!m.client_email) continue;
-      const key = m.client_email.toLowerCase();
+      const key = m.meeting_date;
+      if (!map[key]) map[key] = { date: key, total: 0, completed: 0, cancelled: 0 };
+      map[key].total++;
+      if (m.status === 'completed') map[key].completed++;
+      if (m.status === 'cancelled') map[key].cancelled++;
+    }
+    return Object.values(map)
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map(d => ({
+        ...d,
+        label: format(parseISO(d.date), 'dd/MM', { locale: ptBR }),
+      }));
+  }, [filtered]);
+
+  // Meetings by week
+  const byWeek = useMemo(() => {
+    const map: Record<string, { week: string; total: number; completed: number; cancelled: number }> = {};
+    for (const m of filtered) {
+      const d = parseISO(m.meeting_date);
+      const weekNum = getISOWeek(d);
+      const year = d.getFullYear();
+      const key = `${year}-S${String(weekNum).padStart(2, '0')}`;
+      if (!map[key]) map[key] = { week: key, total: 0, completed: 0, cancelled: 0 };
+      map[key].total++;
+      if (m.status === 'completed') map[key].completed++;
+      if (m.status === 'cancelled') map[key].cancelled++;
+    }
+    return Object.values(map).sort((a, b) => a.week.localeCompare(b.week));
+  }, [filtered]);
+
+  // Meetings by month
+  const byMonth = useMemo(() => {
+    const map: Record<string, { month: string; total: number; completed: number; cancelled: number }> = {};
+    for (const m of meetings) {
+      const d = parseISO(m.meeting_date);
+      const key = format(d, 'yyyy-MM');
+      const label = format(d, 'MMM/yy', { locale: ptBR });
+      if (!map[key]) map[key] = { month: label, total: 0, completed: 0, cancelled: 0 };
+      map[key].total++;
+      if (m.status === 'completed') map[key].completed++;
+      if (m.status === 'cancelled') map[key].cancelled++;
+    }
+    return Object.values(map);
+  }, [meetings]);
+
+  // Meetings by client
+  const byClient = useMemo(() => {
+    const map: Record<string, { name: string; email: string; url: string; total: number; completed: number; scheduled: number; cancelled: number; reschedules: number }> = {};
+    for (const m of filtered) {
+      const key = (m.client_email || 'sem-email').toLowerCase();
       if (!map[key]) {
-        map[key] = { email: key, name: m.client_name || '', url: m.client_url || '', total: 0, completed: 0, scheduled: 0, cancelled: 0, meetings: [] };
+        map[key] = {
+          name: m.client_name || m.client_email || 'Sem cliente',
+          email: m.client_email || '',
+          url: m.client_url || '',
+          total: 0, completed: 0, scheduled: 0, cancelled: 0, reschedules: 0,
+        };
       }
-      map[key].total += 1;
-      if (m.status === 'completed') map[key].completed += 1;
-      else if (m.status === 'scheduled') map[key].scheduled += 1;
-      else if (m.status === 'cancelled') map[key].cancelled += 1;
-      map[key].meetings.push(m);
+      map[key].total++;
+      if (m.status === 'completed') map[key].completed++;
+      else if (m.status === 'scheduled') map[key].scheduled++;
+      else if (m.status === 'cancelled') map[key].cancelled++;
+      // Count reschedules for this meeting
+      map[key].reschedules += reschedules.filter(r => r.meeting_id === m.id).length;
     }
     return Object.values(map).sort((a, b) => b.total - a.total);
-  }, [activeKPI, filtered]);
+  }, [filtered, reschedules]);
 
-  const byReason = useMemo(() => {
-    const map: Record<string, number> = {};
-    for (const m of filtered) {
-      const r = m.meeting_reason || 'Sem motivo';
-      map[r] = (map[r] || 0) + 1;
-    }
-    return Object.entries(map)
-      .map(([name, value]) => ({ name: name.length > 25 ? name.slice(0, 25) + '…' : name, fullName: name, value }))
-      .sort((a, b) => b.value - a.value);
-  }, [filtered]);
+  // Reschedules for the period
+  const filteredReschedules = useMemo(() => {
+    const meetingIds = new Set(filtered.map(m => m.id));
+    return reschedules.filter(r => meetingIds.has(r.meeting_id));
+  }, [filtered, reschedules]);
 
-  const byStatus = useMemo(() => [
-    { name: 'Agendadas', value: stats.scheduled },
-    { name: 'Realizadas', value: stats.completed },
-    { name: 'Canceladas', value: stats.cancelled },
-  ], [stats]);
-
-  const loyaltyDist = useMemo(() => {
-    const dist = [0, 0, 0, 0];
-    for (const m of filtered) {
-      if (m.loyalty_index && m.loyalty_index >= 1 && m.loyalty_index <= 4) {
-        dist[m.loyalty_index - 1]++;
-      }
-    }
-    const internalCount = filtered.filter(m => m.loyalty_index === 0).length;
-    return [
-      { name: '1 — Muito baixo', value: dist[0] },
-      { name: '2 — Baixo', value: dist[1] },
-      { name: '3 — Alto', value: dist[2] },
-      { name: '4 — Muito alto', value: dist[3] },
-      ...(internalCount > 0 ? [{ name: 'Internas', value: internalCount }] : []),
-    ];
-  }, [filtered]);
-
-  const byClientUrl = useMemo(() => {
-    const map: Record<string, { url: string; scheduled: number; completed: number; cancelled: number; total: number }> = {};
-    for (const m of filtered) {
-      const url = m.client_url || 'Sem URL';
-      if (!map[url]) map[url] = { url, scheduled: 0, completed: 0, cancelled: 0, total: 0 };
-      map[url].total++;
-      if (m.status === 'completed') map[url].completed++;
-      else if (m.status === 'scheduled') map[url].scheduled++;
-      else if (m.status === 'cancelled') map[url].cancelled++;
-    }
-    return Object.values(map).sort((a, b) => b.total - a.total);
-  }, [filtered]);
-
-  const LOYALTY_COLORS = ['hsl(var(--destructive))', 'hsl(var(--warning, 30 90% 50%))', 'hsl(var(--info))', 'hsl(var(--success))', 'hsl(var(--muted-foreground))'];
+  const chartData = viewMode === 'day' ? byDay : viewMode === 'week' ? byWeek : byMonth;
+  const chartKey = viewMode === 'day' ? 'label' : viewMode === 'week' ? 'week' : 'month';
 
   if (loading) {
     return (
@@ -221,17 +223,20 @@ export default function MeetingsDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Dashboard de Reuniões</h1>
+          <h1 className="text-2xl font-bold text-foreground">Produtividade — Reuniões</h1>
           <p className="text-sm text-muted-foreground flex items-center gap-2">
             Logado como <span className="font-medium text-foreground">{user?.email}</span>
           </p>
         </div>
+        <button onClick={fetchData} className="text-muted-foreground hover:text-foreground transition-colors" title="Atualizar">
+          <RefreshCw className="h-4 w-4" />
+        </button>
       </div>
 
-      <Tabs defaultValue="reunioes" className="space-y-4">
+      <Tabs defaultValue="produtividade" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="reunioes" className="flex items-center gap-1.5">
-            <CalendarDays className="h-4 w-4" /> Reuniões
+          <TabsTrigger value="produtividade" className="flex items-center gap-1.5">
+            <BarChart3 className="h-4 w-4" /> Produtividade
           </TabsTrigger>
           <TabsTrigger value="fidelidade" className="flex items-center gap-1.5">
             <Heart className="h-4 w-4" /> Fidelidade
@@ -242,305 +247,378 @@ export default function MeetingsDashboard() {
           <LoyaltyTrackingTab />
         </TabsContent>
 
-        <TabsContent value="reunioes" className="space-y-6">
+        <TabsContent value="produtividade" className="space-y-6">
 
-      {/* Period filter */}
-      <div className="flex justify-end">
-        <Select value={periodFilter} onValueChange={setPeriodFilter}>
-          <SelectTrigger className="w-[180px] h-9 text-sm">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="current">Mês atual</SelectItem>
-            <SelectItem value="previous">Mês anterior</SelectItem>
-            <SelectItem value="all">Todo o período</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+          {/* Period filter */}
+          <div className="flex justify-end">
+            <Select value={periodFilter} onValueChange={setPeriodFilter}>
+              <SelectTrigger className="w-[180px] h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="current">Mês atual</SelectItem>
+                <SelectItem value="previous">Mês anterior</SelectItem>
+                <SelectItem value="all">Todo o período</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-        <KpiCard label="Total" value={stats.total} icon={CalendarDays} color="bg-primary/10 text-primary"
-          onClick={() => toggleKPI('total')} active={activeKPI === 'total'} />
-        <KpiCard label="Realizadas" value={stats.completed} icon={CheckCircle} color="bg-success/10 text-success"
-          onClick={() => toggleKPI('completed')} active={activeKPI === 'completed'} />
-        <KpiCard label="Agendadas" value={stats.scheduled} icon={Clock} color="bg-info/10 text-info"
-          onClick={() => toggleKPI('scheduled')} active={activeKPI === 'scheduled'} />
-        <KpiCard label="Canceladas" value={stats.cancelled} icon={XCircle} color="bg-destructive/10 text-destructive"
-          onClick={() => toggleKPI('cancelled')} active={activeKPI === 'cancelled'} />
-        <KpiCard label="Fidelidade" value={stats.avgLoyalty} icon={Star} color="bg-warning/10 text-warning"
-          onClick={() => toggleKPI('loyalty')} active={activeKPI === 'loyalty'} />
-        <KpiCard label="Horas" value={`${Math.round(stats.totalMinutes / 60)}h`} icon={TrendingUp} color="bg-primary/10 text-primary"
-          onClick={() => toggleKPI('hours')} active={activeKPI === 'hours'} />
-        <KpiCard label="Clientes" value={stats.uniqueClients} icon={Users} color="bg-accent text-accent-foreground"
-          onClick={() => toggleKPI('clients')} active={activeKPI === 'clients'} />
-      </div>
+          {/* Today Banner */}
+          <Card className="border-none bg-gradient-to-r from-primary/10 to-primary/5 shadow-sm">
+            <CardContent className="py-4">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                    <CalendarDays className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Hoje — {format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR })}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {stats.todayTotal === 0 ? 'Nenhuma reunião agendada' : `${stats.todayTotal} reunião(ões) • ${stats.todayCompleted} realizada(s)`}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-6">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-foreground">{stats.todayTotal}</p>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Hoje</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-foreground">{thisWeekMeetings.length}</p>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Semana</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-      {/* KPI Detail: Clients grouped */}
-      {activeKPI === 'clients' && clientsGrouped.length > 0 && (
-        <Card className="border-none shadow-[var(--shadow-kpi)] animate-in fade-in slide-in-from-top-2 duration-300">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Users className="h-4 w-4 text-accent-foreground" /> Clientes únicos ({clientsGrouped.length})
+          {/* KPI Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+            <KpiCard label="Total" value={stats.total} icon={CalendarDays} color="bg-primary/10 text-primary"
+              onClick={() => toggleKPI('total')} active={activeKPI === 'total'} />
+            <KpiCard label="Realizadas" value={stats.completed} icon={CheckCircle} color="bg-success/10 text-success"
+              onClick={() => toggleKPI('completed')} active={activeKPI === 'completed'} />
+            <KpiCard label="Agendadas" value={stats.scheduled} icon={Clock} color="bg-info/10 text-info"
+              onClick={() => toggleKPI('scheduled')} active={activeKPI === 'scheduled'} />
+            <KpiCard label="Canceladas" value={stats.cancelled} icon={XCircle} color="bg-destructive/10 text-destructive"
+              onClick={() => toggleKPI('cancelled')} active={activeKPI === 'cancelled'} />
+            <KpiCard label="Reagendamentos" value={stats.rescheduleCount} icon={RefreshCw} color="bg-warning/10 text-warning"
+              onClick={() => toggleKPI('reschedules')} active={activeKPI === 'reschedules'} />
+            <KpiCard label="Horas" value={`${Math.round(stats.totalMinutes / 60)}h`} icon={TrendingUp} color="bg-primary/10 text-primary"
+              onClick={() => toggleKPI('hours')} active={activeKPI === 'hours'} />
+            <KpiCard label="Clientes" value={stats.uniqueClients} icon={Users} color="bg-accent text-accent-foreground"
+              onClick={() => toggleKPI('clients')} active={activeKPI === 'clients'} />
+          </div>
+
+          {/* KPI Detail: Reschedules */}
+          {activeKPI === 'reschedules' && (
+            <Card className="border-none shadow-[var(--shadow-kpi)] animate-in fade-in slide-in-from-top-2 duration-300">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <RefreshCw className="h-4 w-4 text-warning" /> Reagendamentos ({filteredReschedules.length})
+                  </CardTitle>
+                  <button onClick={() => setActiveKPI(null)} className="text-muted-foreground hover:text-foreground text-sm">✕</button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {filteredReschedules.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">Nenhum reagendamento no período</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data Original</TableHead>
+                        <TableHead>Nova Data</TableHead>
+                        <TableHead>Reunião</TableHead>
+                        <TableHead>Motivo</TableHead>
+                        <TableHead>Reagendado em</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredReschedules.map(r => {
+                        const meeting = meetings.find(m => m.id === r.meeting_id);
+                        return (
+                          <TableRow key={r.id}>
+                            <TableCell className="text-sm">
+                              <span className="line-through text-muted-foreground">
+                                {format(parseISO(r.previous_date), 'dd/MM/yyyy', { locale: ptBR })} {r.previous_time?.slice(0, 5)}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-sm font-medium">
+                              {format(parseISO(r.new_date), 'dd/MM/yyyy', { locale: ptBR })} {r.new_time?.slice(0, 5)}
+                            </TableCell>
+                            <TableCell className="text-sm">{meeting?.title || '—'}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate" title={r.reason}>{r.reason}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground">
+                              {format(parseISO(r.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* KPI Detail: Clients grouped */}
+          {activeKPI === 'clients' && byClient.length > 0 && (
+            <Card className="border-none shadow-[var(--shadow-kpi)] animate-in fade-in slide-in-from-top-2 duration-300">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <Users className="h-4 w-4 text-accent-foreground" /> Reuniões por Cliente ({byClient.length})
+                  </CardTitle>
+                  <button onClick={() => setActiveKPI(null)} className="text-muted-foreground hover:text-foreground text-sm">✕</button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>URL</TableHead>
+                      <TableHead className="text-center">Total</TableHead>
+                      <TableHead className="text-center">Realizadas</TableHead>
+                      <TableHead className="text-center">Agendadas</TableHead>
+                      <TableHead className="text-center">Canceladas</TableHead>
+                      <TableHead className="text-center">Reagend.</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {byClient.map(c => (
+                      <TableRow key={c.email || c.name}>
+                        <TableCell>
+                          <div>
+                            <p className="text-sm font-medium">{c.name}</p>
+                            <p className="text-xs text-muted-foreground">{c.email}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {c.url ? (
+                            <a href={c.url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">{c.url}</a>
+                          ) : <span className="text-xs text-muted-foreground">—</span>}
+                        </TableCell>
+                        <TableCell className="text-center font-semibold">{c.total}</TableCell>
+                        <TableCell className="text-center"><Badge className="bg-success/20 text-success border-0 text-[10px]">{c.completed}</Badge></TableCell>
+                        <TableCell className="text-center"><Badge className="bg-info/20 text-info border-0 text-[10px]">{c.scheduled}</Badge></TableCell>
+                        <TableCell className="text-center"><Badge className="bg-destructive/20 text-destructive border-0 text-[10px]">{c.cancelled}</Badge></TableCell>
+                        <TableCell className="text-center">
+                          {c.reschedules > 0 ? (
+                            <Badge className="bg-warning/20 text-warning border-0 text-[10px]">{c.reschedules}</Badge>
+                          ) : <span className="text-xs text-muted-foreground">0</span>}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* KPI Detail: Generic meeting list */}
+          {activeKPI && !['clients', 'reschedules'].includes(activeKPI) && (() => {
+            const list = activeKPI === 'total' ? filtered
+              : activeKPI === 'completed' ? filtered.filter(m => m.status === 'completed')
+              : activeKPI === 'scheduled' ? filtered.filter(m => m.status === 'scheduled')
+              : activeKPI === 'cancelled' ? filtered.filter(m => m.status === 'cancelled')
+              : activeKPI === 'hours' ? filtered.filter(m => m.status === 'completed' && m.duration_minutes > 0).sort((a, b) => b.duration_minutes - a.duration_minutes)
+              : [];
+            if (list.length === 0) return (
+              <Card className="border-none shadow-[var(--shadow-kpi)]"><CardContent className="py-8 text-center text-muted-foreground">Nenhuma reunião encontrada</CardContent></Card>
+            );
+            return (
+              <Card className="border-none shadow-[var(--shadow-kpi)] animate-in fade-in slide-in-from-top-2 duration-300">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-semibold">{list.length} reunião(ões)</CardTitle>
+                    <button onClick={() => setActiveKPI(null)} className="text-muted-foreground hover:text-foreground text-sm">✕</button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Horário</TableHead>
+                        <TableHead>Título</TableHead>
+                        <TableHead>Cliente</TableHead>
+                        <TableHead className="text-center">Status</TableHead>
+                        <TableHead className="text-center">Duração</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {list.slice(0, 50).map(m => (
+                        <TableRow key={m.id}>
+                          <TableCell className="text-sm font-medium">{format(parseISO(m.meeting_date), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{m.meeting_time?.slice(0, 5) || '—'}</TableCell>
+                          <TableCell className="text-sm font-medium max-w-[200px] truncate" title={m.title}>{m.title || '—'}</TableCell>
+                          <TableCell>
+                            <p className="text-sm">{m.client_name || '—'}</p>
+                            {m.client_url && <a href={m.client_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">{m.client_url}</a>}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge className={`border-0 text-[10px] ${
+                              m.status === 'completed' ? 'bg-success/20 text-success' :
+                              m.status === 'scheduled' ? 'bg-info/20 text-info' :
+                              'bg-destructive/20 text-destructive'
+                            }`}>
+                              {m.status === 'completed' ? 'Realizada' : m.status === 'scheduled' ? 'Agendada' : 'Cancelada'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center text-sm">{m.duration_minutes > 0 ? `${m.duration_minutes}min` : '—'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            );
+          })()}
+
+          {/* Productivity Chart */}
+          <Card className="border-none shadow-[var(--shadow-kpi)]">
+            <CardHeader className="pb-1">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Reuniões {viewMode === 'day' ? 'por Dia' : viewMode === 'week' ? 'por Semana' : 'por Mês'}
+                </CardTitle>
+                <div className="flex gap-1">
+                  {(['day', 'week', 'month'] as const).map(mode => (
+                    <button
+                      key={mode}
+                      onClick={() => setViewMode(mode)}
+                      className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                        viewMode === mode
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      {mode === 'day' ? 'Dia' : mode === 'week' ? 'Semana' : 'Mês'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {chartData.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">Nenhuma reunião no período</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey={chartKey} tick={{ fontSize: 10 }} />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip contentStyle={{ borderRadius: 8, border: 'none', boxShadow: 'var(--shadow-elevated)', fontSize: 12 }} />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                    <Bar dataKey="completed" name="Realizadas" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} stackId="stack" />
+                    <Bar dataKey="cancelled" name="Canceladas" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} stackId="stack" />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Clients Table */}
+          <Card className="border-none shadow-[var(--shadow-kpi)]">
+            <CardHeader className="pb-1">
+              <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                <Users className="h-4 w-4 text-primary" />
+                Produtividade por Cliente
               </CardTitle>
-              <button onClick={() => setActiveKPI(null)} className="text-muted-foreground hover:text-foreground text-sm">✕</button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>URL</TableHead>
-                  <TableHead className="text-center">Total</TableHead>
-                  <TableHead className="text-center">Realizadas</TableHead>
-                  <TableHead className="text-center">Agendadas</TableHead>
-                  <TableHead className="text-center">Canceladas</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {clientsGrouped.map(c => (
-                  <TableRow key={c.email}>
-                    <TableCell>
-                      <div>
-                        <p className="text-sm font-medium">{c.name || c.email}</p>
-                        <p className="text-xs text-muted-foreground">{c.email}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {c.url ? (
-                        <a href={c.url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">{c.url}</a>
-                      ) : <span className="text-xs text-muted-foreground">—</span>}
-                    </TableCell>
-                    <TableCell className="text-center font-semibold">{c.total}</TableCell>
-                    <TableCell className="text-center"><Badge className="bg-success/20 text-success border-0 text-[10px]">{c.completed}</Badge></TableCell>
-                    <TableCell className="text-center"><Badge className="bg-info/20 text-info border-0 text-[10px]">{c.scheduled}</Badge></TableCell>
-                    <TableCell className="text-center"><Badge className="bg-destructive/20 text-destructive border-0 text-[10px]">{c.cancelled}</Badge></TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
+            </CardHeader>
+            <CardContent>
+              {byClient.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">Nenhuma reunião no período</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>URL</TableHead>
+                      <TableHead className="text-center">Total</TableHead>
+                      <TableHead className="text-center">Realizadas</TableHead>
+                      <TableHead className="text-center">Agendadas</TableHead>
+                      <TableHead className="text-center">Canceladas</TableHead>
+                      <TableHead className="text-center">Reagend.</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {byClient.slice(0, 30).map(c => (
+                      <TableRow key={c.email || c.name}>
+                        <TableCell>
+                          <div>
+                            <p className="text-sm font-medium">{c.name}</p>
+                            {c.email && <p className="text-xs text-muted-foreground">{c.email}</p>}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {c.url ? (
+                            <a href={c.url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline truncate max-w-[160px] block">{c.url}</a>
+                          ) : <span className="text-xs text-muted-foreground">—</span>}
+                        </TableCell>
+                        <TableCell className="text-center font-semibold">{c.total}</TableCell>
+                        <TableCell className="text-center"><Badge className="bg-success/20 text-success border-0 text-[10px]">{c.completed}</Badge></TableCell>
+                        <TableCell className="text-center"><Badge className="bg-info/20 text-info border-0 text-[10px]">{c.scheduled}</Badge></TableCell>
+                        <TableCell className="text-center"><Badge className="bg-destructive/20 text-destructive border-0 text-[10px]">{c.cancelled}</Badge></TableCell>
+                        <TableCell className="text-center">
+                          {c.reschedules > 0 ? (
+                            <Badge className="bg-warning/20 text-warning border-0 text-[10px]">{c.reschedules}</Badge>
+                          ) : <span className="text-xs text-muted-foreground">0</span>}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
 
-      {/* KPI Detail: Meeting list (non-clients) */}
-      {activeKPI && activeKPI !== 'clients' && kpiFilteredMeetings.length > 0 && (
-        <Card className="border-none shadow-[var(--shadow-kpi)] animate-in fade-in slide-in-from-top-2 duration-300">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                {activeKPI === 'total' && <><CalendarDays className="h-4 w-4 text-primary" /> Todas as reuniões ({kpiFilteredMeetings.length})</>}
-                {activeKPI === 'completed' && <><CheckCircle className="h-4 w-4 text-success" /> Reuniões realizadas ({kpiFilteredMeetings.length})</>}
-                {activeKPI === 'scheduled' && <><Clock className="h-4 w-4 text-info" /> Reuniões agendadas ({kpiFilteredMeetings.length})</>}
-                {activeKPI === 'cancelled' && <><XCircle className="h-4 w-4 text-destructive" /> Reuniões canceladas ({kpiFilteredMeetings.length})</>}
-                {activeKPI === 'loyalty' && <><Star className="h-4 w-4 text-warning" /> Reuniões com fidelidade ({kpiFilteredMeetings.length})</>}
-                {activeKPI === 'hours' && <><TrendingUp className="h-4 w-4 text-primary" /> Reuniões por duração ({kpiFilteredMeetings.length})</>}
-              </CardTitle>
-              <button onClick={() => setActiveKPI(null)} className="text-muted-foreground hover:text-foreground text-sm">✕</button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Horário</TableHead>
-                  <TableHead>Título</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Motivo</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  {(activeKPI === 'loyalty' || activeKPI === 'total') && <TableHead className="text-center">Fidelidade</TableHead>}
-                  {(activeKPI === 'hours' || activeKPI === 'total') && <TableHead className="text-center">Duração</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {kpiFilteredMeetings.map(m => (
-                  <TableRow key={m.id}>
-                    <TableCell className="text-sm font-medium">
-                      {format(parseISO(m.meeting_date), 'dd/MM/yyyy', { locale: ptBR })}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {m.meeting_time || '—'}
-                    </TableCell>
-                    <TableCell className="text-sm font-medium max-w-[200px] truncate" title={m.title}>
-                      {m.title || '—'}
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="text-sm">{m.client_name || '—'}</p>
-                        {m.client_url && (
-                          <a href={m.client_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
-                            {m.client_url}
-                          </a>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground max-w-[180px] truncate" title={m.meeting_reason || ''}>
-                      {m.meeting_reason || '—'}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge className={`border-0 text-[10px] ${
-                        m.status === 'completed' ? 'bg-success/20 text-success' :
-                        m.status === 'scheduled' ? 'bg-info/20 text-info' :
-                        'bg-destructive/20 text-destructive'
-                      }`}>
-                        {m.status === 'completed' ? 'Realizada' : m.status === 'scheduled' ? 'Agendada' : 'Cancelada'}
-                      </Badge>
-                    </TableCell>
-                    {(activeKPI === 'loyalty' || activeKPI === 'total') && (
-                      <TableCell className="text-center">
-                        {m.loyalty_index === 0 ? (
-                          <Badge variant="outline" className="text-[10px] border-muted-foreground/30 text-muted-foreground">Interna</Badge>
-                        ) : m.loyalty_index != null ? (
-                          <Badge variant="outline" className={`text-[10px] ${
-                            m.loyalty_index >= 3 ? 'border-success/30 text-success' :
-                            m.loyalty_index >= 2 ? 'border-warning/30 text-warning' :
-                            'border-destructive/30 text-destructive'
+          {/* Today's meetings detail */}
+          {todayMeetings.length > 0 && (
+            <Card className="border-none shadow-[var(--shadow-kpi)]">
+              <CardHeader className="pb-1">
+                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                  <CalendarIcon className="h-4 w-4 text-primary" />
+                  Reuniões de Hoje ({todayMeetings.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Horário</TableHead>
+                      <TableHead>Título</TableHead>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead className="text-center">Duração</TableHead>
+                      <TableHead className="text-center">Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {todayMeetings.sort((a, b) => (a.meeting_time || '').localeCompare(b.meeting_time || '')).map(m => (
+                      <TableRow key={m.id}>
+                        <TableCell className="text-sm font-medium">{m.meeting_time?.slice(0, 5) || '—'}</TableCell>
+                        <TableCell className="text-sm">{m.title}</TableCell>
+                        <TableCell className="text-sm">{m.client_name || '—'}</TableCell>
+                        <TableCell className="text-center text-sm">{m.duration_minutes}min</TableCell>
+                        <TableCell className="text-center">
+                          <Badge className={`border-0 text-[10px] ${
+                            m.status === 'completed' ? 'bg-success/20 text-success' :
+                            m.status === 'scheduled' ? 'bg-info/20 text-info' :
+                            'bg-destructive/20 text-destructive'
                           }`}>
-                            <Star className="h-2.5 w-2.5 mr-0.5" /> {m.loyalty_index}
+                            {m.status === 'completed' ? 'Realizada' : m.status === 'scheduled' ? 'Agendada' : 'Cancelada'}
                           </Badge>
-                        ) : <span className="text-xs text-muted-foreground">—</span>}
-                      </TableCell>
-                    )}
-                    {(activeKPI === 'hours' || activeKPI === 'total') && (
-                      <TableCell className="text-center">
-                        <span className="text-sm">{m.duration_minutes > 0 ? `${m.duration_minutes}min` : '—'}</span>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Empty state */}
-      {activeKPI && ((activeKPI === 'clients' && clientsGrouped.length === 0) || (activeKPI !== 'clients' && kpiFilteredMeetings.length === 0)) && (
-        <Card className="border-none shadow-[var(--shadow-kpi)]">
-          <CardContent className="py-8 text-center text-muted-foreground">
-            Nenhuma reunião encontrada para este filtro
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Charts Row */}
-      <div className="grid md:grid-cols-2 gap-4">
-        <Card className="border-none shadow-[var(--shadow-kpi)]">
-          <CardHeader className="pb-1">
-            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Distribuição por Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={240}>
-              <PieChart>
-                <Pie data={byStatus} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={55} outerRadius={85} strokeWidth={2} stroke="hsl(var(--card))" label={false}>
-                  {byStatus.map((_, i) => (
-                    <Cell key={i} fill={PIE_COLORS[i]} />
-                  ))}
-                </Pie>
-                {/* Central label */}
-                <text x="50%" y="46%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground text-2xl font-bold">
-                  {stats.total}
-                </text>
-                <text x="50%" y="58%" textAnchor="middle" dominantBaseline="middle" className="fill-muted-foreground text-[11px]">
-                  reuniões
-                </text>
-                <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
-                <Tooltip contentStyle={{ borderRadius: 8, border: 'none', boxShadow: 'var(--shadow-elevated)' }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-[var(--shadow-kpi)]">
-          <CardHeader className="pb-1">
-            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Índice de Fidelidade</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={loyaltyDist}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                <YAxis allowDecimals={false} />
-                <Tooltip contentStyle={{ borderRadius: 8, border: 'none', boxShadow: 'var(--shadow-elevated)' }} />
-                <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                  {loyaltyDist.map((_, i) => (
-                    <Cell key={i} fill={LOYALTY_COLORS[i]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* By Reason Bar Chart */}
-      <Card className="border-none shadow-[var(--shadow-kpi)]">
-        <CardHeader className="pb-1">
-          <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Reuniões por Motivo</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {byReason.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Nenhuma reunião no período</p>
-          ) : (
-            <ResponsiveContainer width="100%" height={Math.max(200, byReason.length * 36)}>
-              <BarChart data={byReason} layout="vertical" margin={{ left: 10, right: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-                <XAxis type="number" allowDecimals={false} />
-                <YAxis type="category" dataKey="name" width={200} tick={{ fontSize: 11 }} />
-                <Tooltip contentStyle={{ borderRadius: 8, border: 'none', boxShadow: 'var(--shadow-elevated)' }} formatter={(v: number, _: string, props: any) => [v, props.payload.fullName]} />
-                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 6, 6, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
           )}
-        </CardContent>
-      </Card>
-
-      {/* By Client URL Table */}
-      <Card className="border-none shadow-[var(--shadow-kpi)]">
-        <CardHeader className="pb-1">
-          <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-            <Globe className="h-4 w-4 text-primary" />
-            Reuniões por URL do Cliente
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {byClientUrl.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Nenhuma reunião no período</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>URL do Cliente</TableHead>
-                  <TableHead className="text-center">Total</TableHead>
-                  <TableHead className="text-center">Realizadas</TableHead>
-                  <TableHead className="text-center">Agendadas</TableHead>
-                  <TableHead className="text-center">Canceladas</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {byClientUrl.map(row => (
-                  <TableRow key={row.url}>
-                    <TableCell className="font-medium text-sm">
-                      {row.url !== 'Sem URL' ? (
-                        <a href={row.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{row.url}</a>
-                      ) : (
-                        <span className="text-muted-foreground">Sem URL</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center font-semibold">{row.total}</TableCell>
-                    <TableCell className="text-center"><Badge className="bg-success/20 text-success">{row.completed}</Badge></TableCell>
-                    <TableCell className="text-center"><Badge className="bg-info/20 text-info">{row.scheduled}</Badge></TableCell>
-                    <TableCell className="text-center"><Badge className="bg-destructive/20 text-destructive">{row.cancelled}</Badge></TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
 
         </TabsContent>
       </Tabs>
