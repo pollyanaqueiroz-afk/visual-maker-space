@@ -195,6 +195,7 @@ export default function Dashboard() {
         pending: 'pending',
         allocated: 'in_progress',
         in_progress: 'in_progress',
+        review: 'review',
         completed: 'completed',
       };
       return {
@@ -326,7 +327,27 @@ export default function Dashboard() {
     return () => window.removeEventListener('resize', syncWidth);
   }, [loading, images]);
 
-  const updateImageStatus = async (id: string, status: RequestStatus) => {
+  const updateImageStatus = async (id: string, status: RequestStatus, isAdjustment?: boolean) => {
+    if (isAdjustment) {
+      // Find parent adjustment for this item
+      const parentAdj = adjData.adjustments.find((a: any) =>
+        adjData.items.some((i: any) => i.id === id && i.adjustment_id === a.id)
+      );
+      if (!parentAdj) { toast.error('Ajuste não encontrado'); return; }
+      // Map RequestStatus back to adjustment status
+      const adjStatusMap: Record<string, string> = {
+        pending: 'pending',
+        in_progress: 'in_progress',
+        review: 'review',
+        completed: 'completed',
+        cancelled: 'cancelled',
+      };
+      const { error } = await supabase.from('briefing_adjustments').update({ status: adjStatusMap[status] || status } as any).eq('id', parentAdj.id);
+      if (error) { toast.error('Erro ao atualizar status'); return; }
+      toast.success('Status do ajuste atualizado');
+      refreshAll();
+      return;
+    }
     const { error } = await supabase.from('briefing_images').update({ status } as any).eq('id', id);
     if (error) {
       toast.error('Erro ao atualizar status');
@@ -336,14 +357,34 @@ export default function Dashboard() {
     }
   };
 
-  const deleteImage = async (id: string, label: string) => {
+  const deleteImage = async (id: string, label: string, isAdjustment?: boolean) => {
     if (!canManage) return;
     if (!confirm(`Excluir arte "${label}"?`)) return;
-    const { error } = await supabase.from('briefing_images').delete().eq('id', id);
-    if (error) { toast.error('Erro ao excluir'); return; }
-    // Audit
-    await (supabase.from('briefing_reviews' as any).insert({ briefing_image_id: id, action: 'deleted', reviewed_by: user?.email || 'admin', reviewer_comments: `Arte excluída por ${user?.email}` }) as any);
-    toast.success('Arte excluída');
+
+    if (isAdjustment) {
+      // Find the parent adjustment for this item
+      const parentAdj = adjData.adjustments.find((a: any) =>
+        adjData.items.some((i: any) => i.id === id && i.adjustment_id === a.id)
+      );
+      if (parentAdj) {
+        // Delete items first, then the adjustment
+        await supabase.from('briefing_adjustment_items').delete().eq('adjustment_id', parentAdj.id);
+        const { error } = await supabase.from('briefing_adjustments').delete().eq('id', parentAdj.id);
+        if (error) { toast.error('Erro ao excluir ajuste'); return; }
+        toast.success('Ajuste de briefing excluído');
+      } else {
+        // Just delete the single item
+        const { error } = await supabase.from('briefing_adjustment_items').delete().eq('id', id);
+        if (error) { toast.error('Erro ao excluir'); return; }
+        toast.success('Item de ajuste excluído');
+      }
+    } else {
+      const { error } = await supabase.from('briefing_images').delete().eq('id', id);
+      if (error) { toast.error('Erro ao excluir'); return; }
+      // Audit
+      await (supabase.from('briefing_reviews' as any).insert({ briefing_image_id: id, action: 'deleted', reviewed_by: user?.email || 'admin', reviewer_comments: `Arte excluída por ${user?.email}` }) as any);
+      toast.success('Arte excluída');
+    }
     refreshAll();
   };
 
@@ -1021,6 +1062,7 @@ export default function Dashboard() {
                   {Object.entries(IMAGE_TYPE_LABELS).map(([key, label]) => (
                     <SelectItem key={key} value={key}>{label}</SelectItem>
                   ))}
+                  <SelectItem value="adjustment">Ajuste de Briefing</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={filterClient} onValueChange={setFilterClient}>
@@ -1331,7 +1373,7 @@ export default function Dashboard() {
                               {img.status === 'review' && (
                                 <ReviewActionDialog image={img} onReviewed={refreshAll} />
                               )}
-                              <Select value={img.status} onValueChange={v => updateImageStatus(img.id, v as RequestStatus)}>
+                              <Select value={img.status} onValueChange={v => updateImageStatus(img.id, v as RequestStatus, (img as any)._isAdjustment)}>
                                 <SelectTrigger className="w-36 h-8 text-xs">
                                   <SelectValue />
                                 </SelectTrigger>
@@ -1379,7 +1421,7 @@ export default function Dashboard() {
                               )}
                               {canManage && (
                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" title="Excluir arte"
-                                  onClick={() => deleteImage(img.id, imageLabel(img))}>
+                                  onClick={() => deleteImage(img.id, imageLabel(img), (img as any)._isAdjustment)}>
                                   <AlertTriangle className="h-3.5 w-3.5" />
                                 </Button>
                               )}
