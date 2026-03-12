@@ -316,6 +316,44 @@ Deno.serve(async (req) => {
 
       if (updateErr) throw updateErr;
 
+      // If linked to a briefing image, create a revision record and increment revision_count
+      try {
+        const { data: adjLink } = await supabase
+          .from("briefing_adjustments")
+          .select("source_briefing_image_id, client_email")
+          .eq("id", adjustment_id)
+          .single();
+
+        if (adjLink?.source_briefing_image_id) {
+          // Increment revision count on the linked briefing image
+          const { data: imgData } = await supabase
+            .from("briefing_images")
+            .select("revision_count")
+            .eq("id", adjLink.source_briefing_image_id)
+            .single();
+
+          if (imgData) {
+            await supabase
+              .from("briefing_images")
+              .update({ 
+                revision_count: (imgData.revision_count || 0) + 1,
+                status: "in_progress"
+              })
+              .eq("id", adjLink.source_briefing_image_id);
+
+            // Create a briefing_review record to track this as a refação
+            await supabase.from("briefing_reviews").insert({
+              briefing_image_id: adjLink.source_briefing_image_id,
+              action: "revision_requested",
+              reviewed_by: adjLink.client_email || "ajuste-briefing",
+              reviewer_comments: `Ajuste de briefing entregue (ID: ${adjustment_id.slice(0, 8)})`,
+            });
+          }
+        }
+      } catch (linkErr) {
+        console.error("Failed to link adjustment to briefing image:", linkErr);
+      }
+
       // Send email notification to requester
       try {
         const { data: adjData } = await supabase

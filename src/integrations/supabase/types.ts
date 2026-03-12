@@ -689,6 +689,7 @@ export type Database = {
           delivery_comments: string | null
           delivery_url: string | null
           id: string
+          source_briefing_image_id: string | null
           status: string
           updated_at: string
         }
@@ -704,6 +705,7 @@ export type Database = {
           delivery_comments?: string | null
           delivery_url?: string | null
           id?: string
+          source_briefing_image_id?: string | null
           status?: string
           updated_at?: string
         }
@@ -719,10 +721,19 @@ export type Database = {
           delivery_comments?: string | null
           delivery_url?: string | null
           id?: string
+          source_briefing_image_id?: string | null
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "briefing_adjustments_source_briefing_image_id_fkey"
+            columns: ["source_briefing_image_id"]
+            isOneToOne: false
+            referencedRelation: "briefing_images"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       briefing_deliveries: {
         Row: {

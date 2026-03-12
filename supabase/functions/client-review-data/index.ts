@@ -147,6 +147,19 @@ Deno.serve(async (req) => {
       .order("created_at", { ascending: true })
       .limit(200);
 
+    // 5. Fetch linked adjustments for this client
+    const platformUrls = [...new Set(requests.map((r: any) => r.platform_url).filter(Boolean))];
+    let adjustmentHistory: any[] = [];
+    if (platformUrls.length > 0) {
+      const { data: adjData } = await supabase
+        .from("briefing_adjustments")
+        .select("id, client_url, status, source_briefing_image_id, delivery_url, delivered_at, created_at")
+        .in("client_url", platformUrls)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      adjustmentHistory = adjData || [];
+    }
+
     // Strip sensitive internal data before returning to client
     const safeRequests = requests.map(({ requester_email, ...rest }: any) => rest);
 
@@ -165,6 +178,7 @@ Deno.serve(async (req) => {
           total: totalResult.count || 0,
         },
         reviewHistory: reviewHistory || [],
+        adjustmentHistory,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -11,10 +11,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Plus, Upload, Trash2, Send, Eye, Clock, UserCheck, CheckCircle, Loader2, ExternalLink, Copy, Mail, Edit2, Save, Link2 } from 'lucide-react';
+import { Plus, Upload, Trash2, Send, Eye, Clock, UserCheck, CheckCircle, Loader2, ExternalLink, Copy, Mail, Edit2, Save, Link2, LinkIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { IMAGE_TYPE_LABELS, ImageType } from '@/types/briefing';
 
 interface AdjustmentItem {
   file: File | null;
@@ -47,6 +49,7 @@ export default function AjusteBriefingsPage() {
   const [savingEmail, setSavingEmail] = useState(false);
   const [resending, setResending] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [selectedBriefingImageId, setSelectedBriefingImageId] = useState<string>('');
 
   const { data: adjustments = [], isLoading } = useQuery({
     queryKey: ['briefing-adjustments'],
@@ -69,6 +72,23 @@ export default function AjusteBriefingsPage() {
       if (error) throw error;
       return data;
     },
+  });
+
+  // Fetch briefing images matching the client URL for linking
+  const { data: matchingBriefingImages = [] } = useQuery({
+    queryKey: ['briefing-images-for-linking', clientUrl],
+    queryFn: async () => {
+      if (!clientUrl.trim()) return [];
+      const { data, error } = await supabase
+        .from('briefing_images')
+        .select('id, image_type, product_name, status, briefing_requests!inner(platform_url)')
+        .ilike('briefing_requests.platform_url', `%${clientUrl.trim().replace(/https?:\/\//, '').replace(/\/$/, '')}%`)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (error) return [];
+      return data || [];
+    },
+    enabled: !!clientUrl.trim() && clientUrl.trim().length > 5,
   });
 
   const addItem = () => {
@@ -95,6 +115,7 @@ export default function AjusteBriefingsPage() {
     setClientUrl('');
     setClientEmail('');
     setItems([{ file: null, filePreview: '', observations: '' }]);
+    setSelectedBriefingImageId('');
   };
 
   const handleSubmit = async () => {
@@ -106,13 +127,18 @@ export default function AjusteBriefingsPage() {
     setSubmitting(true);
     try {
       // Create adjustment record
+      const insertPayload: any = {
+        client_url: clientUrl.trim(),
+        client_email: clientEmail.trim(),
+        created_by: user?.id,
+      };
+      if (selectedBriefingImageId) {
+        insertPayload.source_briefing_image_id = selectedBriefingImageId;
+      }
+
       const { data: adjustment, error: adjError } = await supabase
         .from('briefing_adjustments')
-        .insert({
-          client_url: clientUrl.trim(),
-          client_email: clientEmail.trim(),
-          created_by: user?.id,
-        } as any)
+        .insert(insertPayload)
         .select()
         .single();
 
@@ -309,9 +335,36 @@ export default function AjusteBriefingsPage() {
               </div>
             </div>
 
-            <Separator />
+             {/* Section 1b - Link to briefing image */}
+             {matchingBriefingImages.length > 0 && (
+               <div className="space-y-2 rounded-lg border border-primary/20 bg-primary/5 p-3">
+                 <div className="flex items-center gap-2">
+                   <LinkIcon className="h-4 w-4 text-primary" />
+                   <Label className="text-sm font-semibold text-primary">Vincular a uma Arte do Briefing</Label>
+                 </div>
+                 <p className="text-xs text-muted-foreground">Opcional: vincule este ajuste a uma arte existente para rastrear como refação</p>
+                 <Select value={selectedBriefingImageId} onValueChange={setSelectedBriefingImageId}>
+                   <SelectTrigger className="w-full">
+                     <SelectValue placeholder="Selecione a arte original (opcional)" />
+                   </SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="">Nenhuma (ajuste avulso)</SelectItem>
+                     {matchingBriefingImages.map((img: any) => {
+                       const typeLabel = IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type;
+                       return (
+                         <SelectItem key={img.id} value={img.id}>
+                           {typeLabel}{img.product_name ? ` — ${img.product_name}` : ''} ({img.status})
+                         </SelectItem>
+                       );
+                     })}
+                   </SelectContent>
+                 </Select>
+               </div>
+             )}
 
-            {/* Section 2 - Adjustment items */}
+             <Separator />
+
+             {/* Section 2 - Adjustment items */}
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-semibold text-foreground">Pedidos de Ajuste</h3>
@@ -486,6 +539,18 @@ export default function AjusteBriefingsPage() {
                     </div>
                   )}
                 </div>
+
+                {/* Linked briefing image */}
+                {detailAdjustment.source_briefing_image_id && (
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                    <LinkIcon className="h-4 w-4 text-primary shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-primary">Vinculado a Arte do Briefing</p>
+                      <p className="text-[11px] text-muted-foreground truncate">ID: {detailAdjustment.source_briefing_image_id.slice(0, 8)}…</p>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] shrink-0">Refação</Badge>
+                  </div>
+                )}
 
                 <Separator />
 
