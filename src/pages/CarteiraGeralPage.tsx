@@ -229,24 +229,26 @@ export default function CarteiraGeralPage() {
 
   const loadSummary = useCallback(async () => {
     try {
-      // Query clients table directly for KPI counts
-      let query = supabase.from('clients').select('status_financeiro', { count: 'exact' });
-      
-      if (isCs && userEmail) {
-        // For CS role, we'd need to filter by cs_atual matching user
-        // We'll filter after getting profiles
-      }
+      // Get total count
+      const { count: totalCount } = await supabase
+        .from('clients')
+        .select('id', { count: 'exact', head: true });
 
-      const { data, count, error } = await query;
-      if (error) throw error;
+      // Get adimplentes count  
+      const { count: adimpCount } = await supabase
+        .from('clients')
+        .select('id', { count: 'exact', head: true })
+        .eq('status_financeiro', 'Adimplente');
 
-      const total = count || 0;
-      const adimplentes = (data || []).filter((c: any) => c.status_financeiro === 'Adimplente').length;
-      const inadimplentes = (data || []).filter((c: any) => c.status_financeiro === 'Inadimplente').length;
+      // Get inadimplentes count
+      const { count: inadimpCount } = await supabase
+        .from('clients')
+        .select('id', { count: 'exact', head: true })
+        .eq('status_financeiro', 'Inadimplente');
 
-      setSummaryTotal(total);
-      setSummaryAdimplentes(adimplentes);
-      setSummaryInadimplentes(inadimplentes);
+      setSummaryTotal(totalCount || 0);
+      setSummaryAdimplentes(adimpCount || 0);
+      setSummaryInadimplentes(inadimpCount || 0);
     } catch (err) {
       console.error('Erro ao carregar summary:', err);
     }
