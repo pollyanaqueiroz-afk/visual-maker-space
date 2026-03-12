@@ -5,9 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import TablePagination from '@/components/carteira/TablePagination';
 import { TableSkeleton } from '@/components/ui/TableSkeleton';
-import { Search, Pencil, Check, X, Users } from 'lucide-react';
+import { Search, Pencil, Check, X, Users, Plus, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 type ClientRecord = {
@@ -25,6 +27,18 @@ type ClientRecord = {
   data_criacao: string | null;
 };
 
+const EMPTY_FORM = {
+  id_curseduca: '',
+  nome: '',
+  email: '',
+  email_alternativo: '',
+  telefone_alternativo: '',
+  plano: '',
+  cs_atual: '',
+  status_financeiro: '',
+  status_curseduca: '',
+};
+
 const PER_PAGE = 50;
 
 export default function CadastroTab() {
@@ -37,6 +51,11 @@ export default function CadastroTab() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState({ nome: '', email: '', email_alternativo: '', telefone_alternativo: '' });
   const [saving, setSaving] = useState(false);
+
+  // New client dialog
+  const [showNew, setShowNew] = useState(false);
+  const [newForm, setNewForm] = useState(EMPTY_FORM);
+  const [creating, setCreating] = useState(false);
 
   const fetchClients = useCallback(async () => {
     setLoading(true);
@@ -78,9 +97,7 @@ export default function CadastroTab() {
     });
   };
 
-  const cancelEdit = () => {
-    setEditingId(null);
-  };
+  const cancelEdit = () => { setEditingId(null); };
 
   const saveEdit = async () => {
     if (!editingId) return;
@@ -109,6 +126,33 @@ export default function CadastroTab() {
     setEditingId(null);
   };
 
+  const handleCreate = async () => {
+    if (!newForm.id_curseduca.trim()) {
+      toast.error('ID Curseduca é obrigatório');
+      return;
+    }
+    setCreating(true);
+    const payload: Record<string, any> = {};
+    for (const [k, v] of Object.entries(newForm)) {
+      if (v.trim()) payload[k] = v.trim();
+    }
+    const { data, error } = await supabase
+      .from('clients')
+      .insert(payload)
+      .select('id, id_curseduca, nome, email, email_alternativo, telefone_alternativo, plano, cs_atual, status_financeiro, status_curseduca, indice_fidelidade, data_criacao')
+      .single();
+
+    if (error) {
+      toast.error(`Erro ao criar cliente: ${error.message}`);
+    } else if (data) {
+      toast.success('Cliente criado com sucesso');
+      setClients(prev => [data as ClientRecord, ...prev]);
+      setShowNew(false);
+      setNewForm(EMPTY_FORM);
+    }
+    setCreating(false);
+  };
+
   if (loading) return <TableSkeleton rows={10} columns={7} />;
 
   return (
@@ -124,7 +168,73 @@ export default function CadastroTab() {
           />
         </div>
         <Badge variant="secondary" className="text-xs">{filtered.length} clientes</Badge>
+        <Button size="sm" className="gap-1.5" onClick={() => setShowNew(true)}>
+          <Plus className="h-4 w-4" />
+          Novo Cliente
+        </Button>
       </div>
+
+      {/* New Client Dialog */}
+      <Dialog open={showNew} onOpenChange={setShowNew}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Novo Cliente</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs">ID Curseduca *</Label>
+                <Input value={newForm.id_curseduca} onChange={e => setNewForm(p => ({ ...p, id_curseduca: e.target.value }))} placeholder="Ex: 12345" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Nome</Label>
+                <Input value={newForm.nome} onChange={e => setNewForm(p => ({ ...p, nome: e.target.value }))} placeholder="Nome do cliente" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Email</Label>
+                <Input type="email" value={newForm.email} onChange={e => setNewForm(p => ({ ...p, email: e.target.value }))} placeholder="email@exemplo.com" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Email Alternativo</Label>
+                <Input type="email" value={newForm.email_alternativo} onChange={e => setNewForm(p => ({ ...p, email_alternativo: e.target.value }))} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Telefone</Label>
+                <Input value={newForm.telefone_alternativo} onChange={e => setNewForm(p => ({ ...p, telefone_alternativo: e.target.value }))} placeholder="(11) 99999-0000" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Plano</Label>
+                <Input value={newForm.plano} onChange={e => setNewForm(p => ({ ...p, plano: e.target.value }))} placeholder="Premium, Basic..." />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs">CS Atual</Label>
+                <Input value={newForm.cs_atual} onChange={e => setNewForm(p => ({ ...p, cs_atual: e.target.value }))} placeholder="email do CS" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Status Financeiro</Label>
+                <Input value={newForm.status_financeiro} onChange={e => setNewForm(p => ({ ...p, status_financeiro: e.target.value }))} placeholder="Adimplente, Inadimplente" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Status Curseduca</Label>
+              <Input value={newForm.status_curseduca} onChange={e => setNewForm(p => ({ ...p, status_curseduca: e.target.value }))} placeholder="Ativo, Inativo..." />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNew(false)} disabled={creating}>Cancelar</Button>
+            <Button onClick={handleCreate} disabled={creating}>
+              {creating && <Loader2 className="h-4 w-4 animate-spin mr-1.5" />}
+              Criar Cliente
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardHeader className="pb-2">
@@ -169,36 +279,16 @@ export default function CadastroTab() {
                     {editingId === c.id ? (
                       <>
                         <TableCell>
-                          <Input
-                            value={editData.nome}
-                            onChange={e => setEditData(p => ({ ...p, nome: e.target.value }))}
-                            className="h-7 text-xs w-40"
-                            disabled={saving}
-                          />
+                          <Input value={editData.nome} onChange={e => setEditData(p => ({ ...p, nome: e.target.value }))} className="h-7 text-xs w-40" disabled={saving} />
                         </TableCell>
                         <TableCell>
-                          <Input
-                            value={editData.email}
-                            onChange={e => setEditData(p => ({ ...p, email: e.target.value }))}
-                            className="h-7 text-xs w-44"
-                            disabled={saving}
-                          />
+                          <Input value={editData.email} onChange={e => setEditData(p => ({ ...p, email: e.target.value }))} className="h-7 text-xs w-44" disabled={saving} />
                         </TableCell>
                         <TableCell>
-                          <Input
-                            value={editData.email_alternativo}
-                            onChange={e => setEditData(p => ({ ...p, email_alternativo: e.target.value }))}
-                            className="h-7 text-xs w-44"
-                            disabled={saving}
-                          />
+                          <Input value={editData.email_alternativo} onChange={e => setEditData(p => ({ ...p, email_alternativo: e.target.value }))} className="h-7 text-xs w-44" disabled={saving} />
                         </TableCell>
                         <TableCell>
-                          <Input
-                            value={editData.telefone_alternativo}
-                            onChange={e => setEditData(p => ({ ...p, telefone_alternativo: e.target.value }))}
-                            className="h-7 text-xs w-36"
-                            disabled={saving}
-                          />
+                          <Input value={editData.telefone_alternativo} onChange={e => setEditData(p => ({ ...p, telefone_alternativo: e.target.value }))} className="h-7 text-xs w-36" disabled={saving} />
                         </TableCell>
                         <TableCell className="text-xs">{c.plano || '—'}</TableCell>
                         <TableCell className="text-xs">{c.cs_atual || '—'}</TableCell>
