@@ -208,18 +208,17 @@ function UpsellTabelaTab({ csEmail, refreshKey }: { csEmail?: string; refreshKey
     setPaymentDate('');
   };
 
-  if (loading) return <div className="flex items-center justify-center h-40"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
-  if (!exceedingClients.length) return <Card><CardContent className="p-8 text-center text-muted-foreground">Nenhum cliente excedendo limites encontrado.</CardContent></Card>;
-
   // Calculate status percentages
-  const allTrackingEntries = exceedingClients.flatMap(c => {
-    const tipos: string[] = [];
-    if (c.elegivel_upsell_banda || (c.uso_banda_pct != null && c.uso_banda_pct > 80)) tipos.push('banda');
-    if (c.elegivel_upsell_tokens || (c.uso_tokens_pct != null && c.uso_tokens_pct > 80)) tipos.push('tokens');
-    if (c.uso_storage_pct != null && c.uso_storage_pct > 80) tipos.push('storage');
-    if (tipos.length === 0) tipos.push('geral');
-    return tipos.map(t => ({ id_curseduca: c.id_curseduca, tipo: t }));
-  });
+  const allTrackingEntries = useMemo(() => {
+    return exceedingClients.flatMap(c => {
+      const tipos: string[] = [];
+      if (c.elegivel_upsell_banda || (c.uso_banda_pct != null && c.uso_banda_pct > 80)) tipos.push('banda');
+      if (c.elegivel_upsell_tokens || (c.uso_tokens_pct != null && c.uso_tokens_pct > 80)) tipos.push('tokens');
+      if (c.uso_storage_pct != null && c.uso_storage_pct > 80) tipos.push('storage');
+      if (tipos.length === 0) tipos.push('geral');
+      return tipos.map(t => ({ id_curseduca: c.id_curseduca, tipo: t }));
+    });
+  }, [exceedingClients]);
 
   const totalEntries = allTrackingEntries.length;
   const statusCounts: Record<string, number> = {};
@@ -230,7 +229,7 @@ function UpsellTabelaTab({ csEmail, refreshKey }: { csEmail?: string; refreshKey
   });
 
   // Payment totals
-  const paidRecords = Object.values(tracking).filter(t => t.status === 'pagamento_realizado' && t.valor_pagamento);
+  const paidRecords = useMemo(() => Object.values(tracking).filter(t => t.status === 'pagamento_realizado' && t.valor_pagamento), [tracking]);
   const totalPaid = paidRecords.reduce((sum, r) => sum + (r.valor_pagamento || 0), 0);
 
   // Sales by period
@@ -254,6 +253,9 @@ function UpsellTabelaTab({ csEmail, refreshKey }: { csEmail?: string; refreshKey
   );
   const totalPages = Math.ceil(filtered.length / perPage);
   const paged = filtered.slice(page * perPage, (page + 1) * perPage);
+
+  if (loading) return <div className="flex items-center justify-center h-40"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  if (!exceedingClients.length) return <Card><CardContent className="p-8 text-center text-muted-foreground">Nenhum cliente excedendo limites encontrado.</CardContent></Card>;
 
   return (
     <div className="space-y-4">
