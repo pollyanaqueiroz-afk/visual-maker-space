@@ -242,6 +242,9 @@ export default function SchedulingPage() {
   const [onboardingMediatorSearch, setOnboardingMediatorSearch] = useState('');
   const [onboardingSubmitting, setOnboardingSubmitting] = useState(false);
   const [showMediatorDropdown, setShowMediatorDropdown] = useState(false);
+  const [minutesMeetingIds, setMinutesMeetingIds] = useState<Set<string>>(new Set());
+  const [pendingPage, setPendingPage] = useState(1);
+  const PENDING_PER_PAGE = 5;
 
   const filteredMediators = useMemo(() => {
     if (!onboardingMediatorSearch.trim()) return teamMembers;
