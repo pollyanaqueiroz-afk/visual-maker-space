@@ -271,7 +271,7 @@ export default function CarteiraGeralPage() {
   useEffect(() => {
     if (activeView === 'cadastro') return;
     loadData(apiPage, debouncedSearch, activeView);
-  }, [apiPage, debouncedSearch, activeView, csFilter, activeKPI]);
+  }, [apiPage, debouncedSearch, activeView, csFilter, activeKPI, filterStatus, filterTipoProduto, filterRecorrencia, filterMeioPagamento]);
 
   // When switching tabs, reset to page 1
   const handleViewChange = (view: string) => {
