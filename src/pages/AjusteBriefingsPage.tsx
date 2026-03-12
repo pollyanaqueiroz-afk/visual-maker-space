@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -11,10 +11,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Plus, Upload, Trash2, Send, Eye, Clock, UserCheck, CheckCircle, Loader2, ExternalLink, Copy, Mail, Edit2, Save, Link2 } from 'lucide-react';
+import { Plus, Upload, Trash2, Send, Eye, Clock, UserCheck, CheckCircle, Loader2, ExternalLink, Copy, Mail, Edit2, Save, Link2, LinkIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { IMAGE_TYPE_LABELS, ImageType } from '@/types/briefing';
 
 interface AdjustmentItem {
   file: File | null;
@@ -47,6 +49,7 @@ export default function AjusteBriefingsPage() {
   const [savingEmail, setSavingEmail] = useState(false);
   const [resending, setResending] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [selectedBriefingImageId, setSelectedBriefingImageId] = useState<string>('');
 
   const { data: adjustments = [], isLoading } = useQuery({
     queryKey: ['briefing-adjustments'],
