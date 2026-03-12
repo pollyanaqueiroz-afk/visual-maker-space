@@ -2479,37 +2479,6 @@ export default function SchedulingPage() {
                 />
               </div>
 
-              {/* Editable: Churn Risk */}
-              <div className="p-3 rounded-lg border border-destructive/20 bg-destructive/5 space-y-3">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-destructive" />
-                  <span className="text-sm font-semibold text-foreground">Risco de Churn</span>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">Status do Funil</Label>
-                  <Select value={detailFunilStatus} onValueChange={setDetailFunilStatus}>
-                    <SelectTrigger className={!detailFunilStatus ? 'text-muted-foreground' : ''}>
-                      <SelectValue placeholder="Selecione o status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Sem risco</SelectItem>
-                      <SelectItem value="risco_critico">🔴 Risco Crítico</SelectItem>
-                      <SelectItem value="em_tratamento">🟡 Em Tratamento</SelectItem>
-                      <SelectItem value="resolvido">🟢 Resolvido</SelectItem>
-                      <SelectItem value="cancelou">⚫ Cancelou</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">Notas sobre o risco</Label>
-                  <Textarea
-                    value={detailFunilNotas}
-                    onChange={e => setDetailFunilNotas(e.target.value)}
-                    placeholder="Motivo do risco, ações tomadas..."
-                    rows={2}
-                  />
-                </div>
-              </div>
 
               {/* Actions */}
               <div className="flex items-center gap-2 pt-2">
