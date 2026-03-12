@@ -195,6 +195,7 @@ export default function Dashboard() {
         pending: 'pending',
         allocated: 'in_progress',
         in_progress: 'in_progress',
+        review: 'review',
         completed: 'completed',
       };
       return {
