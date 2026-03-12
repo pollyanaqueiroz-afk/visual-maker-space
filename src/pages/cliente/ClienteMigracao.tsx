@@ -320,6 +320,13 @@ function MigrationForm({ projectId, isResubmission }: { projectId: string; isRes
       setUploading(false);
       queryClient.invalidateQueries({ queryKey: ['cliente-migration'] });
       toast.success(isResubmission ? 'Dados reenviados com sucesso!' : 'Formulário enviado com sucesso! 🎉');
+
+      // Auto-trigger Manus validation
+      supabase.functions.invoke('trigger-manus-migration', {
+        body: { project_id: projectId, action: 'validate' },
+      }).then(({ error }) => {
+        if (error) console.error('Manus auto-validation trigger failed:', error);
+      });
     },
     onError: (e: any) => {
       setUploading(false);
