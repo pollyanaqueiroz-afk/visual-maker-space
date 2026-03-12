@@ -106,9 +106,14 @@ export default function MigracaoKanbanPage() {
           <h1 className="text-2xl font-bold">Gestão de Migração</h1>
           <p className="text-sm text-muted-foreground">Kanban de projetos de migração</p>
         </div>
-        <Button onClick={() => setShowNewDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" /> Novo Cliente
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => navigate('/hub/migracao/analytics')} className="gap-2">
+            <BarChart3 className="h-4 w-4" /> Analytics
+          </Button>
+          <Button onClick={() => setShowNewDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" /> Novo Cliente
+          </Button>
+        </div>
       </div>
 
       <div className="relative max-w-sm">
