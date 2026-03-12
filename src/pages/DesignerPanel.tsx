@@ -893,6 +893,9 @@ export default function DesignerPanel() {
     if (img._source === 'adjustment') {
       return <Badge className="bg-orange-500/20 text-orange-600 border-0">Ajuste</Badge>;
     }
+    if (img.status === 'revision') {
+      return <Badge className="bg-destructive/20 text-destructive border-0 animate-badge-flip">Em Refação {img.revision_count > 0 ? img.revision_count : ''}</Badge>;
+    }
     if (img.revision_count > 0 && img.status === 'in_progress') {
       return <Badge className="bg-destructive/20 text-destructive border-0 animate-badge-flip">Refação {img.revision_count}</Badge>;
     }
