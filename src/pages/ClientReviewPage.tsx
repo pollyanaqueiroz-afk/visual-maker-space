@@ -104,12 +104,14 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
     }
   }, [injectedEmail]);
 
-  const fetchImages = async (clientEmail?: string, reviewToken?: string) => {
+  const fetchImages = async (clientEmail?: string, reviewToken?: string, clientPlatformUrl?: string) => {
     setLoading(true);
     try {
       const body: Record<string, string> = {};
       if (reviewToken) {
         body.review_token = reviewToken;
+      } else if (clientPlatformUrl) {
+        body.platform_url = clientPlatformUrl;
       } else if (clientEmail) {
         body.email = clientEmail;
       }
@@ -128,7 +130,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
 
       const requests = result.requests || [];
       if (requests.length === 0) {
-        toast.error('Nenhuma solicitação encontrada para este email');
+        toast.error('Nenhuma solicitação encontrada para esta URL');
         setLoading(false);
         return;
       }
