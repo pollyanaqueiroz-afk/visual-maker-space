@@ -151,6 +151,12 @@ export default function CarteiraGeralPage() {
   const [activeKPI, setActiveKPI] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
+  // Financeiro filters
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterTipoProduto, setFilterTipoProduto] = useState<string>('all');
+  const [filterRecorrencia, setFilterRecorrencia] = useState<string>('all');
+  const [filterMeioPagamento, setFilterMeioPagamento] = useState<string>('all');
+
   const columns = VIEW_COLUMNS[activeView];
 
   const loadData = useCallback(async (page: number, searchTerm: string, view: ViewType) => {
