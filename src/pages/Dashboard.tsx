@@ -337,14 +337,34 @@ export default function Dashboard() {
     }
   };
 
-  const deleteImage = async (id: string, label: string) => {
+  const deleteImage = async (id: string, label: string, isAdjustment?: boolean) => {
     if (!canManage) return;
     if (!confirm(`Excluir arte "${label}"?`)) return;
-    const { error } = await supabase.from('briefing_images').delete().eq('id', id);
-    if (error) { toast.error('Erro ao excluir'); return; }
-    // Audit
-    await (supabase.from('briefing_reviews' as any).insert({ briefing_image_id: id, action: 'deleted', reviewed_by: user?.email || 'admin', reviewer_comments: `Arte excluída por ${user?.email}` }) as any);
-    toast.success('Arte excluída');
+
+    if (isAdjustment) {
+      // Find the parent adjustment for this item
+      const parentAdj = adjData.adjustments.find((a: any) =>
+        adjData.items.some((i: any) => i.id === id && i.adjustment_id === a.id)
+      );
+      if (parentAdj) {
+        // Delete items first, then the adjustment
+        await supabase.from('briefing_adjustment_items').delete().eq('adjustment_id', parentAdj.id);
+        const { error } = await supabase.from('briefing_adjustments').delete().eq('id', parentAdj.id);
+        if (error) { toast.error('Erro ao excluir ajuste'); return; }
+        toast.success('Ajuste de briefing excluído');
+      } else {
+        // Just delete the single item
+        const { error } = await supabase.from('briefing_adjustment_items').delete().eq('id', id);
+        if (error) { toast.error('Erro ao excluir'); return; }
+        toast.success('Item de ajuste excluído');
+      }
+    } else {
+      const { error } = await supabase.from('briefing_images').delete().eq('id', id);
+      if (error) { toast.error('Erro ao excluir'); return; }
+      // Audit
+      await (supabase.from('briefing_reviews' as any).insert({ briefing_image_id: id, action: 'deleted', reviewed_by: user?.email || 'admin', reviewer_comments: `Arte excluída por ${user?.email}` }) as any);
+      toast.success('Arte excluída');
+    }
     refreshAll();
   };
 
