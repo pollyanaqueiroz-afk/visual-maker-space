@@ -33,7 +33,7 @@ const csModules = [
   { title: 'Agendamento', url: '/hub/agendamento', icon: CalendarDays, permission: 'agendamento.view', badgeKey: null },
   { title: 'Ajuste de Briefings', url: '/hub/ajuste-briefings', icon: FileImage, permission: 'briefings.view', badgeKey: null },
   { title: 'Processos de Implantação', url: '/hub/processos-implantacao', icon: ClipboardCheck, permission: null, badgeKey: null },
-  { title: 'Dashboards', url: '/hub/dashboards', icon: BarChart3, permission: 'dashboards.view', badgeKey: null },
+  { title: 'Produtividade de Reuniões', url: '/hub/dashboards', icon: BarChart3, permission: 'dashboards.view', badgeKey: null },
   { title: 'Carteira Geral', url: '/hub/carteira', icon: Briefcase, permission: 'carteira.view', badgeKey: null },
   { title: 'Dashboard Liderança', url: '/hub/lideranca', icon: Crown, permission: 'lideranca.view', badgeKey: null },
   { title: 'Funil de Cancelamento', url: '/hub/funil-cancelamento', icon: AlertTriangle, permission: 'funil.view', badgeKey: null },
