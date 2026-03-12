@@ -1244,10 +1244,6 @@ export default function SchedulingPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>Link da reunião (Zoom, Meet, etc.)</Label>
-                <Input value={form.meeting_url} onChange={e => setForm(f => ({ ...f, meeting_url: e.target.value }))} placeholder="https://meet.google.com/..." />
-              </div>
               {meetingType === 'client' && (
                 <>
                   <div className="space-y-2">
