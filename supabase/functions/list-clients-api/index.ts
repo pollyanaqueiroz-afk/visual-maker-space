@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
       query = query.eq("cs_atual", csAtual);
     }
 
-    const { data, count, error } = await query.range(from, to).order("cliente", { ascending: true });
+    const { data, count, error } = await query.range(from, to).order("nome", { ascending: true });
 
     if (error) throw error;
 
