@@ -989,13 +989,14 @@ export default function SchedulingPage() {
 
   // Past meetings without meeting_minutes (ata not filled)
   const pendingAnnotations = useMemo(() => {
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
+    const now = new Date();
     return meetings
       .filter(m => {
         if (m.status === 'cancelled') return false;
-        const d = parseISO(m.meeting_date);
-        if (d > today) return false; // future meeting
+        const [h, min] = (m.meeting_time || '00:00').split(':').map(Number);
+        const meetingEnd = parseISO(m.meeting_date);
+        meetingEnd.setHours(h, min + (m.duration_minutes || 30), 0, 0);
+        if (meetingEnd > now) return false; // meeting not finished yet
         return !minutesMeetingIds.has(m.id);
       })
       .sort((a, b) => b.meeting_date.localeCompare(a.meeting_date));
