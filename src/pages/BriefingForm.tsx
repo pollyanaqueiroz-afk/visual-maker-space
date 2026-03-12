@@ -173,18 +173,52 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
 
   const hasAnySelection = Object.values(selections).some(Boolean);
 
-  const uploadFile = async (file: File, folder: string): Promise<string> => {
-    const ext = file.name.split('.').pop();
-    const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from('briefing-uploads').upload(path, file);
-    if (error) throw error;
+  const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp', 'image/tiff'];
+  const ALLOWED_BRAND_TYPES = [...ALLOWED_IMAGE_TYPES, 'application/pdf', 'application/postscript', 'image/vnd.adobe.photoshop', 'application/zip', 'application/x-zip-compressed', 'application/octet-stream'];
+
+  const validateFile = (file: File, allowedTypes?: string[]) => {
+    if (file.size > MAX_FILE_SIZE) {
+      throw new Error(`O arquivo "${file.name}" excede o tamanho máximo de 20MB (tamanho: ${(file.size / 1024 / 1024).toFixed(1)}MB)`);
+    }
+    if (allowedTypes && allowedTypes.length > 0) {
+      const ext = file.name.split('.').pop()?.toLowerCase() || '';
+      const validExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff', 'tif', 'pdf', 'ai', 'psd', 'zip'];
+      if (!allowedTypes.includes(file.type) && !validExtensions.includes(ext)) {
+        throw new Error(`O arquivo "${file.name}" possui formato não suportado (.${ext}). Formatos aceitos: JPG, PNG, GIF, WEBP, SVG, PDF, AI, PSD, ZIP`);
+      }
+    }
+  };
+
+  const sanitizeFileName = (name: string): string => {
+    return name.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/_{2,}/g, '_');
+  };
+
+  const uploadFile = async (file: File, folder: string, allowedTypes?: string[]): Promise<string> => {
+    validateFile(file, allowedTypes);
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'bin';
+    const safeName = sanitizeFileName(file.name);
+    const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}-${safeName}`;
+    const { error } = await supabase.storage.from('briefing-uploads').upload(path, file, {
+      cacheControl: '3600',
+      contentType: file.type || 'application/octet-stream',
+    });
+    if (error) {
+      if (error.message?.includes('Payload too large') || error.message?.includes('413')) {
+        throw new Error(`O arquivo "${file.name}" é muito grande para upload. Tente comprimir ou reduzir o tamanho.`);
+      }
+      if (error.message?.includes('mime') || error.message?.includes('type')) {
+        throw new Error(`O formato do arquivo "${file.name}" não é permitido pelo servidor.`);
+      }
+      throw new Error(`Erro ao enviar "${file.name}": ${error.message}`);
+    }
     const { data } = supabase.storage.from('briefing-uploads').getPublicUrl(path);
     return data.publicUrl;
   };
 
   const uploadReferenceImages = async (refs: ImageBriefingFormData['reference_images'], requestId: string, imageId: string) => {
     for (const ref of refs) {
-      const url = await uploadFile(ref.file, `references/${requestId}`);
+      const url = await uploadFile(ref.file, `references/${requestId}`, ALLOWED_IMAGE_TYPES);
       await supabase.from('briefing_reference_images').insert({
         briefing_image_id: imageId,
         file_url: url,
@@ -198,7 +232,7 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
     const elementImageUrls: string[] = [];
     if (data.element_suggestion_images && data.element_suggestion_images.length > 0) {
       for (const file of data.element_suggestion_images) {
-        const url = await uploadFile(file, `elements/${requestId}`);
+        const url = await uploadFile(file, `elements/${requestId}`, ALLOWED_IMAGE_TYPES);
         elementImageUrls.push(url);
       }
     }
@@ -232,28 +266,71 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
   };
 
   const handleSubmit = async () => {
-    if (!form.requester_name || !form.requester_email || !form.platform_url) {
-      toast.error('Preencha todos os campos obrigatórios do solicitante');
-      setStep(2);
+    // Specific field validation
+    const missingFields: string[] = [];
+    if (!form.requester_name) missingFields.push('Nome completo');
+    if (!form.requester_email) missingFields.push('Email');
+    if (!form.platform_url) missingFields.push('URL da Plataforma');
+
+    if (missingFields.length > 0) {
+      toast.error(`Campos obrigatórios não preenchidos: ${missingFields.join(', ')}`, {
+        description: 'Volte ao Passo 1 para completar seus dados.',
+        duration: 6000,
+      });
+      setStep(1);
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.requester_email)) {
+      toast.error('O email informado é inválido', {
+        description: `"${form.requester_email}" não é um formato de email válido.`,
+        duration: 5000,
+      });
+      setStep(1);
       return;
     }
 
     if (!mockupOnly && !form.brand_file && !form.brand_drive_link) {
-      toast.error('Envie o arquivo de identidade visual ou informe o link do Google Drive');
-      setStep(2);
+      toast.error('Identidade visual não enviada', {
+        description: 'Envie o arquivo de identidade visual ou informe o link do Google Drive no Passo 1.',
+        duration: 6000,
+      });
+      setStep(1);
       return;
     }
 
-    if (selections.product_covers && form.product_covers.some(c => !c.orientation)) {
-      toast.error('Selecione a orientação (horizontal/vertical) em todas as capas de produto');
-      return;
+    if (selections.product_covers) {
+      const coversWithoutOrientation = form.product_covers
+        .map((c, i) => (!c.orientation ? `Capa ${i + 1}` : null))
+        .filter(Boolean);
+      if (coversWithoutOrientation.length > 0) {
+        toast.error('Orientação não selecionada', {
+          description: `Selecione a orientação (horizontal/vertical) em: ${coversWithoutOrientation.join(', ')}`,
+          duration: 6000,
+        });
+        return;
+      }
+    }
+
+    if (selections.product_covers) {
+      const coversWithoutName = form.product_covers
+        .map((c, i) => (!c.product_name ? `Capa ${i + 1}` : null))
+        .filter(Boolean);
+      if (coversWithoutName.length > 0) {
+        toast.error('Nome do produto não preenchido', {
+          description: `Informe o nome do produto/módulo em: ${coversWithoutName.join(', ')}`,
+          duration: 6000,
+        });
+        return;
+      }
     }
 
     setSubmitting(true);
     try {
       let brandFileUrl: string | null = null;
       if (form.brand_file) {
-        brandFileUrl = await uploadFile(form.brand_file, 'brand-files');
+        brandFileUrl = await uploadFile(form.brand_file, 'brand-files', ALLOWED_BRAND_TYPES);
       }
 
       const { data: request, error } = await supabase.from('briefing_requests').insert({
@@ -328,24 +405,43 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
     } catch (err: any) {
       console.error('Error submitting briefing:', err);
       const msg = err?.message || 'Erro desconhecido';
-      toast.error(`Erro ao enviar: ${msg}`);
+      if (msg.includes('tamanho') || msg.includes('grande') || msg.includes('Payload')) {
+        toast.error('Arquivo muito grande', { description: msg, duration: 8000 });
+      } else if (msg.includes('formato') || msg.includes('suportado') || msg.includes('mime')) {
+        toast.error('Formato de arquivo não suportado', { description: msg, duration: 8000 });
+      } else if (msg.includes('network') || msg.includes('fetch') || msg.includes('Failed to fetch')) {
+        toast.error('Erro de conexão', { description: 'Verifique sua internet e tente novamente.', duration: 6000 });
+      } else {
+        toast.error(`Erro ao enviar briefing`, { description: msg, duration: 6000 });
+      }
     } finally {
       setSubmitting(false);
     }
   };
 
   const nextStep = () => {
-    if (step === 1 && (!form.requester_name || !form.requester_email || !form.platform_url)) {
-      toast.error('Preencha todos os campos obrigatórios');
-      return;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (step === 1 && !emailRegex.test(form.requester_email)) {
-      toast.error('Informe um email válido');
-      return;
+    if (step === 1) {
+      const missingFields: string[] = [];
+      if (!form.requester_name) missingFields.push('Nome completo');
+      if (!form.requester_email) missingFields.push('Email');
+      if (!form.platform_url) missingFields.push('URL da Plataforma');
+      
+      if (missingFields.length > 0) {
+        toast.error(`Campos obrigatórios não preenchidos: ${missingFields.join(', ')}`);
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(form.requester_email)) {
+        toast.error('O email informado é inválido', {
+          description: `"${form.requester_email}" não é um formato de email válido.`,
+        });
+        return;
+      }
     }
     if (step === 2 && !hasAnySelection) {
-      toast.error('Selecione pelo menos um tipo de arte');
+      toast.error('Nenhuma arte selecionada', {
+        description: 'Selecione pelo menos um tipo de arte para continuar.',
+      });
       return;
     }
     setSlideDir(1);
