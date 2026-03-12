@@ -32,6 +32,8 @@ const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = 
 
 export default function AjusteBriefingsPage() {
   const { user } = useAuth();
+  const { hasRole } = usePermissions();
+  const isAdmin = hasRole('admin');
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [clientUrl, setClientUrl] = useState('');
