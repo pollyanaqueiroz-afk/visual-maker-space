@@ -300,36 +300,65 @@ function OverviewTab() {
 
 
 export default function MeetingsDashboard() {
-  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [allMeetings, setAllMeetings] = useState<(Meeting & { created_by: string })[]>([]);
   const [reschedules, setReschedules] = useState<Reschedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [periodFilter, setPeriodFilter] = useState('current');
   const [activeKPI, setActiveKPI] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('day');
+  const [csFilter, setCsFilter] = useState<string>('me');
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const { user } = useAuth();
 
   const fetchData = async () => {
     if (!user) return;
     setLoading(true);
-    const [meetRes, rescRes] = await Promise.all([
-      supabase
-        .from('meetings')
-        .select('id, title, meeting_date, meeting_time, status, client_email, client_name, client_url, meeting_reason, loyalty_index, loyalty_reason, duration_minutes, created_by')
-        .eq('created_by', user.id)
-        .order('meeting_date', { ascending: false }),
-      supabase
-        .from('meeting_reschedules')
-        .select('*')
-        .order('created_at', { ascending: false }),
-    ]);
-    if (meetRes.error) toast.error('Erro ao carregar reuniões');
-    if (rescRes.error) console.error(rescRes.error);
-    setMeetings((meetRes.data || []) as Meeting[]);
-    setReschedules((rescRes.data || []) as Reschedule[]);
-    setLoading(false);
+    try {
+      const session = (await supabase.auth.getSession()).data.session;
+      const [meetRes, rescRes, teamRes] = await Promise.all([
+        supabase
+          .from('meetings')
+          .select('id, title, meeting_date, meeting_time, status, client_email, client_name, client_url, meeting_reason, loyalty_index, loyalty_reason, duration_minutes, created_by')
+          .order('meeting_date', { ascending: false })
+          .limit(5000),
+        supabase
+          .from('meeting_reschedules')
+          .select('*')
+          .order('created_at', { ascending: false }),
+        session ? fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-users?action=list`,
+          { headers: { Authorization: `Bearer ${session.access_token}`, apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY } }
+        ) : Promise.resolve(null),
+      ]);
+      if (meetRes.error) toast.error('Erro ao carregar reuniões');
+      if (rescRes.error) console.error(rescRes.error);
+      setAllMeetings((meetRes.data || []) as any);
+      setReschedules((rescRes.data || []) as Reschedule[]);
+      if (teamRes && teamRes.ok) {
+        const result = await teamRes.json();
+        const users = result.users || result;
+        if (Array.isArray(users)) {
+          setTeamMembers(
+            users
+              .filter((u: any) => u.email?.endsWith('@curseduca.com'))
+              .map((u: any) => ({ id: u.id, email: u.email || '', display_name: u.display_name || u.email?.split('@')[0] || u.id }))
+          );
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchData(); }, [user]);
+
+  const meetings = useMemo(() => {
+    const selectedId = csFilter === 'me' ? user?.id : csFilter;
+    if (!selectedId || csFilter === 'all') return allMeetings;
+    return allMeetings.filter(m => m.created_by === selectedId);
+  }, [allMeetings, csFilter, user]);
 
   const filtered = useMemo(() => {
     if (periodFilter === 'all') return meetings;
