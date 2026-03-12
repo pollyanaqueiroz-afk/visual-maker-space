@@ -327,7 +327,27 @@ export default function Dashboard() {
     return () => window.removeEventListener('resize', syncWidth);
   }, [loading, images]);
 
-  const updateImageStatus = async (id: string, status: RequestStatus) => {
+  const updateImageStatus = async (id: string, status: RequestStatus, isAdjustment?: boolean) => {
+    if (isAdjustment) {
+      // Find parent adjustment for this item
+      const parentAdj = adjData.adjustments.find((a: any) =>
+        adjData.items.some((i: any) => i.id === id && i.adjustment_id === a.id)
+      );
+      if (!parentAdj) { toast.error('Ajuste não encontrado'); return; }
+      // Map RequestStatus back to adjustment status
+      const adjStatusMap: Record<string, string> = {
+        pending: 'pending',
+        in_progress: 'in_progress',
+        review: 'review',
+        completed: 'completed',
+        cancelled: 'cancelled',
+      };
+      const { error } = await supabase.from('briefing_adjustments').update({ status: adjStatusMap[status] || status } as any).eq('id', parentAdj.id);
+      if (error) { toast.error('Erro ao atualizar status'); return; }
+      toast.success('Status do ajuste atualizado');
+      refreshAll();
+      return;
+    }
     const { error } = await supabase.from('briefing_images').update({ status } as any).eq('id', id);
     if (error) {
       toast.error('Erro ao atualizar status');
