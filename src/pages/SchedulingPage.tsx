@@ -399,6 +399,7 @@ export default function SchedulingPage() {
     setEditingId(null);
     setIsRescheduling(false);
     setRecurrence({ ...DEFAULT_RECURRENCE });
+    setMeetingType('client');
     setForm({
       ...emptyForm,
       meeting_date: date ? format(date, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
