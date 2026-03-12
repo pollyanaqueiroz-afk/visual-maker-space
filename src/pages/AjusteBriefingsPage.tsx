@@ -46,6 +46,7 @@ export default function AjusteBriefingsPage() {
   const [editEmail, setEditEmail] = useState('');
   const [savingEmail, setSavingEmail] = useState(false);
   const [resending, setResending] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const { data: adjustments = [], isLoading } = useQuery({
     queryKey: ['briefing-adjustments'],
