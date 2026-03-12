@@ -10,7 +10,7 @@ import { IMAGE_TYPE_LABELS, ImageType } from '@/types/briefing';
 import {
   Heart, X, Loader2, Mail, CheckCircle, ImageIcon, Download,
   Sparkles, ThumbsDown, FolderOpen, Clock, Eye, Archive,
-  ChevronRight, PlusCircle, ArrowRight, Palette
+  ChevronRight, PlusCircle, ArrowRight, Palette, Link2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
