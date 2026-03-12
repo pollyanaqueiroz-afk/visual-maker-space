@@ -982,17 +982,20 @@ export default function SchedulingPage() {
     setDialogOpen(true);
   };
 
+  const isExternalMeeting = (m: Meeting) => !!(m.client_email || m.client_url);
+
   const pendingLoyalty = useMemo(() =>
-    meetings.filter(m => m.status === 'completed' && m.loyalty_index == null),
+    meetings.filter(m => m.status === 'completed' && m.loyalty_index == null && isExternalMeeting(m)),
     [meetings]
   );
 
-  // Past meetings without meeting_minutes (ata not filled)
+  // Past meetings without meeting_minutes (ata not filled) — only external
   const pendingAnnotations = useMemo(() => {
     const now = new Date();
     return meetings
       .filter(m => {
         if (m.status === 'cancelled') return false;
+        if (!isExternalMeeting(m)) return false;
         const [h, min] = (m.meeting_time || '00:00').split(':').map(Number);
         const meetingEnd = parseISO(m.meeting_date);
         meetingEnd.setHours(h, min + (m.duration_minutes || 30), 0, 0);
