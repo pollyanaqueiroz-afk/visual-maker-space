@@ -335,9 +335,36 @@ export default function AjusteBriefingsPage() {
               </div>
             </div>
 
-            <Separator />
+             {/* Section 1b - Link to briefing image */}
+             {matchingBriefingImages.length > 0 && (
+               <div className="space-y-2 rounded-lg border border-primary/20 bg-primary/5 p-3">
+                 <div className="flex items-center gap-2">
+                   <LinkIcon className="h-4 w-4 text-primary" />
+                   <Label className="text-sm font-semibold text-primary">Vincular a uma Arte do Briefing</Label>
+                 </div>
+                 <p className="text-xs text-muted-foreground">Opcional: vincule este ajuste a uma arte existente para rastrear como refação</p>
+                 <Select value={selectedBriefingImageId} onValueChange={setSelectedBriefingImageId}>
+                   <SelectTrigger className="w-full">
+                     <SelectValue placeholder="Selecione a arte original (opcional)" />
+                   </SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="">Nenhuma (ajuste avulso)</SelectItem>
+                     {matchingBriefingImages.map((img: any) => {
+                       const typeLabel = IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type;
+                       return (
+                         <SelectItem key={img.id} value={img.id}>
+                           {typeLabel}{img.product_name ? ` — ${img.product_name}` : ''} ({img.status})
+                         </SelectItem>
+                       );
+                     })}
+                   </SelectContent>
+                 </Select>
+               </div>
+             )}
 
-            {/* Section 2 - Adjustment items */}
+             <Separator />
+
+             {/* Section 2 - Adjustment items */}
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-semibold text-foreground">Pedidos de Ajuste</h3>
