@@ -193,10 +193,12 @@ export default function Dashboard() {
       // Map adjustment status to request_status
       const statusMap: Record<string, RequestStatus> = {
         pending: 'pending',
-        allocated: 'in_progress',
+        allocated: 'pending',
         in_progress: 'in_progress',
         review: 'review',
+        revision: 'revision',
         completed: 'completed',
+        cancelled: 'cancelled',
       };
       return {
         id: item.id,
