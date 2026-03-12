@@ -14,10 +14,6 @@ Deno.serve(async (req) => {
   try {
     const MANUS_API_KEY = Deno.env.get("MANUS_API_KEY");
     if (!MANUS_API_KEY) throw new Error("MANUS_API_KEY not configured");
-    const masked = MANUS_API_KEY.length > 12
-      ? `${MANUS_API_KEY.slice(0, 6)}...${MANUS_API_KEY.slice(-6)} (len=${MANUS_API_KEY.length})`
-      : `[too short, len=${MANUS_API_KEY.length}]`;
-    console.log(`DEBUG MANUS_API_KEY: ${masked}`);
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -91,64 +87,28 @@ Deno.serve(async (req) => {
       })),
     };
 
-    // 5. Discover correct Manus project_id via API
-    const MANUS_BASE = "https://api.manus.im/v1";
+    // 5. Send task to Manus API (confirmed config)
+    const MANUS_BASE = "https://api.manus.ai/v1";
+    const MANUS_PROJECT_ID = "ckBczkkkixHxfRVMUmzkUL";
     const manusHeaders = {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${MANUS_API_KEY}`,
+      "API_KEY": MANUS_API_KEY,
     };
 
-    console.log("Fetching Manus projects to discover correct project_id...");
-    const projectsRes = await fetch(`${MANUS_BASE}/projects`, {
-      method: "GET",
-      headers: manusHeaders,
-    });
-    const projectsBody = await projectsRes.text();
-    console.log(`GET /v1/projects status: ${projectsRes.status}`);
-    console.log(`GET /v1/projects body: ${projectsBody}`);
-
-    if (!projectsRes.ok) {
-      throw new Error(`Manus API /projects error [${projectsRes.status}]: ${projectsBody}`);
-    }
-
-    let manusProjects: any;
-    try { manusProjects = JSON.parse(projectsBody); } catch { manusProjects = null; }
-
-    // Try to find "Migrações" project, fallback to first project
-    let manusProjectId: string | null = null;
-    const projectList = Array.isArray(manusProjects) ? manusProjects : manusProjects?.data || manusProjects?.projects || [];
-    
-    for (const p of projectList) {
-      const name = (p.name || p.title || "").toLowerCase();
-      if (name.includes("migra")) {
-        manusProjectId = p.id || p.project_id;
-        break;
-      }
-    }
-    if (!manusProjectId && projectList.length > 0) {
-      manusProjectId = projectList[0].id || projectList[0].project_id;
-    }
-    if (!manusProjectId) {
-      throw new Error(`No Manus projects found. Response: ${projectsBody}`);
-    }
-
-    console.log(`Using Manus project_id: ${manusProjectId}`);
-
-    // 6. Build message and send task
     const actionLabel = action === "validate"
       ? "Validar dados de migração"
       : "Iniciar migração";
-    const message = `${actionLabel}. Payload:\n\n${JSON.stringify(payload, null, 2)}`;
+    const prompt = `${actionLabel}. Payload:\n\n${JSON.stringify(payload, null, 2)}`;
 
     console.log(`Sending task to Manus API: ${MANUS_BASE}/tasks`);
-    console.log(`Action: ${action}`);
+    console.log(`Action: ${action}, Project: ${MANUS_PROJECT_ID}`);
 
     const manusResponse = await fetch(`${MANUS_BASE}/tasks`, {
       method: "POST",
       headers: manusHeaders,
       body: JSON.stringify({
-        project_id: manusProjectId,
-        prompt: message,
+        project_id: MANUS_PROJECT_ID,
+        prompt,
       }),
     });
 
