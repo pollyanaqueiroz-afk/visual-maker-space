@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const review_token = typeof body.review_token === "string" ? body.review_token.trim().slice(0, 100) : "";
     const email = typeof body.email === "string" ? body.email.trim().slice(0, 255) : "";
-    const image_id = typeof body.image_id === "string" ? body.image_id.trim().slice(0, 100) : "";
+    const platform_url = typeof body.platform_url === "string" ? body.platform_url.trim().slice(0, 500) : "";
 
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
 
     let requests: any[] = [];
 
-    // Prefer token-based auth (secure), fall back to email (manual login)
+    // Prefer token-based auth (secure), fall back to platform_url or email
     if (review_token) {
       if (!uuidRegex.test(review_token)) {
         return new Response(
@@ -49,6 +49,24 @@ Deno.serve(async (req) => {
       }
 
       requests = tokenRequests;
+    } else if (platform_url) {
+      // Platform URL-based login — normalize and search with flexible matching
+      let cleanUrl = platform_url.toLowerCase().replace(/\/+$/, "").replace(/^https?:\/\//, "").replace(/\/admin\/home$/, "").replace(/\/login$/, "");
+
+      // Search for briefing_requests whose platform_url contains the cleaned URL
+      const { data: urlRequests, error: urlErr } = await supabase
+        .from("briefing_requests")
+        .select("id, requester_name, platform_url, requester_email");
+
+      if (urlErr) throw urlErr;
+
+      // Flexible match: normalize both sides and compare
+      const matched = (urlRequests || []).filter((r: any) => {
+        const stored = (r.platform_url || "").toLowerCase().replace(/\/+$/, "").replace(/^https?:\/\//, "").replace(/\/admin\/home$/, "").replace(/\/login$/, "");
+        return stored === cleanUrl || stored.includes(cleanUrl) || cleanUrl.includes(stored);
+      });
+
+      requests = matched;
     } else if (email) {
       // Email-based login (manual form entry)
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -69,7 +87,7 @@ Deno.serve(async (req) => {
       requests = emailRequests || [];
     } else {
       return new Response(
-        JSON.stringify({ error: "review_token ou email é obrigatório" }),
+        JSON.stringify({ error: "review_token, platform_url ou email é obrigatório" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

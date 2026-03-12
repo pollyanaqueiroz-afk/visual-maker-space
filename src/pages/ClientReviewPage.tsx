@@ -48,6 +48,7 @@ interface ClientReviewPageProps {
 export default function ClientReviewPage({ injectedEmail, embedded = false }: ClientReviewPageProps = {}) {
   const navigate = useNavigate();
   const [email, setEmail] = useState(injectedEmail || '');
+  const [platformUrlInput, setPlatformUrlInput] = useState('');
   const [authenticated, setAuthenticated] = useState(!!injectedEmail);
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState<ReviewableImage[]>([]);
