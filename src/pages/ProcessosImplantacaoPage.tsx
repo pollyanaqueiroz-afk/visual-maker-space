@@ -200,7 +200,7 @@ export default function ProcessosImplantacaoPage() {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(c =>
-        (c.cliente || '').toLowerCase().includes(q) ||
+        (c.nome || '').toLowerCase().includes(q) ||
         (c.id_curseduca || '').toLowerCase().includes(q)
       );
     }
