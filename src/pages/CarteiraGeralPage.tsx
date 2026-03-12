@@ -531,6 +531,74 @@ export default function CarteiraGeralPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          {/* Filters for Financeiro */}
+          {activeView === 'financeiro' && (
+            <div className="flex flex-wrap items-center gap-2 pb-2 border-b">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Select value={filterStatus} onValueChange={v => { setFilterStatus(v); setApiPage(1); }}>
+                <SelectTrigger className="h-8 w-[140px] text-xs">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos Status</SelectItem>
+                  <SelectItem value="Ativo">Ativo</SelectItem>
+                  <SelectItem value="Cancelado">Cancelado</SelectItem>
+                  <SelectItem value="Inadimplente">Inadimplente</SelectItem>
+                  <SelectItem value="Atrasado">Atrasado</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterTipoProduto} onValueChange={v => { setFilterTipoProduto(v); setApiPage(1); }}>
+                <SelectTrigger className="h-8 w-[150px] text-xs">
+                  <SelectValue placeholder="Tipo Produto" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos Tipos</SelectItem>
+                  <SelectItem value="plano">Plano</SelectItem>
+                  <SelectItem value="upsell">Upsell</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterRecorrencia} onValueChange={v => { setFilterRecorrencia(v); setApiPage(1); }}>
+                <SelectTrigger className="h-8 w-[140px] text-xs">
+                  <SelectValue placeholder="Recorrência" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="Mensal">Mensal</SelectItem>
+                  <SelectItem value="Anual">Anual</SelectItem>
+                  <SelectItem value="Semestral">Semestral</SelectItem>
+                  <SelectItem value="Trimestral">Trimestral</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterMeioPagamento} onValueChange={v => { setFilterMeioPagamento(v); setApiPage(1); }}>
+                <SelectTrigger className="h-8 w-[160px] text-xs">
+                  <SelectValue placeholder="Meio Pagamento" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos Meios</SelectItem>
+                  <SelectItem value="Cartão">Cartão</SelectItem>
+                  <SelectItem value="Boleto">Boleto</SelectItem>
+                  <SelectItem value="Pix">Pix</SelectItem>
+                </SelectContent>
+              </Select>
+              {(filterStatus !== 'all' || filterTipoProduto !== 'all' || filterRecorrencia !== 'all' || filterMeioPagamento !== 'all') && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs text-muted-foreground"
+                  onClick={() => {
+                    setFilterStatus('all');
+                    setFilterTipoProduto('all');
+                    setFilterRecorrencia('all');
+                    setFilterMeioPagamento('all');
+                    setApiPage(1);
+                  }}
+                >
+                  Limpar filtros
+                </Button>
+              )}
+            </div>
+          )}
+
           {/* Pagination top */}
           <TablePagination
             currentPage={apiPage}
