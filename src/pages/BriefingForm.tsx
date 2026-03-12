@@ -173,11 +173,45 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
 
   const hasAnySelection = Object.values(selections).some(Boolean);
 
-  const uploadFile = async (file: File, folder: string): Promise<string> => {
-    const ext = file.name.split('.').pop();
-    const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from('briefing-uploads').upload(path, file);
-    if (error) throw error;
+  const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp', 'image/tiff'];
+  const ALLOWED_BRAND_TYPES = [...ALLOWED_IMAGE_TYPES, 'application/pdf', 'application/postscript', 'image/vnd.adobe.photoshop', 'application/zip', 'application/x-zip-compressed', 'application/octet-stream'];
+
+  const validateFile = (file: File, allowedTypes?: string[]) => {
+    if (file.size > MAX_FILE_SIZE) {
+      throw new Error(`O arquivo "${file.name}" excede o tamanho máximo de 20MB (tamanho: ${(file.size / 1024 / 1024).toFixed(1)}MB)`);
+    }
+    if (allowedTypes && allowedTypes.length > 0) {
+      const ext = file.name.split('.').pop()?.toLowerCase() || '';
+      const validExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff', 'tif', 'pdf', 'ai', 'psd', 'zip'];
+      if (!allowedTypes.includes(file.type) && !validExtensions.includes(ext)) {
+        throw new Error(`O arquivo "${file.name}" possui formato não suportado (.${ext}). Formatos aceitos: JPG, PNG, GIF, WEBP, SVG, PDF, AI, PSD, ZIP`);
+      }
+    }
+  };
+
+  const sanitizeFileName = (name: string): string => {
+    return name.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/_{2,}/g, '_');
+  };
+
+  const uploadFile = async (file: File, folder: string, allowedTypes?: string[]): Promise<string> => {
+    validateFile(file, allowedTypes);
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'bin';
+    const safeName = sanitizeFileName(file.name);
+    const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}-${safeName}`;
+    const { error } = await supabase.storage.from('briefing-uploads').upload(path, file, {
+      cacheControl: '3600',
+      contentType: file.type || 'application/octet-stream',
+    });
+    if (error) {
+      if (error.message?.includes('Payload too large') || error.message?.includes('413')) {
+        throw new Error(`O arquivo "${file.name}" é muito grande para upload. Tente comprimir ou reduzir o tamanho.`);
+      }
+      if (error.message?.includes('mime') || error.message?.includes('type')) {
+        throw new Error(`O formato do arquivo "${file.name}" não é permitido pelo servidor.`);
+      }
+      throw new Error(`Erro ao enviar "${file.name}": ${error.message}`);
+    }
     const { data } = supabase.storage.from('briefing-uploads').getPublicUrl(path);
     return data.publicUrl;
   };
