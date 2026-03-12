@@ -22,6 +22,7 @@ interface AdjustmentItem {
   file: File | null;
   filePreview: string;
   observations: string;
+  linkUrl: string;
 }
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = {
