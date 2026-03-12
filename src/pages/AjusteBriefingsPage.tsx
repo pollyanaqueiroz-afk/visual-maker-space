@@ -74,6 +74,23 @@ export default function AjusteBriefingsPage() {
     },
   });
 
+  // Fetch briefing images matching the client URL for linking
+  const { data: matchingBriefingImages = [] } = useQuery({
+    queryKey: ['briefing-images-for-linking', clientUrl],
+    queryFn: async () => {
+      if (!clientUrl.trim()) return [];
+      const { data, error } = await supabase
+        .from('briefing_images')
+        .select('id, image_type, product_name, status, briefing_requests!inner(platform_url)')
+        .ilike('briefing_requests.platform_url', `%${clientUrl.trim().replace(/https?:\/\//, '').replace(/\/$/, '')}%`)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (error) return [];
+      return data || [];
+    },
+    enabled: !!clientUrl.trim() && clientUrl.trim().length > 5,
+  });
+
   const addItem = () => {
     setItems(prev => [...prev, { file: null, filePreview: '', observations: '' }]);
   };
