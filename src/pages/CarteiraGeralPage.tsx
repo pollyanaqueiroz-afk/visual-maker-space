@@ -21,7 +21,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 import ClientDetailSheet from '@/components/carteira/ClientDetailSheet';
 import TablePagination from '@/components/carteira/TablePagination';
+import CadastroTab from '@/components/carteira/CadastroTab';
 import { usePermissions } from '@/hooks/usePermissions';
+import { ClipboardList } from 'lucide-react';
 
 interface ClientRecord {
   [key: string]: any;
