@@ -730,3 +730,46 @@ function ValidationRow({
     </div>
   );
 }
+
+// ─── Manus Integration Section ────────────────────────────────
+function ManusIntegrationSection({ project, onStatusChange }: { project: MigrationProject; onStatusChange: () => void }) {
+  const [sending, setSending] = useState(false);
+
+  const triggerManus = async () => {
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('trigger-manus-migration', {
+        body: { project_id: project.id },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Erro ao enviar para Manus');
+      toast.success('🚀 Migração enviada ao Manus IA com sucesso!');
+      onStatusChange();
+    } catch (e: any) {
+      toast.error(`Erro: ${e.message}`);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="p-4 rounded-lg border border-primary/20 bg-primary/5 space-y-3">
+      <div className="flex items-center gap-2">
+        <Zap className="h-5 w-5 text-primary" />
+        <h3 className="text-sm font-semibold">Manus IA — Automação</h3>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Envia os dados coletados (links dos clubs, planilhas, credenciais API) para o Manus IA executar a migração automaticamente.
+      </p>
+      <Button
+        className="w-full gap-2"
+        variant="default"
+        onClick={triggerManus}
+        disabled={sending}
+      >
+        {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+        {sending ? 'Enviando ao Manus IA...' : 'Enviar para Manus IA'}
+      </Button>
+    </div>
+  );
+}
