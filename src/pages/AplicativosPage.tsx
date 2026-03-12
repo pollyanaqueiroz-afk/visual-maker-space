@@ -187,14 +187,14 @@ export default function AplicativosPage() {
       // 2. Check clients (carteira)
       const { data: carteiraCl } = await supabase
         .from('clients')
-        .select('id, cliente, id_curseduca')
+        .select('id, nome, id_curseduca')
         .eq('id_curseduca', url)
         .maybeSingle();
       if (carteiraCl) {
-        setMatchedClient({ source: 'clients', nome: carteiraCl.cliente || '', email: '' });
+        setMatchedClient({ source: 'clients', nome: carteiraCl.nome || '', email: '' });
         setForm(p => ({
           ...p,
-          nome: p.nome || carteiraCl.cliente || '',
+          nome: p.nome || carteiraCl.nome || '',
         }));
         return;
       }

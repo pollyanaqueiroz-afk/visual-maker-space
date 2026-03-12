@@ -60,7 +60,7 @@ export default function GlobalSearch() {
 
       const items: SearchResult[] = [
         ...(clients.data || []).map(c => ({
-          id: c.id, label: c.cliente || 'Sem nome', sublabel: `${c.plano || ''} · CS: ${c.cs_atual || '—'}`,
+          id: c.id, label: c.nome || 'Sem nome', sublabel: `${c.plano || ''} · CS: ${c.cs_atual || '—'}`,
           icon: Briefcase, path: `/hub/carteira/${c.id}`, group: 'Carteira',
         })),
         ...(appClientes.data || []).map(c => ({

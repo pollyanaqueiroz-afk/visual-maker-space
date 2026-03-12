@@ -398,7 +398,7 @@ export default function ClientesTab() {
                       )}
                     </TableCell>
                     <TableCell>{c.cs_anterior || '—'}</TableCell>
-                    <TableCell className="text-right tabular-nums">{formatFatura(c.fatura)}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{c.status_financeiro || '—'}</TableCell>
                   </TableRow>
                 ))
               )}
