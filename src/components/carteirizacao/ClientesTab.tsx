@@ -259,12 +259,6 @@ export default function ClientesTab() {
 
   useEffect(() => { setPage(1); }, [search, filterPlano, filterCsAtual, filterCsAnterior]);
 
-  const formatFatura = (v: string | null) => {
-    if (!v) return '—';
-    const n = parseFloat(v);
-    if (isNaN(n)) return v;
-    return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  };
 
   if (loading) return <TableSkeleton rows={10} columns={7} />;
 
