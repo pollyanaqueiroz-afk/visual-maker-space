@@ -201,23 +201,12 @@ export default function CadastroTab() {
             ))}
           </SelectContent>
         </Select>
-        <Select value={filterCs} onValueChange={setFilterCs}>
-          <SelectTrigger className="h-8 w-[180px] text-xs">
-            <SelectValue placeholder="CS Atual" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os CS</SelectItem>
-            {uniqueCs.map(cs => (
-              <SelectItem key={cs} value={cs}>{cs}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {(filterPlano !== 'all' || filterCs !== 'all') && (
+        {filterPlano !== 'all' && (
           <Button
             variant="ghost"
             size="sm"
             className="h-8 text-xs text-muted-foreground"
-            onClick={() => { setFilterPlano('all'); setFilterCs('all'); }}
+            onClick={() => setFilterPlano('all')}
           >
             Limpar filtros
           </Button>
