@@ -327,11 +327,11 @@ export default function ClientesTab() {
             <TableHeader>
               <TableRow>
                 <TableHead>ID Curseduca</TableHead>
-                <TableHead>Cliente</TableHead>
+                <TableHead>Nome</TableHead>
                 <TableHead>Plano</TableHead>
                 <TableHead>CS Atual</TableHead>
                 <TableHead>CS Anterior</TableHead>
-                <TableHead className="text-right">Fatura</TableHead>
+                <TableHead>Status Financeiro</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
