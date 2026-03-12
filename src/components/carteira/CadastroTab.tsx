@@ -7,9 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TablePagination from '@/components/carteira/TablePagination';
 import { TableSkeleton } from '@/components/ui/TableSkeleton';
-import { Search, Pencil, Check, X, Users, Plus, Loader2 } from 'lucide-react';
+import { Search, Pencil, Check, X, Users, Plus, Loader2, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 
 type ClientRecord = {
@@ -57,6 +58,10 @@ export default function CadastroTab() {
   const [newForm, setNewForm] = useState(EMPTY_FORM);
   const [creating, setCreating] = useState(false);
 
+  // Filters
+  const [filterPlano, setFilterPlano] = useState<string>('all');
+  const [filterCs, setFilterCs] = useState<string>('all');
+
   const fetchClients = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -72,20 +77,33 @@ export default function CadastroTab() {
   useEffect(() => { fetchClients(); }, [fetchClients]);
 
   const filtered = useMemo(() => {
-    if (!search) return clients;
-    const q = search.toLowerCase();
-    return clients.filter(c =>
-      c.nome?.toLowerCase().includes(q) ||
-      c.email?.toLowerCase().includes(q) ||
-      c.id_curseduca?.toLowerCase().includes(q)
-    );
-  }, [clients, search]);
+    let result = clients;
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter(c =>
+        c.nome?.toLowerCase().includes(q) ||
+        c.email?.toLowerCase().includes(q) ||
+        c.id_curseduca?.toLowerCase().includes(q)
+      );
+    }
+    if (filterPlano !== 'all') {
+      result = result.filter(c => c.plano === filterPlano);
+    }
+    if (filterCs !== 'all') {
+      result = result.filter(c => c.cs_atual === filterCs);
+    }
+    return result;
+  }, [clients, search, filterPlano, filterCs]);
+
+  // Unique values for filter dropdowns
+  const uniquePlanos = useMemo(() => [...new Set(clients.map(c => c.plano).filter(Boolean))].sort() as string[], [clients]);
+  const uniqueCs = useMemo(() => [...new Set(clients.map(c => c.cs_atual).filter(Boolean))].sort() as string[], [clients]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const currentPage = Math.min(page, totalPages);
   const paged = filtered.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
 
-  useEffect(() => { setPage(1); }, [search]);
+  useEffect(() => { setPage(1); }, [search, filterPlano, filterCs]);
 
   const startEdit = (c: ClientRecord) => {
     setEditingId(c.id);
@@ -172,6 +190,43 @@ export default function CadastroTab() {
           <Plus className="h-4 w-4" />
           Novo Cliente
         </Button>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Filter className="h-4 w-4 text-muted-foreground" />
+        <Select value={filterPlano} onValueChange={setFilterPlano}>
+          <SelectTrigger className="h-8 w-[180px] text-xs">
+            <SelectValue placeholder="Plano" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os Planos</SelectItem>
+            {uniquePlanos.map(p => (
+              <SelectItem key={p} value={p}>{p}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={filterCs} onValueChange={setFilterCs}>
+          <SelectTrigger className="h-8 w-[180px] text-xs">
+            <SelectValue placeholder="CS Atual" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os CS</SelectItem>
+            {uniqueCs.map(cs => (
+              <SelectItem key={cs} value={cs}>{cs}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {(filterPlano !== 'all' || filterCs !== 'all') && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 text-xs text-muted-foreground"
+            onClick={() => { setFilterPlano('all'); setFilterCs('all'); }}
+          >
+            Limpar filtros
+          </Button>
+        )}
       </div>
 
       {/* New Client Dialog */}
