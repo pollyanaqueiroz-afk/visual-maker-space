@@ -22,7 +22,8 @@ Deno.serve(async (req) => {
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    const { project_id } = await req.json();
+    // action: "validate" (default after form) or "migrate" (start migration)
+    const { project_id, action = "validate" } = await req.json();
     if (!project_id) throw new Error("project_id is required");
 
     // 1. Fetch migration project
@@ -55,6 +56,7 @@ Deno.serve(async (req) => {
     // 4. Build payload for Manus
     const webhookUrl = `${SUPABASE_URL}/functions/v1/manus-webhook`;
     const payload = {
+      action, // "validate" or "migrate"
       project_id: project.id,
       client_name: project.client_name,
       client_email: project.client_email,
@@ -88,36 +90,35 @@ Deno.serve(async (req) => {
 
     if (!manusResponse.ok) {
       const errorBody = await manusResponse.text();
-      throw new Error(
-        `Manus API error [${manusResponse.status}]: ${errorBody}`
-      );
+      throw new Error(`Manus API error [${manusResponse.status}]: ${errorBody}`);
     }
 
     const manusResult = await manusResponse.json();
 
-    // 6. Update project status to in_progress
+    // 6. Update project status based on action
+    const newStatus = action === "validate" ? "analysis" : "in_progress";
+    const notes = action === "validate"
+      ? "Dados enviados ao Manus IA para validação automática"
+      : "Migração iniciada pelo Manus IA";
+
     await supabase
       .from("migration_projects")
       .update({
-        migration_status: "in_progress",
+        migration_status: newStatus,
         updated_at: new Date().toISOString(),
       })
       .eq("id", project_id);
 
-    // 7. Add history entry
     await supabase.from("migration_status_history").insert({
       project_id,
       from_status: project.migration_status,
-      to_status: "in_progress",
-      changed_by: "manus_trigger",
-      notes: "Migração enviada ao Manus IA",
+      to_status: newStatus,
+      changed_by: action === "validate" ? "manus_auto_validate" : "manus_trigger",
+      notes,
     });
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        manus_response: manusResult,
-      }),
+      JSON.stringify({ success: true, action, manus_response: manusResult }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {

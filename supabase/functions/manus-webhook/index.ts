@@ -15,15 +15,18 @@ Deno.serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const MANUS_API_KEY = Deno.env.get("MANUS_API_KEY");
+    const MANUS_API_URL = Deno.env.get("MANUS_API_URL");
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     const body = await req.json();
-    const { project_id, status, details, error: manusError } = body;
+    // action: "validation_result" | "migration_result"
+    // status: "validated" | "validation_error" | "completed" | "failed"
+    const { project_id, action, status, details, errors: validationErrors } = body;
 
     if (!project_id) throw new Error("project_id is required");
 
-    // Optional: validate webhook authenticity via API key in header
+    // Optional auth check
     const authHeader = req.headers.get("authorization");
     if (MANUS_API_KEY && authHeader) {
       const token = authHeader.replace("Bearer ", "");
@@ -35,38 +38,71 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fetch current project
     const { data: project, error: projErr } = await supabase
       .from("migration_projects")
-      .select("migration_status")
+      .select("*")
       .eq("id", project_id)
       .single();
     if (projErr || !project) throw new Error("Project not found");
 
     const previousStatus = project.migration_status;
-
-    // Map Manus status to our status
     let newStatus: string;
     let notes: string;
+    let autoTriggerMigration = false;
 
-    switch (status) {
-      case "completed":
-      case "success":
+    // ── Handle validation results ──
+    if (action === "validation_result" || status === "validated" || status === "validation_error") {
+      if (status === "validated") {
+        // Validation passed → move to extraction and auto-trigger migration
+        newStatus = "extraction";
+        notes = "✅ Validação automática aprovada pelo Manus IA";
+        autoTriggerMigration = true;
+      } else {
+        // Validation failed → reject and notify migrator
+        newStatus = "rejected";
+        notes = `❌ Validação falhou: ${details || validationErrors || "erros encontrados"}`;
+
+        // Update validation items if errors provided
+        if (validationErrors && Array.isArray(validationErrors)) {
+          for (const err of validationErrors) {
+            if (err.item_key) {
+              await supabase
+                .from("migration_validations")
+                .update({ status: "rejected", observation: err.message || err.reason })
+                .eq("project_id", project_id)
+                .eq("item_key", err.item_key);
+            }
+          }
+        }
+
+        // Notify migrator
+        const migratorEmail = project.cs_responsible;
+        if (migratorEmail) {
+          // Insert in-app notification (using a simple approach)
+          await supabase.from("migration_status_history").insert({
+            project_id,
+            from_status: previousStatus,
+            to_status: "rejected",
+            changed_by: "manus_validation",
+            notes: `🔔 ATENÇÃO: Validação do Manus falhou para ${project.client_name}. ${details || "Verifique os dados."}`,
+          });
+        }
+      }
+    }
+    // ── Handle migration results ──
+    else if (action === "migration_result" || status === "completed" || status === "failed" || status === "success") {
+      if (status === "completed" || status === "success") {
         newStatus = "completed";
-        notes = "Migração concluída pelo Manus IA";
-        break;
-      case "failed":
-      case "error":
-        newStatus = "in_progress"; // Keep in_progress so team can retry
-        notes = `Erro no Manus IA: ${manusError || details || "erro desconhecido"}`;
-        break;
-      case "in_progress":
-        newStatus = "in_progress";
-        notes = `Manus IA em processamento: ${details || ""}`;
-        break;
-      default:
-        newStatus = previousStatus;
-        notes = `Webhook Manus: status=${status}, details=${details || ""}`;
+        notes = "✅ Migração concluída pelo Manus IA";
+      } else {
+        newStatus = "in_progress"; // Keep in_progress for retry
+        notes = `❌ Erro no Manus IA: ${details || "erro desconhecido"}`;
+      }
+    }
+    // ── Fallback ──
+    else {
+      newStatus = previousStatus;
+      notes = `Webhook Manus: action=${action}, status=${status}, details=${details || ""}`;
     }
 
     // Update project
@@ -74,8 +110,10 @@ Deno.serve(async (req) => {
       migration_status: newStatus,
       updated_at: new Date().toISOString(),
     };
-
-    if (details) {
+    if (newStatus === "rejected") {
+      updatePayload.rejected_tag = true;
+    }
+    if (details && (status === "completed" || status === "success")) {
       updatePayload.migrator_observations = details;
     }
 
@@ -93,8 +131,28 @@ Deno.serve(async (req) => {
       notes,
     });
 
+    // ── Auto-trigger migration if validation passed ──
+    if (autoTriggerMigration && MANUS_API_URL && MANUS_API_KEY) {
+      console.log(`Auto-triggering migration for project ${project_id}`);
+
+      // Call our own trigger function to start migration
+      const triggerUrl = `${SUPABASE_URL}/functions/v1/trigger-manus-migration`;
+      const triggerResponse = await fetch(triggerUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        },
+        body: JSON.stringify({ project_id, action: "migrate" }),
+      });
+
+      if (!triggerResponse.ok) {
+        console.error("Auto-trigger migration failed:", await triggerResponse.text());
+      }
+    }
+
     return new Response(
-      JSON.stringify({ success: true, new_status: newStatus }),
+      JSON.stringify({ success: true, new_status: newStatus, auto_migration: autoTriggerMigration }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {
