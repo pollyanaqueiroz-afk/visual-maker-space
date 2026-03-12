@@ -74,9 +74,6 @@ Deno.serve(async (req) => {
       webhook_url: webhookUrl,
       form_data: submission
         ? {
-            api_client_id: submission.api_client_id,
-            api_client_secret: submission.api_client_secret,
-            api_basic: submission.api_basic,
             members_spreadsheet_url: submission.members_spreadsheet_url,
             members_spreadsheet_name: submission.members_spreadsheet_name,
           }
