@@ -343,7 +343,14 @@ export default function SchedulingPage() {
     }
   };
 
-  useEffect(() => { fetchMeetings(); fetchCsatData(); fetchRescheduleHistory(); }, []);
+  const fetchMinutesIds = async () => {
+    const { data } = await supabase.from('meeting_minutes').select('meeting_id');
+    if (data) {
+      setMinutesMeetingIds(new Set(data.map((d: any) => d.meeting_id)));
+    }
+  };
+
+  useEffect(() => { fetchMeetings(); fetchCsatData(); fetchRescheduleHistory(); fetchMinutesIds(); }, []);
 
   // Fetch team members for managers
   useEffect(() => {
