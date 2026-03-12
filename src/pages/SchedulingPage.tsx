@@ -2246,7 +2246,7 @@ export default function SchedulingPage() {
                                     ) : (
                                       <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-warning/10">
                                         <Star className="h-3.5 w-3.5 text-warning" />
-                                        <span className="text-xs font-bold text-foreground">Fidelidade: {m.loyalty_index}/4</span>
+                                        <span className="text-xs font-bold text-foreground">Fidelidade: {m.loyalty_index}/5</span>
                                       </div>
                                     )}
                                     {m.loyalty_reason && !isInternalMeeting && <span className="text-xs text-muted-foreground line-clamp-1">— {m.loyalty_reason}</span>}
@@ -2443,7 +2443,7 @@ export default function SchedulingPage() {
                 <div className="p-3 rounded-lg bg-warning/5 border border-warning/20 space-y-1">
                   <div className="flex items-center gap-2">
                     <Star className="h-4 w-4 text-warning" />
-                    <span className="text-sm font-semibold">Fidelidade: {detailMeeting.loyalty_index === 0 ? 'Interna' : `${detailMeeting.loyalty_index}/4`}</span>
+                    <span className="text-sm font-semibold">Fidelidade: {detailMeeting.loyalty_index === 0 ? 'Interna' : `${detailMeeting.loyalty_index}/5`}</span>
                   </div>
                   {detailMeeting.loyalty_reason && detailMeeting.loyalty_index !== 0 && (
                     <p className="text-xs text-muted-foreground">{detailMeeting.loyalty_reason}</p>
@@ -2479,37 +2479,6 @@ export default function SchedulingPage() {
                 />
               </div>
 
-              {/* Editable: Churn Risk */}
-              <div className="p-3 rounded-lg border border-destructive/20 bg-destructive/5 space-y-3">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-destructive" />
-                  <span className="text-sm font-semibold text-foreground">Risco de Churn</span>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">Status do Funil</Label>
-                  <Select value={detailFunilStatus} onValueChange={setDetailFunilStatus}>
-                    <SelectTrigger className={!detailFunilStatus ? 'text-muted-foreground' : ''}>
-                      <SelectValue placeholder="Selecione o status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Sem risco</SelectItem>
-                      <SelectItem value="risco_critico">🔴 Risco Crítico</SelectItem>
-                      <SelectItem value="em_tratamento">🟡 Em Tratamento</SelectItem>
-                      <SelectItem value="resolvido">🟢 Resolvido</SelectItem>
-                      <SelectItem value="cancelou">⚫ Cancelou</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">Notas sobre o risco</Label>
-                  <Textarea
-                    value={detailFunilNotas}
-                    onChange={e => setDetailFunilNotas(e.target.value)}
-                    placeholder="Motivo do risco, ações tomadas..."
-                    rows={2}
-                  />
-                </div>
-              </div>
 
               {/* Actions */}
               <div className="flex items-center gap-2 pt-2">
