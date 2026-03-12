@@ -20,6 +20,7 @@ export default function GlobalSearch() {
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [quickViewClientId, setQuickViewClientId] = useState<string | null>(null);
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
