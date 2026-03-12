@@ -1151,6 +1151,12 @@ export default function Dashboard() {
                       Enviar para Designer
                     </Button>
                   )}
+                  {canManage && (
+                    <Button size="sm" variant="destructive" onClick={handleBulkDelete}>
+                      <XCircle className="h-4 w-4 mr-1" />
+                      Excluir selecionadas
+                    </Button>
+                  )}
                   <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
                     Limpar seleção
                   </Button>
