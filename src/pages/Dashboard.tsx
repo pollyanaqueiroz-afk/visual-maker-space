@@ -405,7 +405,7 @@ export default function Dashboard() {
 
     for (const id of ids) {
       // Check if it's an adjustment
-      const img = allImages.find(i => i.id === id);
+      const img = images.find(i => i.id === id);
       if ((img as any)?._isAdjustment) {
         const parentAdj = adjData.adjustments.find((a: any) =>
           adjData.items.some((i: any) => i.id === id && i.adjustment_id === a.id)
