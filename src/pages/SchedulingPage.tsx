@@ -2443,7 +2443,7 @@ export default function SchedulingPage() {
                 <div className="p-3 rounded-lg bg-warning/5 border border-warning/20 space-y-1">
                   <div className="flex items-center gap-2">
                     <Star className="h-4 w-4 text-warning" />
-                    <span className="text-sm font-semibold">Fidelidade: {detailMeeting.loyalty_index === 0 ? 'Interna' : `${detailMeeting.loyalty_index}/4`}</span>
+                    <span className="text-sm font-semibold">Fidelidade: {detailMeeting.loyalty_index === 0 ? 'Interna' : `${detailMeeting.loyalty_index}/5`}</span>
                   </div>
                   {detailMeeting.loyalty_reason && detailMeeting.loyalty_index !== 0 && (
                     <p className="text-xs text-muted-foreground">{detailMeeting.loyalty_reason}</p>
