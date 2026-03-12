@@ -270,6 +270,81 @@ export default function ApiDocsPage() {
           </Card>
         </TabsContent>
 
+        {/* ─── list-financeiro-api ─── */}
+        <TabsContent value="list-financeiro" className="space-y-6 mt-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Badge className="bg-blue-500/10 text-blue-600 border-blue-200">GET</Badge>
+                <CardTitle className="text-base font-mono">/functions/v1/list-financeiro-api</CardTitle>
+              </div>
+              <CardDescription>Endpoint dedicado para listar registros financeiros (assinaturas) com filtros avançados.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div>
+                <h4 className="text-sm font-semibold mb-2">Exemplo básico</h4>
+                <CodeBlock code={`curl '${BASE_URL}/list-financeiro-api?page=1&per_page=50' \\
+  -H 'Authorization: Basic ${API_TOKEN}'`} />
+              </div>
+
+              <div>
+                <h4 className="text-sm font-semibold mb-2">Exemplo com filtros</h4>
+                <CodeBlock code={`curl '${BASE_URL}/list-financeiro-api?status=ativo&meio_de_pagamento=cartao&is_plano=true&search=empresa' \\
+  -H 'Authorization: Basic ${API_TOKEN}'`} />
+              </div>
+
+              <div>
+                <h4 className="text-sm font-semibold mb-2">Filtrar por cliente específico</h4>
+                <CodeBlock code={`curl '${BASE_URL}/list-financeiro-api?id_curseduca=12345' \\
+  -H 'Authorization: Basic ${API_TOKEN}'`} />
+              </div>
+
+              <div>
+                <h4 className="text-sm font-semibold mb-2">Parâmetros</h4>
+                <FieldsTable fields={[
+                  { name: 'page', type: 'integer', description: 'Página (default: 1)' },
+                  { name: 'per_page', type: 'integer', description: 'Itens por página (default: 50, máx: 1000)' },
+                  { name: 'search', type: 'text', description: 'Busca por nome, email, id_curseduca, plano ou nome_plano_master' },
+                  { name: 'id_curseduca', type: 'text', description: 'Filtrar por ID do cliente no Curseduca' },
+                  { name: 'status', type: 'text', description: 'Filtrar por status (ativo, cancelado, inadimplente, etc)' },
+                  { name: 'meio_de_pagamento', type: 'text', description: 'Filtrar por meio de pagamento' },
+                  { name: 'recorrencia_pagamento', type: 'text', description: 'Filtrar por recorrência (mensal, anual, etc)' },
+                  { name: 'tipo_produto_master', type: 'text', description: 'Filtrar por tipo de produto (Plano, Upsell, Addon)' },
+                  { name: 'is_plano', type: 'boolean', description: 'Filtrar apenas planos (true/false)' },
+                  { name: 'is_upsell', type: 'boolean', description: 'Filtrar apenas upsells (true/false)' },
+                ]} />
+              </div>
+
+              <div>
+                <h4 className="text-sm font-semibold mb-2">Campos retornados</h4>
+                <FieldsTable fields={financeiroFields} />
+              </div>
+
+              <div>
+                <h4 className="text-sm font-semibold mb-2">Resposta</h4>
+                <CodeBlock code={`{
+  "data": [
+    {
+      "id": "uuid...",
+      "id_curseduca": "12345",
+      "nome": "Empresa Teste",
+      "plano": "Premium",
+      "status": "ativo",
+      "valor_contratado": 497,
+      "meio_de_pagamento": "cartao",
+      ...
+    }
+  ],
+  "total": 1250,
+  "page": 1,
+  "per_page": 50,
+  "total_pages": 25
+}`} language="json" />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* ─── manage-data-api ─── */}
         <TabsContent value="manage-data" className="space-y-6 mt-6">
           <Card>
