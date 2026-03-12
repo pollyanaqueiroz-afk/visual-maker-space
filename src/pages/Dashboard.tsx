@@ -357,43 +357,73 @@ export default function Dashboard() {
     }
   };
 
+  const deleteSingleBriefingImage = async (id: string) => {
+    // Delete related records first (FK constraints)
+    await supabase.from('briefing_reference_images').delete().eq('briefing_image_id', id);
+    await supabase.from('briefing_deliveries').delete().eq('briefing_image_id', id);
+    await supabase.from('briefing_reviews').delete().eq('briefing_image_id', id);
+    await supabase.from('brand_assets').delete().eq('briefing_image_id', id);
+    // Also unlink any adjustments referencing this image
+    await supabase.from('briefing_adjustments').update({ source_briefing_image_id: null }).eq('source_briefing_image_id', id);
+    const { error } = await supabase.from('briefing_images').delete().eq('id', id);
+    return error;
+  };
+
   const deleteImage = async (id: string, label: string, isAdjustment?: boolean) => {
     if (!canManage) return;
     if (!confirm(`Excluir arte "${label}"?`)) return;
 
     if (isAdjustment) {
-      // Find the parent adjustment for this item
       const parentAdj = adjData.adjustments.find((a: any) =>
         adjData.items.some((i: any) => i.id === id && i.adjustment_id === a.id)
       );
       if (parentAdj) {
-        // Delete items first, then the adjustment
         await supabase.from('briefing_adjustment_items').delete().eq('adjustment_id', parentAdj.id);
         const { error } = await supabase.from('briefing_adjustments').delete().eq('id', parentAdj.id);
         if (error) { toast.error('Erro ao excluir ajuste'); return; }
         toast.success('Ajuste de briefing excluído');
       } else {
-        // Just delete the single item
         const { error } = await supabase.from('briefing_adjustment_items').delete().eq('id', id);
         if (error) { toast.error('Erro ao excluir'); return; }
         toast.success('Item de ajuste excluído');
       }
     } else {
-      const { error } = await supabase.from('briefing_images').delete().eq('id', id);
+      const error = await deleteSingleBriefingImage(id);
       if (error) { toast.error('Erro ao excluir'); return; }
-      // Audit
-      await (supabase.from('briefing_reviews' as any).insert({ briefing_image_id: id, action: 'deleted', reviewed_by: user?.email || 'admin', reviewer_comments: `Arte excluída por ${user?.email}` }) as any);
       toast.success('Arte excluída');
     }
     refreshAll();
   };
 
-  const revertApproval = async (id: string, targetStatus: RequestStatus) => {
-    if (!canManage) return;
-    const { error } = await supabase.from('briefing_images').update({ status: targetStatus } as any).eq('id', id);
-    if (error) { toast.error('Erro ao reverter'); return; }
-    await (supabase.from('briefing_reviews' as any).insert({ briefing_image_id: id, action: `reverted_to_${targetStatus}`, reviewed_by: user?.email || 'admin', reviewer_comments: `Status revertido para ${STATUS_LABELS[targetStatus]} por ${user?.email}` }) as any);
-    toast.success(`Status revertido para ${STATUS_LABELS[targetStatus]}`);
+  const handleBulkDelete = async () => {
+    const ids = Array.from(selectedIds);
+    if (!ids.length) return;
+    if (!confirm(`Excluir ${ids.length} arte(s) selecionada(s)? Esta ação não pode ser desfeita.`)) return;
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const id of ids) {
+      // Check if it's an adjustment
+      const img = allImages.find(i => i.id === id);
+      if ((img as any)?._isAdjustment) {
+        const parentAdj = adjData.adjustments.find((a: any) =>
+          adjData.items.some((i: any) => i.id === id && i.adjustment_id === a.id)
+        );
+        if (parentAdj) {
+          await supabase.from('briefing_adjustment_items').delete().eq('adjustment_id', parentAdj.id);
+          const { error } = await supabase.from('briefing_adjustments').delete().eq('id', parentAdj.id);
+          if (error) errorCount++; else successCount++;
+        }
+      } else {
+        const error = await deleteSingleBriefingImage(id);
+        if (error) errorCount++; else successCount++;
+      }
+    }
+
+    if (successCount > 0) toast.success(`${successCount} arte(s) excluída(s)`);
+    if (errorCount > 0) toast.error(`${errorCount} arte(s) não puderam ser excluídas`);
+    setSelectedIds(new Set());
     refreshAll();
   };
 
