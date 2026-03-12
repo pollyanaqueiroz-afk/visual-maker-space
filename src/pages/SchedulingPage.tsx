@@ -2246,7 +2246,7 @@ export default function SchedulingPage() {
                                     ) : (
                                       <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-warning/10">
                                         <Star className="h-3.5 w-3.5 text-warning" />
-                                        <span className="text-xs font-bold text-foreground">Fidelidade: {m.loyalty_index}/4</span>
+                                        <span className="text-xs font-bold text-foreground">Fidelidade: {m.loyalty_index}/5</span>
                                       </div>
                                     )}
                                     {m.loyalty_reason && !isInternalMeeting && <span className="text-xs text-muted-foreground line-clamp-1">— {m.loyalty_reason}</span>}
