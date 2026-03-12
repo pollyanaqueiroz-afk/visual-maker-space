@@ -127,13 +127,18 @@ export default function AjusteBriefingsPage() {
     setSubmitting(true);
     try {
       // Create adjustment record
+      const insertPayload: any = {
+        client_url: clientUrl.trim(),
+        client_email: clientEmail.trim(),
+        created_by: user?.id,
+      };
+      if (selectedBriefingImageId) {
+        insertPayload.source_briefing_image_id = selectedBriefingImageId;
+      }
+
       const { data: adjustment, error: adjError } = await supabase
         .from('briefing_adjustments')
-        .insert({
-          client_url: clientUrl.trim(),
-          client_email: clientEmail.trim(),
-          created_by: user?.id,
-        } as any)
+        .insert(insertPayload)
         .select()
         .single();
 
