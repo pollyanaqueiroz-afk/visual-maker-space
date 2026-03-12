@@ -29,7 +29,7 @@ interface ClientRecord {
   [key: string]: any;
 }
 
-type ViewType = 'financeiro' | 'produtos' | 'engajamento';
+type ViewType = 'cadastro' | 'financeiro' | 'produtos' | 'engajamento';
 
 const VIEW_COLUMNS: Record<ViewType, { key: string; label: string }[]> = {
   financeiro: [
