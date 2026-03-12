@@ -211,6 +211,26 @@ export default function AjusteBriefingsPage() {
         } else {
           toast.success(`Solicitação registrada com ${successCount} imagem(ns)!`);
         }
+
+        // Notify managers (Jade and Jéssica Lux) about new adjustment request
+        try {
+          const managerEmails = ['jessica.oliveira@curseduca.com', 'jade.sepulveda@curseduca.com'];
+          const clientName = clientUrl.trim().replace(/https?:\/\//, '').replace('.curseduca.pro', '').replace(/\//g, '');
+          
+          await supabase.functions.invoke('notify-adjustment-managers', {
+            body: {
+              adjustment_id: adjustment.id,
+              client_url: clientUrl.trim(),
+              client_name: clientName,
+              manager_emails: managerEmails,
+              created_by_email: user?.email || 'unknown',
+            },
+          });
+        } catch (notifErr) {
+          console.error('Failed to notify managers:', notifErr);
+          // Non-blocking - don't show error to user
+        }
+
         resetForm();
         setFormOpen(false);
         queryClient.invalidateQueries({ queryKey: ['briefing-adjustments'] });
