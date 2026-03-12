@@ -102,6 +102,30 @@ const clientFields = [
   { name: 'indice_fidelidade', type: 'integer', required: false, description: 'Índice de fidelização (1-5)' },
 ];
 
+const financeiroFields = [
+  { name: 'id_curseduca', type: 'text', required: true, description: 'Identificador único do cliente no Curseduca' },
+  { name: 'nome', type: 'text', required: false, description: 'Nome do cliente' },
+  { name: 'email', type: 'text', required: false, description: 'E-mail do cliente' },
+  { name: 'codigo_assinatura_meio_pagamento', type: 'text', required: false, description: 'Código da assinatura no meio de pagamento' },
+  { name: 'codigo_cliente_meio_pagamento', type: 'text', required: false, description: 'Código do cliente no meio de pagamento' },
+  { name: 'plano', type: 'text', required: false, description: 'Plano contratado' },
+  { name: 'meio_de_pagamento', type: 'text', required: false, description: 'Meio de pagamento (ex: cartão, boleto)' },
+  { name: 'meio_pagamento', type: 'text', required: false, description: 'Meio de pagamento (campo alternativo)' },
+  { name: 'valor_contratado', type: 'numeric', required: false, description: 'Valor contratado' },
+  { name: 'numero_parcelas_pagas', type: 'integer', required: false, description: 'Parcelas pagas' },
+  { name: 'numero_parcelas_inadimplentes', type: 'integer', required: false, description: 'Parcelas inadimplentes' },
+  { name: 'numero_parcelas_contrato', type: 'integer', required: false, description: 'Total de parcelas do contrato' },
+  { name: 'recorrencia_pagamento', type: 'text', required: false, description: 'Recorrência (mensal, anual, etc)' },
+  { name: 'is_plano', type: 'boolean', required: false, description: 'Possui plano?' },
+  { name: 'tipo_plano', type: 'text', required: false, description: 'Tipo do plano' },
+  { name: 'is_upsell', type: 'boolean', required: false, description: 'É upsell?' },
+  { name: 'tipo_upsell', type: 'text', required: false, description: 'Tipo de upsell' },
+  { name: 'status', type: 'text', required: false, description: 'Status (ativo, inativo, etc)' },
+  { name: 'vigencia_assinatura', type: 'text', required: false, description: 'Vigência da assinatura' },
+  { name: 'data_criacao', type: 'timestamp', required: false, description: 'Data de criação do registro' },
+  { name: 'processed_at', type: 'timestamp', required: false, description: 'Data de processamento' },
+];
+
 const ENTITIES_LIST = [
   'clients', 'meetings', 'briefing_requests', 'briefing_images', 'briefing_adjustments',
   'briefing_deliveries', 'briefing_reviews', 'brand_assets', 'app_clientes', 'app_fases',
