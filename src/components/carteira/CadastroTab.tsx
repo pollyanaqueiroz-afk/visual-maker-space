@@ -103,7 +103,7 @@ export default function CadastroTab() {
   const currentPage = Math.min(page, totalPages);
   const paged = filtered.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
 
-  useEffect(() => { setPage(1); }, [search]);
+  useEffect(() => { setPage(1); }, [search, filterPlano, filterCs]);
 
   const startEdit = (c: ClientRecord) => {
     setEditingId(c.id);
