@@ -552,6 +552,7 @@ export default function Dashboard() {
   const inProgressImages = images.filter(i => i.status === 'in_progress').length;
   const completedImages = images.filter(i => i.status === 'completed').length;
   const reviewImages = images.filter(i => i.status === 'review').length;
+  const revisionImages = images.filter(i => i.status === 'revision').length;
   const cancelledImages = images.filter(i => i.status === 'cancelled').length;
   const overdueImages = images.filter(i => isOverdue(i)).length;
   const incompleteImages = images.filter(i => isBriefingIncomplete(i)).length;
