@@ -94,10 +94,14 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
     const params = new URLSearchParams(window.location.search);
     const tokenParam = params.get('token');
     const emailParam = params.get('email');
+    const urlParam = params.get('url');
     if (tokenParam) {
       fetchImages(undefined, tokenParam.trim());
     } else if (injectedEmail) {
       fetchImages(injectedEmail.trim().toLowerCase());
+    } else if (urlParam) {
+      setPlatformUrlInput(urlParam);
+      fetchImages(undefined, undefined, urlParam.trim());
     } else if (emailParam) {
       setEmail(emailParam);
       fetchImages(emailParam.trim().toLowerCase());
