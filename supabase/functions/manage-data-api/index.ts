@@ -9,12 +9,24 @@ const corsHeaders = {
 const EXPECTED_TOKEN = "WxYVWSfUJ3kslYCkqlyo5DMdsQHzBA1guEvgAlF86T4CiMqPmPbrVEemby5udFaq";
 
 // Whitelist of allowed columns for insert/update on clients
-const ALLOWED_CLIENT_FIELDS = [
-  "id_curseduca", "nome", "email", "email_alternativo",
-  "telefone_alternativo", "data_criacao", "status_financeiro",
-  "status_curseduca", "plano", "cs_atual", "cs_anterior",
-  "indice_fidelidade",
-];
+// Whitelist per entity
+const ALLOWED_FIELDS: Record<string, string[]> = {
+  clients: [
+    "id_curseduca", "nome", "email", "email_alternativo",
+    "telefone_alternativo", "data_criacao", "status_financeiro",
+    "status_curseduca", "plano", "cs_atual", "cs_anterior",
+    "indice_fidelidade",
+  ],
+  cliente_financeiro: [
+    "id_curseduca", "nome", "email", "codigo_assinatura_meio_pagamento",
+    "codigo_cliente_meio_pagamento", "plano", "meio_de_pagamento",
+    "meio_pagamento", "valor_contratado", "numero_parcelas_pagas",
+    "numero_parcelas_inadimplentes", "numero_parcelas_contrato",
+    "recorrencia_pagamento", "is_plano", "tipo_plano", "is_upsell",
+    "tipo_upsell", "status", "vigencia_assinatura", "data_criacao",
+    "processed_at",
+  ],
+};
 
 function sanitizePayload(body: Record<string, unknown>): Record<string, unknown> {
   const clean: Record<string, unknown> = {};
