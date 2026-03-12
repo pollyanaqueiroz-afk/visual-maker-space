@@ -167,6 +167,7 @@ export default function ApiDocsPage() {
         <TabsList className="w-full justify-start bg-muted/50 h-auto flex-wrap gap-1 p-1">
           <TabsTrigger value="list-data" className="gap-1.5"><List className="h-3.5 w-3.5" /> list-data-api</TabsTrigger>
           <TabsTrigger value="list-clients" className="gap-1.5"><List className="h-3.5 w-3.5" /> list-clients-api</TabsTrigger>
+          <TabsTrigger value="list-financeiro" className="gap-1.5"><List className="h-3.5 w-3.5" /> list-financeiro-api</TabsTrigger>
           <TabsTrigger value="manage-data" className="gap-1.5"><Send className="h-3.5 w-3.5" /> manage-data-api</TabsTrigger>
         </TabsList>
 
