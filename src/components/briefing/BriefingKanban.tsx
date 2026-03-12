@@ -140,9 +140,11 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
       const reviewCount = imgs.filter(i => i.status === 'review').length;
       const completedCount = imgs.filter(i => i.status === 'completed').length;
       const cancelledCount = imgs.filter(i => i.status === 'cancelled').length;
+      const revisionCount = imgs.filter(i => i.status === 'revision').length;
 
       let status = 'completed';
       if (cancelledCount === imgs.length) status = 'cancelled';
+      else if (revisionCount > 0) status = 'revision';
       else if (pendingCount > 0) status = 'pending';
       else if (inProgressCount > 0) status = 'in_progress';
       else if (reviewCount > 0) status = 'review';

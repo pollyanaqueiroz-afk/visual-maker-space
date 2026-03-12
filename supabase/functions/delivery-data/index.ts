@@ -228,7 +228,7 @@ Deno.serve(async (req) => {
 
       // Insert review record if reviewed_by is provided
       if (reviewed_by) {
-        const reviewAction = status === "completed" ? "approved" : status === "in_progress" ? "revision_requested" : status;
+        const reviewAction = status === "completed" ? "approved" : status === "revision" ? "revision_requested" : status === "in_progress" ? "revision_requested" : status;
         await supabase.from("briefing_reviews").insert({
           briefing_image_id: image_id,
           action: reviewAction,
