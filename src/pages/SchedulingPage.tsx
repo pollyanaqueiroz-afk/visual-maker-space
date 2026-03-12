@@ -281,7 +281,10 @@ export default function SchedulingPage() {
       meeting_date: onboardingForm.date,
       meeting_time: onboardingForm.time,
       duration_minutes: onboardingForm.duration,
-      participants: onboardingMediators,
+      participants: [
+        ...onboardingMediators,
+        ...onboardingForm.participantsText.split(';').map(s => s.trim()).filter(Boolean),
+      ],
       status: 'scheduled',
       meeting_reason: 'Passagem de bastão Closer <> Onboarding',
       created_by: user?.id,
