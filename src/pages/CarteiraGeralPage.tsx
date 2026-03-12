@@ -71,6 +71,7 @@ const VIEW_COLUMNS: Record<ViewType, { key: string; label: string }[]> = {
 };
 
 const VIEW_TABS: { value: ViewType; label: string; icon: typeof Wallet }[] = [
+  { value: 'cadastro', label: 'Cadastro', icon: ClipboardList },
   { value: 'financeiro', label: 'Financeiro', icon: Wallet },
   { value: 'produtos', label: 'Produtos', icon: Package },
   { value: 'engajamento', label: 'Engajamento', icon: Activity },
