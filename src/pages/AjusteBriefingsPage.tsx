@@ -115,7 +115,7 @@ export default function AjusteBriefingsPage() {
   const resetForm = () => {
     setClientUrl('');
     setClientEmail('');
-    setItems([{ file: null, filePreview: '', observations: '' }]);
+    setItems([{ file: null, filePreview: '', observations: '', linkUrl: '' }]);
     setSelectedBriefingImageId('');
   };
 
