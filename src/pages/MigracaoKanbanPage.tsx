@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,7 +20,7 @@ import { cn } from '@/lib/utils';
 import {
   Plus, Search, User, ExternalLink, CheckCircle2, XCircle, Clock,
   AlertTriangle, FileText, Link2, Key, Loader2, ArrowRight, RotateCcw,
-  Copy, ChevronRight, Eye, Share2, MessageCircle,
+  Copy, ChevronRight, Eye, Share2, MessageCircle, BarChart3,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -75,6 +76,7 @@ type MigrationProject = {
 
 export default function MigracaoKanbanPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [showNewDialog, setShowNewDialog] = useState(false);
@@ -105,9 +107,14 @@ export default function MigracaoKanbanPage() {
           <h1 className="text-2xl font-bold">Gestão de Migração</h1>
           <p className="text-sm text-muted-foreground">Kanban de projetos de migração</p>
         </div>
-        <Button onClick={() => setShowNewDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" /> Novo Cliente
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => navigate('/hub/migracao/analytics')} className="gap-2">
+            <BarChart3 className="h-4 w-4" /> Analytics
+          </Button>
+          <Button onClick={() => setShowNewDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" /> Novo Cliente
+          </Button>
+        </div>
       </div>
 
       <div className="relative max-w-sm">
