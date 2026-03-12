@@ -605,6 +605,22 @@ export default function CarteiraGeralPage() {
                             </a>
                           ) : col.key === 'produto' ? (
                             formatCellValue(row['tipo_plano'] || row['tipo_upsell'], col.key)
+                          ) : col.key === 'tipo_produto' ? (
+                            (() => {
+                              if (row['is_upsell']) return <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 border-0 text-[11px] font-semibold">Upsell</Badge>;
+                              if (row['is_plano']) return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-0 text-[11px] font-semibold">Plano</Badge>;
+                              return <span className="text-xs text-muted-foreground">—</span>;
+                            })()
+                          ) : col.key === 'status' && activeView === 'financeiro' ? (
+                            (() => {
+                              const val = row['status'];
+                              if (!val) return <span className="text-xs">—</span>;
+                              const lower = val.toLowerCase();
+                              if (lower === 'ativo' || lower === 'active') return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0 text-[11px] font-bold">{val}</Badge>;
+                              if (lower === 'cancelado' || lower === 'canceled' || lower === 'inactive') return <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-0 text-[11px] font-bold">{val}</Badge>;
+                              if (lower.includes('inadimpl') || lower.includes('overdue')) return <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-0 text-[11px] font-bold">{val}</Badge>;
+                              return <Badge className="bg-gray-100 text-gray-700 hover:bg-gray-100 border-0 text-[11px] font-bold">{val}</Badge>;
+                            })()
                           ) : (
                             formatCellValue(row[col.key], col.key)
                           )}
