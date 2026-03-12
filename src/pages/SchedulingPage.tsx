@@ -107,6 +107,30 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
 
 const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
 
+type RecurrenceType = 'none' | 'daily' | 'weekly' | 'monthly' | 'annually' | 'weekdays' | 'custom';
+type RecurrenceFrequency = 'day' | 'week' | 'month' | 'year';
+type RecurrenceEndType = 'never' | 'on_date' | 'after_occurrences';
+
+interface RecurrenceConfig {
+  type: RecurrenceType;
+  interval: number;
+  frequency: RecurrenceFrequency;
+  weekDays: number[]; // 0=Sun .. 6=Sat
+  endType: RecurrenceEndType;
+  endDate: string;
+  occurrences: number;
+}
+
+const DEFAULT_RECURRENCE: RecurrenceConfig = {
+  type: 'none',
+  interval: 1,
+  frequency: 'week',
+  weekDays: [],
+  endType: 'never',
+  endDate: '',
+  occurrences: 13,
+};
+
 const MEETING_REASONS = [
   'Passagem de bastão Closer <> Onboarding',
   'Passagem de bastão Onboarding <> CS',
