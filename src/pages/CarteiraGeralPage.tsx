@@ -174,6 +174,22 @@ export default function CarteiraGeralPage() {
           query = query.or(`id_curseduca.ilike.%${searchTerm}%,nome.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,plano.ilike.%${searchTerm}%`);
         }
 
+        // Apply filters
+        if (filterStatus !== 'all') {
+          query = query.ilike('status', `%${filterStatus}%`);
+        }
+        if (filterTipoProduto === 'plano') {
+          query = query.eq('is_plano', true);
+        } else if (filterTipoProduto === 'upsell') {
+          query = query.eq('is_upsell', true);
+        }
+        if (filterRecorrencia !== 'all') {
+          query = query.ilike('recorrencia_pagamento', `%${filterRecorrencia}%`);
+        }
+        if (filterMeioPagamento !== 'all') {
+          query = query.ilike('meio_de_pagamento', `%${filterMeioPagamento}%`);
+        }
+
         const from = (page - 1) * PER_PAGE;
         const to = from + PER_PAGE - 1;
 
