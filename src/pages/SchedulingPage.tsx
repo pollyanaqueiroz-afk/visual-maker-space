@@ -1246,6 +1246,15 @@ export default function SchedulingPage() {
                       </div>
                     )}
                   </div>
+                  <div className="space-y-2">
+                    <Label>Participantes <span className="text-muted-foreground text-xs">(separar por ;)</span></Label>
+                    <Textarea
+                      value={onboardingForm.participantsText}
+                      onChange={e => setOnboardingForm(f => ({ ...f, participantsText: e.target.value }))}
+                      placeholder="nome1@email.com; nome2@email.com; ..."
+                      rows={2}
+                    />
+                  </div>
                   <Button onClick={handleOnboardingSubmit} disabled={onboardingSubmitting} className="w-full">
                     {onboardingSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
                     Criar Onboarding Coletivo
