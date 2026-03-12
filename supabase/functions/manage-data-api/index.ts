@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // ─── PATCH: Update record by id_curseduca ───
+    // ─── PATCH: Update record by composite key ───
     if (req.method === "PATCH") {
       const idCurseduca = url.searchParams.get("id_curseduca");
       if (!idCurseduca) {
@@ -107,6 +107,7 @@ Deno.serve(async (req) => {
       const body = await req.json();
       const payload = sanitizePayload(body, entity);
       delete payload.id_curseduca;
+      delete payload.codigo_assinatura_meio_pagamento;
 
       if (Object.keys(payload).length === 0) {
         return new Response(
@@ -115,23 +116,29 @@ Deno.serve(async (req) => {
         );
       }
 
-      const { data, error } = await supabase
-        .from(entity)
-        .update(payload)
-        .eq("id_curseduca", idCurseduca)
-        .select();
+      let query = supabase.from(entity).update(payload).eq("id_curseduca", idCurseduca);
+
+      // For cliente_financeiro, use composite key: id_curseduca + codigo_assinatura_meio_pagamento
+      if (entity === "cliente_financeiro") {
+        const codigoAssinatura = url.searchParams.get("codigo_assinatura_meio_pagamento");
+        if (codigoAssinatura) {
+          query = query.eq("codigo_assinatura_meio_pagamento", codigoAssinatura);
+        }
+      }
+
+      const { data, error } = await query.select();
 
       if (error) throw error;
 
       if (!data || data.length === 0) {
         return new Response(
-          JSON.stringify({ error: `Record with id_curseduca '${idCurseduca}' not found in ${entity}` }),
+          JSON.stringify({ error: `Record not found in ${entity} with the given key(s)` }),
           { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
       return new Response(
-        JSON.stringify({ success: true, data: data[0] }),
+        JSON.stringify({ success: true, data: data.length === 1 ? data[0] : data }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
