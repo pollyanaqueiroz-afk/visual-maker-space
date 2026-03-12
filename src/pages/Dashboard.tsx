@@ -1042,7 +1042,7 @@ export default function Dashboard() {
                   {Object.entries(IMAGE_TYPE_LABELS).map(([key, label]) => (
                     <SelectItem key={key} value={key}>{label}</SelectItem>
                   ))}
-                </SelectContent>
+                  <SelectItem value="adjustment">Ajuste de Briefing</SelectItem>
               </Select>
               <Select value={filterClient} onValueChange={setFilterClient}>
                 <SelectTrigger className="w-48">
