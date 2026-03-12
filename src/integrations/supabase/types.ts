@@ -1196,6 +1196,54 @@ export type Database = {
           },
         ]
       }
+      clientes_inativos: {
+        Row: {
+          client_name: string | null
+          client_url: string | null
+          created_at: string
+          data_cancelamento: string | null
+          id: string
+          id_curseduca: string
+          motivo_cancelamento: string | null
+          notas: string | null
+          plano: string | null
+          receita_anterior: number | null
+          status_financeiro: string | null
+          ultimo_cs: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_name?: string | null
+          client_url?: string | null
+          created_at?: string
+          data_cancelamento?: string | null
+          id?: string
+          id_curseduca: string
+          motivo_cancelamento?: string | null
+          notas?: string | null
+          plano?: string | null
+          receita_anterior?: number | null
+          status_financeiro?: string | null
+          ultimo_cs?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_name?: string | null
+          client_url?: string | null
+          created_at?: string
+          data_cancelamento?: string | null
+          id?: string
+          id_curseduca?: string
+          motivo_cancelamento?: string | null
+          notas?: string | null
+          plano?: string | null
+          receita_anterior?: number | null
+          status_financeiro?: string | null
+          ultimo_cs?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           cliente: string | null
@@ -1793,6 +1841,45 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      reversao_tracking: {
+        Row: {
+          client_name: string | null
+          client_url: string | null
+          created_at: string
+          id: string
+          meeting_id: string
+          notas: string | null
+          status: string
+          status_changed_at: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          client_name?: string | null
+          client_url?: string | null
+          created_at?: string
+          id?: string
+          meeting_id: string
+          notas?: string | null
+          status?: string
+          status_changed_at?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          client_name?: string | null
+          client_url?: string | null
+          created_at?: string
+          id?: string
+          meeting_id?: string
+          notas?: string | null
+          status?: string
+          status_changed_at?: string
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }

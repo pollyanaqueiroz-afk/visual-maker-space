@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileImage, LayoutDashboard, LogOut, CalendarDays, Crown, Briefcase, BarChart3, Package, Headset, Home, Settings, Users, ShieldCheck, Smartphone, ExternalLink, Database, AlertTriangle, GraduationCap, PieChart, TrendingDown, ClipboardCheck, Activity, ArrowRightLeft, Construction, Rocket } from 'lucide-react';
+import { FileImage, LayoutDashboard, LogOut, CalendarDays, Crown, Briefcase, BarChart3, Package, Headset, Home, Settings, Users, ShieldCheck, Smartphone, ExternalLink, Database, AlertTriangle, GraduationCap, PieChart, TrendingDown, ClipboardCheck, Activity, ArrowRightLeft, Construction, Rocket, RotateCcw, UserX } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -40,6 +40,8 @@ const csModules = [
   { title: 'BI', url: '/hub/bi', icon: PieChart, permission: 'dashboards.view', badgeKey: null },
   { title: 'Churn', url: '/hub/churn', icon: TrendingDown, permission: 'dashboards.view', badgeKey: null },
   { title: 'Upsell', url: '/hub/upsell', icon: Rocket, permission: 'dashboards.view', badgeKey: null },
+  { title: 'Reversão', url: '/hub/reversao', icon: RotateCcw, permission: 'funil.view', badgeKey: null },
+  { title: 'Clientes Inativos', url: '/hub/inativos', icon: UserX, permission: 'dashboards.view', badgeKey: null },
 ];
 
 const auditoriaModules = [
