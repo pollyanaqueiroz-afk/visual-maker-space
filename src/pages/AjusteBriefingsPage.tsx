@@ -22,6 +22,7 @@ interface AdjustmentItem {
   file: File | null;
   filePreview: string;
   observations: string;
+  linkUrl: string;
 }
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = {
@@ -40,7 +41,7 @@ export default function AjusteBriefingsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [clientUrl, setClientUrl] = useState('');
   const [clientEmail, setClientEmail] = useState('');
-  const [items, setItems] = useState<AdjustmentItem[]>([{ file: null, filePreview: '', observations: '' }]);
+  const [items, setItems] = useState<AdjustmentItem[]>([{ file: null, filePreview: '', observations: '', linkUrl: '' }]);
   const [submitting, setSubmitting] = useState(false);
   const [detailAdjustment, setDetailAdjustment] = useState<any>(null);
   const [detailItems, setDetailItems] = useState<any[]>([]);
@@ -92,7 +93,7 @@ export default function AjusteBriefingsPage() {
   });
 
   const addItem = () => {
-    setItems(prev => [...prev, { file: null, filePreview: '', observations: '' }]);
+    setItems(prev => [...prev, { file: null, filePreview: '', observations: '', linkUrl: '' }]);
   };
 
   const removeItem = (index: number) => {
@@ -114,15 +115,15 @@ export default function AjusteBriefingsPage() {
   const resetForm = () => {
     setClientUrl('');
     setClientEmail('');
-    setItems([{ file: null, filePreview: '', observations: '' }]);
+    setItems([{ file: null, filePreview: '', observations: '', linkUrl: '' }]);
     setSelectedBriefingImageId('');
   };
 
   const handleSubmit = async () => {
     if (!clientUrl.trim()) { toast.error('Informe a URL do cliente'); return; }
     if (!clientEmail.trim()) { toast.error('Informe o e-mail do cliente'); return; }
-    const validItems = items.filter(i => i.file);
-    if (validItems.length === 0) { toast.error('Adicione pelo menos uma imagem'); return; }
+    const validItems = items.filter(i => i.file || i.linkUrl.trim());
+    if (validItems.length === 0) { toast.error('Adicione pelo menos uma imagem ou link'); return; }
 
     setSubmitting(true);
     try {
@@ -153,32 +154,44 @@ export default function AjusteBriefingsPage() {
         const batch = validItems.slice(i, i + BATCH_SIZE);
         const results = await Promise.allSettled(
           batch.map(async (item) => {
-            const file = item.file!;
-            const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-            const filePath = `adjustments/${adjustment.id}/${Date.now()}_${Math.random().toString(36).slice(2)}_${safeName}`;
-            
-            const { error: uploadError } = await supabase.storage
-              .from('briefing-uploads')
-              .upload(filePath, file);
+            let fileUrl: string;
+            let fileName: string;
 
-            if (uploadError) {
-              console.error('Upload failed:', file.name, uploadError);
-              throw uploadError;
+            if (item.file) {
+              const file = item.file;
+              const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+              const filePath = `adjustments/${adjustment.id}/${Date.now()}_${Math.random().toString(36).slice(2)}_${safeName}`;
+              
+              const { error: uploadError } = await supabase.storage
+                .from('briefing-uploads')
+                .upload(filePath, file);
+
+              if (uploadError) {
+                console.error('Upload failed:', file.name, uploadError);
+                throw uploadError;
+              }
+
+              const { data: urlData } = supabase.storage
+                .from('briefing-uploads')
+                .getPublicUrl(filePath);
+
+              fileUrl = urlData.publicUrl;
+              fileName = file.name;
+            } else {
+              // Link-only item
+              fileUrl = item.linkUrl.trim();
+              fileName = `Link: ${fileUrl}`;
             }
-
-            const { data: urlData } = supabase.storage
-              .from('briefing-uploads')
-              .getPublicUrl(filePath);
 
             const { error: insertError } = await supabase.from('briefing_adjustment_items').insert({
               adjustment_id: adjustment.id,
-              file_url: urlData.publicUrl,
-              file_name: file.name,
+              file_url: fileUrl,
+              file_name: fileName,
               observations: item.observations || null,
             } as any);
 
             if (insertError) {
-              console.error('Insert failed:', file.name, insertError);
+              console.error('Insert failed:', fileName, insertError);
               throw insertError;
             }
           })
@@ -386,13 +399,13 @@ export default function AjusteBriefingsPage() {
                     )}
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="space-y-2">
-                        <Label className="text-xs">Arte atual</Label>
+                        <Label className="text-xs">Arte atual (arquivo ou link)</Label>
                         {item.filePreview ? (
                           <div className="relative">
                             <img
                               src={item.filePreview}
                               alt="Preview"
-                              className="w-full h-32 object-cover rounded-lg border"
+                              className="w-full h-24 object-cover rounded-lg border"
                             />
                             <Button
                               variant="ghost"
@@ -404,9 +417,9 @@ export default function AjusteBriefingsPage() {
                             </Button>
                           </div>
                         ) : (
-                          <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/30 transition-colors">
-                            <Upload className="h-6 w-6 text-muted-foreground mb-1" />
-                            <span className="text-xs text-muted-foreground">Clique para enviar</span>
+                          <label className="flex flex-col items-center justify-center h-24 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/30 transition-colors">
+                            <Upload className="h-5 w-5 text-muted-foreground mb-1" />
+                            <span className="text-xs text-muted-foreground">Upload de imagem</span>
                             <input
                               type="file"
                               accept="image/*,.pdf,.ai,.psd,.svg"
@@ -418,6 +431,16 @@ export default function AjusteBriefingsPage() {
                             />
                           </label>
                         )}
+                        <div className="flex items-center gap-2">
+                          <Link2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          <Input
+                            placeholder="Ou cole um link (Google Drive, etc.)"
+                            value={item.linkUrl}
+                            onChange={(e) => updateItem(index, 'linkUrl', e.target.value)}
+                            className="h-8 text-xs"
+                            disabled={!!item.file}
+                          />
+                        </div>
                       </div>
                       <div className="space-y-2">
                         <Label className="text-xs">Observação do ajuste</Label>
@@ -425,7 +448,7 @@ export default function AjusteBriefingsPage() {
                           placeholder="Descreva qual alteração o cliente solicitou..."
                           value={item.observations}
                           onChange={(e) => updateItem(index, 'observations', e.target.value)}
-                          className="h-32 resize-none"
+                          className="h-[152px] resize-none"
                         />
                       </div>
                     </div>
