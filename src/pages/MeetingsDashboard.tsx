@@ -509,7 +509,13 @@ export default function MeetingsDashboard() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Produtividade — Reuniões</h1>
           <p className="text-sm text-muted-foreground flex items-center gap-2">
-            Logado como <span className="font-medium text-foreground">{user?.email}</span>
+            {csFilter === 'me' ? (
+              <>Logado como <span className="font-medium text-foreground">{user?.email}</span></>
+            ) : csFilter === 'all' ? (
+              <span className="font-medium text-foreground">Todos os CSs</span>
+            ) : (
+              <>Visualizando <span className="font-medium text-foreground">{teamMembers.find(t => t.id === csFilter)?.display_name || csFilter}</span></>
+            )}
           </p>
         </div>
         <button onClick={fetchData} className="text-muted-foreground hover:text-foreground transition-colors" title="Atualizar">
