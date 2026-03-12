@@ -104,6 +104,27 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
   const update = (updates: Partial<BriefingFormData>) => setForm(prev => ({ ...prev, ...updates }));
   const toggleSelection = (key: keyof ArtSelection) => setSelections(prev => ({ ...prev, [key]: !prev[key] }));
 
+  const getRequesterInputValue = (inputId: string) => {
+    if (typeof document === 'undefined') return '';
+    return (document.getElementById(inputId) as HTMLInputElement | null)?.value?.trim() || '';
+  };
+
+  const resolveRequesterFields = () => {
+    const requester_name = form.requester_name.trim() || getRequesterInputValue('name');
+    const requester_email = form.requester_email.trim() || getRequesterInputValue('email');
+    const platform_url = form.platform_url.trim() || getRequesterInputValue('url');
+
+    if (
+      requester_name !== form.requester_name ||
+      requester_email !== form.requester_email ||
+      platform_url !== form.platform_url
+    ) {
+      setForm(prev => ({ ...prev, requester_name, requester_email, platform_url }));
+    }
+
+    return { requester_name, requester_email, platform_url };
+  };
+
   const handleApplySuggestion = (suggestion: any) => {
     if (suggestion.selections) {
       setSelections(prev => ({ ...prev, ...suggestion.selections }));
