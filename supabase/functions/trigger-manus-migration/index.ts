@@ -73,9 +73,9 @@ Deno.serve(async (req) => {
     const id_curseduca = extractIdCurseduca(project.client_url);
 
     const payload = {
-      action, // "validate" or "migrate"
+      action,
       project_id: project.id,
-      id_curseduca, // Identificador Curseduca do cliente (subdomínio)
+      id_curseduca,
       client_name: project.client_name,
       client_email: project.client_email,
       client_url: project.client_url,
@@ -96,14 +96,21 @@ Deno.serve(async (req) => {
       })),
     };
 
-    // 5. Send to Manus API
+    // Build the chat message with the payload embedded as text
+    const actionLabel = action === "validate"
+      ? "Validar dados de migração"
+      : "Iniciar migração";
+
+    const chatMessage = `${actionLabel}. Payload:\n\n${JSON.stringify(payload, null, 2)}`;
+
+    // Send as a chat message to Manus API
     const manusResponse = await fetch(MANUS_API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${MANUS_API_KEY}`,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ message: chatMessage }),
     });
 
     if (!manusResponse.ok) {
