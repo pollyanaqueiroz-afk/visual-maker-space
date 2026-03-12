@@ -34,7 +34,8 @@ import FunilCancelamentoPage from "./pages/FunilCancelamentoPage";
 import ScormManagerPage from "./pages/ScormManagerPage";
 import ScormPlayerPage from "./pages/ScormPlayerPage";
 import BIDashboardPage from "./pages/BIDashboardPage";
-import ChurnUpsellPage from "./pages/ChurnUpsellPage";
+import ChurnPage from "./pages/ChurnPage";
+import UpsellPage from "./pages/UpsellPage";
 import AuditoriaPage from "./pages/AuditoriaPage";
 import PipelinePage from "./pages/PipelinePage";
 import ProcessosImplantacaoPage from "./pages/ProcessosImplantacaoPage";
@@ -99,7 +100,8 @@ const App = () => (
               <Route path="funil-cancelamento" element={<PermissionGuard permission="funil.view"><FunilCancelamentoPage /></PermissionGuard>} />
               <Route path="scorm" element={<PermissionGuard permission="scorm.view"><ScormManagerPage /></PermissionGuard>} />
               <Route path="bi" element={<PermissionGuard permission="dashboards.view"><BIDashboardPage /></PermissionGuard>} />
-              <Route path="churn-upsell" element={<PermissionGuard permission="dashboards.view"><ChurnUpsellPage /></PermissionGuard>} />
+              <Route path="churn" element={<PermissionGuard permission="dashboards.view"><ChurnPage /></PermissionGuard>} />
+              <Route path="upsell" element={<PermissionGuard permission="dashboards.view"><UpsellPage /></PermissionGuard>} />
               <Route path="auditoria" element={<PermissionGuard permission="admin.view"><AuditoriaPage /></PermissionGuard>} />
               <Route path="pipeline" element={<PermissionGuard permission="admin.view"><PipelinePage /></PermissionGuard>} />
               <Route path="processos-implantacao" element={<PermissionGuard permission="carteira.view"><ProcessosImplantacaoPage /></PermissionGuard>} />

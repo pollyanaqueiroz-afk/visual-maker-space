@@ -1862,6 +1862,48 @@ export type Database = {
         }
         Relationships: []
       }
+      upsell_tracking: {
+        Row: {
+          client_name: string | null
+          client_url: string | null
+          created_at: string
+          data_pagamento: string | null
+          id: string
+          id_curseduca: string
+          status: string
+          tipo: string
+          updated_at: string
+          updated_by: string | null
+          valor_pagamento: number | null
+        }
+        Insert: {
+          client_name?: string | null
+          client_url?: string | null
+          created_at?: string
+          data_pagamento?: string | null
+          id?: string
+          id_curseduca: string
+          status?: string
+          tipo?: string
+          updated_at?: string
+          updated_by?: string | null
+          valor_pagamento?: number | null
+        }
+        Update: {
+          client_name?: string | null
+          client_url?: string | null
+          created_at?: string
+          data_pagamento?: string | null
+          id?: string
+          id_curseduca?: string
+          status?: string
+          tipo?: string
+          updated_at?: string
+          updated_by?: string | null
+          valor_pagamento?: number | null
+        }
+        Relationships: []
+      }
       user_managers: {
         Row: {
           created_at: string
