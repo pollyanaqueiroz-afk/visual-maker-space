@@ -108,6 +108,15 @@ const translations = {
   'img.challenge_banner': { pt: 'Banner de Desafio', en: 'Challenge Banner' },
   'img.community_banner': { pt: 'Banner de Comunidade', en: 'Community Banner' },
   'img.app_mockup': { pt: 'Mockup do Aplicativo', en: 'App Mockup' },
+
+  // Statuses (unified)
+  'status.pending': { pt: 'Pendente', en: 'Pending' },
+  'status.in_progress': { pt: 'Em Produção', en: 'In Production' },
+  'status.review': { pt: 'Aguardando Validação', en: 'Awaiting Validation' },
+  'status.completed': { pt: 'Aprovada', en: 'Approved' },
+  'status.revision': { pt: 'Em Refação', en: 'In Revision' },
+  'status.cancelled': { pt: 'Cancelada', en: 'Cancelled' },
+  'status.adjustment_requested': { pt: 'Solicitação de Ajuste', en: 'Adjustment Requested' },
 } as const;
 
 export type TranslationKey = keyof typeof translations;
