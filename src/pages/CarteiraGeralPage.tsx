@@ -39,8 +39,8 @@ const VIEW_COLUMNS: Record<ViewType, { key: string; label: string }[]> = {
     { key: 'nome', label: 'Cliente' },
     { key: 'email', label: 'Email' },
     { key: 'status', label: 'Status' },
-    { key: 'nome_plano_master', label: 'Plano' },
-    { key: 'tipo_plano_master', label: 'Tipo Plano' },
+    { key: 'nome_plano_master', label: 'Plano Master' },
+    { key: 'tipo_produto_master', label: 'Tipo Produto Master' },
     { key: 'valor_contratado', label: 'Valor Contratado' },
     { key: 'recorrencia_pagamento', label: 'Recorrência' },
     { key: 'numero_parcelas_pagas', label: 'Parc. Pagas' },
@@ -178,10 +178,8 @@ export default function CarteiraGeralPage() {
         if (filterStatus !== 'all') {
           query = query.ilike('status', `%${filterStatus}%`);
         }
-        if (filterTipoProduto === 'plano') {
-          query = query.eq('is_plano', true);
-        } else if (filterTipoProduto === 'upsell') {
-          query = query.eq('is_upsell', true);
+        if (filterTipoProduto !== 'all') {
+          query = query.ilike('tipo_produto_master', `%${filterTipoProduto}%`);
         }
         if (filterRecorrencia !== 'all') {
           query = query.ilike('recorrencia_pagamento', `%${filterRecorrencia}%`);
@@ -548,13 +546,14 @@ export default function CarteiraGeralPage() {
                 </SelectContent>
               </Select>
               <Select value={filterTipoProduto} onValueChange={v => { setFilterTipoProduto(v); setApiPage(1); }}>
-                <SelectTrigger className="h-8 w-[150px] text-xs">
-                  <SelectValue placeholder="Tipo Produto" />
+                <SelectTrigger className="h-8 w-[170px] text-xs">
+                  <SelectValue placeholder="Tipo Produto Master" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos Tipos</SelectItem>
-                  <SelectItem value="plano">Plano</SelectItem>
-                  <SelectItem value="upsell">Upsell</SelectItem>
+                  <SelectItem value="Plano">Plano</SelectItem>
+                  <SelectItem value="Upsell">Upsell</SelectItem>
+                  <SelectItem value="Addon">Addon</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={filterRecorrencia} onValueChange={v => { setFilterRecorrencia(v); setApiPage(1); }}>
@@ -693,14 +692,6 @@ export default function CarteiraGeralPage() {
                             <a href={row[col.key]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" onClick={e => e.stopPropagation()}>
                               {row[col.key]}
                             </a>
-                          ) : col.key === 'produto' ? (
-                            formatCellValue(row['tipo_plano'] || row['tipo_upsell'], col.key)
-                          ) : col.key === 'tipo_produto' ? (
-                            (() => {
-                              if (row['is_upsell']) return <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 border-0 text-[11px] font-semibold">Upsell</Badge>;
-                              if (row['is_plano']) return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-0 text-[11px] font-semibold">Plano</Badge>;
-                              return <span className="text-xs text-muted-foreground">—</span>;
-                            })()
                           ) : col.key === 'status' && activeView === 'financeiro' ? (
                             (() => {
                               const val = row['status'];
