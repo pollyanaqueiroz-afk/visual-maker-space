@@ -37,7 +37,7 @@ const VIEW_COLUMNS: Record<ViewType, { key: string; label: string }[]> = {
     { key: 'id_curseduca', label: 'ID' },
     { key: 'nome', label: 'Cliente' },
     { key: 'email', label: 'Email' },
-    { key: 'plano', label: 'Plano' },
+    { key: 'tipo_plano', label: 'Plano' },
     { key: 'meio_de_pagamento', label: 'Meio Pagamento' },
     { key: 'valor_contratado', label: 'Valor Contratado' },
     { key: 'recorrencia_pagamento', label: 'Recorrência' },
