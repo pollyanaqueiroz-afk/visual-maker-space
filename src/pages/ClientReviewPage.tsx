@@ -790,24 +790,24 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
                   transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
                   className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shadow-inner"
                 >
-                  <Mail className="h-7 w-7 text-primary" />
+                  <Link2 className="h-7 w-7 text-primary" />
                 </motion.div>
                 <h2 className="text-xl font-bold text-foreground">Acesse suas artes</h2>
                 <p className="text-muted-foreground text-sm leading-relaxed">
-                  Informe o email utilizado na solicitação para visualizar e aprovar suas artes.
+                  Informe a URL da sua plataforma para visualizar e aprovar suas artes.
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="client-email" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Seu email
+                <Label htmlFor="client-url" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  URL da sua plataforma
                 </Label>
                 <Input
-                  id="client-email"
-                  type="email"
-                  placeholder="seuemail@empresa.com"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  id="client-url"
+                  type="text"
+                  placeholder="suaescola.curseduca.pro"
+                  value={platformUrlInput}
+                  onChange={e => setPlatformUrlInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleLogin()}
                   className="h-12 text-base rounded-xl bg-muted/50 border-border focus:bg-card"
                 />
