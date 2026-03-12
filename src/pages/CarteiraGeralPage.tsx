@@ -155,47 +155,73 @@ export default function CarteiraGeralPage() {
     if (isInitial && clientRecords.length === 0) setInitialLoading(true);
     setPageLoading(true);
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      // Financeiro view: query cliente_financeiro table directly
+      if (view === 'financeiro') {
+        let query = supabase
+          .from('cliente_financeiro')
+          .select('*', { count: 'exact' });
 
-      let fetchUrl = `${supabaseUrl}/functions/v1/fetch-hub-summary?endpoint=clientes&view=${view}&page=${page}&per_page=${PER_PAGE}`;
-      if (searchTerm) {
-        fetchUrl += `&search=${encodeURIComponent(searchTerm)}`;
+        if (searchTerm) {
+          query = query.or(`id_curseduca.ilike.%${searchTerm}%,nome.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,plano.ilike.%${searchTerm}%`);
+        }
+
+        const from = (page - 1) * PER_PAGE;
+        const to = from + PER_PAGE - 1;
+
+        const { data, count, error } = await query
+          .order('created_at', { ascending: false })
+          .range(from, to);
+
+        if (error) throw error;
+
+        setClientRecords(data || []);
+        setApiPage(page);
+        setApiTotal(count || 0);
+        setApiTotalPages(Math.max(1, Math.ceil((count || 0) / PER_PAGE)));
+        setLoadError(null);
+      } else {
+        // Other views: use external API as before
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+        let fetchUrl = `${supabaseUrl}/functions/v1/fetch-hub-summary?endpoint=clientes&view=${view}&page=${page}&per_page=${PER_PAGE}`;
+        if (searchTerm) {
+          fetchUrl += `&search=${encodeURIComponent(searchTerm)}`;
+        }
+        if (isCs && userEmail) {
+          fetchUrl += `&cs_email_atual=${encodeURIComponent(userEmail)}`;
+        } else if (isAdmin && csFilter) {
+          fetchUrl += `&cs_email_atual=${encodeURIComponent(csFilter)}`;
+        }
+        if (activeKPI === 'adimplentes') {
+          fetchUrl += `&status_inadimplencia=Adimplente`;
+        } else if (activeKPI === 'inadimplentes') {
+          fetchUrl += `&status_inadimplencia=Inadimplente`;
+        }
+
+        const res = await fetch(fetchUrl, {
+          headers: {
+            'Authorization': `Bearer ${supabaseKey}`,
+            'apikey': supabaseKey,
+          },
+        });
+
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(errText);
+        }
+
+        const result = await res.json();
+        if (result.error) throw new Error(result.error);
+
+        setClientRecords(result.data || []);
+        setApiPage(result.page || 1);
+        setApiTotalPages(result.total_pages || 1);
+        setApiTotal(result.total || 0);
+        setLoadError(null);
       }
-      if (isCs && userEmail) {
-        fetchUrl += `&cs_email_atual=${encodeURIComponent(userEmail)}`;
-      } else if (isAdmin && csFilter) {
-        fetchUrl += `&cs_email_atual=${encodeURIComponent(csFilter)}`;
-      }
-      // KPI filter
-      if (activeKPI === 'adimplentes') {
-        fetchUrl += `&status_inadimplencia=Adimplente`;
-      } else if (activeKPI === 'inadimplentes') {
-        fetchUrl += `&status_inadimplencia=Inadimplente`;
-      }
-
-      const res = await fetch(fetchUrl, {
-        headers: {
-          'Authorization': `Bearer ${supabaseKey}`,
-          'apikey': supabaseKey,
-        },
-      });
-
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(errText);
-      }
-
-      const result = await res.json();
-      if (result.error) throw new Error(result.error);
-
-      setClientRecords(result.data || []);
-      setApiPage(result.page || 1);
-      setApiTotalPages(result.total_pages || 1);
-      setApiTotal(result.total || 0);
-      setLoadError(null);
     } catch (err: any) {
-      console.error('Erro ao carregar dados da API:', err);
+      console.error('Erro ao carregar dados:', err);
       setLoadError(err.message);
       setClientRecords([]);
       setApiTotal(0);
