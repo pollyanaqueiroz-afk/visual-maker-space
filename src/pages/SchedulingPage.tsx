@@ -1084,6 +1084,103 @@ export default function SchedulingPage() {
             <RefreshCw className={cn("h-4 w-4 mr-2", calendarSyncing && "animate-spin")} />
             {calendarSyncing ? 'Sincronizando...' : 'Sincronizar'}
           </Button>
+          {canCreate && (
+            <Dialog open={onboardingOpen} onOpenChange={setOnboardingOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" onClick={() => { setOnboardingOpen(true); setOnboardingForm({ title: '', date: format(new Date(), 'yyyy-MM-dd'), time: '10:00', duration: 60 }); setOnboardingMediators([]); }}>
+                  <Users className="h-4 w-4 mr-2" /> Onboarding Coletivo
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Novo Onboarding Coletivo</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 pt-2">
+                  <div className="space-y-2">
+                    <Label>Nome da Reunião *</Label>
+                    <Input value={onboardingForm.title} onChange={e => setOnboardingForm(f => ({ ...f, title: e.target.value }))} placeholder="Ex: Onboarding turma março" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label>Data *</Label>
+                      <Input type="date" value={onboardingForm.date} onChange={e => setOnboardingForm(f => ({ ...f, date: e.target.value }))} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Horário *</Label>
+                      <Input type="time" value={onboardingForm.time} onChange={e => setOnboardingForm(f => ({ ...f, time: e.target.value }))} />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Duração</Label>
+                    <Select value={String(onboardingForm.duration)} onValueChange={v => setOnboardingForm(f => ({ ...f, duration: Number(v) }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {[30, 45, 60, 90, 120].map(d => (
+                          <SelectItem key={d} value={String(d)}>{d} minutos</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Mediadores (CS) *</Label>
+                    <div className="relative">
+                      <Input
+                        value={onboardingMediatorSearch}
+                        onChange={e => { setOnboardingMediatorSearch(e.target.value); setShowMediatorDropdown(true); }}
+                        onFocus={() => setShowMediatorDropdown(true)}
+                        placeholder="Buscar CS por nome ou email..."
+                      />
+                      {showMediatorDropdown && filteredMediators.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-md max-h-48 overflow-y-auto">
+                          {filteredMediators.map(t => (
+                            <button
+                              key={t.email}
+                              className={cn(
+                                "w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors flex items-center justify-between",
+                                onboardingMediators.includes(t.email) && "opacity-50"
+                              )}
+                              onClick={() => handleAddMediator(t.email)}
+                              disabled={onboardingMediators.includes(t.email)}
+                            >
+                              <div>
+                                <p className="font-medium text-foreground">{t.display_name}</p>
+                                <p className="text-xs text-muted-foreground">{t.email}</p>
+                              </div>
+                              {onboardingMediators.includes(t.email) && (
+                                <CheckCircle className="h-4 w-4 text-success" />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {onboardingMediators.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {onboardingMediators.map(email => {
+                          const member = teamMembers.find(t => t.email === email);
+                          return (
+                            <Badge key={email} variant="secondary" className="gap-1 pr-1">
+                              {member?.display_name || email}
+                              <button
+                                onClick={() => handleRemoveMediator(email)}
+                                className="ml-1 rounded-full hover:bg-destructive/20 p-0.5"
+                              >
+                                <Trash2 className="h-3 w-3 text-destructive" />
+                              </button>
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                  <Button onClick={handleOnboardingSubmit} disabled={onboardingSubmitting} className="w-full">
+                    {onboardingSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+                    Criar Onboarding Coletivo
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           {canCreate && (
             <DialogTrigger asChild>
