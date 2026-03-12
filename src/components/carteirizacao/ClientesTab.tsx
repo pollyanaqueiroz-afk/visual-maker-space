@@ -383,14 +383,16 @@ export default function ClientesTab() {
                       ) : (
                         <div className="flex items-center gap-1 group">
                           <span>{c.cs_atual || '—'}</span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => startEdit(c)}
-                          >
-                            <Pencil className="h-3 w-3" />
-                          </Button>
+                          {isAdmin && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => startEdit(c)}
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                          )}
                         </div>
                       )}
                     </TableCell>
