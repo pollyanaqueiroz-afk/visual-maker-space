@@ -65,7 +65,7 @@ export default function ClientesTab() {
     const { data, error } = await supabase
       .from('clients')
       .select('*')
-      .order('cliente', { ascending: true });
+      .order('nome', { ascending: true });
     if (!error && data) {
       setClients(data as Client[]);
     }
