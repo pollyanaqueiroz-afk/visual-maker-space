@@ -232,7 +232,7 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
     const elementImageUrls: string[] = [];
     if (data.element_suggestion_images && data.element_suggestion_images.length > 0) {
       for (const file of data.element_suggestion_images) {
-        const url = await uploadFile(file, `elements/${requestId}`);
+        const url = await uploadFile(file, `elements/${requestId}`, ALLOWED_IMAGE_TYPES);
         elementImageUrls.push(url);
       }
     }
