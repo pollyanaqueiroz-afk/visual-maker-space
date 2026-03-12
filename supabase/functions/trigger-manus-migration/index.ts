@@ -14,6 +14,10 @@ Deno.serve(async (req) => {
   try {
     const MANUS_API_KEY = Deno.env.get("MANUS_API_KEY");
     if (!MANUS_API_KEY) throw new Error("MANUS_API_KEY not configured");
+    const masked = MANUS_API_KEY.length > 12
+      ? `${MANUS_API_KEY.slice(0, 6)}...${MANUS_API_KEY.slice(-6)} (len=${MANUS_API_KEY.length})`
+      : `[too short, len=${MANUS_API_KEY.length}]`;
+    console.log(`DEBUG MANUS_API_KEY: ${masked}`);
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
