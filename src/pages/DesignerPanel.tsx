@@ -979,6 +979,17 @@ export default function DesignerPanel() {
     return img.status !== 'completed' && img.status !== 'review' && img.status !== 'cancelled';
   };
 
+  // Status filter options including revision
+  const statusFilterOptions = [
+    { value: 'all', label: 'Todas' },
+    { value: 'pending', label: 'Pendente' },
+    { value: 'in_progress', label: 'Em Produção' },
+    { value: 'revision', label: 'Em Refação' },
+    { value: 'review', label: 'Aguardando Validação' },
+    { value: 'completed', label: 'Aprovada' },
+    { value: 'adjustment', label: 'Ajustes' },
+  ];
+
   return (
     <CursEducaLayout
       title="Minhas Artes"
