@@ -378,12 +378,12 @@ export default function AjusteBriefingsPage() {
                    <Label className="text-sm font-semibold text-primary">Vincular a uma Arte do Briefing</Label>
                  </div>
                  <p className="text-xs text-muted-foreground">Opcional: vincule este ajuste a uma arte existente para rastrear como refação</p>
-                 <Select value={selectedBriefingImageId} onValueChange={setSelectedBriefingImageId}>
-                   <SelectTrigger className="w-full">
-                     <SelectValue placeholder="Selecione a arte original (opcional)" />
-                   </SelectTrigger>
-                   <SelectContent>
-                     <SelectItem value="">Nenhuma (ajuste avulso)</SelectItem>
+                  <Select value={selectedBriefingImageId || '__none__'} onValueChange={v => setSelectedBriefingImageId(v === '__none__' ? '' : v)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selecione a arte original (opcional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">Nenhuma (ajuste avulso)</SelectItem>
                      {matchingBriefingImages.map((img: any) => {
                        const typeLabel = IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type;
                        return (
