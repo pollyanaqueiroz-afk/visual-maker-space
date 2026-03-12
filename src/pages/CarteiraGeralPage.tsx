@@ -602,6 +602,8 @@ export default function CarteiraGeralPage() {
                             <a href={row[col.key]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" onClick={e => e.stopPropagation()}>
                               {row[col.key]}
                             </a>
+                          ) : col.key === 'produto' ? (
+                            formatCellValue(row['tipo_plano'] || row['tipo_upsell'], col.key)
                           ) : (
                             formatCellValue(row[col.key], col.key)
                           )}
