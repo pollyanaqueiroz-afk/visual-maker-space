@@ -45,18 +45,20 @@ interface ImageWithRequest {
 
 const KANBAN_COLUMNS = [
   { key: 'adjustment', label: 'Solicitação de Ajustes', color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-950/20', border: 'border-l-orange-500' },
-  { key: 'pending', label: 'Pendentes', color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-950/20', border: 'border-l-amber-500' },
+  { key: 'pending', label: 'Pendente', color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-950/20', border: 'border-l-amber-500' },
   { key: 'in_progress', label: 'Em Produção', color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/20', border: 'border-l-blue-500' },
-  { key: 'review', label: 'Em Revisão', color: 'text-primary', bg: 'bg-primary/5', border: 'border-l-primary' },
-  { key: 'completed', label: 'Concluídas', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950/20', border: 'border-l-emerald-500' },
-  { key: 'cancelled', label: 'Canceladas', color: 'text-destructive', bg: 'bg-destructive/5', border: 'border-l-destructive' },
+  { key: 'review', label: 'Aguardando Validação do Cliente', color: 'text-primary', bg: 'bg-primary/5', border: 'border-l-primary' },
+  { key: 'revision', label: 'Em Refação', color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-950/20', border: 'border-l-orange-400' },
+  { key: 'completed', label: 'Aprovada', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950/20', border: 'border-l-emerald-500' },
+  { key: 'cancelled', label: 'Cancelada', color: 'text-destructive', bg: 'bg-destructive/5', border: 'border-l-destructive' },
 ];
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
-  adjustment: ['in_progress', 'cancelled'],
+  adjustment: ['pending', 'in_progress', 'cancelled'],
   pending: ['in_progress', 'cancelled'],
   in_progress: ['review', 'pending', 'cancelled'],
-  review: ['completed', 'in_progress', 'cancelled'],
+  review: ['completed', 'revision', 'cancelled'],
+  revision: ['in_progress', 'cancelled'],
   completed: [],
   cancelled: ['pending'],
 };
