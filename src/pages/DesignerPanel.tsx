@@ -553,7 +553,7 @@ function BatchDeliveryDialog({ group, designerEmail, onDelivered }: { group: Ima
   const handleManualAssign = (imageIdx: number, fileName: string) => {
     setMatchResults(prev => {
       const updated = [...prev];
-      if (!fileName) {
+      if (!fileName || fileName === '__none__') {
         updated[imageIdx] = { ...updated[imageIdx], file: null, confidence: 'none' };
       } else {
         const selectedFile = files.find(f => f.name === fileName);
@@ -750,7 +750,7 @@ function BatchDeliveryDialog({ group, designerEmail, onDelivered }: { group: Ima
                                 <SelectValue placeholder="Selecionar arquivo..." />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="">Nenhum</SelectItem>
+                                <SelectItem value="__none__">Nenhum</SelectItem>
                                 {files.map(f => {
                                   const isUsedElsewhere = matchResults.some((mr, mi) => mi !== idx && mr.file?.name === f.name);
                                   return (
