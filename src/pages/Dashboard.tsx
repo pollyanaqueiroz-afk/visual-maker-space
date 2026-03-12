@@ -474,12 +474,10 @@ export default function Dashboard() {
   const filtered = useMemo(() => images.filter(i => {
     if (filterStatus === 'incomplete') {
       if (!isBriefingIncomplete(i)) return false;
-    } else if (filterStatus !== 'all' && filterStatus !== 'revision') {
+    } else if (filterStatus === 'revision') {
+      if (i.status !== 'revision' && !(i.revision_count > 0 && i.status !== 'completed' && i.status !== 'cancelled')) return false;
+    } else if (filterStatus !== 'all') {
       if (i.status !== filterStatus) return false;
-    }
-    if (filterStatus === 'revision') {
-      if (i.revision_count === 0) return false;
-      if (i.status === 'completed' || i.status === 'cancelled') return false;
     }
     if (filterType !== 'all' && i.image_type !== filterType) return false;
     if (filterClient !== 'all' && i.platform_url !== filterClient) return false;
