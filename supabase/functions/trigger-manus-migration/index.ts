@@ -12,9 +12,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const MANUS_API_URL = Deno.env.get("MANUS_API_URL");
-    if (!MANUS_API_URL) throw new Error("MANUS_API_URL not configured");
-
     const MANUS_API_KEY = Deno.env.get("MANUS_API_KEY");
     if (!MANUS_API_KEY) throw new Error("MANUS_API_KEY not configured");
 
@@ -22,7 +19,6 @@ Deno.serve(async (req) => {
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // action: "validate" (default after form) or "migrate" (start migration)
     const { project_id, action = "validate" } = await req.json();
     if (!project_id) throw new Error("project_id is required");
 
@@ -53,14 +49,9 @@ Deno.serve(async (req) => {
       clubs = clubData || [];
     }
 
-    // 4. Build payload for Manus
-    // The POST sends all relevant migration data so Manus can:
-    //   - Identify the Curseduca client via `id_curseduca` (extracted from client_url)
-    //   - Access the source platform clubs and API credentials
-    //   - Report back progress via the webhook_url
+    // 4. Build payload
     const webhookUrl = `${SUPABASE_URL}/functions/v1/manus-webhook`;
 
-    // Extract id_curseduca from client_url (e.g. "escola.curseduca.com" → "escola")
     const extractIdCurseduca = (url: string): string => {
       try {
         const cleaned = url.replace(/^https?:\/\//, '').replace(/\/$/, '');
@@ -96,31 +87,53 @@ Deno.serve(async (req) => {
       })),
     };
 
-    // Build the chat message with the payload embedded as text
+    // 5. Build message for Manus
     const actionLabel = action === "validate"
       ? "Validar dados de migração"
       : "Iniciar migração";
 
-    const chatMessage = `${actionLabel}. Payload:\n\n${JSON.stringify(payload, null, 2)}`;
+    const message = `${actionLabel}. Payload:\n\n${JSON.stringify(payload, null, 2)}`;
 
-    // Send as a chat message to Manus API
-    const manusResponse = await fetch(MANUS_API_URL, {
+    // 6. Send to Manus API
+    const MANUS_ENDPOINT = "https://api.manus.im/v1/tasks";
+    const MANUS_PROJECT_ID = "VQYdJ1YaS5kf3fdir4RuDL";
+
+    console.log(`Sending to Manus API: ${MANUS_ENDPOINT}`);
+    console.log(`Manus project_id: ${MANUS_PROJECT_ID}`);
+    console.log(`Action: ${action}`);
+
+    const manusResponse = await fetch(MANUS_ENDPOINT, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${MANUS_API_KEY}`,
+        "API_KEY": MANUS_API_KEY,
       },
-      body: JSON.stringify({ message: chatMessage }),
+      body: JSON.stringify({
+        project_id: MANUS_PROJECT_ID,
+        prompt: message,
+      }),
     });
 
+    const manusResponseBody = await manusResponse.text();
+
+    // 7. Log response details
+    console.log(`Manus API HTTP status: ${manusResponse.status}`);
+    console.log(`Manus API response body: ${manusResponseBody}`);
+
     if (!manusResponse.ok) {
-      const errorBody = await manusResponse.text();
-      throw new Error(`Manus API error [${manusResponse.status}]: ${errorBody}`);
+      console.error(`Manus API error [${manusResponse.status}]: ${manusResponseBody}`);
+      throw new Error(`Manus API error [${manusResponse.status}]: ${manusResponseBody}`);
     }
 
-    const manusResult = await manusResponse.json();
+    let manusResult;
+    try {
+      manusResult = JSON.parse(manusResponseBody);
+    } catch {
+      manusResult = { raw: manusResponseBody };
+    }
 
-    // 6. Update project status based on action
+    // 8. Update project status
     const newStatus = action === "validate" ? "analysis" : "in_progress";
     const notes = action === "validate"
       ? "Dados enviados ao Manus IA para validação automática"
