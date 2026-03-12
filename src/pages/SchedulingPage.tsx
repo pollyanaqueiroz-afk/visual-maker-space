@@ -2017,21 +2017,38 @@ export default function SchedulingPage() {
                           if (hasExactStart) {
                             return (
                               <div key={slot} className="space-y-0.5">
-                                {exactStartMeetings.map(meetingInSlot => (
+                                {exactStartMeetings.map(meetingInSlot => {
+                                  const meetingDate = parseISO(meetingInSlot.meeting_date);
+                                  const now = new Date();
+                                  const isPast = meetingDate <= now;
+                                  const isPendingAnnotation = isPast && meetingInSlot.status !== 'cancelled' && !minutesMeetingIds.has(meetingInSlot.id);
+                                  
+                                  let bgClass = 'bg-primary/8 hover:bg-primary/15 border border-primary/20';
+                                  let barClass = 'bg-primary';
+                                  if (isPendingAnnotation) {
+                                    bgClass = 'bg-destructive/8 hover:bg-destructive/15 border border-destructive/20';
+                                    barClass = 'bg-destructive';
+                                  } else if (meetingInSlot.status === 'completed') {
+                                    bgClass = 'bg-success/8 hover:bg-success/15 border border-success/20';
+                                    barClass = 'bg-success';
+                                  }
+                                  
+                                  return (
                                   <div
                                     key={meetingInSlot.id}
                                     className={cn(
                                       "flex items-center gap-1.5 px-2 py-1.5 rounded-lg cursor-pointer transition-all",
-                                      meetingInSlot.status === 'completed' ? 'bg-success/8 hover:bg-success/15 border border-success/20' : 'bg-primary/8 hover:bg-primary/15 border border-primary/20'
+                                      bgClass
                                     )}
                                     onClick={() => handleOpenDetail(meetingInSlot)}
                                   >
                                     <span className="w-10 text-right text-[10px] tabular-nums font-medium text-foreground/70 mr-1">{slot}</span>
-                                    <div className={cn("w-1 h-4 rounded-full shrink-0", meetingInSlot.status === 'completed' ? 'bg-success' : 'bg-primary')} />
+                                    <div className={cn("w-1 h-4 rounded-full shrink-0", barClass)} />
                                     <span className="text-xs font-medium text-foreground truncate flex-1">{meetingInSlot.title}</span>
                                     <span className="text-[10px] text-muted-foreground shrink-0">{meetingInSlot.duration_minutes}min</span>
                                   </div>
-                                ))}
+                                  );
+                                })}
                               </div>
                             );
                           }
