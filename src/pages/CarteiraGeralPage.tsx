@@ -35,9 +35,10 @@ const VIEW_COLUMNS: Record<ViewType, { key: string; label: string }[]> = {
   cadastro: [],
   financeiro: [
     { key: 'id_curseduca', label: 'ID' },
+    { key: 'codigo_assinatura_meio_pagamento', label: 'ID Assinatura' },
     { key: 'nome', label: 'Cliente' },
     { key: 'email', label: 'Email' },
-    { key: 'tipo_plano', label: 'Plano' },
+    { key: 'produto', label: 'Produto' },
     { key: 'meio_de_pagamento', label: 'Meio Pagamento' },
     { key: 'valor_contratado', label: 'Valor Contratado' },
     { key: 'recorrencia_pagamento', label: 'Recorrência' },
@@ -601,6 +602,8 @@ export default function CarteiraGeralPage() {
                             <a href={row[col.key]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" onClick={e => e.stopPropagation()}>
                               {row[col.key]}
                             </a>
+                          ) : col.key === 'produto' ? (
+                            formatCellValue(row['tipo_plano'] || row['tipo_upsell'], col.key)
                           ) : (
                             formatCellValue(row[col.key], col.key)
                           )}
