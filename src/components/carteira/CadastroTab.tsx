@@ -60,7 +60,6 @@ export default function CadastroTab() {
 
   // Filters
   const [filterPlano, setFilterPlano] = useState<string>('all');
-  const [filterCs, setFilterCs] = useState<string>('all');
 
   const fetchClients = useCallback(async () => {
     setLoading(true);
