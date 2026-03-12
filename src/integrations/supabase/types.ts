@@ -1303,39 +1303,51 @@ export type Database = {
       }
       clients: {
         Row: {
-          cliente: string | null
-          created_at: string
           cs_anterior: string | null
           cs_atual: string | null
-          data_da_carga: string | null
-          fatura: string | null
+          data_criacao: string | null
+          email: string | null
+          email_alternativo: string | null
           id: string
           id_curseduca: string | null
+          indice_fidelidade: number | null
+          nome: string | null
           plano: string | null
+          status_curseduca: string | null
+          status_financeiro: string | null
+          telefone_alternativo: string | null
           updated_at: string
         }
         Insert: {
-          cliente?: string | null
-          created_at?: string
           cs_anterior?: string | null
           cs_atual?: string | null
-          data_da_carga?: string | null
-          fatura?: string | null
+          data_criacao?: string | null
+          email?: string | null
+          email_alternativo?: string | null
           id?: string
           id_curseduca?: string | null
+          indice_fidelidade?: number | null
+          nome?: string | null
           plano?: string | null
+          status_curseduca?: string | null
+          status_financeiro?: string | null
+          telefone_alternativo?: string | null
           updated_at?: string
         }
         Update: {
-          cliente?: string | null
-          created_at?: string
           cs_anterior?: string | null
           cs_atual?: string | null
-          data_da_carga?: string | null
-          fatura?: string | null
+          data_criacao?: string | null
+          email?: string | null
+          email_alternativo?: string | null
           id?: string
           id_curseduca?: string | null
+          indice_fidelidade?: number | null
+          nome?: string | null
           plano?: string | null
+          status_curseduca?: string | null
+          status_financeiro?: string | null
+          telefone_alternativo?: string | null
           updated_at?: string
         }
         Relationships: []
