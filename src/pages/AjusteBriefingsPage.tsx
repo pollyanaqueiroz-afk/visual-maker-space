@@ -93,7 +93,7 @@ export default function AjusteBriefingsPage() {
   });
 
   const addItem = () => {
-    setItems(prev => [...prev, { file: null, filePreview: '', observations: '' }]);
+    setItems(prev => [...prev, { file: null, filePreview: '', observations: '', linkUrl: '' }]);
   };
 
   const removeItem = (index: number) => {
