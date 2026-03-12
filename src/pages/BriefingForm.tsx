@@ -444,19 +444,20 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
 
   const nextStep = () => {
     if (step === 1) {
+      const requester = resolveRequesterFields();
       const missingFields: string[] = [];
-      if (!form.requester_name) missingFields.push('Nome completo');
-      if (!form.requester_email) missingFields.push('Email');
-      if (!form.platform_url) missingFields.push('URL da Plataforma');
+      if (!requester.requester_name) missingFields.push('Nome completo');
+      if (!requester.requester_email) missingFields.push('Email');
+      if (!requester.platform_url) missingFields.push('URL da Plataforma');
       
       if (missingFields.length > 0) {
         toast.error(`Campos obrigatórios não preenchidos: ${missingFields.join(', ')}`);
         return;
       }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(form.requester_email)) {
+      if (!emailRegex.test(requester.requester_email)) {
         toast.error('O email informado é inválido', {
-          description: `"${form.requester_email}" não é um formato de email válido.`,
+          description: `"${requester.requester_email}" não é um formato de email válido.`,
         });
         return;
       }
