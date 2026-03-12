@@ -234,6 +234,69 @@ export default function SchedulingPage() {
   const [detailFunilNotas, setDetailFunilNotas] = useState('');
   const [detailSaving, setDetailSaving] = useState(false);
 
+  // Onboarding Coletivo state
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [onboardingForm, setOnboardingForm] = useState({ title: '', date: '', time: '10:00', duration: 60 });
+  const [onboardingMediators, setOnboardingMediators] = useState<string[]>([]);
+  const [onboardingMediatorSearch, setOnboardingMediatorSearch] = useState('');
+  const [onboardingSubmitting, setOnboardingSubmitting] = useState(false);
+  const [showMediatorDropdown, setShowMediatorDropdown] = useState(false);
+
+  const filteredMediators = useMemo(() => {
+    if (!onboardingMediatorSearch.trim()) return teamMembers;
+    const q = onboardingMediatorSearch.toLowerCase();
+    return teamMembers.filter(
+      t => t.display_name.toLowerCase().includes(q) || t.email.toLowerCase().includes(q)
+    );
+  }, [teamMembers, onboardingMediatorSearch]);
+
+  const handleAddMediator = (email: string) => {
+    if (!onboardingMediators.includes(email)) {
+      setOnboardingMediators(prev => [...prev, email]);
+    }
+    setOnboardingMediatorSearch('');
+    setShowMediatorDropdown(false);
+  };
+
+  const handleRemoveMediator = (email: string) => {
+    setOnboardingMediators(prev => prev.filter(e => e !== email));
+  };
+
+  const handleOnboardingSubmit = async () => {
+    if (!onboardingForm.title || !onboardingForm.date || !onboardingForm.time) {
+      toast.error('Preencha todos os campos obrigatórios');
+      return;
+    }
+    if (onboardingMediators.length === 0) {
+      toast.error('Adicione ao menos um mediador');
+      return;
+    }
+    setOnboardingSubmitting(true);
+    const payload = {
+      title: `[Onboarding Coletivo] ${onboardingForm.title}`,
+      meeting_date: onboardingForm.date,
+      meeting_time: onboardingForm.time,
+      duration_minutes: onboardingForm.duration,
+      participants: onboardingMediators,
+      status: 'scheduled',
+      meeting_reason: 'Passagem de bastão Closer <> Onboarding',
+      created_by: user?.id,
+    };
+
+    const { error } = await supabase.from('meetings').insert(payload as any);
+    setOnboardingSubmitting(false);
+    if (error) {
+      toast.error('Erro ao criar onboarding coletivo');
+      console.error(error);
+      return;
+    }
+    toast.success('Onboarding coletivo criado!');
+    setOnboardingOpen(false);
+    setOnboardingForm({ title: '', date: '', time: '10:00', duration: 60 });
+    setOnboardingMediators([]);
+    fetchMeetings();
+  };
+
   const fetchMeetings = async () => {
     const { data, error } = await supabase
       .from('meetings')
