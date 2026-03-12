@@ -35,6 +35,8 @@ type UserProfile = { user_id: string; email: string | null; display_name: string
 const PER_PAGE = 50;
 
 export default function ClientesTab() {
+  const { hasRole } = usePermissions();
+  const isAdmin = hasRole('admin');
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
