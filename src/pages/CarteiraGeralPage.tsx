@@ -84,6 +84,7 @@ const NUMERIC_KEYS = new Set([
   'certificados_mec_utilizados', 'certificados_mec_contratados',
   'numero_alunos', 'tempo_medio_uso_web_minutos', 'dias_desde_ultimo_login',
   'mm_2_meses', 'mm_3_meses',
+  'numero_parcelas_pagas', 'numero_parcelas_inadimplentes', 'numero_parcelas_contrato',
 ]);
 
 function formatCellValue(value: any, key?: string): string {
