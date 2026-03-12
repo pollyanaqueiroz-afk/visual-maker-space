@@ -2216,7 +2216,7 @@ export default function SchedulingPage() {
                             )}
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
-                            {m.meeting_url && <Button variant="ghost" size="icon" className="h-8 w-8" asChild><a href={m.meeting_url} target="_blank" rel="noopener noreferrer"><Video className="h-4 w-4 text-primary" /></a></Button>}
+                            
                             {m.status === 'scheduled' && <Button variant="ghost" size="icon" className="h-8 w-8" asChild title="Adicionar ao Google Calendar"><a href={buildGoogleCalendarUrl(m)} target="_blank" rel="noopener noreferrer"><CalendarDays className="h-4 w-4 text-success" /></a></Button>}
                             {m.status === 'scheduled' && (
                               <AlertDialog>
