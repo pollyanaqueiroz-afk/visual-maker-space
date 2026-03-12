@@ -232,19 +232,17 @@ export default function MeetingsDashboard() {
         </button>
       </div>
 
-      <Tabs defaultValue="produtividade" className="space-y-4">
+      <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="produtividade" className="flex items-center gap-1.5">
-            <BarChart3 className="h-4 w-4" /> Produtividade
+          <TabsTrigger value="overview" className="flex items-center gap-1.5">
+            <LayoutGrid className="h-4 w-4" /> Overview
           </TabsTrigger>
-          <TabsTrigger value="fidelidade" className="flex items-center gap-1.5">
-            <Heart className="h-4 w-4" /> Fidelidade
+          <TabsTrigger value="produtividade" className="flex items-center gap-1.5">
+            <BarChart3 className="h-4 w-4" /> Produtividade Individual
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="fidelidade">
-          <LoyaltyTrackingTab />
-        </TabsContent>
+        <OverviewTab />
 
         <TabsContent value="produtividade" className="space-y-6">
 
