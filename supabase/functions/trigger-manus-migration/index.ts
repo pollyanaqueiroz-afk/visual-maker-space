@@ -107,10 +107,11 @@ Deno.serve(async (req) => {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${MANUS_API_KEY}`,
+        "API_KEY": MANUS_API_KEY,
       },
       body: JSON.stringify({
         project_id: MANUS_PROJECT_ID,
-        message,
+        prompt: message,
       }),
     });
 
