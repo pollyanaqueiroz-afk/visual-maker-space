@@ -100,11 +100,12 @@ export const defaultImageBriefing: ImageBriefingFormData = {
 };
 
 export const STATUS_LABELS: Record<RequestStatus, string> = {
-  pending: 'Aguardando Alocação',
-  in_progress: 'Em Execução',
+  pending: 'Pendente',
+  in_progress: 'Em Produção',
   review: 'Aguardando Validação do Cliente',
   completed: 'Aprovada',
-  cancelled: 'Cancelado',
+  revision: 'Em Refação',
+  cancelled: 'Cancelada',
 };
 
 export const STATUS_COLORS: Record<RequestStatus, string> = {
@@ -112,6 +113,7 @@ export const STATUS_COLORS: Record<RequestStatus, string> = {
   in_progress: 'bg-blue-500/15 text-blue-400 border border-blue-500/20',
   review: 'bg-violet-500/15 text-violet-400 border border-violet-500/20',
   completed: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20',
+  revision: 'bg-orange-500/15 text-orange-400 border border-orange-500/20',
   cancelled: 'bg-red-500/15 text-red-400 border border-red-500/20',
 };
 
