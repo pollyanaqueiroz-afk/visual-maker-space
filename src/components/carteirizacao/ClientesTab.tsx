@@ -305,9 +305,11 @@ export default function ClientesTab() {
             {csAnteriores.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Button variant="outline" size="sm" className="h-9 gap-1.5" onClick={openBulkDialog}>
-          <ArrowRightLeft className="h-3.5 w-3.5" /> Mover em lote
-        </Button>
+        {isAdmin && (
+          <Button variant="outline" size="sm" className="h-9 gap-1.5" onClick={openBulkDialog}>
+            <ArrowRightLeft className="h-3.5 w-3.5" /> Mover em lote
+          </Button>
+        )}
       </div>
 
       <Card>
