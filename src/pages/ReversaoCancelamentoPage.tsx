@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -26,24 +26,21 @@ const REVERSAO_STATUSES = [
 
 const PIE_COLORS = ['#9ca3af', '#3b82f6', '#eab308', '#22c55e', '#ef4444'];
 
-interface MeetingRisk {
-  meeting_id: string;
-  client_url: string;
-  client_name: string | null;
-  meeting_date: string;
-  loyalty_reason: string | null;
-  meeting_title: string;
-  created_by_email: string | null;
-}
-
-interface TrackingRecord {
+interface ChurnRecord {
   id: string;
-  meeting_id: string;
-  client_url: string | null;
+  id_curseduca: string;
   client_name: string | null;
+  client_url: string | null;
+  plano: string | null;
+  receita: number | null;
+  cs_email: string | null;
+  cs_nome: string | null;
+  meeting_id: string | null;
+  loyalty_reason: string | null;
   status: string;
   status_changed_at: string;
   notas: string | null;
+  created_at: string;
 }
 
 export default function ReversaoCancelamentoPage() {
@@ -55,7 +52,7 @@ export default function ReversaoCancelamentoPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <RotateCcw className="h-6 w-6 text-primary" />
-            Reversão de Cancelamento
+            Recuperação de Churn
           </h1>
           <p className="text-sm text-muted-foreground">Clientes com índice de fidelidade 1 — acompanhamento de reversão</p>
         </div>
@@ -76,21 +73,84 @@ export default function ReversaoCancelamentoPage() {
   );
 }
 
-function useReversaoData(refreshKey: number) {
-  const [clients, setClients] = useState<MeetingRisk[]>([]);
-  const [tracking, setTracking] = useState<Record<string, TrackingRecord>>({});
+/**
+ * Syncs meetings with loyalty_index=1 into cliente_churn table.
+ * Uses id_curseduca (derived from client_url) as unique key.
+ */
+async function syncChurnFromMeetings() {
+  // Fetch meetings with loyalty_index = 1
+  const { data: meetings } = await supabase
+    .from('meetings')
+    .select('id, client_url, client_name, meeting_date, loyalty_reason, created_by')
+    .eq('loyalty_index', 1)
+    .eq('status', 'completed')
+    .order('meeting_date', { ascending: false });
+
+  if (!meetings || meetings.length === 0) return;
+
+  // Deduplicate by client_url
+  const seen = new Map<string, any>();
+  for (const m of meetings) {
+    const key = m.client_url || m.client_name || m.id;
+    if (!seen.has(key)) seen.set(key, m);
+  }
+
+  // Get existing records
+  const { data: existing } = await supabase.from('cliente_churn').select('id_curseduca');
+  const existingKeys = new Set((existing || []).map(e => e.id_curseduca));
+
+  // Resolve CS emails
+  const userIds = [...new Set(meetings.map(m => m.created_by).filter(Boolean))];
+  const profileMap = new Map<string, { email: string; name: string }>();
+  if (userIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('user_id, display_name, email')
+      .in('user_id', userIds);
+    for (const p of profiles || []) {
+      profileMap.set(p.user_id, { email: p.email, name: p.display_name || p.email });
+    }
+  }
+
+  // Insert new ones
+  const toInsert: any[] = [];
+  for (const [key, m] of seen) {
+    const idCurseduca = m.client_url || key;
+    if (existingKeys.has(idCurseduca)) continue;
+
+    const profile = m.created_by ? profileMap.get(m.created_by) : null;
+    toInsert.push({
+      id_curseduca: idCurseduca,
+      client_name: m.client_name,
+      client_url: m.client_url,
+      meeting_id: m.id,
+      loyalty_reason: m.loyalty_reason,
+      cs_email: profile?.email || null,
+      cs_nome: profile?.name || null,
+      status: 'nenhum_contato',
+    });
+  }
+
+  if (toInsert.length > 0) {
+    await supabase.from('cliente_churn').insert(toInsert);
+  }
+}
+
+function useChurnData(refreshKey: number) {
+  const [records, setRecords] = useState<ChurnRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
 
-    // Fetch meetings with loyalty_index = 1
-    const { data: meetings, error } = await supabase
-      .from('meetings')
-      .select('id, client_url, client_name, meeting_date, loyalty_reason, title, created_by')
-      .eq('loyalty_index', 1)
-      .eq('status', 'completed')
-      .order('meeting_date', { ascending: false });
+    // First sync new loyalty_index=1 meetings into cliente_churn
+    await syncChurnFromMeetings();
+
+    // Then fetch all records
+    const { data, error } = await supabase
+      .from('cliente_churn')
+      .select('*')
+      .order('created_at', { ascending: false });
 
     if (error) {
       toast.error('Erro ao carregar dados');
@@ -98,115 +158,39 @@ function useReversaoData(refreshKey: number) {
       return;
     }
 
-    const raw = (meetings || []) as any[];
-
-    // Deduplicate by client
-    const seen = new Map<string, MeetingRisk>();
-    for (const m of raw) {
-      const key = m.client_url || m.client_name || m.title;
-      if (!seen.has(key)) {
-        seen.set(key, {
-          meeting_id: m.id,
-          client_url: m.client_url || '',
-          client_name: m.client_name,
-          meeting_date: m.meeting_date,
-          loyalty_reason: m.loyalty_reason,
-          meeting_title: m.title,
-          created_by_email: null,
-        });
-      }
-    }
-
-    // Get CS names
-    const userIds = [...new Set(raw.map(m => m.created_by).filter(Boolean))];
-    if (userIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('user_id, display_name, email')
-        .in('user_id', userIds);
-      const profileMap = new Map((profiles || []).map(p => [p.user_id, p.display_name || p.email]));
-      for (const m of raw) {
-        const key = m.client_url || m.client_name || m.title;
-        const entry = seen.get(key);
-        if (entry && !entry.created_by_email && m.created_by) {
-          entry.created_by_email = profileMap.get(m.created_by) || null;
-        }
-      }
-    }
-
-    // Fetch tracking data
-    const { data: trackingData } = await supabase.from('reversao_tracking').select('*');
-    const trackMap: Record<string, TrackingRecord> = {};
-    if (trackingData) {
-      for (const t of trackingData) {
-        trackMap[t.meeting_id] = t as TrackingRecord;
-      }
-    }
-
-    setClients(Array.from(seen.values()));
-    setTracking(trackMap);
+    setRecords((data || []) as ChurnRecord[]);
     setLoading(false);
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData, refreshKey]);
 
-  return { clients, tracking, loading, refetch: fetchData, setTracking };
+  return { records, loading, refetch: fetchData };
 }
 
 // ── Tabela Tab ──
 function ReversaoTabelaTab({ refreshKey }: { refreshKey: number }) {
-  const { clients, tracking, loading, refetch, setTracking } = useReversaoData(refreshKey);
+  const { records, loading, refetch } = useChurnData(refreshKey);
   const [search, setSearch] = useState('');
 
-  const getStatus = (meetingId: string) => tracking[meetingId]?.status || 'nenhum_contato';
-
-  const handleStatusChange = async (row: MeetingRisk, newStatus: string) => {
+  const handleStatusChange = async (record: ChurnRecord, newStatus: string) => {
     const { data: user } = await supabase.auth.getUser();
-    const existing = tracking[row.meeting_id];
-
-    const payload: any = {
-      meeting_id: row.meeting_id,
-      client_url: row.client_url,
-      client_name: row.client_name,
+    const { error } = await supabase.from('cliente_churn').update({
       status: newStatus,
       status_changed_at: new Date().toISOString(),
       updated_by: user?.user?.id || null,
       updated_at: new Date().toISOString(),
-    };
+    }).eq('id', record.id);
 
-    let error;
-    if (existing) {
-      ({ error } = await supabase.from('reversao_tracking').update(payload).eq('id', existing.id));
-    } else {
-      ({ error } = await supabase.from('reversao_tracking').insert(payload));
-    }
-
-    if (error) {
-      toast.error('Erro ao salvar status');
-      return;
-    }
+    if (error) { toast.error('Erro ao salvar status'); return; }
     toast.success('Status atualizado');
     refetch();
   };
 
-  const handleNotasSave = async (meetingId: string, notas: string, row: MeetingRisk) => {
-    const existing = tracking[meetingId];
-    if (existing) {
-      const { error } = await supabase.from('reversao_tracking')
-        .update({ notas: notas || null, updated_at: new Date().toISOString() })
-        .eq('id', existing.id);
-      if (error) { toast.error('Erro ao salvar'); return; }
-    } else {
-      const { data: user } = await supabase.auth.getUser();
-      const { error } = await supabase.from('reversao_tracking').insert({
-        meeting_id: meetingId,
-        client_url: row.client_url,
-        client_name: row.client_name,
-        notas: notas || null,
-        updated_by: user?.user?.id || null,
-      });
-      if (error) { toast.error('Erro ao salvar'); return; }
-    }
+  const handleNotasSave = async (record: ChurnRecord, notas: string) => {
+    const { error } = await supabase.from('cliente_churn')
+      .update({ notas: notas || null, updated_at: new Date().toISOString() })
+      .eq('id', record.id);
+    if (error) { toast.error('Erro ao salvar'); return; }
     toast.success('Observações salvas');
     refetch();
   };
@@ -216,18 +200,16 @@ function ReversaoTabelaTab({ refreshKey }: { refreshKey: number }) {
   // Status KPIs
   const statusCounts: Record<string, number> = {};
   REVERSAO_STATUSES.forEach(s => { statusCounts[s.value] = 0; });
-  clients.forEach(c => {
-    const st = getStatus(c.meeting_id);
-    statusCounts[st] = (statusCounts[st] || 0) + 1;
-  });
-  const total = clients.length;
+  records.forEach(r => { statusCounts[r.status] = (statusCounts[r.status] || 0) + 1; });
+  const total = records.length;
 
-  const filtered = clients.filter(c => {
+  const filtered = records.filter(r => {
     if (!search) return true;
     const q = search.toLowerCase();
-    return (c.client_name || '').toLowerCase().includes(q) ||
-      (c.client_url || '').toLowerCase().includes(q) ||
-      (c.created_by_email || '').toLowerCase().includes(q);
+    return (r.client_name || '').toLowerCase().includes(q) ||
+      (r.client_url || '').toLowerCase().includes(q) ||
+      (r.id_curseduca || '').toLowerCase().includes(q) ||
+      (r.cs_nome || '').toLowerCase().includes(q);
   });
 
   return (
@@ -251,7 +233,7 @@ function ReversaoTabelaTab({ refreshKey }: { refreshKey: number }) {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4">
-          <CardTitle className="text-sm">Clientes em Reversão ({filtered.length})</CardTitle>
+          <CardTitle className="text-sm">Clientes em Recuperação ({filtered.length})</CardTitle>
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 max-w-xs h-8 text-sm" />
@@ -262,7 +244,8 @@ function ReversaoTabelaTab({ refreshKey }: { refreshKey: number }) {
             <TableHeader>
               <TableRow>
                 <TableHead>Cliente</TableHead>
-                <TableHead>Última Reunião</TableHead>
+                <TableHead>ID Curseduca</TableHead>
+                <TableHead>Plano</TableHead>
                 <TableHead>Motivo</TableHead>
                 <TableHead>CS Responsável</TableHead>
                 <TableHead className="text-center">Status</TableHead>
@@ -271,61 +254,54 @@ function ReversaoTabelaTab({ refreshKey }: { refreshKey: number }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((row, idx) => {
-                const tr = tracking[row.meeting_id];
-                return (
-                  <TableRow key={row.meeting_id || idx}>
-                    <TableCell>
-                      <div className="flex flex-col gap-0.5">
-                        {row.client_name && <span className="text-sm font-medium text-foreground">{row.client_name}</span>}
-                        {row.client_url ? (
-                          <a href={row.client_url.startsWith('http') ? row.client_url : `https://${row.client_url}`}
-                            target="_blank" rel="noopener noreferrer"
-                            className="text-xs text-primary hover:underline truncate max-w-[200px]">
-                            {row.client_url}
-                          </a>
-                        ) : <span className="text-xs text-muted-foreground">Sem URL</span>}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <CalendarDays className="h-3.5 w-3.5" />
-                        {format(parseISO(row.meeting_date), 'dd/MM/yyyy', { locale: ptBR })}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground max-w-[180px] truncate">{row.loyalty_reason || '—'}</TableCell>
-                    <TableCell>
-                      <span className="flex items-center gap-1 text-sm">
-                        <User className="h-3.5 w-3.5 text-muted-foreground" />
-                        {row.created_by_email || '—'}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Select value={getStatus(row.meeting_id)} onValueChange={(v) => handleStatusChange(row, v)}>
-                        <SelectTrigger className="h-7 w-[170px] text-[11px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {REVERSAO_STATUSES.map(s => (
-                            <SelectItem key={s.value} value={s.value} className="text-xs">{s.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {tr?.status_changed_at
-                        ? format(parseISO(tr.status_changed_at), 'dd/MM/yy HH:mm', { locale: ptBR })
-                        : '—'}
-                    </TableCell>
-                    <TableCell>
-                      <NotasPopover
-                        value={tr?.notas || ''}
-                        onSave={(v) => handleNotasSave(row.meeting_id, v, row)}
-                      />
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+              {filtered.map((row) => (
+                <TableRow key={row.id}>
+                  <TableCell>
+                    <div className="flex flex-col gap-0.5">
+                      {row.client_name && <span className="text-sm font-medium text-foreground">{row.client_name}</span>}
+                      {row.client_url ? (
+                        <a href={row.client_url.startsWith('http') ? row.client_url : `https://${row.client_url}`}
+                          target="_blank" rel="noopener noreferrer"
+                          className="text-xs text-primary hover:underline truncate max-w-[200px]">
+                          {row.client_url}
+                        </a>
+                      ) : <span className="text-xs text-muted-foreground">Sem URL</span>}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground font-mono">{row.id_curseduca}</TableCell>
+                  <TableCell><Badge variant="outline" className="text-[10px]">{row.plano || '—'}</Badge></TableCell>
+                  <TableCell className="text-sm text-muted-foreground max-w-[180px] truncate">{row.loyalty_reason || '—'}</TableCell>
+                  <TableCell>
+                    <span className="flex items-center gap-1 text-sm">
+                      <User className="h-3.5 w-3.5 text-muted-foreground" />
+                      {row.cs_nome || '—'}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Select value={row.status} onValueChange={(v) => handleStatusChange(row, v)}>
+                      <SelectTrigger className="h-7 w-[170px] text-[11px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {REVERSAO_STATUSES.map(s => (
+                          <SelectItem key={s.value} value={s.value} className="text-xs">{s.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {row.status_changed_at
+                      ? format(parseISO(row.status_changed_at), 'dd/MM/yy HH:mm', { locale: ptBR })
+                      : '—'}
+                  </TableCell>
+                  <TableCell>
+                    <NotasPopover
+                      value={row.notas || ''}
+                      onSave={(v) => handleNotasSave(row, v)}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </CardContent>
@@ -358,20 +334,16 @@ function NotasPopover({ value, onSave }: { value: string; onSave: (v: string) =>
 
 // ── Gráficos Tab ──
 function ReversaoGraficosTab({ refreshKey }: { refreshKey: number }) {
-  const { clients, tracking, loading } = useReversaoData(refreshKey);
+  const { records, loading } = useChurnData(refreshKey);
 
   if (loading) return <div className="flex items-center justify-center h-40"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
-  const getStatus = (meetingId: string) => tracking[meetingId]?.status || 'nenhum_contato';
-  const total = clients.length;
+  const total = records.length;
 
   // Status distribution
   const statusCounts: Record<string, number> = {};
   REVERSAO_STATUSES.forEach(s => { statusCounts[s.value] = 0; });
-  clients.forEach(c => {
-    const st = getStatus(c.meeting_id);
-    statusCounts[st] = (statusCounts[st] || 0) + 1;
-  });
+  records.forEach(r => { statusCounts[r.status] = (statusCounts[r.status] || 0) + 1; });
 
   const pieData = REVERSAO_STATUSES.map((s, i) => ({
     name: s.label,
@@ -381,11 +353,10 @@ function ReversaoGraficosTab({ refreshKey }: { refreshKey: number }) {
 
   // CS breakdown
   const csCounts: Record<string, Record<string, number>> = {};
-  clients.forEach(c => {
-    const cs = c.created_by_email || 'Sem CS';
-    const st = getStatus(c.meeting_id);
+  records.forEach(r => {
+    const cs = r.cs_nome || r.cs_email || 'Sem CS';
     if (!csCounts[cs]) csCounts[cs] = {};
-    csCounts[cs][st] = (csCounts[cs][st] || 0) + 1;
+    csCounts[cs][r.status] = (csCounts[cs][r.status] || 0) + 1;
   });
 
   const csBarData = Object.entries(csCounts).map(([cs, counts]) => ({
@@ -394,13 +365,15 @@ function ReversaoGraficosTab({ refreshKey }: { refreshKey: number }) {
     total: Object.values(counts).reduce((a, b) => a + b, 0),
   })).sort((a, b) => b.total - a.total).slice(0, 15);
 
-  // Monthly trend from status_changed_at
+  // Monthly trend
   const monthlyTrend: Record<string, Record<string, number>> = {};
-  Object.values(tracking).forEach(t => {
-    if (t.status_changed_at) {
-      const month = t.status_changed_at.substring(0, 7); // YYYY-MM
-      if (!monthlyTrend[month]) monthlyTrend[month] = {};
-      monthlyTrend[month][t.status] = (monthlyTrend[month][t.status] || 0) + 1;
+  records.forEach(r => {
+    if (r.status_changed_at) {
+      const month = r.status_changed_at.substring(0, 7);
+      if (month >= '2026-01') {
+        if (!monthlyTrend[month]) monthlyTrend[month] = {};
+        monthlyTrend[month][r.status] = (monthlyTrend[month][r.status] || 0) + 1;
+      }
     }
   });
 

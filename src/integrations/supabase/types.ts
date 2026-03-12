@@ -1196,6 +1196,63 @@ export type Database = {
           },
         ]
       }
+      cliente_churn: {
+        Row: {
+          client_name: string | null
+          client_url: string | null
+          created_at: string
+          cs_email: string | null
+          cs_nome: string | null
+          id: string
+          id_curseduca: string
+          loyalty_reason: string | null
+          meeting_id: string | null
+          notas: string | null
+          plano: string | null
+          receita: number | null
+          status: string
+          status_changed_at: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          client_name?: string | null
+          client_url?: string | null
+          created_at?: string
+          cs_email?: string | null
+          cs_nome?: string | null
+          id?: string
+          id_curseduca: string
+          loyalty_reason?: string | null
+          meeting_id?: string | null
+          notas?: string | null
+          plano?: string | null
+          receita?: number | null
+          status?: string
+          status_changed_at?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          client_name?: string | null
+          client_url?: string | null
+          created_at?: string
+          cs_email?: string | null
+          cs_nome?: string | null
+          id?: string
+          id_curseduca?: string
+          loyalty_reason?: string | null
+          meeting_id?: string | null
+          notas?: string | null
+          plano?: string | null
+          receita?: number | null
+          status?: string
+          status_changed_at?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       clientes_inativos: {
         Row: {
           client_name: string | null
