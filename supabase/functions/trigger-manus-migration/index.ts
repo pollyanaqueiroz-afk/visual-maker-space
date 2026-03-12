@@ -87,30 +87,63 @@ Deno.serve(async (req) => {
       })),
     };
 
-    // 5. Build message for Manus
+    // 5. Discover correct Manus project_id via API
+    const MANUS_BASE = "https://api.manus.im/v1";
+    const manusHeaders = {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${MANUS_API_KEY}`,
+    };
+
+    console.log("Fetching Manus projects to discover correct project_id...");
+    const projectsRes = await fetch(`${MANUS_BASE}/projects`, {
+      method: "GET",
+      headers: manusHeaders,
+    });
+    const projectsBody = await projectsRes.text();
+    console.log(`GET /v1/projects status: ${projectsRes.status}`);
+    console.log(`GET /v1/projects body: ${projectsBody}`);
+
+    if (!projectsRes.ok) {
+      throw new Error(`Manus API /projects error [${projectsRes.status}]: ${projectsBody}`);
+    }
+
+    let manusProjects: any;
+    try { manusProjects = JSON.parse(projectsBody); } catch { manusProjects = null; }
+
+    // Try to find "Migrações" project, fallback to first project
+    let manusProjectId: string | null = null;
+    const projectList = Array.isArray(manusProjects) ? manusProjects : manusProjects?.data || manusProjects?.projects || [];
+    
+    for (const p of projectList) {
+      const name = (p.name || p.title || "").toLowerCase();
+      if (name.includes("migra")) {
+        manusProjectId = p.id || p.project_id;
+        break;
+      }
+    }
+    if (!manusProjectId && projectList.length > 0) {
+      manusProjectId = projectList[0].id || projectList[0].project_id;
+    }
+    if (!manusProjectId) {
+      throw new Error(`No Manus projects found. Response: ${projectsBody}`);
+    }
+
+    console.log(`Using Manus project_id: ${manusProjectId}`);
+
+    // 6. Build message and send task
     const actionLabel = action === "validate"
       ? "Validar dados de migração"
       : "Iniciar migração";
-
     const message = `${actionLabel}. Payload:\n\n${JSON.stringify(payload, null, 2)}`;
 
-    // 6. Send to Manus API
-    const MANUS_ENDPOINT = "https://api.manus.im/v1/tasks";
-    const MANUS_PROJECT_ID = "VQYdJ1YaS5kf3fdir4RuDL";
-
-    console.log(`Sending to Manus API: ${MANUS_ENDPOINT}`);
-    console.log(`Manus project_id: ${MANUS_PROJECT_ID}`);
+    console.log(`Sending task to Manus API: ${MANUS_BASE}/tasks`);
     console.log(`Action: ${action}`);
 
-    const manusResponse = await fetch(MANUS_ENDPOINT, {
+    const manusResponse = await fetch(`${MANUS_BASE}/tasks`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${MANUS_API_KEY}`,
-        "API_KEY": MANUS_API_KEY,
-      },
+      headers: manusHeaders,
       body: JSON.stringify({
-        project_id: MANUS_PROJECT_ID,
+        project_id: manusProjectId,
         prompt: message,
       }),
     });
