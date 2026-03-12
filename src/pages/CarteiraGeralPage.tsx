@@ -229,27 +229,26 @@ export default function CarteiraGeralPage() {
 
   const loadSummary = useCallback(async () => {
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      let summaryUrl = `${supabaseUrl}/functions/v1/fetch-hub-summary`;
-      if (isCs && userEmail) {
-        summaryUrl += `?cs_email_atual=${encodeURIComponent(userEmail)}`;
-      } else if (isAdmin && csFilter) {
-        summaryUrl += `?cs_email_atual=${encodeURIComponent(csFilter)}`;
-      }
-      const res = await fetch(summaryUrl, {
-        headers: {
-          'Authorization': `Bearer ${supabaseKey}`,
-          'apikey': supabaseKey,
-        },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.total_clientes != null) setSummaryTotal(data.total_clientes);
-        if (data.receita_total != null) setSummaryReceita(data.receita_total);
-        if (data.total_adimplentes != null) setSummaryAdimplentes(data.total_adimplentes);
-        if (data.total_inadimplentes != null) setSummaryInadimplentes(data.total_inadimplentes);
-      }
+      // Get total count
+      const { count: totalCount } = await supabase
+        .from('clients')
+        .select('id', { count: 'exact', head: true });
+
+      // Get adimplentes count  
+      const { count: adimpCount } = await supabase
+        .from('clients')
+        .select('id', { count: 'exact', head: true })
+        .eq('status_financeiro', 'Adimplente');
+
+      // Get inadimplentes count
+      const { count: inadimpCount } = await supabase
+        .from('clients')
+        .select('id', { count: 'exact', head: true })
+        .eq('status_financeiro', 'Inadimplente');
+
+      setSummaryTotal(totalCount || 0);
+      setSummaryAdimplentes(adimpCount || 0);
+      setSummaryInadimplentes(inadimpCount || 0);
     } catch (err) {
       console.error('Erro ao carregar summary:', err);
     }
