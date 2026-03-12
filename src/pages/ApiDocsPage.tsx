@@ -273,16 +273,27 @@ export default function ApiDocsPage() {
         <TabsContent value="manage-data" className="space-y-6 mt-6">
           <Card>
             <CardHeader>
+              <CardTitle className="text-lg">manage-data-api</CardTitle>
+              <CardDescription>
+                Criar e atualizar registros nas entidades <code className="font-mono text-xs bg-muted px-1 rounded">clients</code> e <code className="font-mono text-xs bg-muted px-1 rounded">cliente_financeiro</code>.
+                Use o parâmetro <code className="font-mono text-xs bg-muted px-1 rounded">?entity=</code> para escolher a entidade (default: clients).
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          {/* POST clients */}
+          <Card>
+            <CardHeader>
               <div className="flex items-center gap-2">
                 <Badge className="bg-green-500/10 text-green-600 border-green-200">POST</Badge>
-                <CardTitle className="text-base font-mono">/functions/v1/manage-data-api</CardTitle>
+                <CardTitle className="text-base font-mono">/functions/v1/manage-data-api?entity=clients</CardTitle>
               </div>
               <CardDescription>Criar um novo cliente.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
               <div>
                 <h4 className="text-sm font-semibold mb-2">Exemplo</h4>
-                <CodeBlock code={`curl -X POST '${BASE_URL}/manage-data-api' \\
+                <CodeBlock code={`curl -X POST '${BASE_URL}/manage-data-api?entity=clients' \\
   -H 'Authorization: Basic ${API_TOKEN}' \\
   -H 'Content-Type: application/json' \\
   -d '{
@@ -290,60 +301,79 @@ export default function ApiDocsPage() {
     "nome": "Empresa Teste",
     "email": "contato@teste.com",
     "plano": "Premium",
-    "cs_atual": "joao@curseduca.com",
-    "status_curseduca": "ativo"
+    "cs_atual": "joao@curseduca.com"
   }'`} />
               </div>
-
               <div>
-                <h4 className="text-sm font-semibold mb-2">Campos aceitos</h4>
+                <h4 className="text-sm font-semibold mb-2">Campos aceitos (clients)</h4>
                 <FieldsTable fields={clientFields} />
-              </div>
-
-              <div>
-                <h4 className="text-sm font-semibold mb-2">Resposta (201)</h4>
-                <CodeBlock code={`{
-  "success": true,
-  "data": { "id": "uuid...", "id_curseduca": "12345", "nome": "Empresa Teste", ... }
-}`} language="json" />
               </div>
             </CardContent>
           </Card>
 
+          {/* POST cliente_financeiro */}
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Badge className="bg-amber-500/10 text-amber-600 border-amber-200">PATCH</Badge>
-                <CardTitle className="text-base font-mono">/functions/v1/manage-data-api?id_curseduca=12345</CardTitle>
+                <Badge className="bg-green-500/10 text-green-600 border-green-200">POST</Badge>
+                <CardTitle className="text-base font-mono">/functions/v1/manage-data-api?entity=cliente_financeiro</CardTitle>
               </div>
-              <CardDescription>Atualizar um cliente existente pelo id_curseduca.</CardDescription>
+              <CardDescription>Criar um novo registro financeiro.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
               <div>
                 <h4 className="text-sm font-semibold mb-2">Exemplo</h4>
-                <CodeBlock code={`curl -X PATCH '${BASE_URL}/manage-data-api?id_curseduca=12345' \\
+                <CodeBlock code={`curl -X POST '${BASE_URL}/manage-data-api?entity=cliente_financeiro' \\
   -H 'Authorization: Basic ${API_TOKEN}' \\
   -H 'Content-Type: application/json' \\
   -d '{
-    "status_curseduca": "inativo",
-    "indice_fidelidade": 3
+    "id_curseduca": "12345",
+    "nome": "Empresa Teste",
+    "plano": "Premium",
+    "meio_de_pagamento": "cartao",
+    "valor_contratado": 497,
+    "status": "ativo",
+    "is_plano": true,
+    "tipo_plano": "anual"
   }'`} />
               </div>
-
               <div>
-                <h4 className="text-sm font-semibold mb-2">Resposta (200)</h4>
-                <CodeBlock code={`{
-  "success": true,
-  "data": { "id": "uuid...", "id_curseduca": "12345", "status_curseduca": "inativo", ... }
-}`} language="json" />
+                <h4 className="text-sm font-semibold mb-2">Campos aceitos (cliente_financeiro)</h4>
+                <FieldsTable fields={financeiroFields} />
               </div>
+            </CardContent>
+          </Card>
 
+          {/* PATCH */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Badge className="bg-amber-500/10 text-amber-600 border-amber-200">PATCH</Badge>
+                <CardTitle className="text-base font-mono">/functions/v1/manage-data-api?entity=...&id_curseduca=12345</CardTitle>
+              </div>
+              <CardDescription>Atualizar um registro existente pelo id_curseduca em qualquer entidade suportada.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div>
+                <h4 className="text-sm font-semibold mb-2">Exemplo (clients)</h4>
+                <CodeBlock code={`curl -X PATCH '${BASE_URL}/manage-data-api?entity=clients&id_curseduca=12345' \\
+  -H 'Authorization: Basic ${API_TOKEN}' \\
+  -H 'Content-Type: application/json' \\
+  -d '{ "status_curseduca": "inativo", "indice_fidelidade": 3 }'`} />
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold mb-2">Exemplo (cliente_financeiro)</h4>
+                <CodeBlock code={`curl -X PATCH '${BASE_URL}/manage-data-api?entity=cliente_financeiro&id_curseduca=12345' \\
+  -H 'Authorization: Basic ${API_TOKEN}' \\
+  -H 'Content-Type: application/json' \\
+  -d '{ "status": "inadimplente", "numero_parcelas_inadimplentes": 2 }'`} />
+              </div>
               <div>
                 <h4 className="text-sm font-semibold mb-2">Erros possíveis</h4>
                 <FieldsTable fields={[
-                  { name: '400', type: 'error', description: 'id_curseduca ausente ou nenhum campo válido enviado' },
+                  { name: '400', type: 'error', description: 'id_curseduca ausente, entity inválida ou nenhum campo válido' },
                   { name: '401', type: 'error', description: 'Token de autenticação inválido' },
-                  { name: '404', type: 'error', description: 'Cliente com o id_curseduca informado não encontrado' },
+                  { name: '404', type: 'error', description: 'Registro com o id_curseduca não encontrado' },
                   { name: '405', type: 'error', description: 'Método HTTP não permitido (use POST ou PATCH)' },
                   { name: '500', type: 'error', description: 'Erro interno do servidor' },
                 ]} />
