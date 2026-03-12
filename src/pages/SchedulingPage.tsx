@@ -2084,35 +2084,46 @@ export default function SchedulingPage() {
               </div>
               <div className="space-y-2">
                 <Label>Índice de Fidelidade *</Label>
-                <Select value={confirmForm.loyalty_index} onValueChange={v => setConfirmForm(f => ({ ...f, loyalty_index: v, ...(v === '0' ? { loyalty_reason: '' } : {}) }))}>
-                  <SelectTrigger className={confirmForm.loyalty_index === '' ? 'text-muted-foreground' : ''}>
-                    <SelectValue placeholder="Selecione de 1 a 4 ou Reunião Interna" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1 — Muito baixo</SelectItem>
-                    <SelectItem value="2">2 — Baixo</SelectItem>
-                    <SelectItem value="3">3 — Alto</SelectItem>
-                    <SelectItem value="4">4 — Muito alto</SelectItem>
-                    <SelectItem value="0">
-                      <span className="text-muted-foreground">Reunião Interna</span>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                {confirmForm.loyalty_index === '0' && (
-                  <p className="text-xs text-muted-foreground">Reuniões internas não impactam o índice de fidelidade do cliente.</p>
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setConfirmForm(f => ({ ...f, loyalty_stars: star }))}
+                      className="p-0.5 transition-transform hover:scale-110"
+                    >
+                      <Star
+                        className={cn(
+                          "h-7 w-7 transition-colors",
+                          star <= confirmForm.loyalty_stars
+                            ? "fill-amber-400 text-amber-400"
+                            : "text-muted-foreground/30"
+                        )}
+                      />
+                    </button>
+                  ))}
+                  {confirmForm.loyalty_stars > 0 && (
+                    <span className="text-sm text-muted-foreground ml-2">
+                      {confirmForm.loyalty_stars}/5
+                    </span>
+                  )}
+                </div>
+                {confirmForm.loyalty_stars > 0 && confirmForm.loyalty_stars <= 2 && (
+                  <p className="text-xs text-destructive">⚠️ Índice baixo — observação obrigatória</p>
                 )}
               </div>
-              {confirmForm.loyalty_index !== '0' && (
-                <div className="space-y-2">
-                  <Label>Motivo do Índice *</Label>
-                  <Textarea
-                    value={confirmForm.loyalty_reason}
-                    onChange={e => setConfirmForm(f => ({ ...f, loyalty_reason: e.target.value }))}
-                    placeholder="Explique o motivo pelo qual você atribuiu esse índice..."
-                    rows={3}
-                  />
-                </div>
-              )}
+              <div className="space-y-2">
+                <Label>
+                  Observações {confirmForm.loyalty_stars > 0 && confirmForm.loyalty_stars <= 2 ? '*' : ''}
+                </Label>
+                <Textarea
+                  value={confirmForm.observations}
+                  onChange={e => setConfirmForm(f => ({ ...f, observations: e.target.value }))}
+                  placeholder={confirmForm.loyalty_stars <= 2 && confirmForm.loyalty_stars > 0 ? 'Explique o motivo do índice baixo...' : 'Observações sobre a reunião (opcional)...'}
+                  rows={3}
+                  className={cn(confirmForm.loyalty_stars > 0 && confirmForm.loyalty_stars <= 2 && "border-destructive/50 focus-visible:ring-destructive/30")}
+                />
+              </div>
               <Button className="w-full" onClick={handleConfirmSubmit} disabled={confirmSubmitting}>
                 {confirmSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle className="h-4 w-4 mr-2" />}
                 Confirmar Reunião
