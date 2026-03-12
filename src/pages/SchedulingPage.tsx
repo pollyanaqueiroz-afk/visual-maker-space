@@ -1058,32 +1058,190 @@ export default function SchedulingPage() {
                 <Label>Link da reunião (Zoom, Meet, etc.)</Label>
                 <Input value={form.meeting_url} onChange={e => setForm(f => ({ ...f, meeting_url: e.target.value }))} placeholder="https://meet.google.com/..." />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>Nome do cliente</Label>
-                  <Input value={form.client_name} onChange={e => setForm(f => ({ ...f, client_name: e.target.value }))} placeholder="João Silva" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Email do cliente</Label>
-                  <Input value={form.client_email} onChange={e => setForm(f => ({ ...f, client_email: e.target.value }))} placeholder="joao@email.com" />
-                </div>
-              </div>
               <div className="space-y-2">
-                <Label>URL do cliente (plataforma)</Label>
-                <Input value={form.client_url} onChange={e => setForm(f => ({ ...f, client_url: e.target.value }))} placeholder="https://cliente.curseduca.com" />
+                <Label>Email do cliente</Label>
+                <Input value={form.client_email} onChange={e => setForm(f => ({ ...f, client_email: e.target.value }))} placeholder="joao@email.com" />
               </div>
               <div className="space-y-2">
                 <Label>Participantes (separados por vírgula)</Label>
                 <Input value={form.participants} onChange={e => setForm(f => ({ ...f, participants: e.target.value }))} placeholder="ana@email.com, pedro@email.com" />
               </div>
-              <div className="space-y-2">
-                <Label>Descrição</Label>
-                <Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Pauta da reunião..." rows={2} />
-              </div>
-              <div className="space-y-2">
-                <Label>Observações</Label>
-                <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Notas internas..." rows={2} />
-              </div>
+
+              {/* Recurrence selector */}
+              {!editingId && (
+                <div className="space-y-2">
+                  <Label>Recorrência</Label>
+                  <Select
+                    value={recurrence.type}
+                    onValueChange={v => {
+                      if (v === 'custom') {
+                        setTempRecurrence({ ...recurrence, type: 'custom', frequency: 'week', weekDays: form.meeting_date ? [getDay(parseISO(form.meeting_date))] : [getDay(new Date())] });
+                        setCustomRecurrenceOpen(true);
+                      } else {
+                        setRecurrence({ ...DEFAULT_RECURRENCE, type: v as RecurrenceType });
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue>{getRecurrenceLabel()}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Não se repete</SelectItem>
+                      <SelectItem value="daily">Todos os dias</SelectItem>
+                      <SelectItem value="weekly">
+                        {form.meeting_date
+                          ? `Semanal: cada ${['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'][getDay(parseISO(form.meeting_date))]}`
+                          : 'Semanal'}
+                      </SelectItem>
+                      <SelectItem value="monthly">
+                        {form.meeting_date
+                          ? (() => {
+                              const d = parseISO(form.meeting_date);
+                              const dayNames = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+                              const weekNum = Math.ceil(d.getDate() / 7);
+                              const ordinals = ['','primeiro(a)','segundo(a)','terceiro(a)','quarto(a)','quinto(a)'];
+                              return `Mensal no(a) ${ordinals[weekNum]} ${dayNames[getDay(d)]}`;
+                            })()
+                          : 'Mensal'}
+                      </SelectItem>
+                      <SelectItem value="annually">
+                        {form.meeting_date
+                          ? (() => {
+                              const d = parseISO(form.meeting_date);
+                              const monthNames = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+                              return `Anual em ${monthNames[d.getMonth()]} ${d.getDate()}`;
+                            })()
+                          : 'Anual'}
+                      </SelectItem>
+                      <SelectItem value="weekdays">Todos os dias da semana (segunda a sexta-feira)</SelectItem>
+                      <SelectItem value="custom">Personalizar...</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Custom recurrence dialog */}
+              <Dialog open={customRecurrenceOpen} onOpenChange={setCustomRecurrenceOpen}>
+                <DialogContent className="max-w-sm">
+                  <DialogHeader>
+                    <DialogTitle>Recorrência personalizada</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-5 pt-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-foreground whitespace-nowrap">Repetir a cada:</span>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={99}
+                        className="w-16"
+                        value={tempRecurrence.interval}
+                        onChange={e => setTempRecurrence(r => ({ ...r, interval: Math.max(1, parseInt(e.target.value) || 1) }))}
+                      />
+                      <Select value={tempRecurrence.frequency} onValueChange={v => setTempRecurrence(r => ({ ...r, frequency: v as RecurrenceFrequency }))}>
+                        <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="day">dia</SelectItem>
+                          <SelectItem value="week">semana</SelectItem>
+                          <SelectItem value="month">mês</SelectItem>
+                          <SelectItem value="year">ano</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {tempRecurrence.frequency === 'week' && (
+                      <div className="space-y-2">
+                        <span className="text-sm text-foreground">Repetir:</span>
+                        <div className="flex gap-1.5">
+                          {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((label, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                setTempRecurrence(r => ({
+                                  ...r,
+                                  weekDays: r.weekDays.includes(idx)
+                                    ? r.weekDays.filter(d => d !== idx)
+                                    : [...r.weekDays, idx].sort(),
+                                }));
+                              }}
+                              className={cn(
+                                "h-9 w-9 rounded-full text-sm font-medium transition-colors border",
+                                tempRecurrence.weekDays.includes(idx)
+                                  ? "bg-primary text-primary-foreground border-primary"
+                                  : "bg-background text-foreground border-border hover:bg-muted"
+                              )}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-3">
+                      <span className="text-sm text-foreground">Termina em</span>
+                      <div className="space-y-2">
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="recurrence-end"
+                            checked={tempRecurrence.endType === 'never'}
+                            onChange={() => setTempRecurrence(r => ({ ...r, endType: 'never' }))}
+                            className="accent-primary"
+                          />
+                          <span className="text-sm text-foreground">Nunca</span>
+                        </label>
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="recurrence-end"
+                            checked={tempRecurrence.endType === 'on_date'}
+                            onChange={() => setTempRecurrence(r => ({ ...r, endType: 'on_date' }))}
+                            className="accent-primary"
+                          />
+                          <span className="text-sm text-foreground">Em</span>
+                          <Input
+                            type="date"
+                            className="w-40"
+                            value={tempRecurrence.endDate}
+                            onChange={e => setTempRecurrence(r => ({ ...r, endDate: e.target.value, endType: 'on_date' }))}
+                            disabled={tempRecurrence.endType !== 'on_date'}
+                          />
+                        </label>
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="recurrence-end"
+                            checked={tempRecurrence.endType === 'after_occurrences'}
+                            onChange={() => setTempRecurrence(r => ({ ...r, endType: 'after_occurrences' }))}
+                            className="accent-primary"
+                          />
+                          <span className="text-sm text-foreground">Após</span>
+                          <Input
+                            type="number"
+                            min={1}
+                            max={365}
+                            className="w-16"
+                            value={tempRecurrence.occurrences}
+                            onChange={e => setTempRecurrence(r => ({ ...r, occurrences: Math.max(1, parseInt(e.target.value) || 1), endType: 'after_occurrences' }))}
+                            disabled={tempRecurrence.endType !== 'after_occurrences'}
+                          />
+                          <span className="text-sm text-muted-foreground">ocorrências</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-2">
+                      <Button variant="ghost" onClick={() => setCustomRecurrenceOpen(false)}>Cancelar</Button>
+                      <Button onClick={() => {
+                        setRecurrence({ ...tempRecurrence, type: 'custom' });
+                        setCustomRecurrenceOpen(false);
+                      }}>Concluir</Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
               {isRescheduling && (
                 <div className="space-y-2">
                   <Label className="text-destructive">Motivo do reagendamento *</Label>
