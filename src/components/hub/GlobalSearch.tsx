@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Smartphone, FileImage, Briefcase, ArrowRightLeft, Search, Loader2, X } from 'lucide-react';
+import ClientQuickViewDialog from './ClientQuickViewDialog';
 
 interface SearchResult {
   id: string;
@@ -19,6 +20,7 @@ export default function GlobalSearch() {
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [quickViewClientId, setQuickViewClientId] = useState<string | null>(null);
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -94,7 +96,11 @@ export default function GlobalSearch() {
   const showDropdown = focused && (query.length >= 2 || loading);
 
   const handleSelect = (item: SearchResult) => {
-    navigate(item.path);
+    if (item.group === 'Carteira') {
+      setQuickViewClientId(item.id);
+    } else {
+      navigate(item.path);
+    }
     setQuery('');
     setFocused(false);
     inputRef.current?.blur();
@@ -188,6 +194,12 @@ export default function GlobalSearch() {
           ))}
         </div>
       )}
+
+      <ClientQuickViewDialog
+        clientId={quickViewClientId}
+        open={!!quickViewClientId}
+        onOpenChange={(open) => { if (!open) setQuickViewClientId(null); }}
+      />
     </div>
   );
 }
