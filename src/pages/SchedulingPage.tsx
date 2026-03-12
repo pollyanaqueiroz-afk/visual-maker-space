@@ -1221,47 +1221,8 @@ export default function SchedulingPage() {
                   <Input type="time" value={form.meeting_time} onChange={e => setForm(f => ({ ...f, meeting_time: e.target.value }))} />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>Duração</Label>
-                <Select value={String(form.duration_minutes)} onValueChange={v => setForm(f => ({ ...f, duration_minutes: Number(v) }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {DURATION_OPTIONS.map(d => (
-                      <SelectItem key={d} value={String(d)}>{d} min</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Tipo de Reunião *</Label>
-                <Select value={meetingType} onValueChange={v => setMeetingType(v as 'client' | 'internal')}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="client">Com cliente</SelectItem>
-                    <SelectItem value="internal">Interna</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {meetingType === 'client' && (
-                <>
-                  <div className="space-y-2">
-                    <Label>Email do cliente</Label>
-                    <Input value={form.client_email} onChange={e => setForm(f => ({ ...f, client_email: e.target.value }))} placeholder="joao@email.com" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>URL da plataforma do cliente</Label>
-                    <Input value={form.client_url} onChange={e => setForm(f => ({ ...f, client_url: e.target.value }))} placeholder="https://cliente.curseduca.pro" />
-                  </div>
-                </>
-              )}
-              <div className="space-y-2">
-                <Label>Participantes (separados por vírgula)</Label>
-                <Input value={form.participants} onChange={e => setForm(f => ({ ...f, participants: e.target.value }))} placeholder="ana@email.com, pedro@email.com" />
-              </div>
 
-              {/* Recurrence selector */}
+              {/* Recurrence selector - right after date */}
               {!editingId && (
                 <div className="space-y-2">
                   <Label>Recorrência</Label>
@@ -1313,6 +1274,18 @@ export default function SchedulingPage() {
                   </Select>
                 </div>
               )}
+
+              <div className="space-y-2">
+                <Label>Duração</Label>
+                <Select value={String(form.duration_minutes)} onValueChange={v => setForm(f => ({ ...f, duration_minutes: Number(v) }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {DURATION_OPTIONS.map(d => (
+                      <SelectItem key={d} value={String(d)}>{d} min</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               {/* Custom recurrence dialog */}
               <Dialog open={customRecurrenceOpen} onOpenChange={setCustomRecurrenceOpen}>
