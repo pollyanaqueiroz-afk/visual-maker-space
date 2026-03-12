@@ -40,6 +40,8 @@ const csModules = [
   { title: 'BI', url: '/hub/bi', icon: PieChart, permission: 'dashboards.view', badgeKey: null },
   { title: 'Churn', url: '/hub/churn', icon: TrendingDown, permission: 'dashboards.view', badgeKey: null },
   { title: 'Upsell', url: '/hub/upsell', icon: Rocket, permission: 'dashboards.view', badgeKey: null },
+  { title: 'Reversão', url: '/hub/reversao', icon: RotateCcw, permission: 'funil.view', badgeKey: null },
+  { title: 'Clientes Inativos', url: '/hub/inativos', icon: UserX, permission: 'dashboards.view', badgeKey: null },
 ];
 
 const auditoriaModules = [
