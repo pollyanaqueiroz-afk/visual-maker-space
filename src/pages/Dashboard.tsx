@@ -132,6 +132,7 @@ export default function Dashboard() {
         case 'pending': setFilterStatus('pending'); break;
         case 'in_progress': setFilterStatus('in_progress'); break;
         case 'review': setFilterStatus('review'); break;
+        case 'revision': setFilterStatus('revision'); break;
         case 'completed': setFilterStatus('completed'); break;
         case 'cancelled': setFilterStatus('cancelled'); break;
         case 'clients': setFilterStatus('all'); break;
