@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
     let query = supabase.from("clients").select("*", { count: "exact" });
 
     if (search) {
-      query = query.or(`cliente.ilike.%${search}%,id_curseduca.ilike.%${search}%`);
+      query = query.or(`nome.ilike.%${search}%,id_curseduca.ilike.%${search}%`);
     }
     if (csAtual) {
       query = query.eq("cs_atual", csAtual);
