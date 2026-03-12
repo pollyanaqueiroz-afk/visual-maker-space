@@ -220,8 +220,8 @@ export default function SchedulingPage() {
   const [confirmForm, setConfirmForm] = useState({
     minutes_url: '',
     recording_url: '',
-    loyalty_index: '',
-    loyalty_reason: '',
+    loyalty_stars: 0,
+    observations: '',
   });
   const [confirmSubmitting, setConfirmSubmitting] = useState(false);
   const [csatMap, setCsatMap] = useState<Record<string, { score: number | null; responded: boolean }>>({});
