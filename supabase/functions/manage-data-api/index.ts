@@ -8,17 +8,29 @@ const corsHeaders = {
 
 const EXPECTED_TOKEN = "WxYVWSfUJ3kslYCkqlyo5DMdsQHzBA1guEvgAlF86T4CiMqPmPbrVEemby5udFaq";
 
-// Whitelist of allowed columns for insert/update on clients
-const ALLOWED_CLIENT_FIELDS = [
-  "id_curseduca", "nome", "email", "email_alternativo",
-  "telefone_alternativo", "data_criacao", "status_financeiro",
-  "status_curseduca", "plano", "cs_atual", "cs_anterior",
-  "indice_fidelidade",
-];
+// Whitelist per entity
+const ALLOWED_FIELDS: Record<string, string[]> = {
+  clients: [
+    "id_curseduca", "nome", "email", "email_alternativo",
+    "telefone_alternativo", "data_criacao", "status_financeiro",
+    "status_curseduca", "plano", "cs_atual", "cs_anterior",
+    "indice_fidelidade",
+  ],
+  cliente_financeiro: [
+    "id_curseduca", "nome", "email", "codigo_assinatura_meio_pagamento",
+    "codigo_cliente_meio_pagamento", "plano", "meio_de_pagamento",
+    "meio_pagamento", "valor_contratado", "numero_parcelas_pagas",
+    "numero_parcelas_inadimplentes", "numero_parcelas_contrato",
+    "recorrencia_pagamento", "is_plano", "tipo_plano", "is_upsell",
+    "tipo_upsell", "status", "vigencia_assinatura", "data_criacao",
+    "processed_at",
+  ],
+};
 
-function sanitizePayload(body: Record<string, unknown>): Record<string, unknown> {
+function sanitizePayload(body: Record<string, unknown>, entity: string): Record<string, unknown> {
+  const allowed = ALLOWED_FIELDS[entity] || [];
   const clean: Record<string, unknown> = {};
-  for (const key of ALLOWED_CLIENT_FIELDS) {
+  for (const key of allowed) {
     if (key in body) {
       clean[key] = body[key];
     }
@@ -32,7 +44,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Auth
     const authHeader = req.headers.get("Authorization") || "";
     const token = authHeader.replace(/^Basic\s+/i, "").trim();
     if (token !== EXPECTED_TOKEN) {
@@ -48,11 +59,19 @@ Deno.serve(async (req) => {
     );
 
     const url = new URL(req.url);
+    const entity = url.searchParams.get("entity") || "clients";
 
-    // ─── POST: Create a new client ───
+    if (!ALLOWED_FIELDS[entity]) {
+      return new Response(
+        JSON.stringify({ error: `Entity '${entity}' not supported. Available: ${Object.keys(ALLOWED_FIELDS).join(", ")}` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ─── POST: Create a new record ───
     if (req.method === "POST") {
       const body = await req.json();
-      const payload = sanitizePayload(body);
+      const payload = sanitizePayload(body, entity);
 
       if (!payload.id_curseduca) {
         return new Response(
@@ -62,7 +81,7 @@ Deno.serve(async (req) => {
       }
 
       const { data, error } = await supabase
-        .from("clients")
+        .from(entity)
         .insert(payload)
         .select()
         .single();
@@ -75,7 +94,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // ─── PATCH: Update client by id_curseduca ───
+    // ─── PATCH: Update record by id_curseduca ───
     if (req.method === "PATCH") {
       const idCurseduca = url.searchParams.get("id_curseduca");
       if (!idCurseduca) {
@@ -86,20 +105,18 @@ Deno.serve(async (req) => {
       }
 
       const body = await req.json();
-      const payload = sanitizePayload(body);
-
-      // Remove id_curseduca from update payload to avoid overwriting the key
+      const payload = sanitizePayload(body, entity);
       delete payload.id_curseduca;
 
       if (Object.keys(payload).length === 0) {
         return new Response(
-          JSON.stringify({ error: "No valid fields to update. Allowed: " + ALLOWED_CLIENT_FIELDS.join(", ") }),
+          JSON.stringify({ error: "No valid fields to update. Allowed: " + ALLOWED_FIELDS[entity].join(", ") }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      const { data, error, count } = await supabase
-        .from("clients")
+      const { data, error } = await supabase
+        .from(entity)
         .update(payload)
         .eq("id_curseduca", idCurseduca)
         .select();
@@ -108,7 +125,7 @@ Deno.serve(async (req) => {
 
       if (!data || data.length === 0) {
         return new Response(
-          JSON.stringify({ error: `Client with id_curseduca '${idCurseduca}' not found` }),
+          JSON.stringify({ error: `Record with id_curseduca '${idCurseduca}' not found in ${entity}` }),
           { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }

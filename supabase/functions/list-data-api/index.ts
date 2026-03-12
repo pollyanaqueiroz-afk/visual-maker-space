@@ -39,7 +39,7 @@ const ALLOWED_ENTITIES: Record<string, { table: string; searchColumns?: string[]
   meeting_reschedules: { table: "meeting_reschedules", searchColumns: ["reason"], orderBy: "created_at" },
   scorm_packages: { table: "scorm_packages", searchColumns: ["title", "client_name"], orderBy: "created_at" },
   profiles: { table: "profiles", searchColumns: ["email", "display_name"], orderBy: "created_at" },
-  cliente_financeiro: { table: "cliente_financeiro", searchColumns: ["id_curseduca", "meio_de_pagamento", "status"], orderBy: "created_at" },
+  cliente_financeiro: { table: "cliente_financeiro", searchColumns: ["id_curseduca", "nome", "email", "meio_de_pagamento", "plano", "status"], orderBy: "created_at" },
 };
 
 Deno.serve(async (req) => {
