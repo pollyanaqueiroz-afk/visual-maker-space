@@ -650,39 +650,57 @@ export default function SchedulingPage() {
     else { toast.success('Reunião removida'); fetchMeetings(); }
   };
 
-  const handleOpenConfirm = (m: Meeting) => {
+  const handleOpenConfirm = async (m: Meeting) => {
     setConfirmingMeeting(m);
+    // Try to load existing minutes
+    const { data: existingMinutes } = await supabase
+      .from('meeting_minutes')
+      .select('*')
+      .eq('meeting_id', m.id)
+      .maybeSingle();
+
     setConfirmForm({
       minutes_url: m.minutes_url || '',
       recording_url: m.recording_url || '',
-      loyalty_index: m.loyalty_index ? String(m.loyalty_index) : '',
-      loyalty_reason: m.loyalty_reason || '',
+      loyalty_stars: (existingMinutes as any)?.loyalty_stars || 0,
+      observations: (existingMinutes as any)?.observations || '',
     });
     setConfirmDialogOpen(true);
   };
 
   const handleConfirmSubmit = async () => {
     if (!confirmingMeeting) return;
-    if (confirmForm.loyalty_index === '') {
-      toast.error('Selecione o índice de fidelidade');
+    if (confirmForm.loyalty_stars === 0) {
+      toast.error('Selecione o índice de fidelidade (1 a 5 estrelas)');
       return;
     }
-    const isInternal = confirmForm.loyalty_index === '0';
-    if (!isInternal && !confirmForm.loyalty_reason.trim()) {
-      toast.error('Preencha o motivo do índice de fidelidade');
+    if (confirmForm.loyalty_stars <= 2 && !confirmForm.observations.trim()) {
+      toast.error('Observação é obrigatória para índice 1 ou 2 estrelas');
       return;
     }
     setConfirmSubmitting(true);
     try {
+      // Update meeting status
       const { error } = await supabase.from('meetings').update({
         status: 'completed',
         minutes_url: confirmForm.minutes_url || null,
         recording_url: confirmForm.recording_url || null,
-        loyalty_index: Number(confirmForm.loyalty_index),
-        loyalty_reason: isInternal ? 'Reunião Interna' : confirmForm.loyalty_reason,
+        loyalty_index: confirmForm.loyalty_stars,
+        loyalty_reason: confirmForm.observations || null,
       }).eq('id', confirmingMeeting.id);
       if (error) throw error;
-      toast.success('Reunião confirmada!');
+
+      // Upsert meeting_minutes
+      const { error: minutesError } = await supabase
+        .from('meeting_minutes')
+        .upsert({
+          meeting_id: confirmingMeeting.id,
+          loyalty_stars: confirmForm.loyalty_stars,
+          observations: confirmForm.observations || null,
+        } as any, { onConflict: 'meeting_id' });
+      if (minutesError) console.error('Minutes save error:', minutesError);
+
+      toast.success('Reunião confirmada e ata salva!');
 
       // Send CSAT email if client has email
       if (confirmingMeeting.client_email) {
