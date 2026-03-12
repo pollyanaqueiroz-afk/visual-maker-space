@@ -459,7 +459,10 @@ export default function CarteiraGeralPage() {
         </div>
       </Tabs>
 
-      {/* Client Table */}
+      {activeView === 'cadastro' ? (
+        <CadastroTab />
+      ) : (
+      /* Client Table */
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
