@@ -256,7 +256,7 @@ export default function CarteiraGeralPage() {
       setInitialLoading(false);
       setPageLoading(false);
     }
-  }, [clientRecords.length, isCs, isAdmin, userEmail, csFilter, activeKPI]);
+  }, [clientRecords.length, isCs, isAdmin, userEmail, csFilter, activeKPI, filterStatus, filterTipoProduto, filterRecorrencia, filterMeioPagamento]);
 
   // Debounce search
   useEffect(() => {
