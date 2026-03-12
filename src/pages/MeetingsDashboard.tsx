@@ -531,8 +531,20 @@ export default function MeetingsDashboard() {
 
         <TabsContent value="produtividade" className="space-y-6">
 
-          {/* Period filter */}
-          <div className="flex justify-end">
+          {/* Filters */}
+          <div className="flex justify-end gap-3 flex-wrap">
+            <Select value={csFilter} onValueChange={setCsFilter}>
+              <SelectTrigger className="w-[220px] h-9 text-sm">
+                <SelectValue placeholder="CS" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="me">Meu ({user?.email?.split('@')[0]})</SelectItem>
+                <SelectItem value="all">Todos os CSs</SelectItem>
+                {teamMembers.filter(t => t.id !== user?.id).map(t => (
+                  <SelectItem key={t.id} value={t.id}>{t.display_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={periodFilter} onValueChange={setPeriodFilter}>
               <SelectTrigger className="w-[180px] h-9 text-sm">
                 <SelectValue />
