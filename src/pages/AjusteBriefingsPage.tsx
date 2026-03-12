@@ -41,7 +41,7 @@ export default function AjusteBriefingsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [clientUrl, setClientUrl] = useState('');
   const [clientEmail, setClientEmail] = useState('');
-  const [items, setItems] = useState<AdjustmentItem[]>([{ file: null, filePreview: '', observations: '' }]);
+  const [items, setItems] = useState<AdjustmentItem[]>([{ file: null, filePreview: '', observations: '', linkUrl: '' }]);
   const [submitting, setSubmitting] = useState(false);
   const [detailAdjustment, setDetailAdjustment] = useState<any>(null);
   const [detailItems, setDetailItems] = useState<any[]>([]);
