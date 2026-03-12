@@ -750,7 +750,7 @@ function BatchDeliveryDialog({ group, designerEmail, onDelivered }: { group: Ima
                                 <SelectValue placeholder="Selecionar arquivo..." />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="">Nenhum</SelectItem>
+                                <SelectItem value="__none__">Nenhum</SelectItem>
                                 {files.map(f => {
                                   const isUsedElsewhere = matchResults.some((mr, mi) => mi !== idx && mr.file?.name === f.name);
                                   return (
