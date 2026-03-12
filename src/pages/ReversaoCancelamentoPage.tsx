@@ -25,7 +25,7 @@ const REVERSAO_STATUSES = [
   { value: 'cliente_perdido', label: 'Cliente Perdido', color: 'bg-destructive/20 text-destructive' },
 ];
 
-const PIE_COLORS = ['#9ca3af', '#3b82f6', '#eab308', '#22c55e', '#ef4444'];
+const PIE_COLORS = ['#9ca3af', '#f97316', '#3b82f6', '#eab308', '#22c55e', '#ef4444'];
 
 interface ChurnRecord {
   id: string;
