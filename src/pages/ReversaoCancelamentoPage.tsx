@@ -217,7 +217,7 @@ function ReversaoTabelaTab({ refreshKey }: { refreshKey: number }) {
   return (
     <div className="space-y-4">
       {/* Status percentage cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {REVERSAO_STATUSES.map(s => {
           const count = statusCounts[s.value] || 0;
           const pct = total > 0 ? ((count / total) * 100).toFixed(1) : '0.0';
