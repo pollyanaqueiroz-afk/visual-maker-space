@@ -299,7 +299,7 @@ export default function SchedulingPage() {
     }
     toast.success('Onboarding coletivo criado!');
     setOnboardingOpen(false);
-    setOnboardingForm({ title: '', date: '', time: '10:00', duration: 60 });
+    setOnboardingForm({ title: '', date: '', time: '10:00', duration: 60, participantsText: '' });
     setOnboardingMediators([]);
     fetchMeetings();
   };
