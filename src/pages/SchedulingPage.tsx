@@ -14,7 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { toast } from 'sonner';
 import { format, isSameDay, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isBefore, addDays, startOfWeek, endOfWeek, addMonths, subMonths, subWeeks, addWeeks, getDay, getYear, setYear, setMonth, getMonth, isSameMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, Video, Clock, User, Trash2, Edit2, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Loader2, CheckCircle, FileText, Star, RefreshCw, AlertCircle, MessageSquare, Eye, TrendingUp, Calendar as CalendarIcon, Bell, PartyPopper } from 'lucide-react';
+import { Plus, Video, Clock, User, Users, Trash2, Edit2, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Loader2, CheckCircle, FileText, Star, RefreshCw, AlertCircle, MessageSquare, Eye, TrendingUp, Calendar as CalendarIcon, Bell, PartyPopper } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Brazilian holidays (fixed + Easter-based)
@@ -233,6 +233,69 @@ export default function SchedulingPage() {
   const [detailFunilStatus, setDetailFunilStatus] = useState('');
   const [detailFunilNotas, setDetailFunilNotas] = useState('');
   const [detailSaving, setDetailSaving] = useState(false);
+
+  // Onboarding Coletivo state
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [onboardingForm, setOnboardingForm] = useState({ title: '', date: '', time: '10:00', duration: 60 });
+  const [onboardingMediators, setOnboardingMediators] = useState<string[]>([]);
+  const [onboardingMediatorSearch, setOnboardingMediatorSearch] = useState('');
+  const [onboardingSubmitting, setOnboardingSubmitting] = useState(false);
+  const [showMediatorDropdown, setShowMediatorDropdown] = useState(false);
+
+  const filteredMediators = useMemo(() => {
+    if (!onboardingMediatorSearch.trim()) return teamMembers;
+    const q = onboardingMediatorSearch.toLowerCase();
+    return teamMembers.filter(
+      t => t.display_name.toLowerCase().includes(q) || t.email.toLowerCase().includes(q)
+    );
+  }, [teamMembers, onboardingMediatorSearch]);
+
+  const handleAddMediator = (email: string) => {
+    if (!onboardingMediators.includes(email)) {
+      setOnboardingMediators(prev => [...prev, email]);
+    }
+    setOnboardingMediatorSearch('');
+    setShowMediatorDropdown(false);
+  };
+
+  const handleRemoveMediator = (email: string) => {
+    setOnboardingMediators(prev => prev.filter(e => e !== email));
+  };
+
+  const handleOnboardingSubmit = async () => {
+    if (!onboardingForm.title || !onboardingForm.date || !onboardingForm.time) {
+      toast.error('Preencha todos os campos obrigatórios');
+      return;
+    }
+    if (onboardingMediators.length === 0) {
+      toast.error('Adicione ao menos um mediador');
+      return;
+    }
+    setOnboardingSubmitting(true);
+    const payload = {
+      title: `[Onboarding Coletivo] ${onboardingForm.title}`,
+      meeting_date: onboardingForm.date,
+      meeting_time: onboardingForm.time,
+      duration_minutes: onboardingForm.duration,
+      participants: onboardingMediators,
+      status: 'scheduled',
+      meeting_reason: 'Passagem de bastão Closer <> Onboarding',
+      created_by: user?.id,
+    };
+
+    const { error } = await supabase.from('meetings').insert(payload as any);
+    setOnboardingSubmitting(false);
+    if (error) {
+      toast.error('Erro ao criar onboarding coletivo');
+      console.error(error);
+      return;
+    }
+    toast.success('Onboarding coletivo criado!');
+    setOnboardingOpen(false);
+    setOnboardingForm({ title: '', date: '', time: '10:00', duration: 60 });
+    setOnboardingMediators([]);
+    fetchMeetings();
+  };
 
   const fetchMeetings = async () => {
     const { data, error } = await supabase
@@ -1021,6 +1084,103 @@ export default function SchedulingPage() {
             <RefreshCw className={cn("h-4 w-4 mr-2", calendarSyncing && "animate-spin")} />
             {calendarSyncing ? 'Sincronizando...' : 'Sincronizar'}
           </Button>
+          {canCreate && (
+            <Dialog open={onboardingOpen} onOpenChange={setOnboardingOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" onClick={() => { setOnboardingOpen(true); setOnboardingForm({ title: '', date: format(new Date(), 'yyyy-MM-dd'), time: '10:00', duration: 60 }); setOnboardingMediators([]); }}>
+                  <Users className="h-4 w-4 mr-2" /> Onboarding Coletivo
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Novo Onboarding Coletivo</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 pt-2">
+                  <div className="space-y-2">
+                    <Label>Nome da Reunião *</Label>
+                    <Input value={onboardingForm.title} onChange={e => setOnboardingForm(f => ({ ...f, title: e.target.value }))} placeholder="Ex: Onboarding turma março" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label>Data *</Label>
+                      <Input type="date" value={onboardingForm.date} onChange={e => setOnboardingForm(f => ({ ...f, date: e.target.value }))} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Horário *</Label>
+                      <Input type="time" value={onboardingForm.time} onChange={e => setOnboardingForm(f => ({ ...f, time: e.target.value }))} />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Duração</Label>
+                    <Select value={String(onboardingForm.duration)} onValueChange={v => setOnboardingForm(f => ({ ...f, duration: Number(v) }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {[30, 45, 60, 90, 120].map(d => (
+                          <SelectItem key={d} value={String(d)}>{d} minutos</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Mediadores (CS) *</Label>
+                    <div className="relative">
+                      <Input
+                        value={onboardingMediatorSearch}
+                        onChange={e => { setOnboardingMediatorSearch(e.target.value); setShowMediatorDropdown(true); }}
+                        onFocus={() => setShowMediatorDropdown(true)}
+                        placeholder="Buscar CS por nome ou email..."
+                      />
+                      {showMediatorDropdown && filteredMediators.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-md max-h-48 overflow-y-auto">
+                          {filteredMediators.map(t => (
+                            <button
+                              key={t.email}
+                              className={cn(
+                                "w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors flex items-center justify-between",
+                                onboardingMediators.includes(t.email) && "opacity-50"
+                              )}
+                              onClick={() => handleAddMediator(t.email)}
+                              disabled={onboardingMediators.includes(t.email)}
+                            >
+                              <div>
+                                <p className="font-medium text-foreground">{t.display_name}</p>
+                                <p className="text-xs text-muted-foreground">{t.email}</p>
+                              </div>
+                              {onboardingMediators.includes(t.email) && (
+                                <CheckCircle className="h-4 w-4 text-success" />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {onboardingMediators.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {onboardingMediators.map(email => {
+                          const member = teamMembers.find(t => t.email === email);
+                          return (
+                            <Badge key={email} variant="secondary" className="gap-1 pr-1">
+                              {member?.display_name || email}
+                              <button
+                                onClick={() => handleRemoveMediator(email)}
+                                className="ml-1 rounded-full hover:bg-destructive/20 p-0.5"
+                              >
+                                <Trash2 className="h-3 w-3 text-destructive" />
+                              </button>
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                  <Button onClick={handleOnboardingSubmit} disabled={onboardingSubmitting} className="w-full">
+                    {onboardingSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+                    Criar Onboarding Coletivo
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           {canCreate && (
             <DialogTrigger asChild>
