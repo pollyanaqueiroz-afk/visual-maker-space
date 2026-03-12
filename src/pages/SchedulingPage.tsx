@@ -210,6 +210,9 @@ export default function SchedulingPage() {
   const [filterReason, setFilterReason] = useState<string>('all');
   const [sendInvite, setSendInvite] = useState(true);
   const [isRescheduling, setIsRescheduling] = useState(false);
+  const [recurrence, setRecurrence] = useState<RecurrenceConfig>({ ...DEFAULT_RECURRENCE });
+  const [customRecurrenceOpen, setCustomRecurrenceOpen] = useState(false);
+  const [tempRecurrence, setTempRecurrence] = useState<RecurrenceConfig>({ ...DEFAULT_RECURRENCE });
   const [reschedulingOldData, setReschedulingOldData] = useState<{ date: string; time: string } | null>(null);
   const [rescheduleHistory, setRescheduleHistory] = useState<Record<string, { previous_date: string; previous_time: string; new_date: string; new_time: string; reason: string; created_at: string }[]>>({});
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
