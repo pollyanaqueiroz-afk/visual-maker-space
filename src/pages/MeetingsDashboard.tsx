@@ -7,13 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { format, parseISO, startOfMonth, endOfMonth, subMonths, isWithinInterval, startOfWeek, endOfWeek, isSameDay, getDay, getISOWeek } from 'date-fns';
+import { format, parseISO, startOfMonth, endOfMonth, subMonths, isWithinInterval, startOfWeek, endOfWeek, isSameDay, getISOWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
   CalendarDays, CheckCircle, XCircle, Clock, TrendingUp, Users, BarChart3, RefreshCw, Calendar as CalendarIcon, LayoutGrid,
 } from 'lucide-react';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line, Legend,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
 } from 'recharts';
 import { KpiCard } from '@/components/dashboard/KpiCard';
 
@@ -53,11 +53,14 @@ interface AllMeeting extends Meeting {
   created_by: string;
 }
 
+// ─── Overview Tab ───────────────────────────────────────────────────────────
 function OverviewTab() {
   const [allMeetings, setAllMeetings] = useState<AllMeeting[]>([]);
+  const [allReschedules, setAllReschedules] = useState<{ id: string; meeting_id: string; reason: string; created_at: string }[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [overviewPeriod, setOverviewPeriod] = useState('current');
+  const [overviewViewMode, setOverviewViewMode] = useState<'day' | 'week' | 'month'>('day');
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -65,47 +68,29 @@ function OverviewTab() {
       try {
         const session = (await supabase.auth.getSession()).data.session;
         if (!session) return;
-
-        // Fetch all meetings (admin RLS) and team members in parallel
-        const [meetRes, teamRes] = await Promise.all([
-          supabase
-            .from('meetings')
+        const [meetRes, rescRes, teamRes] = await Promise.all([
+          supabase.from('meetings')
             .select('id, title, meeting_date, meeting_time, status, client_email, client_name, client_url, meeting_reason, loyalty_index, loyalty_reason, duration_minutes, created_by')
-            .order('meeting_date', { ascending: false })
-            .limit(5000),
-          fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-users?action=list`,
-            {
-              headers: {
-                Authorization: `Bearer ${session.access_token}`,
-                apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-              },
-            }
-          ),
+            .order('meeting_date', { ascending: false }).limit(5000),
+          supabase.from('meeting_reschedules')
+            .select('id, meeting_id, reason, created_at')
+            .order('created_at', { ascending: false }),
+          fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-users?action=list`, {
+            headers: { Authorization: `Bearer ${session.access_token}`, apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+          }),
         ]);
-
         if (meetRes.data) setAllMeetings(meetRes.data as AllMeeting[]);
-
+        if (rescRes.data) setAllReschedules(rescRes.data as any);
         if (teamRes.ok) {
           const result = await teamRes.json();
           const users = result.users || result;
           if (Array.isArray(users)) {
-            setTeamMembers(
-              users
-                .filter((u: any) => u.email?.endsWith('@curseduca.com'))
-                .map((u: any) => ({
-                  id: u.id,
-                  email: u.email || '',
-                  display_name: u.display_name || u.email?.split('@')[0] || u.id,
-                }))
-            );
+            setTeamMembers(users.filter((u: any) => u.email?.endsWith('@curseduca.com'))
+              .map((u: any) => ({ id: u.id, email: u.email || '', display_name: u.display_name || u.email?.split('@')[0] || u.id })));
           }
         }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
+      } catch (err) { console.error(err); }
+      finally { setLoading(false); }
     };
     fetchAll();
   }, []);
@@ -114,39 +99,95 @@ function OverviewTab() {
     if (overviewPeriod === 'all') return allMeetings;
     const now = new Date();
     let start: Date, end: Date;
-    if (overviewPeriod === 'current') {
-      start = startOfMonth(now);
-      end = endOfMonth(now);
-    } else {
-      const prev = subMonths(now, 1);
-      start = startOfMonth(prev);
-      end = endOfMonth(prev);
-    }
-    return allMeetings.filter(m => {
-      const d = parseISO(m.meeting_date);
-      return isWithinInterval(d, { start, end });
-    });
+    if (overviewPeriod === 'current') { start = startOfMonth(now); end = endOfMonth(now); }
+    else { const prev = subMonths(now, 1); start = startOfMonth(prev); end = endOfMonth(prev); }
+    return allMeetings.filter(m => isWithinInterval(parseISO(m.meeting_date), { start, end }));
   }, [allMeetings, overviewPeriod]);
+
+  const totalStats = useMemo(() => {
+    const total = filtered.length;
+    const completed = filtered.filter(m => m.status === 'completed').length;
+    const cancelled = filtered.filter(m => m.status === 'cancelled').length;
+    const scheduled = filtered.filter(m => m.status === 'scheduled').length;
+    const totalMinutes = filtered.filter(m => m.status === 'completed').reduce((s, m) => s + m.duration_minutes, 0);
+    const uniqueClients = new Set(filtered.filter(m => m.client_email).map(m => m.client_email!.toLowerCase())).size;
+    const meetingIds = new Set(filtered.map(m => m.id));
+    const rescheduleCount = allReschedules.filter(r => meetingIds.has(r.meeting_id)).length;
+    const todayCount = filtered.filter(m => isSameDay(parseISO(m.meeting_date), new Date())).length;
+    const now = new Date();
+    const ws = startOfWeek(now, { weekStartsOn: 1 }); const we = endOfWeek(now, { weekStartsOn: 1 });
+    const weekCount = filtered.filter(m => isWithinInterval(parseISO(m.meeting_date), { start: ws, end: we })).length;
+    return { total, completed, cancelled, scheduled, totalMinutes, uniqueClients, rescheduleCount, todayCount, weekCount };
+  }, [filtered, allReschedules]);
+
+  const byDay = useMemo(() => {
+    const map: Record<string, { date: string; total: number; completed: number; cancelled: number }> = {};
+    for (const m of filtered) {
+      const key = m.meeting_date;
+      if (!map[key]) map[key] = { date: key, total: 0, completed: 0, cancelled: 0 };
+      map[key].total++;
+      if (m.status === 'completed') map[key].completed++;
+      if (m.status === 'cancelled') map[key].cancelled++;
+    }
+    return Object.values(map).sort((a, b) => a.date.localeCompare(b.date))
+      .map(d => ({ ...d, label: format(parseISO(d.date), 'dd/MM', { locale: ptBR }) }));
+  }, [filtered]);
+
+  const byWeek = useMemo(() => {
+    const map: Record<string, { week: string; total: number; completed: number; cancelled: number }> = {};
+    for (const m of filtered) {
+      const d = parseISO(m.meeting_date);
+      const key = `${d.getFullYear()}-S${String(getISOWeek(d)).padStart(2, '0')}`;
+      if (!map[key]) map[key] = { week: key, total: 0, completed: 0, cancelled: 0 };
+      map[key].total++;
+      if (m.status === 'completed') map[key].completed++;
+      if (m.status === 'cancelled') map[key].cancelled++;
+    }
+    return Object.values(map).sort((a, b) => a.week.localeCompare(b.week));
+  }, [filtered]);
+
+  const byMonth = useMemo(() => {
+    const map: Record<string, { month: string; total: number; completed: number; cancelled: number }> = {};
+    for (const m of allMeetings) {
+      const d = parseISO(m.meeting_date);
+      const key = format(d, 'yyyy-MM');
+      const label = format(d, 'MMM/yy', { locale: ptBR });
+      if (!map[key]) map[key] = { month: label, total: 0, completed: 0, cancelled: 0 };
+      map[key].total++;
+      if (m.status === 'completed') map[key].completed++;
+      if (m.status === 'cancelled') map[key].cancelled++;
+    }
+    return Object.values(map);
+  }, [allMeetings]);
+
+  const byClient = useMemo(() => {
+    const map: Record<string, { name: string; email: string; total: number; completed: number; cancelled: number; reschedules: number }> = {};
+    for (const m of filtered) {
+      const key = (m.client_email || 'sem-email').toLowerCase();
+      if (!map[key]) map[key] = { name: m.client_name || m.client_email || 'Sem cliente', email: m.client_email || '', total: 0, completed: 0, cancelled: 0, reschedules: 0 };
+      map[key].total++;
+      if (m.status === 'completed') map[key].completed++;
+      if (m.status === 'cancelled') map[key].cancelled++;
+      map[key].reschedules += allReschedules.filter(r => r.meeting_id === m.id).length;
+    }
+    return Object.values(map).sort((a, b) => b.total - a.total);
+  }, [filtered, allReschedules]);
 
   const csComparison = useMemo(() => {
     const map: Record<string, {
       id: string; name: string; email: string;
       total: number; completed: number; cancelled: number; scheduled: number;
       totalMinutes: number; uniqueClients: Set<string>;
-      loyaltySum: number; loyaltyCount: number;
+      loyaltySum: number; loyaltyCount: number; reschedules: number;
     }> = {};
-
     for (const m of filtered) {
       const csId = m.created_by || 'unknown';
       if (!map[csId]) {
         const member = teamMembers.find(t => t.id === csId);
         map[csId] = {
-          id: csId,
-          name: member?.display_name || member?.email?.split('@')[0] || 'Desconhecido',
-          email: member?.email || '',
-          total: 0, completed: 0, cancelled: 0, scheduled: 0,
-          totalMinutes: 0, uniqueClients: new Set(),
-          loyaltySum: 0, loyaltyCount: 0,
+          id: csId, name: member?.display_name || member?.email?.split('@')[0] || 'Desconhecido',
+          email: member?.email || '', total: 0, completed: 0, cancelled: 0, scheduled: 0,
+          totalMinutes: 0, uniqueClients: new Set(), loyaltySum: 0, loyaltyCount: 0, reschedules: 0,
         };
       }
       const cs = map[csId];
@@ -156,28 +197,23 @@ function OverviewTab() {
       if (m.status === 'scheduled') cs.scheduled++;
       if (m.client_email) cs.uniqueClients.add(m.client_email.toLowerCase());
       if (m.loyalty_index != null) { cs.loyaltySum += m.loyalty_index; cs.loyaltyCount++; }
+      cs.reschedules += allReschedules.filter(r => r.meeting_id === m.id).length;
     }
-
-    return Object.values(map)
-      .filter(cs => cs.total > 0)
-      .sort((a, b) => b.total - a.total)
+    return Object.values(map).filter(cs => cs.total > 0).sort((a, b) => b.completed - a.completed)
       .map(cs => ({
-        ...cs,
-        uniqueClientsCount: cs.uniqueClients.size,
+        ...cs, uniqueClientsCount: cs.uniqueClients.size,
         avgLoyalty: cs.loyaltyCount > 0 ? (cs.loyaltySum / cs.loyaltyCount).toFixed(1) : '—',
         completionRate: cs.total > 0 ? Math.round((cs.completed / cs.total) * 100) : 0,
         hours: Math.round(cs.totalMinutes / 60),
       }));
-  }, [filtered, teamMembers]);
+  }, [filtered, teamMembers, allReschedules]);
 
-  const chartData = useMemo(() =>
-    csComparison.map(cs => ({
-      name: cs.name,
-      Realizadas: cs.completed,
-      Canceladas: cs.cancelled,
-      Agendadas: cs.scheduled,
-    })),
+  const csChartData = useMemo(() =>
+    csComparison.map(cs => ({ name: cs.name, Realizadas: cs.completed, Canceladas: cs.cancelled, Reagendamentos: cs.reschedules })),
   [csComparison]);
+
+  const timeChartData = overviewViewMode === 'day' ? byDay : overviewViewMode === 'week' ? byWeek : byMonth;
+  const timeChartKey = overviewViewMode === 'day' ? 'label' : overviewViewMode === 'week' ? 'week' : 'month';
 
   if (loading) {
     return (
@@ -191,12 +227,9 @@ function OverviewTab() {
 
   return (
     <TabsContent value="overview" className="space-y-6">
-      {/* Period filter */}
       <div className="flex justify-end">
         <Select value={overviewPeriod} onValueChange={setOverviewPeriod}>
-          <SelectTrigger className="w-[180px] h-9 text-sm">
-            <SelectValue />
-          </SelectTrigger>
+          <SelectTrigger className="w-[180px] h-9 text-sm"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="current">Mês atual</SelectItem>
             <SelectItem value="previous">Mês anterior</SelectItem>
@@ -205,25 +238,94 @@ function OverviewTab() {
         </Select>
       </div>
 
-      {/* Totals */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KpiCard label="Total Reuniões" value={filtered.length} icon={CalendarDays} color="bg-primary/10 text-primary" />
-        <KpiCard label="Realizadas" value={filtered.filter(m => m.status === 'completed').length} icon={CheckCircle} color="bg-success/10 text-success" />
-        <KpiCard label="Canceladas" value={filtered.filter(m => m.status === 'cancelled').length} icon={XCircle} color="bg-destructive/10 text-destructive" />
-        <KpiCard label="CSs Ativos" value={csComparison.length} icon={Users} color="bg-accent text-accent-foreground" />
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+        <KpiCard label="Total" value={totalStats.total} icon={CalendarDays} color="bg-primary/10 text-primary" />
+        <KpiCard label="Realizadas" value={totalStats.completed} icon={CheckCircle} color="bg-success/10 text-success" />
+        <KpiCard label="Agendadas" value={totalStats.scheduled} icon={Clock} color="bg-info/10 text-info" />
+        <KpiCard label="Canceladas" value={totalStats.cancelled} icon={XCircle} color="bg-destructive/10 text-destructive" />
+        <KpiCard label="Reagendamentos" value={totalStats.rescheduleCount} icon={RefreshCw} color="bg-warning/10 text-warning" />
+        <KpiCard label="Horas" value={`${Math.round(totalStats.totalMinutes / 60)}h`} icon={TrendingUp} color="bg-primary/10 text-primary" />
+        <KpiCard label="Clientes" value={totalStats.uniqueClients} icon={Users} color="bg-accent text-accent-foreground" />
+        <KpiCard label="CSs Ativos" value={csComparison.length} icon={LayoutGrid} color="bg-info/10 text-info" />
       </div>
 
-      {/* Comparison Chart */}
-      {chartData.length > 0 && (
+      {/* Today / Week */}
+      <Card className="border-none bg-gradient-to-r from-primary/10 to-primary/5 shadow-sm">
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                <CalendarDays className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">Hoje — {format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR })}</p>
+                <p className="text-xs text-muted-foreground">
+                  {totalStats.todayCount === 0 ? 'Nenhuma reunião (equipe)' : `${totalStats.todayCount} reunião(ões) (equipe)`}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-6">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-foreground">{totalStats.todayCount}</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Hoje</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-foreground">{totalStats.weekCount}</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Semana</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Timeline Chart */}
+      <Card className="border-none shadow-[var(--shadow-kpi)]">
+        <CardHeader className="pb-1">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Reuniões {overviewViewMode === 'day' ? 'por Dia' : overviewViewMode === 'week' ? 'por Semana' : 'por Mês'}
+            </CardTitle>
+            <div className="flex gap-1">
+              {(['day', 'week', 'month'] as const).map(mode => (
+                <button key={mode} onClick={() => setOverviewViewMode(mode)}
+                  className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                    overviewViewMode === mode ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:text-foreground'
+                  }`}>
+                  {mode === 'day' ? 'Dia' : mode === 'week' ? 'Semana' : 'Mês'}
+                </button>
+              ))}
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {timeChartData.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">Nenhuma reunião no período</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={timeChartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey={timeChartKey} tick={{ fontSize: 10 }} />
+                <YAxis allowDecimals={false} />
+                <Tooltip contentStyle={{ borderRadius: 8, border: 'none', boxShadow: 'var(--shadow-elevated)', fontSize: 12 }} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="completed" name="Realizadas" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} stackId="stack" />
+                <Bar dataKey="cancelled" name="Canceladas" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} stackId="stack" />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* CS Comparison Chart */}
+      {csChartData.length > 0 && (
         <Card className="border-none shadow-[var(--shadow-kpi)]">
           <CardHeader className="pb-1">
-            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Reuniões por CS
-            </CardTitle>
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Comparativo por CS</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={320}>
-              <BarChart data={chartData} layout="vertical">
+            <ResponsiveContainer width="100%" height={Math.max(200, csChartData.length * 45)}>
+              <BarChart data={csChartData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis type="number" allowDecimals={false} />
                 <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 11 }} />
@@ -231,19 +333,18 @@ function OverviewTab() {
                 <Legend wrapperStyle={{ fontSize: 11 }} />
                 <Bar dataKey="Realizadas" fill="hsl(var(--success))" radius={[0, 4, 4, 0]} stackId="stack" />
                 <Bar dataKey="Canceladas" fill="hsl(var(--destructive))" radius={[0, 4, 4, 0]} stackId="stack" />
-                <Bar dataKey="Agendadas" fill="hsl(var(--info))" radius={[0, 4, 4, 0]} stackId="stack" />
+                <Bar dataKey="Reagendamentos" fill="hsl(var(--warning))" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
       )}
 
-      {/* Comparison Table */}
+      {/* CS Ranking Table */}
       <Card className="border-none shadow-[var(--shadow-kpi)]">
         <CardHeader className="pb-1">
           <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-            <Users className="h-4 w-4 text-primary" />
-            Comparativo entre CSs
+            <Users className="h-4 w-4 text-primary" /> Ranking de Produtividade por CS
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -253,19 +354,22 @@ function OverviewTab() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>#</TableHead>
                   <TableHead>CS</TableHead>
                   <TableHead className="text-center">Total</TableHead>
                   <TableHead className="text-center">Realizadas</TableHead>
                   <TableHead className="text-center">Canceladas</TableHead>
+                  <TableHead className="text-center">Reagend.</TableHead>
                   <TableHead className="text-center">% Conclusão</TableHead>
                   <TableHead className="text-center">Horas</TableHead>
                   <TableHead className="text-center">Clientes</TableHead>
-                  <TableHead className="text-center">Fidelidade Média</TableHead>
+                  <TableHead className="text-center">Fidelidade</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {csComparison.map(cs => (
+                {csComparison.map((cs, idx) => (
                   <TableRow key={cs.id}>
+                    <TableCell className="text-sm font-bold text-muted-foreground">{idx + 1}º</TableCell>
                     <TableCell>
                       <div>
                         <p className="text-sm font-medium">{cs.name}</p>
@@ -273,11 +377,10 @@ function OverviewTab() {
                       </div>
                     </TableCell>
                     <TableCell className="text-center font-semibold">{cs.total}</TableCell>
+                    <TableCell className="text-center"><Badge className="bg-success/20 text-success border-0 text-[10px]">{cs.completed}</Badge></TableCell>
+                    <TableCell className="text-center"><Badge className="bg-destructive/20 text-destructive border-0 text-[10px]">{cs.cancelled}</Badge></TableCell>
                     <TableCell className="text-center">
-                      <Badge className="bg-success/20 text-success border-0 text-[10px]">{cs.completed}</Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge className="bg-destructive/20 text-destructive border-0 text-[10px]">{cs.cancelled}</Badge>
+                      {cs.reschedules > 0 ? <Badge className="bg-warning/20 text-warning border-0 text-[10px]">{cs.reschedules}</Badge> : <span className="text-xs text-muted-foreground">0</span>}
                     </TableCell>
                     <TableCell className="text-center">
                       <span className={`text-sm font-medium ${cs.completionRate >= 80 ? 'text-success' : cs.completionRate >= 50 ? 'text-warning' : 'text-destructive'}`}>
@@ -294,11 +397,55 @@ function OverviewTab() {
           )}
         </CardContent>
       </Card>
+
+      {/* By Client Table */}
+      <Card className="border-none shadow-[var(--shadow-kpi)]">
+        <CardHeader className="pb-1">
+          <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+            <Users className="h-4 w-4 text-primary" /> Reuniões por Cliente
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {byClient.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">Nenhuma reunião no período</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead className="text-center">Total</TableHead>
+                  <TableHead className="text-center">Realizadas</TableHead>
+                  <TableHead className="text-center">Canceladas</TableHead>
+                  <TableHead className="text-center">Reagend.</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {byClient.slice(0, 30).map(c => (
+                  <TableRow key={c.email || c.name}>
+                    <TableCell>
+                      <div>
+                        <p className="text-sm font-medium">{c.name}</p>
+                        {c.email && <p className="text-xs text-muted-foreground">{c.email}</p>}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center font-semibold">{c.total}</TableCell>
+                    <TableCell className="text-center"><Badge className="bg-success/20 text-success border-0 text-[10px]">{c.completed}</Badge></TableCell>
+                    <TableCell className="text-center"><Badge className="bg-destructive/20 text-destructive border-0 text-[10px]">{c.cancelled}</Badge></TableCell>
+                    <TableCell className="text-center">
+                      {c.reschedules > 0 ? <Badge className="bg-warning/20 text-warning border-0 text-[10px]">{c.reschedules}</Badge> : <span className="text-xs text-muted-foreground">0</span>}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </TabsContent>
   );
 }
 
-
+// ─── Main Component ─────────────────────────────────────────────────────────
 export default function MeetingsDashboard() {
   const [allMeetings, setAllMeetings] = useState<(Meeting & { created_by: string })[]>([]);
   const [reschedules, setReschedules] = useState<Reschedule[]>([]);
@@ -365,34 +512,24 @@ export default function MeetingsDashboard() {
     const now = new Date();
     let start: Date, end: Date;
     if (periodFilter === 'current') {
-      start = startOfMonth(now);
-      end = endOfMonth(now);
+      start = startOfMonth(now); end = endOfMonth(now);
     } else {
       const prev = subMonths(now, 1);
-      start = startOfMonth(prev);
-      end = endOfMonth(prev);
+      start = startOfMonth(prev); end = endOfMonth(prev);
     }
-    return meetings.filter(m => {
-      const d = parseISO(m.meeting_date);
-      return isWithinInterval(d, { start, end });
-    });
+    return meetings.filter(m => isWithinInterval(parseISO(m.meeting_date), { start, end }));
   }, [meetings, periodFilter]);
 
-  // Today's meetings
   const todayMeetings = useMemo(() => {
     const today = new Date();
     return meetings.filter(m => isSameDay(parseISO(m.meeting_date), today));
   }, [meetings]);
 
-  // This week's meetings
   const thisWeekMeetings = useMemo(() => {
     const now = new Date();
     const ws = startOfWeek(now, { weekStartsOn: 1 });
     const we = endOfWeek(now, { weekStartsOn: 1 });
-    return meetings.filter(m => {
-      const d = parseISO(m.meeting_date);
-      return isWithinInterval(d, { start: ws, end: we });
-    });
+    return meetings.filter(m => isWithinInterval(parseISO(m.meeting_date), { start: ws, end: we }));
   }, [meetings]);
 
   const stats = useMemo(() => {
@@ -413,7 +550,6 @@ export default function MeetingsDashboard() {
     setActiveKPI(prev => prev === kpi ? null : kpi);
   };
 
-  // Meetings by day (for chart)
   const byDay = useMemo(() => {
     const map: Record<string, { date: string; total: number; completed: number; cancelled: number }> = {};
     for (const m of filtered) {
@@ -423,22 +559,15 @@ export default function MeetingsDashboard() {
       if (m.status === 'completed') map[key].completed++;
       if (m.status === 'cancelled') map[key].cancelled++;
     }
-    return Object.values(map)
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .map(d => ({
-        ...d,
-        label: format(parseISO(d.date), 'dd/MM', { locale: ptBR }),
-      }));
+    return Object.values(map).sort((a, b) => a.date.localeCompare(b.date))
+      .map(d => ({ ...d, label: format(parseISO(d.date), 'dd/MM', { locale: ptBR }) }));
   }, [filtered]);
 
-  // Meetings by week
   const byWeek = useMemo(() => {
     const map: Record<string, { week: string; total: number; completed: number; cancelled: number }> = {};
     for (const m of filtered) {
       const d = parseISO(m.meeting_date);
-      const weekNum = getISOWeek(d);
-      const year = d.getFullYear();
-      const key = `${year}-S${String(weekNum).padStart(2, '0')}`;
+      const key = `${d.getFullYear()}-S${String(getISOWeek(d)).padStart(2, '0')}`;
       if (!map[key]) map[key] = { week: key, total: 0, completed: 0, cancelled: 0 };
       map[key].total++;
       if (m.status === 'completed') map[key].completed++;
@@ -447,7 +576,6 @@ export default function MeetingsDashboard() {
     return Object.values(map).sort((a, b) => a.week.localeCompare(b.week));
   }, [filtered]);
 
-  // Meetings by month
   const byMonth = useMemo(() => {
     const map: Record<string, { month: string; total: number; completed: number; cancelled: number }> = {};
     for (const m of meetings) {
@@ -462,7 +590,6 @@ export default function MeetingsDashboard() {
     return Object.values(map);
   }, [meetings]);
 
-  // Meetings by client
   const byClient = useMemo(() => {
     const map: Record<string, { name: string; email: string; url: string; total: number; completed: number; scheduled: number; cancelled: number; reschedules: number }> = {};
     for (const m of filtered) {
@@ -470,8 +597,7 @@ export default function MeetingsDashboard() {
       if (!map[key]) {
         map[key] = {
           name: m.client_name || m.client_email || 'Sem cliente',
-          email: m.client_email || '',
-          url: m.client_url || '',
+          email: m.client_email || '', url: m.client_url || '',
           total: 0, completed: 0, scheduled: 0, cancelled: 0, reschedules: 0,
         };
       }
@@ -479,13 +605,11 @@ export default function MeetingsDashboard() {
       if (m.status === 'completed') map[key].completed++;
       else if (m.status === 'scheduled') map[key].scheduled++;
       else if (m.status === 'cancelled') map[key].cancelled++;
-      // Count reschedules for this meeting
       map[key].reschedules += reschedules.filter(r => r.meeting_id === m.id).length;
     }
     return Object.values(map).sort((a, b) => b.total - a.total);
   }, [filtered, reschedules]);
 
-  // Reschedules for the period
   const filteredReschedules = useMemo(() => {
     const meetingIds = new Set(filtered.map(m => m.id));
     return reschedules.filter(r => meetingIds.has(r.meeting_id));
