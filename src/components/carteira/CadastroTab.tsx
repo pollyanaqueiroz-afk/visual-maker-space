@@ -228,6 +228,19 @@ export default function CadastroTab() {
           </Button>
         )}
       </div>
+
+      {/* New Client Dialog */}
+      <Dialog open={showNew} onOpenChange={setShowNew}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Novo Cliente</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs">ID Curseduca *</Label>
+                <Input value={newForm.id_curseduca} onChange={e => setNewForm(p => ({ ...p, id_curseduca: e.target.value }))} placeholder="Ex: 12345" />
+              </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">ID Curseduca *</Label>
                 <Input value={newForm.id_curseduca} onChange={e => setNewForm(p => ({ ...p, id_curseduca: e.target.value }))} placeholder="Ex: 12345" />
