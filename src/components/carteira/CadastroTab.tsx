@@ -192,14 +192,42 @@ export default function CadastroTab() {
         </Button>
       </div>
 
-      {/* New Client Dialog */}
-      <Dialog open={showNew} onOpenChange={setShowNew}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Novo Cliente</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-2">
-            <div className="grid grid-cols-2 gap-4">
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Filter className="h-4 w-4 text-muted-foreground" />
+        <Select value={filterPlano} onValueChange={setFilterPlano}>
+          <SelectTrigger className="h-8 w-[180px] text-xs">
+            <SelectValue placeholder="Plano" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os Planos</SelectItem>
+            {uniquePlanos.map(p => (
+              <SelectItem key={p} value={p}>{p}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={filterCs} onValueChange={setFilterCs}>
+          <SelectTrigger className="h-8 w-[180px] text-xs">
+            <SelectValue placeholder="CS Atual" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os CS</SelectItem>
+            {uniqueCs.map(cs => (
+              <SelectItem key={cs} value={cs}>{cs}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {(filterPlano !== 'all' || filterCs !== 'all') && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 text-xs text-muted-foreground"
+            onClick={() => { setFilterPlano('all'); setFilterCs('all'); }}
+          >
+            Limpar filtros
+          </Button>
+        )}
+      </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">ID Curseduca *</Label>
                 <Input value={newForm.id_curseduca} onChange={e => setNewForm(p => ({ ...p, id_curseduca: e.target.value }))} placeholder="Ex: 12345" />
