@@ -69,8 +69,10 @@ export default function HubWelcome() {
         .select('display_name')
         .eq('user_id', user.id)
         .single();
-      if (data?.display_name) {
-        setDisplayName(data.display_name);
+      const name = data?.display_name;
+      // If display_name looks like an email, treat as unset
+      if (name && !name.includes('@')) {
+        setDisplayName(name);
       } else {
         setShowNameDialog(true);
       }
