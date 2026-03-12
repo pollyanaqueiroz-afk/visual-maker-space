@@ -88,7 +88,7 @@ const NUMERIC_KEYS = new Set([
 
 function formatCellValue(value: any, key?: string): string {
   if (value == null || value === '') return '—';
-  if (key === 'fatura_total') {
+  if (key === 'fatura_total' || key === 'valor_contratado') {
     const num = Number(value);
     if (!isNaN(num)) return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num);
   }
