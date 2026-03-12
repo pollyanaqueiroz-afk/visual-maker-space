@@ -104,6 +104,27 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
   const update = (updates: Partial<BriefingFormData>) => setForm(prev => ({ ...prev, ...updates }));
   const toggleSelection = (key: keyof ArtSelection) => setSelections(prev => ({ ...prev, [key]: !prev[key] }));
 
+  const getRequesterInputValue = (inputId: string) => {
+    if (typeof document === 'undefined') return '';
+    return (document.getElementById(inputId) as HTMLInputElement | null)?.value?.trim() || '';
+  };
+
+  const resolveRequesterFields = () => {
+    const requester_name = form.requester_name.trim() || getRequesterInputValue('name');
+    const requester_email = form.requester_email.trim() || getRequesterInputValue('email');
+    const platform_url = form.platform_url.trim() || getRequesterInputValue('url');
+
+    if (
+      requester_name !== form.requester_name ||
+      requester_email !== form.requester_email ||
+      platform_url !== form.platform_url
+    ) {
+      setForm(prev => ({ ...prev, requester_name, requester_email, platform_url }));
+    }
+
+    return { requester_name, requester_email, platform_url };
+  };
+
   const handleApplySuggestion = (suggestion: any) => {
     if (suggestion.selections) {
       setSelections(prev => ({ ...prev, ...suggestion.selections }));
@@ -266,11 +287,13 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
   };
 
   const handleSubmit = async () => {
+    const requester = resolveRequesterFields();
+
     // Specific field validation
     const missingFields: string[] = [];
-    if (!form.requester_name) missingFields.push('Nome completo');
-    if (!form.requester_email) missingFields.push('Email');
-    if (!form.platform_url) missingFields.push('URL da Plataforma');
+    if (!requester.requester_name) missingFields.push('Nome completo');
+    if (!requester.requester_email) missingFields.push('Email');
+    if (!requester.platform_url) missingFields.push('URL da Plataforma');
 
     if (missingFields.length > 0) {
       toast.error(`Campos obrigatórios não preenchidos: ${missingFields.join(', ')}`, {
@@ -282,9 +305,9 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(form.requester_email)) {
+    if (!emailRegex.test(requester.requester_email)) {
       toast.error('O email informado é inválido', {
-        description: `"${form.requester_email}" não é um formato de email válido.`,
+        description: `"${requester.requester_email}" não é um formato de email válido.`,
         duration: 5000,
       });
       setStep(1);
@@ -334,9 +357,9 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
       }
 
       const { data: request, error } = await supabase.from('briefing_requests').insert({
-        requester_name: form.requester_name,
-        requester_email: form.requester_email,
-        platform_url: form.platform_url,
+        requester_name: requester.requester_name,
+        requester_email: requester.requester_email,
+        platform_url: requester.platform_url,
         has_trail: selections.trail_banner,
         has_challenge: selections.challenge_banner,
         has_community: selections.community_banner,
@@ -421,19 +444,20 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
 
   const nextStep = () => {
     if (step === 1) {
+      const requester = resolveRequesterFields();
       const missingFields: string[] = [];
-      if (!form.requester_name) missingFields.push('Nome completo');
-      if (!form.requester_email) missingFields.push('Email');
-      if (!form.platform_url) missingFields.push('URL da Plataforma');
+      if (!requester.requester_name) missingFields.push('Nome completo');
+      if (!requester.requester_email) missingFields.push('Email');
+      if (!requester.platform_url) missingFields.push('URL da Plataforma');
       
       if (missingFields.length > 0) {
         toast.error(`Campos obrigatórios não preenchidos: ${missingFields.join(', ')}`);
         return;
       }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(form.requester_email)) {
+      if (!emailRegex.test(requester.requester_email)) {
         toast.error('O email informado é inválido', {
-          description: `"${form.requester_email}" não é um formato de email válido.`,
+          description: `"${requester.requester_email}" não é um formato de email válido.`,
         });
         return;
       }
