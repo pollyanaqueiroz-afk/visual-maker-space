@@ -1267,6 +1267,7 @@ export type Database = {
           meio_de_pagamento: string | null
           meio_pagamento: string | null
           nome: string | null
+          nome_plano_master: string | null
           numero_parcelas_contrato: number | null
           numero_parcelas_inadimplentes: number | null
           numero_parcelas_pagas: number | null
@@ -1275,6 +1276,7 @@ export type Database = {
           recorrencia_pagamento: string | null
           status: string | null
           tipo_plano: string | null
+          tipo_plano_master: string | null
           tipo_upsell: string | null
           updated_at: string
           valor_contratado: number | null
@@ -1293,6 +1295,7 @@ export type Database = {
           meio_de_pagamento?: string | null
           meio_pagamento?: string | null
           nome?: string | null
+          nome_plano_master?: string | null
           numero_parcelas_contrato?: number | null
           numero_parcelas_inadimplentes?: number | null
           numero_parcelas_pagas?: number | null
@@ -1301,6 +1304,7 @@ export type Database = {
           recorrencia_pagamento?: string | null
           status?: string | null
           tipo_plano?: string | null
+          tipo_plano_master?: string | null
           tipo_upsell?: string | null
           updated_at?: string
           valor_contratado?: number | null
@@ -1319,6 +1323,7 @@ export type Database = {
           meio_de_pagamento?: string | null
           meio_pagamento?: string | null
           nome?: string | null
+          nome_plano_master?: string | null
           numero_parcelas_contrato?: number | null
           numero_parcelas_inadimplentes?: number | null
           numero_parcelas_pagas?: number | null
@@ -1327,6 +1332,7 @@ export type Database = {
           recorrencia_pagamento?: string | null
           status?: string | null
           tipo_plano?: string | null
+          tipo_plano_master?: string | null
           tipo_upsell?: string | null
           updated_at?: string
           valor_contratado?: number | null
