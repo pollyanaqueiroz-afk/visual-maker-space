@@ -334,6 +334,7 @@ export default function SchedulingPage() {
   const handleOpenNew = (date?: Date) => {
     setEditingId(null);
     setIsRescheduling(false);
+    setRecurrence({ ...DEFAULT_RECURRENCE });
     setForm({
       ...emptyForm,
       meeting_date: date ? format(date, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
