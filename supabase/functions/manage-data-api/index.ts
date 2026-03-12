@@ -8,7 +8,6 @@ const corsHeaders = {
 
 const EXPECTED_TOKEN = "WxYVWSfUJ3kslYCkqlyo5DMdsQHzBA1guEvgAlF86T4CiMqPmPbrVEemby5udFaq";
 
-// Whitelist of allowed columns for insert/update on clients
 // Whitelist per entity
 const ALLOWED_FIELDS: Record<string, string[]> = {
   clients: [
@@ -45,7 +44,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Auth
     const authHeader = req.headers.get("Authorization") || "";
     const token = authHeader.replace(/^Basic\s+/i, "").trim();
     if (token !== EXPECTED_TOKEN) {
@@ -61,11 +59,19 @@ Deno.serve(async (req) => {
     );
 
     const url = new URL(req.url);
+    const entity = url.searchParams.get("entity") || "clients";
 
-    // ─── POST: Create a new client ───
+    if (!ALLOWED_FIELDS[entity]) {
+      return new Response(
+        JSON.stringify({ error: `Entity '${entity}' not supported. Available: ${Object.keys(ALLOWED_FIELDS).join(", ")}` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ─── POST: Create a new record ───
     if (req.method === "POST") {
       const body = await req.json();
-      const payload = sanitizePayload(body);
+      const payload = sanitizePayload(body, entity);
 
       if (!payload.id_curseduca) {
         return new Response(
@@ -75,7 +81,7 @@ Deno.serve(async (req) => {
       }
 
       const { data, error } = await supabase
-        .from("clients")
+        .from(entity)
         .insert(payload)
         .select()
         .single();
@@ -88,7 +94,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // ─── PATCH: Update client by id_curseduca ───
+    // ─── PATCH: Update record by id_curseduca ───
     if (req.method === "PATCH") {
       const idCurseduca = url.searchParams.get("id_curseduca");
       if (!idCurseduca) {
@@ -99,20 +105,18 @@ Deno.serve(async (req) => {
       }
 
       const body = await req.json();
-      const payload = sanitizePayload(body);
-
-      // Remove id_curseduca from update payload to avoid overwriting the key
+      const payload = sanitizePayload(body, entity);
       delete payload.id_curseduca;
 
       if (Object.keys(payload).length === 0) {
         return new Response(
-          JSON.stringify({ error: "No valid fields to update. Allowed: " + ALLOWED_CLIENT_FIELDS.join(", ") }),
+          JSON.stringify({ error: "No valid fields to update. Allowed: " + ALLOWED_FIELDS[entity].join(", ") }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      const { data, error, count } = await supabase
-        .from("clients")
+      const { data, error } = await supabase
+        .from(entity)
         .update(payload)
         .eq("id_curseduca", idCurseduca)
         .select();
@@ -121,7 +125,7 @@ Deno.serve(async (req) => {
 
       if (!data || data.length === 0) {
         return new Response(
-          JSON.stringify({ error: `Client with id_curseduca '${idCurseduca}' not found` }),
+          JSON.stringify({ error: `Record with id_curseduca '${idCurseduca}' not found in ${entity}` }),
           { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
