@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
     const message = `${actionLabel}. Payload:\n\n${JSON.stringify(payload, null, 2)}`;
 
     // 6. Send to Manus API
-    const MANUS_ENDPOINT = "https://api.manus.im/v1/tarefas";
+    const MANUS_ENDPOINT = "https://api.manus.im/v1/tasks";
     const MANUS_PROJECT_ID = "VQYdJ1YaS5kf3fdir4RuDL";
 
     console.log(`Sending to Manus API: ${MANUS_ENDPOINT}`);
