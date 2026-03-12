@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,8 @@ const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = 
 
 export default function AjusteBriefingsPage() {
   const { user } = useAuth();
+  const { hasRole } = usePermissions();
+  const isAdmin = hasRole('admin');
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [clientUrl, setClientUrl] = useState('');
@@ -43,6 +46,7 @@ export default function AjusteBriefingsPage() {
   const [editEmail, setEditEmail] = useState('');
   const [savingEmail, setSavingEmail] = useState(false);
   const [resending, setResending] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const { data: adjustments = [], isLoading } = useQuery({
     queryKey: ['briefing-adjustments'],
@@ -626,6 +630,42 @@ export default function AjusteBriefingsPage() {
                           }}
                         >
                           <CheckCircle className="h-3 w-3" /> Marcar como Concluído
+                        </Button>
+                      )}
+                      {isAdmin && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="gap-1"
+                          disabled={deleting}
+                          onClick={async () => {
+                            if (!confirm('Tem certeza que deseja excluir esta solicitação e todos os seus itens?')) return;
+                            setDeleting(true);
+                            try {
+                              // Delete items first
+                              await supabase
+                                .from('briefing_adjustment_items')
+                                .delete()
+                                .eq('adjustment_id', detailAdjustment.id);
+                              // Delete adjustment
+                              const { error } = await supabase
+                                .from('briefing_adjustments')
+                                .delete()
+                                .eq('id', detailAdjustment.id);
+                              if (error) throw error;
+                              toast.success('Solicitação excluída!');
+                              setDetailAdjustment(null);
+                              queryClient.invalidateQueries({ queryKey: ['briefing-adjustments'] });
+                              queryClient.invalidateQueries({ queryKey: ['briefing-adjustment-items'] });
+                            } catch (err: any) {
+                              toast.error('Erro ao excluir: ' + err.message);
+                            } finally {
+                              setDeleting(false);
+                            }
+                          }}
+                        >
+                          {deleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
+                          Excluir
                         </Button>
                       )}
                     </div>
