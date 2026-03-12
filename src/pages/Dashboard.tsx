@@ -1043,6 +1043,7 @@ export default function Dashboard() {
                     <SelectItem key={key} value={key}>{label}</SelectItem>
                   ))}
                   <SelectItem value="adjustment">Ajuste de Briefing</SelectItem>
+                </SelectContent>
               </Select>
               <Select value={filterClient} onValueChange={setFilterClient}>
                 <SelectTrigger className="w-48">
