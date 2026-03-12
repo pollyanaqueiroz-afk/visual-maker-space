@@ -237,7 +237,7 @@ export default function SchedulingPage() {
 
   // Onboarding Coletivo state
   const [onboardingOpen, setOnboardingOpen] = useState(false);
-  const [onboardingForm, setOnboardingForm] = useState({ title: '', date: '', time: '10:00', duration: 60 });
+  const [onboardingForm, setOnboardingForm] = useState({ title: '', date: '', time: '10:00', duration: 60, participantsText: '' });
   const [onboardingMediators, setOnboardingMediators] = useState<string[]>([]);
   const [onboardingMediatorSearch, setOnboardingMediatorSearch] = useState('');
   const [onboardingSubmitting, setOnboardingSubmitting] = useState(false);
