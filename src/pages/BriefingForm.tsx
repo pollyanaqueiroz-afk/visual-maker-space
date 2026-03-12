@@ -405,7 +405,15 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
     } catch (err: any) {
       console.error('Error submitting briefing:', err);
       const msg = err?.message || 'Erro desconhecido';
-      toast.error(`Erro ao enviar: ${msg}`);
+      if (msg.includes('tamanho') || msg.includes('grande') || msg.includes('Payload')) {
+        toast.error('Arquivo muito grande', { description: msg, duration: 8000 });
+      } else if (msg.includes('formato') || msg.includes('suportado') || msg.includes('mime')) {
+        toast.error('Formato de arquivo não suportado', { description: msg, duration: 8000 });
+      } else if (msg.includes('network') || msg.includes('fetch') || msg.includes('Failed to fetch')) {
+        toast.error('Erro de conexão', { description: 'Verifique sua internet e tente novamente.', duration: 6000 });
+      } else {
+        toast.error(`Erro ao enviar briefing`, { description: msg, duration: 6000 });
+      }
     } finally {
       setSubmitting(false);
     }
