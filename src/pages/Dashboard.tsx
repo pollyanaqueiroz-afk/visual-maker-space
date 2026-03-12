@@ -132,6 +132,7 @@ export default function Dashboard() {
         case 'pending': setFilterStatus('pending'); break;
         case 'in_progress': setFilterStatus('in_progress'); break;
         case 'review': setFilterStatus('review'); break;
+        case 'revision': setFilterStatus('revision'); break;
         case 'completed': setFilterStatus('completed'); break;
         case 'cancelled': setFilterStatus('cancelled'); break;
         case 'clients': setFilterStatus('all'); break;
@@ -193,10 +194,12 @@ export default function Dashboard() {
       // Map adjustment status to request_status
       const statusMap: Record<string, RequestStatus> = {
         pending: 'pending',
-        allocated: 'in_progress',
+        allocated: 'pending',
         in_progress: 'in_progress',
         review: 'review',
+        revision: 'revision',
         completed: 'completed',
+        cancelled: 'cancelled',
       };
       return {
         id: item.id,
@@ -339,6 +342,7 @@ export default function Dashboard() {
         pending: 'pending',
         in_progress: 'in_progress',
         review: 'review',
+        revision: 'revision',
         completed: 'completed',
         cancelled: 'cancelled',
       };
@@ -471,12 +475,10 @@ export default function Dashboard() {
   const filtered = useMemo(() => images.filter(i => {
     if (filterStatus === 'incomplete') {
       if (!isBriefingIncomplete(i)) return false;
-    } else if (filterStatus !== 'all' && filterStatus !== 'revision') {
+    } else if (filterStatus === 'revision') {
+      if (i.status !== 'revision' && !(i.revision_count > 0 && i.status !== 'completed' && i.status !== 'cancelled')) return false;
+    } else if (filterStatus !== 'all') {
       if (i.status !== filterStatus) return false;
-    }
-    if (filterStatus === 'revision') {
-      if (i.revision_count === 0) return false;
-      if (i.status === 'completed' || i.status === 'cancelled') return false;
     }
     if (filterType !== 'all' && i.image_type !== filterType) return false;
     if (filterClient !== 'all' && i.platform_url !== filterClient) return false;
@@ -550,6 +552,7 @@ export default function Dashboard() {
   const inProgressImages = images.filter(i => i.status === 'in_progress').length;
   const completedImages = images.filter(i => i.status === 'completed').length;
   const reviewImages = images.filter(i => i.status === 'review').length;
+  const revisionImages = images.filter(i => i.status === 'revision').length;
   const cancelledImages = images.filter(i => i.status === 'cancelled').length;
   const overdueImages = images.filter(i => isOverdue(i)).length;
   const incompleteImages = images.filter(i => isBriefingIncomplete(i)).length;

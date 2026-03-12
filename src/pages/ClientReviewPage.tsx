@@ -257,7 +257,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
         body: {
           action: 'update_status',
           image_id: currentImage.id,
-          status: 'in_progress',
+          status: 'revision',
           revision_count: currentImage.revision_count + 1,
           reviewed_by: email,
           reviewer_comments: rejectionReason,

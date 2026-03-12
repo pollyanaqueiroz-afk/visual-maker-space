@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
       .from("briefing_adjustments")
       .select("id, client_url, client_email, status, deadline, assigned_email, created_at")
       .eq("assigned_email", cleanEmail)
-      .in("status", ["allocated", "in_progress"])
+      .in("status", ["allocated", "in_progress", "revision"])
       .order("created_at", { ascending: false });
 
     let adjustmentItems: any[] = [];

@@ -858,7 +858,7 @@ export default function DesignerPanel() {
             image_type: 'adjustment',
             product_name: item.file_name || `Ajuste ${idx + 1}`,
             deadline: adj.deadline,
-            status: adj.status === 'allocated' ? 'in_progress' : adj.status,
+            status: adj.status === 'allocated' ? 'pending' : adj.status,
             revision_count: 0,
             delivery_token: null,
             extra_info: null,
@@ -893,6 +893,9 @@ export default function DesignerPanel() {
     if (img._source === 'adjustment') {
       return <Badge className="bg-orange-500/20 text-orange-600 border-0">Ajuste</Badge>;
     }
+    if (img.status === 'revision') {
+      return <Badge className="bg-destructive/20 text-destructive border-0 animate-badge-flip">Em Refação {img.revision_count > 0 ? img.revision_count : ''}</Badge>;
+    }
     if (img.revision_count > 0 && img.status === 'in_progress') {
       return <Badge className="bg-destructive/20 text-destructive border-0 animate-badge-flip">Refação {img.revision_count}</Badge>;
     }
@@ -909,7 +912,7 @@ export default function DesignerPanel() {
   const filtered = images.filter(img => {
     if (filterStatus === 'all') return true;
     if (filterStatus === 'adjustment') return img._source === 'adjustment';
-    if (filterStatus === 'revision') return img.revision_count > 0 && img.status === 'in_progress';
+    if (filterStatus === 'revision') return img.status === 'revision' || (img.revision_count > 0 && img.status === 'in_progress');
     return img.status === filterStatus;
   });
 
@@ -975,6 +978,17 @@ export default function DesignerPanel() {
   const canDeliver = (img: DesignerImage) => {
     return img.status !== 'completed' && img.status !== 'review' && img.status !== 'cancelled';
   };
+
+  // Status filter options including revision
+  const statusFilterOptions = [
+    { value: 'all', label: 'Todas' },
+    { value: 'pending', label: 'Pendente' },
+    { value: 'in_progress', label: 'Em Produção' },
+    { value: 'revision', label: 'Em Refação' },
+    { value: 'review', label: 'Aguardando Validação' },
+    { value: 'completed', label: 'Aprovada' },
+    { value: 'adjustment', label: 'Ajustes' },
+  ];
 
   return (
     <CursEducaLayout

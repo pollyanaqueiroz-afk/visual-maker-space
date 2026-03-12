@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
     const reviewer_comments = typeof body.reviewer_comments === "string" ? body.reviewer_comments.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "").slice(0, 2000) : "";
 
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    const validStatuses = ["pending", "in_progress", "review", "completed", "cancelled"];
+    const validStatuses = ["pending", "in_progress", "review", "completed", "revision", "cancelled"];
 
     if (!action) {
       return new Response(
@@ -228,7 +228,7 @@ Deno.serve(async (req) => {
 
       // Insert review record if reviewed_by is provided
       if (reviewed_by) {
-        const reviewAction = status === "completed" ? "approved" : status === "in_progress" ? "revision_requested" : status;
+        const reviewAction = status === "completed" ? "approved" : status === "revision" ? "revision_requested" : status === "in_progress" ? "revision_requested" : status;
         await supabase.from("briefing_reviews").insert({
           briefing_image_id: image_id,
           action: reviewAction,

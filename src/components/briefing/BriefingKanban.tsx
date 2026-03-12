@@ -45,18 +45,20 @@ interface ImageWithRequest {
 
 const KANBAN_COLUMNS = [
   { key: 'adjustment', label: 'Solicitação de Ajustes', color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-950/20', border: 'border-l-orange-500' },
-  { key: 'pending', label: 'Pendentes', color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-950/20', border: 'border-l-amber-500' },
+  { key: 'pending', label: 'Pendente', color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-950/20', border: 'border-l-amber-500' },
   { key: 'in_progress', label: 'Em Produção', color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/20', border: 'border-l-blue-500' },
-  { key: 'review', label: 'Em Revisão', color: 'text-primary', bg: 'bg-primary/5', border: 'border-l-primary' },
-  { key: 'completed', label: 'Concluídas', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950/20', border: 'border-l-emerald-500' },
-  { key: 'cancelled', label: 'Canceladas', color: 'text-destructive', bg: 'bg-destructive/5', border: 'border-l-destructive' },
+  { key: 'review', label: 'Aguardando Validação do Cliente', color: 'text-primary', bg: 'bg-primary/5', border: 'border-l-primary' },
+  { key: 'revision', label: 'Em Refação', color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-950/20', border: 'border-l-orange-400' },
+  { key: 'completed', label: 'Aprovada', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950/20', border: 'border-l-emerald-500' },
+  { key: 'cancelled', label: 'Cancelada', color: 'text-destructive', bg: 'bg-destructive/5', border: 'border-l-destructive' },
 ];
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
-  adjustment: ['in_progress', 'cancelled'],
+  adjustment: ['pending', 'in_progress', 'cancelled'],
   pending: ['in_progress', 'cancelled'],
   in_progress: ['review', 'pending', 'cancelled'],
-  review: ['completed', 'in_progress', 'cancelled'],
+  review: ['completed', 'revision', 'cancelled'],
+  revision: ['in_progress', 'cancelled'],
   completed: [],
   cancelled: ['pending'],
 };
@@ -138,9 +140,11 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
       const reviewCount = imgs.filter(i => i.status === 'review').length;
       const completedCount = imgs.filter(i => i.status === 'completed').length;
       const cancelledCount = imgs.filter(i => i.status === 'cancelled').length;
+      const revisionCount = imgs.filter(i => i.status === 'revision').length;
 
       let status = 'completed';
       if (cancelledCount === imgs.length) status = 'cancelled';
+      else if (revisionCount > 0) status = 'revision';
       else if (pendingCount > 0) status = 'pending';
       else if (inProgressCount > 0) status = 'in_progress';
       else if (reviewCount > 0) status = 'review';
@@ -172,40 +176,50 @@ export default function BriefingKanban({ images, loading = false }: BriefingKanb
     });
   }, [images]);
 
-  // Build adjustment cards for the "adjustment" column
-  const adjustmentCards: KanbanCard[] = useMemo(() => {
-    return adjustments
-      .filter((a: any) => a.status === 'pending' || a.status === 'allocated')
-      .map((a: any) => {
-        const itemCount = adjustmentItems.filter((i: any) => i.adjustment_id === a.id).length;
-        return {
-          requestId: a.id,
-          platformUrl: a.client_url,
-          requesterName: a.client_email,
-          totalImages: itemCount,
-          pendingImages: itemCount,
-          inProgressImages: 0,
-          reviewImages: 0,
-          completedImages: 0,
-          cancelledImages: 0,
-          status: 'adjustment',
-          assignedDesigners: a.assigned_email ? [a.assigned_email] : [],
-          receivedAt: a.created_at,
-          createdAt: a.created_at,
-          imageTypes: ['adjustment'],
-          slaOverdue: false,
-          _isAdjustment: true,
-          _adjustmentData: a,
-        } as KanbanCard & { _isAdjustment?: boolean; _adjustmentData?: any };
-      });
+  // Build adjustment cards — place them in their proper status column
+  const adjustmentCards: (KanbanCard & { _isAdjustment?: boolean; _adjustmentData?: any })[] = useMemo(() => {
+    return adjustments.map((a: any) => {
+      const itemCount = adjustmentItems.filter((i: any) => i.adjustment_id === a.id).length;
+      // Map adjustment statuses to kanban columns
+      let kanbanStatus = 'adjustment';
+      if (a.status === 'pending') kanbanStatus = 'adjustment'; // Not allocated
+      else if (a.status === 'allocated') kanbanStatus = 'pending'; // Allocated but not started
+      else if (a.status === 'in_progress') kanbanStatus = 'in_progress';
+      else if (a.status === 'review') kanbanStatus = 'review';
+      else if (a.status === 'revision') kanbanStatus = 'revision';
+      else if (a.status === 'completed') kanbanStatus = 'completed';
+      else if (a.status === 'cancelled') kanbanStatus = 'cancelled';
+
+      return {
+        requestId: a.id,
+        platformUrl: a.client_url,
+        requesterName: a.client_email,
+        totalImages: itemCount,
+        pendingImages: itemCount,
+        inProgressImages: 0,
+        reviewImages: 0,
+        completedImages: 0,
+        cancelledImages: 0,
+        status: kanbanStatus,
+        assignedDesigners: a.assigned_email ? [a.assigned_email] : [],
+        receivedAt: a.created_at,
+        createdAt: a.created_at,
+        imageTypes: ['adjustment'],
+        slaOverdue: false,
+        _isAdjustment: true,
+        _adjustmentData: a,
+      };
+    });
   }, [adjustments, adjustmentItems]);
 
   const kanbanColumns = useMemo(() => {
     const cols: Record<string, KanbanCard[]> = {};
     KANBAN_COLUMNS.forEach(c => { cols[c.key] = []; });
 
-    // Add adjustment cards
-    cols['adjustment'] = adjustmentCards;
+    // Add adjustment cards to their respective columns
+    adjustmentCards.forEach(card => {
+      if (cols[card.status]) cols[card.status].push(card);
+    });
 
     kanbanCards.forEach(card => {
       if (cols[card.status]) cols[card.status].push(card);

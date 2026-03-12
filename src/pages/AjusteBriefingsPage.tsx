@@ -26,11 +26,13 @@ interface AdjustmentItem {
 }
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = {
-  pending: { label: 'Aguardando Alocação', color: 'bg-amber-500/15 text-amber-600 border-amber-500/20', icon: Clock },
-  allocated: { label: 'Alocado para Design', color: 'bg-blue-500/15 text-blue-600 border-blue-500/20', icon: UserCheck },
-  in_progress: { label: 'Em Execução', color: 'bg-violet-500/15 text-violet-600 border-violet-500/20', icon: Loader2 },
-  review: { label: 'Em Revisão', color: 'bg-orange-500/15 text-orange-600 border-orange-500/20', icon: Eye },
-  completed: { label: 'Concluído', color: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/20', icon: CheckCircle },
+  pending: { label: 'Solicitação de Ajuste', color: 'bg-amber-500/15 text-amber-600 border-amber-500/20', icon: Clock },
+  allocated: { label: 'Pendente', color: 'bg-blue-500/15 text-blue-600 border-blue-500/20', icon: UserCheck },
+  in_progress: { label: 'Em Produção', color: 'bg-violet-500/15 text-violet-600 border-violet-500/20', icon: Loader2 },
+  review: { label: 'Aguardando Validação do Cliente', color: 'bg-orange-500/15 text-orange-600 border-orange-500/20', icon: Eye },
+  revision: { label: 'Em Refação', color: 'bg-rose-500/15 text-rose-600 border-rose-500/20', icon: Clock },
+  completed: { label: 'Aprovada', color: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/20', icon: CheckCircle },
+  cancelled: { label: 'Cancelada', color: 'bg-red-500/15 text-red-600 border-red-500/20', icon: Clock },
 };
 
 export default function AjusteBriefingsPage() {
@@ -209,6 +211,26 @@ export default function AjusteBriefingsPage() {
         } else {
           toast.success(`Solicitação registrada com ${successCount} imagem(ns)!`);
         }
+
+        // Notify managers (Jade and Jéssica Lux) about new adjustment request
+        try {
+          const managerEmails = ['jessica.oliveira@curseduca.com', 'jade.sepulveda@curseduca.com'];
+          const clientName = clientUrl.trim().replace(/https?:\/\//, '').replace('.curseduca.pro', '').replace(/\//g, '');
+          
+          await supabase.functions.invoke('notify-adjustment-managers', {
+            body: {
+              adjustment_id: adjustment.id,
+              client_url: clientUrl.trim(),
+              client_name: clientName,
+              manager_emails: managerEmails,
+              created_by_email: user?.email || 'unknown',
+            },
+          });
+        } catch (notifErr) {
+          console.error('Failed to notify managers:', notifErr);
+          // Non-blocking - don't show error to user
+        }
+
         resetForm();
         setFormOpen(false);
         queryClient.invalidateQueries({ queryKey: ['briefing-adjustments'] });
