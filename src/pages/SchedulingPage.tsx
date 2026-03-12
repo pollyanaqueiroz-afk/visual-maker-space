@@ -488,7 +488,7 @@ export default function SchedulingPage() {
     return 'Não se repete';
   };
 
-
+  const handleSubmit = async () => {
     if (!form.title || !form.meeting_date || !form.meeting_time || !form.meeting_reason) {
       toast.error('Preencha título, motivo, data e horário');
       return;
