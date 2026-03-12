@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { format } from 'date-fns';
+import { usePermissions } from '@/hooks/usePermissions';
 import { ptBR } from 'date-fns/locale';
 import { CalendarIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -64,6 +65,8 @@ export default function CadastroTab() {
   const [showNew, setShowNew] = useState(false);
   const [newForm, setNewForm] = useState(EMPTY_FORM);
   const [creating, setCreating] = useState(false);
+  const { hasRole } = usePermissions();
+  const isAdmin = hasRole('admin');
 
   // Filters
   const [filterPlano, setFilterPlano] = useState<string>('all');
@@ -356,7 +359,7 @@ export default function CadastroTab() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs">CS Atual</Label>
-                <Input value={newForm.cs_atual} onChange={e => setNewForm(p => ({ ...p, cs_atual: e.target.value }))} placeholder="email do CS" />
+                <Input value={newForm.cs_atual} onChange={e => setNewForm(p => ({ ...p, cs_atual: e.target.value }))} placeholder="email do CS" disabled={!isAdmin} title={!isAdmin ? 'Apenas administradores podem definir o CS' : ''} />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Status Financeiro</Label>
@@ -435,7 +438,7 @@ export default function CadastroTab() {
                         </TableCell>
                         <TableCell className="text-xs">{c.plano || '—'}</TableCell>
                         <TableCell>
-                          <Input value={editData.cs_atual} onChange={e => setEditData(p => ({ ...p, cs_atual: e.target.value }))} className="h-7 text-xs w-44" disabled={saving} placeholder="email do CS" />
+                          <Input value={editData.cs_atual} onChange={e => setEditData(p => ({ ...p, cs_atual: e.target.value }))} className="h-7 text-xs w-44" disabled={saving || !isAdmin} placeholder="email do CS" title={!isAdmin ? 'Apenas administradores podem alterar o CS' : ''} />
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
                           {c.data_criacao ? format(new Date(c.data_criacao), 'dd/MM/yyyy') : '—'}

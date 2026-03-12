@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -34,6 +35,8 @@ type UserProfile = { user_id: string; email: string | null; display_name: string
 const PER_PAGE = 50;
 
 export default function ClientesTab() {
+  const { hasRole } = usePermissions();
+  const isAdmin = hasRole('admin');
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -302,9 +305,11 @@ export default function ClientesTab() {
             {csAnteriores.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Button variant="outline" size="sm" className="h-9 gap-1.5" onClick={openBulkDialog}>
-          <ArrowRightLeft className="h-3.5 w-3.5" /> Mover em lote
-        </Button>
+        {isAdmin && (
+          <Button variant="outline" size="sm" className="h-9 gap-1.5" onClick={openBulkDialog}>
+            <ArrowRightLeft className="h-3.5 w-3.5" /> Mover em lote
+          </Button>
+        )}
       </div>
 
       <Card>
@@ -380,14 +385,16 @@ export default function ClientesTab() {
                       ) : (
                         <div className="flex items-center gap-1 group">
                           <span>{c.cs_atual || '—'}</span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => startEdit(c)}
-                          >
-                            <Pencil className="h-3 w-3" />
-                          </Button>
+                          {isAdmin && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => startEdit(c)}
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                          )}
                         </div>
                       )}
                     </TableCell>
