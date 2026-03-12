@@ -39,6 +39,8 @@ const VIEW_COLUMNS: Record<ViewType, { key: string; label: string }[]> = {
     { key: 'nome', label: 'Cliente' },
     { key: 'email', label: 'Email' },
     { key: 'status', label: 'Status' },
+    { key: 'nome_plano_master', label: 'Plano Master' },
+    { key: 'tipo_plano_master', label: 'Tipo Plano Master' },
     { key: 'produto', label: 'Produto' },
     { key: 'tipo_produto', label: 'Tipo de Produto' },
     { key: 'valor_contratado', label: 'Valor Contratado' },
