@@ -438,7 +438,7 @@ export default function CadastroTab() {
                         </TableCell>
                         <TableCell className="text-xs">{c.plano || '—'}</TableCell>
                         <TableCell>
-                          <Input value={editData.cs_atual} onChange={e => setEditData(p => ({ ...p, cs_atual: e.target.value }))} className="h-7 text-xs w-44" disabled={saving} placeholder="email do CS" />
+                          <Input value={editData.cs_atual} onChange={e => setEditData(p => ({ ...p, cs_atual: e.target.value }))} className="h-7 text-xs w-44" disabled={saving || !isAdmin} placeholder="email do CS" title={!isAdmin ? 'Apenas administradores podem alterar o CS' : ''} />
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
                           {c.data_criacao ? format(new Date(c.data_criacao), 'dd/MM/yyyy') : '—'}
