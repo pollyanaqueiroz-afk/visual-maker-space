@@ -546,13 +546,14 @@ export default function CarteiraGeralPage() {
                 </SelectContent>
               </Select>
               <Select value={filterTipoProduto} onValueChange={v => { setFilterTipoProduto(v); setApiPage(1); }}>
-                <SelectTrigger className="h-8 w-[150px] text-xs">
-                  <SelectValue placeholder="Tipo Produto" />
+                <SelectTrigger className="h-8 w-[170px] text-xs">
+                  <SelectValue placeholder="Tipo Produto Master" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos Tipos</SelectItem>
-                  <SelectItem value="plano">Plano</SelectItem>
-                  <SelectItem value="upsell">Upsell</SelectItem>
+                  <SelectItem value="Plano">Plano</SelectItem>
+                  <SelectItem value="Upsell">Upsell</SelectItem>
+                  <SelectItem value="Addon">Addon</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={filterRecorrencia} onValueChange={v => { setFilterRecorrencia(v); setApiPage(1); }}>
