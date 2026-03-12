@@ -983,6 +983,27 @@ export default function SchedulingPage() {
     [meetings]
   );
 
+  // Past meetings without meeting_minutes (ata not filled)
+  const pendingAnnotations = useMemo(() => {
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    return meetings
+      .filter(m => {
+        if (m.status === 'cancelled') return false;
+        const d = parseISO(m.meeting_date);
+        if (d > today) return false; // future meeting
+        return !minutesMeetingIds.has(m.id);
+      })
+      .sort((a, b) => b.meeting_date.localeCompare(a.meeting_date));
+  }, [meetings, minutesMeetingIds]);
+
+  const pendingAnnotationsPage = useMemo(() => {
+    const start = (pendingPage - 1) * PENDING_PER_PAGE;
+    return pendingAnnotations.slice(start, start + PENDING_PER_PAGE);
+  }, [pendingAnnotations, pendingPage]);
+
+  const pendingTotalPages = Math.max(1, Math.ceil(pendingAnnotations.length / PENDING_PER_PAGE));
+
   // Meetings past their date still "scheduled" — split by days overdue
   const { pendingConclusion, pendingReschedule } = useMemo(() => {
     const today = new Date();
