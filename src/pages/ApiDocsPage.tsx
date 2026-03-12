@@ -344,40 +344,73 @@ export default function ApiDocsPage() {
             </CardContent>
           </Card>
 
-          {/* PATCH */}
+          {/* PATCH clients */}
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Badge className="bg-amber-500/10 text-amber-600 border-amber-200">PATCH</Badge>
-                <CardTitle className="text-base font-mono">/functions/v1/manage-data-api?entity=...&id_curseduca=12345</CardTitle>
+                <CardTitle className="text-base font-mono">/manage-data-api?entity=clients&id_curseduca=12345</CardTitle>
               </div>
-              <CardDescription>Atualizar um registro existente pelo id_curseduca em qualquer entidade suportada.</CardDescription>
+              <CardDescription>Atualizar um cliente pelo id_curseduca.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
               <div>
-                <h4 className="text-sm font-semibold mb-2">Exemplo (clients)</h4>
+                <h4 className="text-sm font-semibold mb-2">Exemplo</h4>
                 <CodeBlock code={`curl -X PATCH '${BASE_URL}/manage-data-api?entity=clients&id_curseduca=12345' \\
   -H 'Authorization: Basic ${API_TOKEN}' \\
   -H 'Content-Type: application/json' \\
   -d '{ "status_curseduca": "inativo", "indice_fidelidade": 3 }'`} />
               </div>
-              <div>
-                <h4 className="text-sm font-semibold mb-2">Exemplo (cliente_financeiro)</h4>
-                <CodeBlock code={`curl -X PATCH '${BASE_URL}/manage-data-api?entity=cliente_financeiro&id_curseduca=12345' \\
-  -H 'Authorization: Basic ${API_TOKEN}' \\
-  -H 'Content-Type: application/json' \\
-  -d '{ "status": "inadimplente", "numero_parcelas_inadimplentes": 2 }'`} />
+            </CardContent>
+          </Card>
+
+          {/* PATCH cliente_financeiro */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Badge className="bg-amber-500/10 text-amber-600 border-amber-200">PATCH</Badge>
+                <CardTitle className="text-base font-mono text-wrap break-all">/manage-data-api?entity=cliente_financeiro&id_curseduca=12345&codigo_assinatura_meio_pagamento=SUB_001</CardTitle>
               </div>
+              <CardDescription>
+                Atualizar um registro financeiro pela chave composta: <code className="font-mono text-xs bg-muted px-1 rounded">id_curseduca</code> + <code className="font-mono text-xs bg-muted px-1 rounded">codigo_assinatura_meio_pagamento</code>.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
               <div>
-                <h4 className="text-sm font-semibold mb-2">Erros possíveis</h4>
+                <h4 className="text-sm font-semibold mb-2">Parâmetros de query</h4>
                 <FieldsTable fields={[
-                  { name: '400', type: 'error', description: 'id_curseduca ausente, entity inválida ou nenhum campo válido' },
-                  { name: '401', type: 'error', description: 'Token de autenticação inválido' },
-                  { name: '404', type: 'error', description: 'Registro com o id_curseduca não encontrado' },
-                  { name: '405', type: 'error', description: 'Método HTTP não permitido (use POST ou PATCH)' },
-                  { name: '500', type: 'error', description: 'Erro interno do servidor' },
+                  { name: 'entity', type: 'text', required: true, description: 'cliente_financeiro' },
+                  { name: 'id_curseduca', type: 'text', required: true, description: 'Identificador do cliente' },
+                  { name: 'codigo_assinatura_meio_pagamento', type: 'text', required: false, description: 'Código da assinatura (filtra registro específico)' },
                 ]} />
               </div>
+              <div>
+                <h4 className="text-sm font-semibold mb-2">Exemplo</h4>
+                <CodeBlock code={`curl -X PATCH '${BASE_URL}/manage-data-api?entity=cliente_financeiro&id_curseduca=12345&codigo_assinatura_meio_pagamento=SUB_001' \\
+  -H 'Authorization: Basic ${API_TOKEN}' \\
+  -H 'Content-Type: application/json' \\
+  -d '{
+    "status": "inadimplente",
+    "numero_parcelas_inadimplentes": 2,
+    "valor_contratado": 497
+  }'`} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Erros */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Erros possíveis</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <FieldsTable fields={[
+                { name: '400', type: 'error', description: 'id_curseduca ausente, entity inválida ou nenhum campo válido' },
+                { name: '401', type: 'error', description: 'Token de autenticação inválido' },
+                { name: '404', type: 'error', description: 'Registro não encontrado com a(s) chave(s) informada(s)' },
+                { name: '405', type: 'error', description: 'Método HTTP não permitido (use POST ou PATCH)' },
+                { name: '500', type: 'error', description: 'Erro interno do servidor' },
+              ]} />
             </CardContent>
           </Card>
         </TabsContent>
