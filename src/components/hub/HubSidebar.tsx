@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileImage, LayoutDashboard, LogOut, CalendarDays, Crown, Briefcase, BarChart3, Package, Headset, Home, Settings, Users, ShieldCheck, Smartphone, ExternalLink, Database, AlertTriangle, GraduationCap, PieChart, TrendingDown, ClipboardCheck, Activity, ArrowRightLeft, Construction, Rocket, RotateCcw, UserX } from 'lucide-react';
+import { FileImage, LayoutDashboard, LogOut, CalendarDays, Crown, Briefcase, BarChart3, Package, Headset, Home, Settings, Users, ShieldCheck, Smartphone, ExternalLink, Database, AlertTriangle, GraduationCap, PieChart, TrendingDown, ClipboardCheck, Activity, ArrowRightLeft, Construction, Rocket, RotateCcw, UserX, FileCode } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -60,6 +60,7 @@ const adminModules = [
   { title: 'Carteirização', url: '/hub/admin/carteirizacao', icon: Briefcase, permission: 'admin.view', badgeKey: null },
   { title: 'Permissões por Perfil', url: '/hub/admin/permissoes', icon: ShieldCheck, permission: 'admin.manage_permissions', badgeKey: null },
   { title: 'Campos da Carteira', url: '/hub/admin/campos', icon: Database, permission: 'carteira.manage_fields', badgeKey: null },
+  { title: 'Documentação de APIs', url: '/hub/admin/api-docs', icon: FileCode, permission: 'admin.view', badgeKey: null },
   { title: 'Hub do Cliente', url: '/cliente', icon: ExternalLink, permission: 'admin.view', badgeKey: null },
 ];
 
