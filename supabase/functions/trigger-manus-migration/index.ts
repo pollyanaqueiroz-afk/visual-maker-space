@@ -54,10 +54,28 @@ Deno.serve(async (req) => {
     }
 
     // 4. Build payload for Manus
+    // The POST sends all relevant migration data so Manus can:
+    //   - Identify the Curseduca client via `id_curseduca` (extracted from client_url)
+    //   - Access the source platform clubs and API credentials
+    //   - Report back progress via the webhook_url
     const webhookUrl = `${SUPABASE_URL}/functions/v1/manus-webhook`;
+
+    // Extract id_curseduca from client_url (e.g. "escola.curseduca.com" → "escola")
+    const extractIdCurseduca = (url: string): string => {
+      try {
+        const cleaned = url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+        return cleaned.split('.')[0] || url;
+      } catch {
+        return url;
+      }
+    };
+
+    const id_curseduca = extractIdCurseduca(project.client_url);
+
     const payload = {
       action, // "validate" or "migrate"
       project_id: project.id,
+      id_curseduca, // Identificador Curseduca do cliente (subdomínio)
       client_name: project.client_name,
       client_email: project.client_email,
       client_url: project.client_url,
