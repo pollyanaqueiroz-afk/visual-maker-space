@@ -7,9 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TablePagination from '@/components/carteira/TablePagination';
 import { TableSkeleton } from '@/components/ui/TableSkeleton';
-import { Search, Pencil, Check, X, Users, Plus, Loader2 } from 'lucide-react';
+import { Search, Pencil, Check, X, Users, Plus, Loader2, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 
 type ClientRecord = {
