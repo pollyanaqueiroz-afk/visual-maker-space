@@ -1253,6 +1253,54 @@ export type Database = {
         }
         Relationships: []
       }
+      cliente_financeiro: {
+        Row: {
+          codigo_assinatura_meio_pagamento: string | null
+          codigo_cliente_meio_pagamento: string | null
+          created_at: string
+          id: string
+          id_curseduca: string
+          meio_de_pagamento: string | null
+          numero_parcelas_contrato: number | null
+          numero_parcelas_inadimplentes: number | null
+          numero_parcelas_pagas: number | null
+          recorrencia_pagamento: string | null
+          status: string | null
+          updated_at: string
+          valor_contratado: number | null
+        }
+        Insert: {
+          codigo_assinatura_meio_pagamento?: string | null
+          codigo_cliente_meio_pagamento?: string | null
+          created_at?: string
+          id?: string
+          id_curseduca: string
+          meio_de_pagamento?: string | null
+          numero_parcelas_contrato?: number | null
+          numero_parcelas_inadimplentes?: number | null
+          numero_parcelas_pagas?: number | null
+          recorrencia_pagamento?: string | null
+          status?: string | null
+          updated_at?: string
+          valor_contratado?: number | null
+        }
+        Update: {
+          codigo_assinatura_meio_pagamento?: string | null
+          codigo_cliente_meio_pagamento?: string | null
+          created_at?: string
+          id?: string
+          id_curseduca?: string
+          meio_de_pagamento?: string | null
+          numero_parcelas_contrato?: number | null
+          numero_parcelas_inadimplentes?: number | null
+          numero_parcelas_pagas?: number | null
+          recorrencia_pagamento?: string | null
+          status?: string | null
+          updated_at?: string
+          valor_contratado?: number | null
+        }
+        Relationships: []
+      }
       clientes_inativos: {
         Row: {
           client_name: string | null
