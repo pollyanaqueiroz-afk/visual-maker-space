@@ -79,17 +79,17 @@ export default function ReversaoCancelamentoPage() {
  * Uses id_curseduca (derived from client_url) as unique key.
  */
 async function syncChurnFromMeetings() {
-  // Fetch meetings with loyalty_index = 1
+  // Fetch meetings with loyalty_index = 1 OR 2
   const { data: meetings } = await supabase
     .from('meetings')
-    .select('id, client_url, client_name, meeting_date, loyalty_reason, created_by')
-    .eq('loyalty_index', 1)
+    .select('id, client_url, client_name, meeting_date, loyalty_reason, created_by, loyalty_index')
+    .in('loyalty_index', [1, 2])
     .eq('status', 'completed')
     .order('meeting_date', { ascending: false });
 
   if (!meetings || meetings.length === 0) return;
 
-  // Deduplicate by client_url
+  // Deduplicate by client_url, keeping most recent
   const seen = new Map<string, any>();
   for (const m of meetings) {
     const key = m.client_url || m.client_name || m.id;
@@ -113,13 +113,14 @@ async function syncChurnFromMeetings() {
     }
   }
 
-  // Insert new ones
+  // Insert new ones — loyalty_index=1 → nenhum_contato, loyalty_index=2 → risco_fidelidade
   const toInsert: any[] = [];
   for (const [key, m] of seen) {
     const idCurseduca = m.client_url || key;
     if (existingKeys.has(idCurseduca)) continue;
 
     const profile = m.created_by ? profileMap.get(m.created_by) : null;
+    const initialStatus = m.loyalty_index === 2 ? 'risco_fidelidade' : 'nenhum_contato';
     toInsert.push({
       id_curseduca: idCurseduca,
       client_name: m.client_name,
@@ -128,7 +129,7 @@ async function syncChurnFromMeetings() {
       loyalty_reason: m.loyalty_reason,
       cs_email: profile?.email || null,
       cs_nome: profile?.name || null,
-      status: 'nenhum_contato',
+      status: initialStatus,
     });
   }
 
