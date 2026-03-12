@@ -385,7 +385,110 @@ export default function SchedulingPage() {
     setDialogOpen(true);
   };
 
-  const handleSubmit = async () => {
+  // Generate recurrence dates based on config
+  const generateRecurrenceDates = (baseDate: string, config: RecurrenceConfig): string[] => {
+    if (config.type === 'none') return [baseDate];
+    const dates: string[] = [baseDate];
+    const base = parseISO(baseDate);
+    const maxDates = 365; // safety limit
+
+    let current = base;
+    for (let i = 1; i < maxDates; i++) {
+      let next: Date;
+
+      if (config.type === 'daily') {
+        next = addDays(current, 1);
+      } else if (config.type === 'weekdays') {
+        next = addDays(current, 1);
+        while (getDay(next) === 0 || getDay(next) === 6) {
+          next = addDays(next, 1);
+        }
+      } else if (config.type === 'custom') {
+        if (config.frequency === 'day') {
+          next = addDays(current, config.interval);
+        } else if (config.frequency === 'week') {
+          if (config.weekDays.length === 0) {
+            next = addDays(current, config.interval * 7);
+          } else {
+            // Find next matching weekday
+            let candidate = addDays(current, 1);
+            let found = false;
+            for (let j = 0; j < config.interval * 7 + 7; j++) {
+              if (config.weekDays.includes(getDay(candidate))) {
+                found = true;
+                next = candidate;
+                break;
+              }
+              candidate = addDays(candidate, 1);
+            }
+            if (!found) next = addDays(current, config.interval * 7);
+          }
+        } else if (config.frequency === 'month') {
+          next = new Date(current.getFullYear(), current.getMonth() + config.interval, current.getDate());
+        } else {
+          next = new Date(current.getFullYear() + config.interval, current.getMonth(), current.getDate());
+        }
+      } else if (config.type === 'weekly') {
+        next = addDays(current, 7);
+      } else if (config.type === 'monthly') {
+        next = new Date(current.getFullYear(), current.getMonth() + 1, current.getDate());
+      } else if (config.type === 'annually') {
+        next = new Date(current.getFullYear() + 1, current.getMonth(), current.getDate());
+      } else {
+        break;
+      }
+
+      // Check end conditions
+      if (config.endType === 'on_date' && config.endDate) {
+        if (next > parseISO(config.endDate)) break;
+      }
+      if (config.endType === 'after_occurrences') {
+        if (dates.length >= config.occurrences) break;
+      }
+      // Default safety: max 52 occurrences for 'never'
+      if (config.endType === 'never' && dates.length >= 52) break;
+
+      dates.push(format(next, 'yyyy-MM-dd'));
+      current = next;
+    }
+    return dates;
+  };
+
+  const getRecurrenceLabel = (): string => {
+    if (recurrence.type === 'none') return 'Não se repete';
+    if (recurrence.type === 'daily') return 'Todos os dias';
+    if (recurrence.type === 'weekdays') return 'Todos os dias da semana (segunda a sexta-feira)';
+    if (recurrence.type === 'weekly') {
+      const dayNames = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+      const baseDay = form.meeting_date ? getDay(parseISO(form.meeting_date)) : getDay(new Date());
+      return `Semanal: cada ${dayNames[baseDay]}`;
+    }
+    if (recurrence.type === 'monthly') {
+      if (form.meeting_date) {
+        const d = parseISO(form.meeting_date);
+        const dayNames = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+        const weekNum = Math.ceil(d.getDate() / 7);
+        const ordinals = ['', 'primeiro(a)', 'segundo(a)', 'terceiro(a)', 'quarto(a)', 'quinto(a)'];
+        return `Mensal no(a) ${ordinals[weekNum]} ${dayNames[getDay(d)]}`;
+      }
+      return 'Mensal';
+    }
+    if (recurrence.type === 'annually') {
+      if (form.meeting_date) {
+        const d = parseISO(form.meeting_date);
+        const monthNames = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+        return `Anual em ${monthNames[d.getMonth()]} ${d.getDate()}`;
+      }
+      return 'Anual';
+    }
+    if (recurrence.type === 'custom') {
+      const freqNames: Record<string, string> = { day: 'dia(s)', week: 'semana(s)', month: 'mês(es)', year: 'ano(s)' };
+      return `Personalizado: a cada ${recurrence.interval} ${freqNames[recurrence.frequency]}`;
+    }
+    return 'Não se repete';
+  };
+
+
     if (!form.title || !form.meeting_date || !form.meeting_time || !form.meeting_reason) {
       toast.error('Preencha título, motivo, data e horário');
       return;
