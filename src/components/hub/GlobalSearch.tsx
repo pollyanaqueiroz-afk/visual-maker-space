@@ -96,7 +96,11 @@ export default function GlobalSearch() {
   const showDropdown = focused && (query.length >= 2 || loading);
 
   const handleSelect = (item: SearchResult) => {
-    navigate(item.path);
+    if (item.group === 'Carteira') {
+      setQuickViewClientId(item.id);
+    } else {
+      navigate(item.path);
+    }
     setQuery('');
     setFocused(false);
     inputRef.current?.blur();
