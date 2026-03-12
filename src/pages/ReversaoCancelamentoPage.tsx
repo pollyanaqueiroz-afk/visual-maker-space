@@ -18,6 +18,7 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGri
 
 const REVERSAO_STATUSES = [
   { value: 'nenhum_contato', label: 'Nenhum Contato', color: 'bg-muted text-muted-foreground' },
+  { value: 'risco_fidelidade', label: 'Risco por Fidelidade', color: 'bg-orange-500/20 text-orange-700 dark:text-orange-400' },
   { value: 'elaboracao_proposta', label: 'Elaboração de Proposta', color: 'bg-blue-500/20 text-blue-700 dark:text-blue-400' },
   { value: 'reuniao_reversao', label: 'Reunião de Reversão', color: 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400' },
   { value: 'cliente_revertido', label: 'Cliente Revertido', color: 'bg-green-500/20 text-green-700 dark:text-green-400' },
