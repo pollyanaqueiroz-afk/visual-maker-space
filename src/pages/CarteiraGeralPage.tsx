@@ -32,6 +32,7 @@ interface ClientRecord {
 type ViewType = 'cadastro' | 'financeiro' | 'produtos' | 'engajamento';
 
 const VIEW_COLUMNS: Record<ViewType, { key: string; label: string }[]> = {
+  cadastro: [],
   financeiro: [
     { key: 'id_curseduca', label: 'ID' },
     { key: 'cliente_nome', label: 'Cliente' },
