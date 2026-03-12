@@ -88,11 +88,8 @@ export default function CadastroTab() {
     if (filterPlano !== 'all') {
       result = result.filter(c => c.plano === filterPlano);
     }
-    if (filterCs !== 'all') {
-      result = result.filter(c => c.cs_atual === filterCs);
-    }
     return result;
-  }, [clients, search, filterPlano, filterCs]);
+  }, [clients, search, filterPlano]);
 
   // Unique values for filter dropdowns
   const uniquePlanos = useMemo(() => [...new Set(clients.map(c => c.plano).filter(Boolean))].sort() as string[], [clients]);
