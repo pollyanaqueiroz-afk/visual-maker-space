@@ -399,13 +399,13 @@ export default function AjusteBriefingsPage() {
                     )}
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="space-y-2">
-                        <Label className="text-xs">Arte atual</Label>
+                        <Label className="text-xs">Arte atual (arquivo ou link)</Label>
                         {item.filePreview ? (
                           <div className="relative">
                             <img
                               src={item.filePreview}
                               alt="Preview"
-                              className="w-full h-32 object-cover rounded-lg border"
+                              className="w-full h-24 object-cover rounded-lg border"
                             />
                             <Button
                               variant="ghost"
@@ -417,9 +417,9 @@ export default function AjusteBriefingsPage() {
                             </Button>
                           </div>
                         ) : (
-                          <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/30 transition-colors">
-                            <Upload className="h-6 w-6 text-muted-foreground mb-1" />
-                            <span className="text-xs text-muted-foreground">Clique para enviar</span>
+                          <label className="flex flex-col items-center justify-center h-24 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/30 transition-colors">
+                            <Upload className="h-5 w-5 text-muted-foreground mb-1" />
+                            <span className="text-xs text-muted-foreground">Upload de imagem</span>
                             <input
                               type="file"
                               accept="image/*,.pdf,.ai,.psd,.svg"
@@ -431,6 +431,16 @@ export default function AjusteBriefingsPage() {
                             />
                           </label>
                         )}
+                        <div className="flex items-center gap-2">
+                          <Link2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          <Input
+                            placeholder="Ou cole um link (Google Drive, etc.)"
+                            value={item.linkUrl}
+                            onChange={(e) => updateItem(index, 'linkUrl', e.target.value)}
+                            className="h-8 text-xs"
+                            disabled={!!item.file}
+                          />
+                        </div>
                       </div>
                       <div className="space-y-2">
                         <Label className="text-xs">Observação do ajuste</Label>
@@ -438,7 +448,7 @@ export default function AjusteBriefingsPage() {
                           placeholder="Descreva qual alteração o cliente solicitou..."
                           value={item.observations}
                           onChange={(e) => updateItem(index, 'observations', e.target.value)}
-                          className="h-32 resize-none"
+                          className="h-[152px] resize-none"
                         />
                       </div>
                     </div>
