@@ -691,14 +691,6 @@ export default function CarteiraGeralPage() {
                             <a href={row[col.key]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" onClick={e => e.stopPropagation()}>
                               {row[col.key]}
                             </a>
-                          ) : col.key === 'produto' ? (
-                            formatCellValue(row['tipo_plano'] || row['tipo_upsell'], col.key)
-                          ) : col.key === 'tipo_produto' ? (
-                            (() => {
-                              if (row['is_upsell']) return <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 border-0 text-[11px] font-semibold">Upsell</Badge>;
-                              if (row['is_plano']) return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-0 text-[11px] font-semibold">Plano</Badge>;
-                              return <span className="text-xs text-muted-foreground">—</span>;
-                            })()
                           ) : col.key === 'status' && activeView === 'financeiro' ? (
                             (() => {
                               const val = row['status'];
