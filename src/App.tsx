@@ -44,6 +44,7 @@ import AjusteAplicativosPage from "./pages/AjusteAplicativosPage";
 import CarteirizacaoPage from "./pages/CarteirizacaoPage";
 import MigracaoKanbanPage from "./pages/MigracaoKanbanPage";
 import MigracaoAjustesPage from "./pages/MigracaoAjustesPage";
+import MigracaoAnalyticsPage from "./pages/MigracaoAnalyticsPage";
 import ClienteLogin from "./pages/cliente/ClienteLogin";
 import ClienteHubLayout from "./pages/cliente/ClienteHubLayout";
 import ClienteHome from "./pages/cliente/ClienteHome";
