@@ -220,8 +220,8 @@ export default function SchedulingPage() {
   const [confirmForm, setConfirmForm] = useState({
     minutes_url: '',
     recording_url: '',
-    loyalty_index: '',
-    loyalty_reason: '',
+    loyalty_stars: 0,
+    observations: '',
   });
   const [confirmSubmitting, setConfirmSubmitting] = useState(false);
   const [csatMap, setCsatMap] = useState<Record<string, { score: number | null; responded: boolean }>>({});
@@ -650,39 +650,57 @@ export default function SchedulingPage() {
     else { toast.success('Reunião removida'); fetchMeetings(); }
   };
 
-  const handleOpenConfirm = (m: Meeting) => {
+  const handleOpenConfirm = async (m: Meeting) => {
     setConfirmingMeeting(m);
+    // Try to load existing minutes
+    const { data: existingMinutes } = await supabase
+      .from('meeting_minutes')
+      .select('*')
+      .eq('meeting_id', m.id)
+      .maybeSingle();
+
     setConfirmForm({
       minutes_url: m.minutes_url || '',
       recording_url: m.recording_url || '',
-      loyalty_index: m.loyalty_index ? String(m.loyalty_index) : '',
-      loyalty_reason: m.loyalty_reason || '',
+      loyalty_stars: (existingMinutes as any)?.loyalty_stars || 0,
+      observations: (existingMinutes as any)?.observations || '',
     });
     setConfirmDialogOpen(true);
   };
 
   const handleConfirmSubmit = async () => {
     if (!confirmingMeeting) return;
-    if (confirmForm.loyalty_index === '') {
-      toast.error('Selecione o índice de fidelidade');
+    if (confirmForm.loyalty_stars === 0) {
+      toast.error('Selecione o índice de fidelidade (1 a 5 estrelas)');
       return;
     }
-    const isInternal = confirmForm.loyalty_index === '0';
-    if (!isInternal && !confirmForm.loyalty_reason.trim()) {
-      toast.error('Preencha o motivo do índice de fidelidade');
+    if (confirmForm.loyalty_stars <= 2 && !confirmForm.observations.trim()) {
+      toast.error('Observação é obrigatória para índice 1 ou 2 estrelas');
       return;
     }
     setConfirmSubmitting(true);
     try {
+      // Update meeting status
       const { error } = await supabase.from('meetings').update({
         status: 'completed',
         minutes_url: confirmForm.minutes_url || null,
         recording_url: confirmForm.recording_url || null,
-        loyalty_index: Number(confirmForm.loyalty_index),
-        loyalty_reason: isInternal ? 'Reunião Interna' : confirmForm.loyalty_reason,
+        loyalty_index: confirmForm.loyalty_stars,
+        loyalty_reason: confirmForm.observations || null,
       }).eq('id', confirmingMeeting.id);
       if (error) throw error;
-      toast.success('Reunião confirmada!');
+
+      // Upsert meeting_minutes
+      const { error: minutesError } = await supabase
+        .from('meeting_minutes')
+        .upsert({
+          meeting_id: confirmingMeeting.id,
+          loyalty_stars: confirmForm.loyalty_stars,
+          observations: confirmForm.observations || null,
+        } as any, { onConflict: 'meeting_id' });
+      if (minutesError) console.error('Minutes save error:', minutesError);
+
+      toast.success('Reunião confirmada e ata salva!');
 
       // Send CSAT email if client has email
       if (confirmingMeeting.client_email) {
@@ -2066,35 +2084,46 @@ export default function SchedulingPage() {
               </div>
               <div className="space-y-2">
                 <Label>Índice de Fidelidade *</Label>
-                <Select value={confirmForm.loyalty_index} onValueChange={v => setConfirmForm(f => ({ ...f, loyalty_index: v, ...(v === '0' ? { loyalty_reason: '' } : {}) }))}>
-                  <SelectTrigger className={confirmForm.loyalty_index === '' ? 'text-muted-foreground' : ''}>
-                    <SelectValue placeholder="Selecione de 1 a 4 ou Reunião Interna" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1 — Muito baixo</SelectItem>
-                    <SelectItem value="2">2 — Baixo</SelectItem>
-                    <SelectItem value="3">3 — Alto</SelectItem>
-                    <SelectItem value="4">4 — Muito alto</SelectItem>
-                    <SelectItem value="0">
-                      <span className="text-muted-foreground">Reunião Interna</span>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                {confirmForm.loyalty_index === '0' && (
-                  <p className="text-xs text-muted-foreground">Reuniões internas não impactam o índice de fidelidade do cliente.</p>
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setConfirmForm(f => ({ ...f, loyalty_stars: star }))}
+                      className="p-0.5 transition-transform hover:scale-110"
+                    >
+                      <Star
+                        className={cn(
+                          "h-7 w-7 transition-colors",
+                          star <= confirmForm.loyalty_stars
+                            ? "fill-amber-400 text-amber-400"
+                            : "text-muted-foreground/30"
+                        )}
+                      />
+                    </button>
+                  ))}
+                  {confirmForm.loyalty_stars > 0 && (
+                    <span className="text-sm text-muted-foreground ml-2">
+                      {confirmForm.loyalty_stars}/5
+                    </span>
+                  )}
+                </div>
+                {confirmForm.loyalty_stars > 0 && confirmForm.loyalty_stars <= 2 && (
+                  <p className="text-xs text-destructive">⚠️ Índice baixo — observação obrigatória</p>
                 )}
               </div>
-              {confirmForm.loyalty_index !== '0' && (
-                <div className="space-y-2">
-                  <Label>Motivo do Índice *</Label>
-                  <Textarea
-                    value={confirmForm.loyalty_reason}
-                    onChange={e => setConfirmForm(f => ({ ...f, loyalty_reason: e.target.value }))}
-                    placeholder="Explique o motivo pelo qual você atribuiu esse índice..."
-                    rows={3}
-                  />
-                </div>
-              )}
+              <div className="space-y-2">
+                <Label>
+                  Observações {confirmForm.loyalty_stars > 0 && confirmForm.loyalty_stars <= 2 ? '*' : ''}
+                </Label>
+                <Textarea
+                  value={confirmForm.observations}
+                  onChange={e => setConfirmForm(f => ({ ...f, observations: e.target.value }))}
+                  placeholder={confirmForm.loyalty_stars <= 2 && confirmForm.loyalty_stars > 0 ? 'Explique o motivo do índice baixo...' : 'Observações sobre a reunião (opcional)...'}
+                  rows={3}
+                  className={cn(confirmForm.loyalty_stars > 0 && confirmForm.loyalty_stars <= 2 && "border-destructive/50 focus-visible:ring-destructive/30")}
+                />
+              </div>
               <Button className="w-full" onClick={handleConfirmSubmit} disabled={confirmSubmitting}>
                 {confirmSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle className="h-4 w-4 mr-2" />}
                 Confirmar Reunião
