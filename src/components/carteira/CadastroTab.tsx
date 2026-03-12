@@ -242,10 +242,6 @@ export default function CadastroTab() {
                 <Input value={newForm.id_curseduca} onChange={e => setNewForm(p => ({ ...p, id_curseduca: e.target.value }))} placeholder="Ex: 12345" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">ID Curseduca *</Label>
-                <Input value={newForm.id_curseduca} onChange={e => setNewForm(p => ({ ...p, id_curseduca: e.target.value }))} placeholder="Ex: 12345" />
-              </div>
-              <div className="space-y-1.5">
                 <Label className="text-xs">Nome</Label>
                 <Input value={newForm.nome} onChange={e => setNewForm(p => ({ ...p, nome: e.target.value }))} placeholder="Nome do cliente" />
               </div>
