@@ -154,32 +154,44 @@ export default function AjusteBriefingsPage() {
         const batch = validItems.slice(i, i + BATCH_SIZE);
         const results = await Promise.allSettled(
           batch.map(async (item) => {
-            const file = item.file!;
-            const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-            const filePath = `adjustments/${adjustment.id}/${Date.now()}_${Math.random().toString(36).slice(2)}_${safeName}`;
-            
-            const { error: uploadError } = await supabase.storage
-              .from('briefing-uploads')
-              .upload(filePath, file);
+            let fileUrl: string;
+            let fileName: string;
 
-            if (uploadError) {
-              console.error('Upload failed:', file.name, uploadError);
-              throw uploadError;
+            if (item.file) {
+              const file = item.file;
+              const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+              const filePath = `adjustments/${adjustment.id}/${Date.now()}_${Math.random().toString(36).slice(2)}_${safeName}`;
+              
+              const { error: uploadError } = await supabase.storage
+                .from('briefing-uploads')
+                .upload(filePath, file);
+
+              if (uploadError) {
+                console.error('Upload failed:', file.name, uploadError);
+                throw uploadError;
+              }
+
+              const { data: urlData } = supabase.storage
+                .from('briefing-uploads')
+                .getPublicUrl(filePath);
+
+              fileUrl = urlData.publicUrl;
+              fileName = file.name;
+            } else {
+              // Link-only item
+              fileUrl = item.linkUrl.trim();
+              fileName = `Link: ${fileUrl}`;
             }
-
-            const { data: urlData } = supabase.storage
-              .from('briefing-uploads')
-              .getPublicUrl(filePath);
 
             const { error: insertError } = await supabase.from('briefing_adjustment_items').insert({
               adjustment_id: adjustment.id,
-              file_url: urlData.publicUrl,
-              file_name: file.name,
+              file_url: fileUrl,
+              file_name: fileName,
               observations: item.observations || null,
             } as any);
 
             if (insertError) {
-              console.error('Insert failed:', file.name, insertError);
+              console.error('Insert failed:', fileName, insertError);
               throw insertError;
             }
           })
