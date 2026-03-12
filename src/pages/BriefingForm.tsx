@@ -218,7 +218,7 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
 
   const uploadReferenceImages = async (refs: ImageBriefingFormData['reference_images'], requestId: string, imageId: string) => {
     for (const ref of refs) {
-      const url = await uploadFile(ref.file, `references/${requestId}`);
+      const url = await uploadFile(ref.file, `references/${requestId}`, ALLOWED_IMAGE_TYPES);
       await supabase.from('briefing_reference_images').insert({
         briefing_image_id: imageId,
         file_url: url,
