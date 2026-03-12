@@ -912,7 +912,7 @@ export default function DesignerPanel() {
   const filtered = images.filter(img => {
     if (filterStatus === 'all') return true;
     if (filterStatus === 'adjustment') return img._source === 'adjustment';
-    if (filterStatus === 'revision') return img.revision_count > 0 && img.status === 'in_progress';
+    if (filterStatus === 'revision') return img.status === 'revision' || (img.revision_count > 0 && img.status === 'in_progress');
     return img.status === filterStatus;
   });
 
