@@ -2374,11 +2374,6 @@ export default function SchedulingPage() {
                 {detailMeeting.description && (
                   <p className="text-xs text-muted-foreground border-t border-border pt-2 mt-2">{detailMeeting.description}</p>
                 )}
-                {detailMeeting.meeting_url && (
-                  <a href={detailMeeting.meeting_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline">
-                    <Video className="h-3 w-3" /> Link da reunião
-                  </a>
-                )}
               </div>
 
               {/* Loyalty info */}
