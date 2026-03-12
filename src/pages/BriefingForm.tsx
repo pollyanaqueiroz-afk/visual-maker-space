@@ -173,7 +173,7 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
 
   const hasAnySelection = Object.values(selections).some(Boolean);
 
-  const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+  const MAX_FILE_SIZE = 1024 * 1024 * 1024 * 1024; // 1TB (sem limite prático no client)
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp', 'image/tiff'];
   const ALLOWED_BRAND_TYPES = [...ALLOWED_IMAGE_TYPES, 'application/pdf', 'application/postscript', 'image/vnd.adobe.photoshop', 'application/zip', 'application/x-zip-compressed', 'application/octet-stream'];
 
