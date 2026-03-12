@@ -38,7 +38,8 @@ const csModules = [
   { title: 'Dashboard Liderança', url: '/hub/lideranca', icon: Crown, permission: 'lideranca.view', badgeKey: null },
   { title: 'Funil de Cancelamento', url: '/hub/funil-cancelamento', icon: AlertTriangle, permission: 'funil.view', badgeKey: null },
   { title: 'BI', url: '/hub/bi', icon: PieChart, permission: 'dashboards.view', badgeKey: null },
-  { title: 'Churn & Upsell', url: '/hub/churn-upsell', icon: TrendingDown, permission: 'dashboards.view', badgeKey: null },
+  { title: 'Churn', url: '/hub/churn', icon: TrendingDown, permission: 'dashboards.view', badgeKey: null },
+  { title: 'Upsell', url: '/hub/upsell', icon: Rocket, permission: 'dashboards.view', badgeKey: null },
 ];
 
 const auditoriaModules = [
