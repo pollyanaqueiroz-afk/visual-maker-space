@@ -58,6 +58,10 @@ export default function CadastroTab() {
   const [newForm, setNewForm] = useState(EMPTY_FORM);
   const [creating, setCreating] = useState(false);
 
+  // Filters
+  const [filterPlano, setFilterPlano] = useState<string>('all');
+  const [filterCs, setFilterCs] = useState<string>('all');
+
   const fetchClients = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
