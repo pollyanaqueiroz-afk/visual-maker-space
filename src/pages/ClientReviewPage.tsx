@@ -10,7 +10,7 @@ import { IMAGE_TYPE_LABELS, ImageType } from '@/types/briefing';
 import {
   Heart, X, Loader2, Mail, CheckCircle, ImageIcon, Download,
   Sparkles, ThumbsDown, FolderOpen, Clock, Eye, Archive,
-  ChevronRight, PlusCircle, ArrowRight, Palette
+  ChevronRight, PlusCircle, ArrowRight, Palette, Link2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -94,22 +94,28 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
     const params = new URLSearchParams(window.location.search);
     const tokenParam = params.get('token');
     const emailParam = params.get('email');
+    const urlParam = params.get('url');
     if (tokenParam) {
       fetchImages(undefined, tokenParam.trim());
     } else if (injectedEmail) {
       fetchImages(injectedEmail.trim().toLowerCase());
+    } else if (urlParam) {
+      setPlatformUrlInput(urlParam);
+      fetchImages(undefined, undefined, urlParam.trim());
     } else if (emailParam) {
       setEmail(emailParam);
       fetchImages(emailParam.trim().toLowerCase());
     }
   }, [injectedEmail]);
 
-  const fetchImages = async (clientEmail?: string, reviewToken?: string) => {
+  const fetchImages = async (clientEmail?: string, reviewToken?: string, clientPlatformUrl?: string) => {
     setLoading(true);
     try {
       const body: Record<string, string> = {};
       if (reviewToken) {
         body.review_token = reviewToken;
+      } else if (clientPlatformUrl) {
+        body.platform_url = clientPlatformUrl;
       } else if (clientEmail) {
         body.email = clientEmail;
       }
@@ -128,7 +134,7 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
 
       const requests = result.requests || [];
       if (requests.length === 0) {
-        toast.error('Nenhuma solicitação encontrada para este email');
+        toast.error('Nenhuma solicitação encontrada para esta URL');
         setLoading(false);
         return;
       }
@@ -174,10 +180,13 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
     setBriefingDetailId(imageId);
     setLoadingDetail(true);
     try {
-      // Use edge function to fetch detail securely
-      const { data: result } = await supabase.functions.invoke('client-review-data', {
-        body: { email, image_id: imageId },
-      });
+      const body: Record<string, string> = { image_id: imageId };
+      if (platformUrlInput) {
+        body.platform_url = platformUrlInput;
+      } else if (email) {
+        body.email = email;
+      }
+      const { data: result } = await supabase.functions.invoke('client-review-data', { body });
       const allImgs = result?.images?.all || [];
       const detail = allImgs.find((i: any) => i.id === imageId);
       setBriefingDetail(detail || null);
@@ -189,11 +198,12 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
   };
 
   const handleLogin = () => {
-    if (!email.trim()) {
-      toast.error('Informe seu email');
+    const url = platformUrlInput.trim();
+    if (!url) {
+      toast.error('Informe a URL da sua plataforma');
       return;
     }
-    fetchImages(email.trim().toLowerCase());
+    fetchImages(undefined, undefined, url);
   };
 
   const currentImage = images[currentIndex];
@@ -784,24 +794,24 @@ export default function ClientReviewPage({ injectedEmail, embedded = false }: Cl
                   transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
                   className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shadow-inner"
                 >
-                  <Mail className="h-7 w-7 text-primary" />
+                  <Link2 className="h-7 w-7 text-primary" />
                 </motion.div>
                 <h2 className="text-xl font-bold text-foreground">Acesse suas artes</h2>
                 <p className="text-muted-foreground text-sm leading-relaxed">
-                  Informe o email utilizado na solicitação para visualizar e aprovar suas artes.
+                  Informe a URL da sua plataforma para visualizar e aprovar suas artes.
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="client-email" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Seu email
+                <Label htmlFor="client-url" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  URL da sua plataforma
                 </Label>
                 <Input
-                  id="client-email"
-                  type="email"
-                  placeholder="seuemail@empresa.com"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  id="client-url"
+                  type="text"
+                  placeholder="suaescola.curseduca.pro"
+                  value={platformUrlInput}
+                  onChange={e => setPlatformUrlInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleLogin()}
                   className="h-12 text-base rounded-xl bg-muted/50 border-border focus:bg-card"
                 />
