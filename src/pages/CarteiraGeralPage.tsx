@@ -463,6 +463,7 @@ export default function CarteiraGeralPage() {
         <CadastroTab />
       ) : (
       /* Client Table */
+      <>
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -601,6 +602,8 @@ export default function CarteiraGeralPage() {
         open={!!detailId}
         onOpenChange={(open) => { if (!open) setDetailId(null); }}
       />
+      </>
+      )}
 
     </div>
   );
