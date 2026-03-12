@@ -10,12 +10,11 @@ import { toast } from 'sonner';
 import { format, parseISO, startOfMonth, endOfMonth, subMonths, isWithinInterval, startOfWeek, endOfWeek, isSameDay, getDay, getISOWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
-  CalendarDays, CheckCircle, XCircle, Clock, TrendingUp, Users, BarChart3, RefreshCw, Heart, Calendar as CalendarIcon,
+  CalendarDays, CheckCircle, XCircle, Clock, TrendingUp, Users, BarChart3, RefreshCw, Calendar as CalendarIcon, LayoutGrid,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line, Legend,
 } from 'recharts';
-import LoyaltyTrackingTab from '@/components/dashboard/LoyaltyTrackingTab';
 import { KpiCard } from '@/components/dashboard/KpiCard';
 
 interface Meeting {
