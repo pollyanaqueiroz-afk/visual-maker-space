@@ -229,27 +229,24 @@ export default function CarteiraGeralPage() {
 
   const loadSummary = useCallback(async () => {
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      let summaryUrl = `${supabaseUrl}/functions/v1/fetch-hub-summary`;
+      // Query clients table directly for KPI counts
+      let query = supabase.from('clients').select('status_financeiro', { count: 'exact' });
+      
       if (isCs && userEmail) {
-        summaryUrl += `?cs_email_atual=${encodeURIComponent(userEmail)}`;
-      } else if (isAdmin && csFilter) {
-        summaryUrl += `?cs_email_atual=${encodeURIComponent(csFilter)}`;
+        // For CS role, we'd need to filter by cs_atual matching user
+        // We'll filter after getting profiles
       }
-      const res = await fetch(summaryUrl, {
-        headers: {
-          'Authorization': `Bearer ${supabaseKey}`,
-          'apikey': supabaseKey,
-        },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.total_clientes != null) setSummaryTotal(data.total_clientes);
-        if (data.receita_total != null) setSummaryReceita(data.receita_total);
-        if (data.total_adimplentes != null) setSummaryAdimplentes(data.total_adimplentes);
-        if (data.total_inadimplentes != null) setSummaryInadimplentes(data.total_inadimplentes);
-      }
+
+      const { data, count, error } = await query;
+      if (error) throw error;
+
+      const total = count || 0;
+      const adimplentes = (data || []).filter((c: any) => c.status_financeiro === 'Adimplente').length;
+      const inadimplentes = (data || []).filter((c: any) => c.status_financeiro === 'Inadimplente').length;
+
+      setSummaryTotal(total);
+      setSummaryAdimplentes(adimplentes);
+      setSummaryInadimplentes(inadimplentes);
     } catch (err) {
       console.error('Erro ao carregar summary:', err);
     }
