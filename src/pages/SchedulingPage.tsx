@@ -799,6 +799,7 @@ export default function SchedulingPage() {
       setConfirmDialogOpen(false);
       setConfirmingMeeting(null);
       fetchMeetings();
+      fetchMinutesIds();
     } catch (err: any) {
       toast.error('Erro: ' + err.message);
     } finally {
