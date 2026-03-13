@@ -119,7 +119,7 @@ export default function ClientTicketsTab({ clientName, clientId }: Props) {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div className="flex items-center gap-3">
           <h3 className="text-sm font-semibold">Tickets de Suporte</h3>
           <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
@@ -130,7 +130,7 @@ export default function ClientTicketsTab({ clientName, clientId }: Props) {
             )}
           </div>
         </div>
-        <Button size="sm" onClick={() => setShowCreate(true)} className="h-7 text-xs gap-1">
+        <Button size="sm" onClick={() => setShowCreate(true)} className="h-8 sm:h-7 text-xs gap-1 w-full sm:w-auto">
           <Plus className="h-3 w-3" /> Novo Ticket
         </Button>
       </div>
