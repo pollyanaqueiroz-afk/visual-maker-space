@@ -212,9 +212,44 @@ function NewClientDialog({ open, onClose }: { open: boolean; onClose: () => void
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [form, setForm] = useState({
-    client_name: '', client_email: '', client_url: '', platform_origin: 'Hotmart',
-    has_migration: true, has_app: false, has_design: false,
+    client_name: '', client_email: '', client_url: '', whatsapp: '',
   });
+  const [lookupDone, setLookupDone] = useState(false);
+  const [lookupLoading, setLookupLoading] = useState(false);
+
+  const handleUrlLookup = async (url: string) => {
+    setForm(f => ({ ...f, client_url: url }));
+    setLookupDone(false);
+    if (!url.trim()) return;
+
+    setLookupLoading(true);
+    try {
+      // Try to find client in carteira geral by id_curseduca (URL-based match)
+      const cleanUrl = url.trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
+      const idCurseduca = cleanUrl.split('.')[0] || cleanUrl;
+
+      const { data: client } = await supabase
+        .from('clients')
+        .select('nome, email, id_curseduca')
+        .or(`id_curseduca.eq.${idCurseduca},id_curseduca.ilike.%${idCurseduca}%`)
+        .limit(1)
+        .maybeSingle();
+
+      if (client) {
+        setForm(f => ({
+          ...f,
+          client_name: client.nome || f.client_name,
+          client_email: client.email || f.client_email,
+        }));
+        toast.success('Cliente encontrado na carteira geral!');
+      }
+    } catch {
+      // Ignore lookup errors
+    } finally {
+      setLookupLoading(false);
+      setLookupDone(true);
+    }
+  };
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -222,33 +257,32 @@ function NewClientDialog({ open, onClose }: { open: boolean; onClose: () => void
         client_name: form.client_name,
         client_email: form.client_email,
         client_url: form.client_url,
-        platform_origin: form.platform_origin,
-        has_migration: form.has_migration,
-        has_app: form.has_app,
-        has_design: form.has_design,
+        platform_origin: 'Hotmart',
+        has_migration: true,
+        has_app: false,
+        has_design: false,
         created_by: user?.id,
         cs_responsible: user?.email,
-        migration_status: form.has_migration ? 'waiting_form' : 'completed',
+        migration_status: 'waiting_form',
       }).select().single();
       if (error) throw error;
 
       // Create initial validation items
-      if (form.has_migration) {
-        const items = VALIDATION_ITEMS.map(v => ({
-          project_id: data.id,
-          item_key: v.key,
-          status: 'pending',
-        }));
-        await supabase.from('migration_validations').insert(items);
-      }
+      const items = VALIDATION_ITEMS.map(v => ({
+        project_id: data.id,
+        item_key: v.key,
+        status: 'pending',
+      }));
+      await supabase.from('migration_validations').insert(items);
 
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['migration-projects'] });
-      toast.success('Cliente criado com sucesso!');
+      toast.success('Solicitação de migração criada!');
       onClose();
-      setForm({ client_name: '', client_email: '', client_url: '', platform_origin: 'Hotmart', has_migration: true, has_app: false, has_design: false });
+      setForm({ client_name: '', client_email: '', client_url: '', whatsapp: '' });
+      setLookupDone(false);
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -259,9 +293,27 @@ function NewClientDialog({ open, onClose }: { open: boolean; onClose: () => void
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Cadastrar Novo Cliente</DialogTitle>
+          <DialogTitle>Solicitação de Migração</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>URL de identificação na Curseduca *</Label>
+            <div className="flex gap-2">
+              <Input
+                value={form.client_url}
+                onChange={e => setForm(f => ({ ...f, client_url: e.target.value }))}
+                onBlur={e => handleUrlLookup(e.target.value)}
+                placeholder="empresa.curseduca.com"
+                className="flex-1"
+              />
+              {lookupLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground mt-2.5" />}
+            </div>
+            {lookupDone && (
+              <p className="text-[11px] text-muted-foreground">
+                {form.client_name ? '✅ Dados preenchidos automaticamente' : 'Cliente não encontrado na carteira — preencha manualmente'}
+              </p>
+            )}
+          </div>
           <div className="space-y-2">
             <Label>Nome do cliente *</Label>
             <Input value={form.client_name} onChange={e => setForm(f => ({ ...f, client_name: e.target.value }))} placeholder="Nome completo" />
@@ -271,42 +323,15 @@ function NewClientDialog({ open, onClose }: { open: boolean; onClose: () => void
             <Input type="email" value={form.client_email} onChange={e => setForm(f => ({ ...f, client_email: e.target.value }))} placeholder="email@empresa.com" />
           </div>
           <div className="space-y-2">
-            <Label>URL de identificação na Curseduca *</Label>
-            <Input value={form.client_url} onChange={e => setForm(f => ({ ...f, client_url: e.target.value }))} placeholder="empresa.curseduca.com" />
-          </div>
-          <div className="space-y-2">
-            <Label>Plataforma de origem</Label>
-            <Select value={form.platform_origin} onValueChange={v => setForm(f => ({ ...f, platform_origin: v }))}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {PLATFORM_OPTIONS.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <Separator />
-          <p className="text-sm font-medium">Serviços contratados</p>
-
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label>Cliente contratou Migração?</Label>
-              <Switch checked={form.has_migration} onCheckedChange={v => setForm(f => ({ ...f, has_migration: v }))} />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label>Cliente contratou Aplicativo?</Label>
-              <Switch checked={form.has_app} onCheckedChange={v => setForm(f => ({ ...f, has_app: v }))} />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label>Cliente contratou Design?</Label>
-              <Switch checked={form.has_design} onCheckedChange={v => setForm(f => ({ ...f, has_design: v }))} />
-            </div>
+            <Label>WhatsApp</Label>
+            <Input value={form.whatsapp} onChange={e => setForm(f => ({ ...f, whatsapp: e.target.value }))} placeholder="(11) 99999-9999" />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
           <Button onClick={() => createMutation.mutate()} disabled={!canSubmit || createMutation.isPending}>
             {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
-            Cadastrar
+            Criar Solicitação
           </Button>
         </DialogFooter>
       </DialogContent>
