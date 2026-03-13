@@ -220,10 +220,6 @@ export default function InconsistenciasPage() {
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Atualizar
           </Button>
-          <Button size="sm" onClick={handleImportJson} disabled={importing}>
-            <Upload className="h-4 w-4 mr-2" />
-            {importing ? 'Importando...' : 'Importar JSON'}
-          </Button>
         </div>
       </div>
 
