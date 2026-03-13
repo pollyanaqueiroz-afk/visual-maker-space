@@ -359,8 +359,9 @@ export default function EntregasTab() {
                 <Separator />
 
                 <div>
-                  <p className="text-sm font-medium mb-3">Artes Entregues ({selectedGroup.artCount})</p>
+                  <p className="text-sm font-medium mb-3">Artes ({selectedGroup.artCount})</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Deliveries with file previews */}
                     {selectedGroup.deliveries.map((d: any) => {
                       const img = d.briefing_images;
                       const label = img ? (IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type) + (img.product_name ? ` — ${img.product_name}` : '') : 'Arte';
@@ -385,6 +386,26 @@ export default function EntregasTab() {
                         </div>
                       );
                     })}
+                    {/* Images without deliveries (imported/manual) */}
+                    {selectedGroup.images
+                      .filter((img: any) => !selectedGroup.deliveries.some((d: any) => d.briefing_images?.id === img.id))
+                      .map((img: any) => {
+                        const label = (IMAGE_TYPE_LABELS[img.image_type as ImageType] || img.image_type) + (img.product_name ? ` — ${img.product_name}` : '');
+                        const isApproved = img.status === 'completed';
+                        return (
+                          <div key={img.id} className="border rounded-lg overflow-hidden">
+                            <div className="w-full h-32 bg-muted flex items-center justify-center">
+                              <PackageCheck className="h-8 w-8 text-muted-foreground/40" />
+                            </div>
+                            <div className="p-2 space-y-1">
+                              <p className="text-xs font-medium truncate">{label}</p>
+                              <Badge className={isApproved ? 'bg-primary/15 text-primary border border-primary/20 text-[10px]' : 'bg-accent text-accent-foreground border border-border text-[10px]'}>
+                                {isApproved ? 'Aprovada' : 'Aguardando'}
+                              </Badge>
+                            </div>
+                          </div>
+                        );
+                      })}
                   </div>
                 </div>
 
