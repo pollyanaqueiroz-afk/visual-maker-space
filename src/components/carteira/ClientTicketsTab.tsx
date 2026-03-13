@@ -119,7 +119,7 @@ export default function ClientTicketsTab({ clientName, clientId }: Props) {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div className="flex items-center gap-3">
           <h3 className="text-sm font-semibold">Tickets de Suporte</h3>
           <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
@@ -130,23 +130,23 @@ export default function ClientTicketsTab({ clientName, clientId }: Props) {
             )}
           </div>
         </div>
-        <Button size="sm" onClick={() => setShowCreate(true)} className="h-7 text-xs gap-1">
+        <Button size="sm" onClick={() => setShowCreate(true)} className="h-8 sm:h-7 text-xs gap-1 w-full sm:w-auto">
           <Plus className="h-3 w-3" /> Novo Ticket
         </Button>
       </div>
 
       {/* Mini KPIs */}
-      <div className="grid grid-cols-3 gap-2">
-        <div className="rounded-lg border bg-card p-2.5 text-center">
-          <p className="text-lg font-bold">{tickets.length}</p>
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="rounded-lg border bg-card p-2 sm:p-2.5 text-center">
+          <p className="text-base sm:text-lg font-bold">{tickets.length}</p>
           <p className="text-[10px] text-muted-foreground">Total</p>
         </div>
-        <div className="rounded-lg border bg-card p-2.5 text-center">
-          <p className="text-lg font-bold text-amber-600">{openCount}</p>
+        <div className="rounded-lg border bg-card p-2 sm:p-2.5 text-center">
+          <p className="text-base sm:text-lg font-bold text-amber-600">{openCount}</p>
           <p className="text-[10px] text-muted-foreground">Em Aberto</p>
         </div>
-        <div className="rounded-lg border bg-card p-2.5 text-center">
-          <p className="text-lg font-bold text-red-600">{criticalCount}</p>
+        <div className="rounded-lg border bg-card p-2 sm:p-2.5 text-center">
+          <p className="text-base sm:text-lg font-bold text-red-600">{criticalCount}</p>
           <p className="text-[10px] text-muted-foreground">Críticos</p>
         </div>
       </div>
@@ -172,32 +172,36 @@ export default function ClientTicketsTab({ clientName, clientId }: Props) {
           return (
             <Collapsible key={ticket.id} open={isOpen} onOpenChange={() => setExpandedId(isOpen ? null : ticket.id)}>
               <CollapsibleTrigger className="w-full">
-                <div className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left transition-colors hover:bg-muted/50 ${isOpen ? 'bg-muted/30 border-primary/20' : ''}`}>
-                  {isOpen ? <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
-                  <PriorityIcon className={`h-3.5 w-3.5 shrink-0 ${priorityInfo.color}`} />
-                  {ticket.type === 'Bug' ? <Bug className="h-3.5 w-3.5 shrink-0 text-red-400" /> : <Lightbulb className="h-3.5 w-3.5 shrink-0 text-blue-400" />}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-mono text-muted-foreground">{ticket.key}</span>
-                      <span className="text-xs font-medium truncate">{ticket.summary}</span>
+                <div className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 px-3 py-2.5 rounded-lg border text-left transition-colors hover:bg-muted/50 ${isOpen ? 'bg-muted/30 border-primary/20' : ''}`}>
+                  <div className="flex items-center gap-2 sm:gap-3 w-full">
+                    {isOpen ? <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
+                    <PriorityIcon className={`h-3.5 w-3.5 shrink-0 ${priorityInfo.color}`} />
+                    {ticket.type === 'Bug' ? <Bug className="h-3.5 w-3.5 shrink-0 text-red-400" /> : <Lightbulb className="h-3.5 w-3.5 shrink-0 text-blue-400" />}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                        <span className="text-[11px] font-mono text-muted-foreground">{ticket.key}</span>
+                        <span className="text-xs font-medium truncate">{ticket.summary}</span>
+                      </div>
                     </div>
                   </div>
-                  <Badge className={`text-[10px] px-1.5 py-0 border-0 ${STATUS_COLORS[ticket.statusCategory] || STATUS_COLORS.indeterminate}`}>
-                    {STATUS_MAP[ticket.status] || ticket.status}
-                  </Badge>
-                  <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                    {formatDistanceToNow(new Date(ticket.created), { addSuffix: true, locale: ptBR })}
-                  </span>
+                  <div className="flex items-center gap-2 sm:gap-3 ml-auto pl-6 sm:pl-0">
+                    <Badge className={`text-[10px] px-1.5 py-0 border-0 ${STATUS_COLORS[ticket.statusCategory] || STATUS_COLORS.indeterminate}`}>
+                      {STATUS_MAP[ticket.status] || ticket.status}
+                    </Badge>
+                    <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                      {formatDistanceToNow(new Date(ticket.created), { addSuffix: true, locale: ptBR })}
+                    </span>
+                  </div>
                 </div>
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="ml-5 mr-1 mt-1 p-3 rounded-lg bg-muted/20 border border-border/50 space-y-3">
                   {/* Details */}
-                  <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                     <div><span className="text-muted-foreground">Tipo:</span> <span className="font-medium">{ticket.type}</span></div>
                     <div><span className="text-muted-foreground">Severidade:</span> <span className="font-medium">{ticket.priority}</span></div>
                     {ticket.components.length > 0 && (
-                      <div className="col-span-2"><span className="text-muted-foreground">Componente:</span> <span className="font-medium">{ticket.components.join(', ')}</span></div>
+                      <div className="col-span-1 sm:col-span-2"><span className="text-muted-foreground">Componente:</span> <span className="font-medium">{ticket.components.join(', ')}</span></div>
                     )}
                     <div><span className="text-muted-foreground">Criado:</span> <span>{new Date(ticket.created).toLocaleDateString('pt-BR')}</span></div>
                     <div><span className="text-muted-foreground">Atualizado:</span> <span>{new Date(ticket.updated).toLocaleDateString('pt-BR')}</span></div>
@@ -275,9 +279,9 @@ export default function ClientTicketsTab({ clientName, clientId }: Props) {
               value={form.description}
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
             />
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Select value={form.type} onValueChange={v => setForm(f => ({ ...f, type: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Bug">Bug</SelectItem>
                   <SelectItem value="Improvement">Melhoria</SelectItem>
@@ -285,7 +289,7 @@ export default function ClientTicketsTab({ clientName, clientId }: Props) {
                 </SelectContent>
               </Select>
               <Select value={form.priority} onValueChange={v => setForm(f => ({ ...f, priority: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Critical">Crítico</SelectItem>
                   <SelectItem value="High">Alto</SelectItem>
