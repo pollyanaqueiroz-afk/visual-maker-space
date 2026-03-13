@@ -7,9 +7,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   User, Mail, Globe, DollarSign, Calendar, Activity, HardDrive,
-  Cpu, Award, ShoppingCart, BookOpen, Clock, TrendingUp, ExternalLink, TicketCheck,
+  Cpu, Award, ShoppingCart, BookOpen, Clock, TrendingUp, ExternalLink, TicketCheck, FolderKanban,
 } from 'lucide-react';
 import ClientTicketsTab from './ClientTicketsTab';
+import ClientProjectsTab from './ClientProjectsTab';
 
 interface Props {
   idCurseduca: string | null;
@@ -270,6 +271,7 @@ export default function ClientDetailSheet({ idCurseduca, open, onOpenChange }: P
             <TabsList className="w-full">
               <TabsTrigger value="info" className="flex-1 gap-1 text-xs"><User className="h-3 w-3" /> Informações</TabsTrigger>
               <TabsTrigger value="tickets" className="flex-1 gap-1 text-xs"><TicketCheck className="h-3 w-3" /> Tickets</TabsTrigger>
+              <TabsTrigger value="projects" className="flex-1 gap-1 text-xs"><FolderKanban className="h-3 w-3" /> Projetos</TabsTrigger>
             </TabsList>
           </div>
 
@@ -330,6 +332,14 @@ export default function ClientDetailSheet({ idCurseduca, open, onOpenChange }: P
             <ScrollArea className="h-full">
               <div className="px-6 py-4">
                 <ClientTicketsTab clientName={data?.cliente_nome || idCurseduca || ''} clientId={idCurseduca || undefined} />
+              </div>
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="projects" className="flex-1 overflow-hidden mt-0">
+            <ScrollArea className="h-full">
+              <div className="px-6 py-4">
+                <ClientProjectsTab clientName={data?.cliente_nome || idCurseduca || ''} clientIdCurseduca={idCurseduca || undefined} />
               </div>
             </ScrollArea>
           </TabsContent>

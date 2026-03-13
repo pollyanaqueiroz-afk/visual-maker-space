@@ -1196,6 +1196,45 @@ export type Database = {
           },
         ]
       }
+      client_projects: {
+        Row: {
+          category: string
+          client_id_curseduca: string
+          client_name: string | null
+          created_at: string
+          description: string | null
+          id: string
+          requested_by: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          client_id_curseduca: string
+          client_name?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          requested_by?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          client_id_curseduca?: string
+          client_name?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          requested_by?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cliente_churn: {
         Row: {
           client_name: string | null
