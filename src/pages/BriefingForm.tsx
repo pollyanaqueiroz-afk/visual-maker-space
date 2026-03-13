@@ -380,11 +380,15 @@ export default function BriefingForm({ mockupOnly = false }: BriefingFormProps) 
             await insertImage(requestId, 'login', loginImg, sortOrder++);
           }
         }
-        for (const banner of form.banner_vitrine) {
-          await insertImage(requestId, 'banner_vitrine', banner, sortOrder++);
+        if (selections.banner_vitrine) {
+          for (const banner of form.banner_vitrine) {
+            await insertImage(requestId, 'banner_vitrine', banner, sortOrder++);
+          }
         }
-        for (const cover of form.product_covers) {
-          await insertImage(requestId, 'product_cover', cover, sortOrder++);
+        if (selections.product_covers) {
+          for (const cover of form.product_covers) {
+            await insertImage(requestId, 'product_cover', cover, sortOrder++);
+          }
         }
         if (selections.trail_banner && form.trail_banner.enabled) {
           await insertImage(requestId, 'trail_banner', form.trail_banner, sortOrder++);
