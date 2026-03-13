@@ -406,10 +406,22 @@ export default function CarteiraGeralPage() {
           className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'total' ? 'ring-2 ring-primary' : ''}`}
           onClick={() => toggleKPI('total')}
         >
-          <CardContent className="p-4 flex flex-col items-center text-center gap-1">
+           <CardContent className="p-4 flex flex-col items-center text-center gap-1">
             <Globe className="h-5 w-5 text-foreground" />
             <span className="text-2xl font-bold text-foreground">{new Intl.NumberFormat('pt-BR').format(stats.total)}</span>
-            <span className="text-[11px] text-muted-foreground">Total de Clientes</span>
+            <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+              Total de Clientes
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-[260px] text-xs">
+                    Contagem distinta de id_curseduca na tabela de clientes.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </span>
           </CardContent>
         </Card>
         <Card
@@ -429,7 +441,7 @@ export default function CarteiraGeralPage() {
                     <Info className="h-3 w-3 text-muted-foreground cursor-help" />
                   </TooltipTrigger>
                   <TooltipContent className="max-w-[260px] text-xs">
-                    Soma do valor contratado de todas as assinaturas com vigência Ativa.
+                    Soma de valor_contratado de todas as assinaturas com vigência "Ativa" na tabela financeira.
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -443,7 +455,19 @@ export default function CarteiraGeralPage() {
           <CardContent className="p-4 flex flex-col items-center text-center gap-1">
             <CheckCircle className="h-5 w-5 text-emerald-500" />
             <span className="text-2xl font-bold text-emerald-600">{summaryAdimplentes != null ? new Intl.NumberFormat('pt-BR').format(summaryAdimplentes) : '—'}</span>
-            <span className="text-[11px] text-muted-foreground">Adimplentes</span>
+            <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+              Adimplentes
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-[260px] text-xs">
+                    Contagem de clientes com status_financeiro = "Adimplente" na tabela de clientes.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </span>
           </CardContent>
         </Card>
         <Card
@@ -453,7 +477,19 @@ export default function CarteiraGeralPage() {
           <CardContent className="p-4 flex flex-col items-center text-center gap-1">
             <AlertTriangle className="h-5 w-5 text-destructive" />
             <span className="text-2xl font-bold text-destructive">{summaryInadimplentes != null ? new Intl.NumberFormat('pt-BR').format(summaryInadimplentes) : '—'}</span>
-            <span className="text-[11px] text-muted-foreground">Inadimplentes</span>
+            <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+              Inadimplentes
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-[260px] text-xs">
+                    Contagem de clientes com status_financeiro = "Inadimplente" na tabela de clientes.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </span>
           </CardContent>
         </Card>
       </div>
