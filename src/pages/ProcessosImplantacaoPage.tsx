@@ -166,10 +166,16 @@ export default function ProcessosImplantacaoPage() {
 
       const clientScorm = scormPackages.filter((pkg: any) => pkg.platform_url === url);
 
+      const clientMigration = migrationProjects.find(m => 
+        m.client_url === url || (client.email && m.client_email === client.email)
+      );
+      const hasMigration = !!clientMigration && clientMigration.has_migration;
+      const migrationActive = hasMigration && clientMigration.migration_status !== 'completed';
+
       const hasOpenBriefing = briefingOpen > 0;
       const hasOpenApp = !!appOpen;
       const hasScorm = clientScorm.length > 0;
-      const hasAnyProcess = hasOpenBriefing || hasOpenApp || hasScorm;
+      const hasAnyProcess = hasOpenBriefing || hasOpenApp || hasScorm || hasMigration;
 
       // Overdue detection
       const briefingOverdue = clientBriefings.some((img: any) => {
@@ -190,13 +196,16 @@ export default function ProcessosImplantacaoPage() {
         scorm: clientScorm,
         hasScorm,
         hasOpenBriefing,
+        hasMigration,
+        migrationActive,
+        migration: clientMigration || null,
         hasAnyProcess,
         briefingOverdue,
         appOverdue,
         isOverdue,
       };
     });
-  }, [allClients, briefingImages, appClientes, scormPackages, allFases]);
+  }, [allClients, briefingImages, appClientes, scormPackages, allFases, migrationProjects]);
 
   // Filters
   const filteredClients = useMemo(() => {
