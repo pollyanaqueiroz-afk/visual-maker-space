@@ -11,11 +11,6 @@ import { Loader2, Smartphone, UserPlus, Eye, EyeOff } from 'lucide-react';
 
 export default function ClienteLogin() {
   const { user, loading: authLoading } = useAuth();
-
-  // Redirect to portal if already authenticated
-  if (!authLoading && user) {
-    return <Navigate to="/cliente" replace />;
-  }
   const navigate = useNavigate();
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
@@ -24,6 +19,11 @@ export default function ClienteLogin() {
   const [plataformaUrl, setPlataformaUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Redirect to portal if already authenticated
+  if (!authLoading && user) {
+    return <Navigate to="/cliente" replace />;
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
