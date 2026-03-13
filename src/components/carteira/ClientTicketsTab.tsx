@@ -136,17 +136,17 @@ export default function ClientTicketsTab({ clientName, clientId }: Props) {
       </div>
 
       {/* Mini KPIs */}
-      <div className="grid grid-cols-3 gap-2">
-        <div className="rounded-lg border bg-card p-2.5 text-center">
-          <p className="text-lg font-bold">{tickets.length}</p>
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="rounded-lg border bg-card p-2 sm:p-2.5 text-center">
+          <p className="text-base sm:text-lg font-bold">{tickets.length}</p>
           <p className="text-[10px] text-muted-foreground">Total</p>
         </div>
-        <div className="rounded-lg border bg-card p-2.5 text-center">
-          <p className="text-lg font-bold text-amber-600">{openCount}</p>
+        <div className="rounded-lg border bg-card p-2 sm:p-2.5 text-center">
+          <p className="text-base sm:text-lg font-bold text-amber-600">{openCount}</p>
           <p className="text-[10px] text-muted-foreground">Em Aberto</p>
         </div>
-        <div className="rounded-lg border bg-card p-2.5 text-center">
-          <p className="text-lg font-bold text-red-600">{criticalCount}</p>
+        <div className="rounded-lg border bg-card p-2 sm:p-2.5 text-center">
+          <p className="text-base sm:text-lg font-bold text-red-600">{criticalCount}</p>
           <p className="text-[10px] text-muted-foreground">Críticos</p>
         </div>
       </div>
