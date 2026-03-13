@@ -31,6 +31,7 @@ import BulkPhotoUploadDialog from '@/components/briefing/BulkPhotoUploadDialog';
 import BulkAssignDialog from '@/components/briefing/BulkAssignDialog';
 import { usePermissions } from '@/hooks/usePermissions';
 import BriefingKanban from '@/components/briefing/BriefingKanban';
+import EntregasTab from '@/components/briefing/EntregasTab';
 function ChangeDesignerForm({ imageId, currentEmail, onChanged }: { imageId: string; currentEmail: string; onChanged: () => void }) {
   const [email, setEmail] = useState(currentEmail);
   const [saving, setSaving] = useState(false);
