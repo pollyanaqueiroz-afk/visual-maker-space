@@ -552,6 +552,10 @@ export default function ProcessosImplantacaoPage() {
                     <GraduationCap className="h-3.5 w-3.5" /> SCORM
                     {selectedClient.hasScorm && <Badge variant="secondary" className="text-[9px] ml-1 h-4 px-1">{selectedClient.scorm.length}</Badge>}
                   </TabsTrigger>
+                  <TabsTrigger value="migration" className="gap-1.5 text-xs">
+                    <ArrowRightLeft className="h-3.5 w-3.5" /> Migração
+                    {selectedClient.hasMigration && <Badge variant="secondary" className="text-[9px] ml-1 h-4 px-1">1</Badge>}
+                  </TabsTrigger>
                 </TabsList>
 
                 {/* DESIGN */}
