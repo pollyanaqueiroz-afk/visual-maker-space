@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { TableSkeleton } from '@/components/ui/TableSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { supabase } from '@/integrations/supabase/client';
-import { AlertTriangle, Search, CreditCard, DollarSign, Users, Filter, Upload, CheckCircle, RefreshCw } from 'lucide-react';
+import { AlertTriangle, Search, CreditCard, DollarSign, Users, Filter, CheckCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 type InconsistenciaRecord = {
