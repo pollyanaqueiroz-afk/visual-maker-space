@@ -36,6 +36,7 @@ const VIEW_COLUMNS: Record<ViewType, { key: string; label: string }[]> = {
   financeiro: [
     { key: 'id_curseduca', label: 'ID' },
     { key: 'codigo_assinatura_meio_pagamento', label: 'ID Assinatura' },
+    { key: 'vigencia_assinatura', label: 'Vigência' },
     { key: 'nome', label: 'Cliente' },
     { key: 'email', label: 'Email' },
     { key: 'status', label: 'Status' },
