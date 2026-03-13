@@ -7,9 +7,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   User, Mail, Globe, DollarSign, Calendar, Activity, HardDrive,
-  Cpu, Award, ShoppingCart, BookOpen, Clock, TrendingUp, ExternalLink, TicketCheck,
+  Cpu, Award, ShoppingCart, BookOpen, Clock, TrendingUp, ExternalLink, TicketCheck, FolderKanban,
 } from 'lucide-react';
 import ClientTicketsTab from './ClientTicketsTab';
+import ClientProjectsTab from './ClientProjectsTab';
 
 interface Props {
   idCurseduca: string | null;
