@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { TableSkeleton } from '@/components/ui/TableSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { supabase } from '@/integrations/supabase/client';
-import { AlertTriangle, Search, CreditCard, DollarSign, Users, Filter, CheckCircle, RefreshCw } from 'lucide-react';
+import { AlertTriangle, Search, CreditCard, DollarSign, Users, Filter, CheckCircle, TrendingUp, Hash, FileWarning } from 'lucide-react';
 import { toast } from 'sonner';
 
 type InconsistenciaRecord = {
@@ -67,23 +67,15 @@ function formatCurrency(value: number | null) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
 
-function statusBadge(status: string | null) {
-  if (!status) return <Badge variant="outline">—</Badge>;
-  const colors: Record<string, string> = {
-    Adimplente: 'bg-emerald-500/15 text-emerald-700 border-emerald-200',
-    Inadimplente: 'bg-red-500/15 text-red-700 border-red-200',
-    Cancelado: 'bg-muted text-muted-foreground',
-    Ativo: 'bg-emerald-500/15 text-emerald-700 border-emerald-200',
-    Ativa: 'bg-emerald-500/15 text-emerald-700 border-emerald-200',
-  };
-  return <Badge variant="outline" className={colors[status] || ''}>{status}</Badge>;
+function cleanPaymentMethod(value: string | null) {
+  if (!value) return '—';
+  return value.replace('PaymentMethod::', '');
 }
 
 export default function InconsistenciasPage() {
   const [activeSource, setActiveSource] = useState('vindi');
   const [activeType, setActiveType] = useState<InconsistencyType>('sem_id_curseduca');
   const [loading, setLoading] = useState(true);
-  
   const [records, setRecords] = useState<InconsistenciaRecord[]>([]);
   const [typeCounts, setTypeCounts] = useState<Record<string, number>>({});
   const [search, setSearch] = useState('');
@@ -155,7 +147,6 @@ export default function InconsistenciasPage() {
     fetchCounts();
   }, [fetchCounts]);
 
-
   const handleResolve = async (id: string) => {
     const { error } = await supabase
       .from('inconsistencias' as any)
@@ -201,25 +192,34 @@ export default function InconsistenciasPage() {
     [filtered]
   );
 
+  const totalInadimplentes = useMemo(() =>
+    filtered.filter(r => r.status === 'Inadimplente').length,
+    [filtered]
+  );
+
   const sources = [
     { id: 'vindi', label: 'Vindi' },
   ];
 
+  const totalPendentes = Object.values(typeCounts).reduce((a, b) => a + b, 0);
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Inconsistências</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Identificação e acompanhamento de dados inconsistentes nos sistemas financeiros
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => { fetchData(); fetchCounts(); }} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Atualizar
-          </Button>
+      <div>
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-lg bg-destructive/10 flex items-center justify-center">
+            <FileWarning className="h-5 w-5 text-destructive" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Inconsistências</h1>
+            <p className="text-muted-foreground text-sm">
+              Dados inconsistentes nos sistemas financeiros
+              {!loading && totalPendentes > 0 && (
+                <span className="ml-2 text-destructive font-medium">• {totalPendentes} pendentes</span>
+              )}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -236,7 +236,7 @@ export default function InconsistenciasPage() {
 
         <TabsContent value={activeSource} className="space-y-4 mt-4">
           {/* Inconsistency type selector */}
-          <div className="flex flex-wrap gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {(Object.keys(inconsistencyLabels) as InconsistencyType[]).map(type => {
               const info = inconsistencyLabels[type];
               const Icon = info.icon;
@@ -246,15 +246,27 @@ export default function InconsistenciasPage() {
                 <button
                   key={type}
                   onClick={() => { setActiveType(type); setSearch(''); setFilterPlano('all'); }}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-all ${
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all ${
                     isActive
-                      ? 'bg-primary/10 border-primary/30 text-primary shadow-sm'
-                      : 'bg-card border-border hover:bg-muted/50 text-muted-foreground'
+                      ? 'bg-primary/10 border-primary/30 shadow-sm ring-1 ring-primary/20'
+                      : 'bg-card border-border hover:bg-muted/50'
                   }`}
                 >
-                  <Icon className="h-4 w-4" />
-                  {info.label}
-                  <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs">
+                  <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 ${
+                    isActive ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'
+                  }`}>
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className={`text-sm font-medium truncate ${isActive ? 'text-primary' : 'text-foreground'}`}>
+                      {info.label}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">{info.description}</div>
+                  </div>
+                  <Badge 
+                    variant={count > 0 ? "destructive" : "secondary"} 
+                    className="ml-auto shrink-0 h-6 min-w-6 px-2 text-xs"
+                  >
                     {count}
                   </Badge>
                 </button>
@@ -265,25 +277,37 @@ export default function InconsistenciasPage() {
           {/* Summary cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Registros encontrados</CardDescription>
-                <CardTitle className="text-2xl">{loading ? '...' : filtered.length}</CardTitle>
+              <CardHeader className="pb-2 flex flex-row items-center gap-3 space-y-0">
+                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Hash className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <CardDescription className="text-xs">Registros encontrados</CardDescription>
+                  <CardTitle className="text-xl">{loading ? '...' : filtered.length}</CardTitle>
+                </div>
               </CardHeader>
             </Card>
             <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Valor total contratado</CardDescription>
-                <CardTitle className="text-2xl">{loading ? '...' : formatCurrency(totalValor)}</CardTitle>
+              <CardHeader className="pb-2 flex flex-row items-center gap-3 space-y-0">
+                <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                  <TrendingUp className="h-4 w-4 text-emerald-600" />
+                </div>
+                <div>
+                  <CardDescription className="text-xs">Valor total contratado</CardDescription>
+                  <CardTitle className="text-xl">{loading ? '...' : formatCurrency(totalValor)}</CardTitle>
+                </div>
               </CardHeader>
             </Card>
             <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Tipo de inconsistência</CardDescription>
-                <CardTitle className="text-lg">{inconsistencyLabels[activeType].label}</CardTitle>
+              <CardHeader className="pb-2 flex flex-row items-center gap-3 space-y-0">
+                <div className="h-8 w-8 rounded-lg bg-destructive/10 flex items-center justify-center">
+                  <AlertTriangle className="h-4 w-4 text-destructive" />
+                </div>
+                <div>
+                  <CardDescription className="text-xs">Inadimplentes no filtro</CardDescription>
+                  <CardTitle className="text-xl">{loading ? '...' : totalInadimplentes}</CardTitle>
+                </div>
               </CardHeader>
-              <CardContent>
-                <p className="text-xs text-muted-foreground">{inconsistencyLabels[activeType].description}</p>
-              </CardContent>
             </Card>
           </div>
 
@@ -329,53 +353,84 @@ export default function InconsistenciasPage() {
                 <EmptyState
                   icon={AlertTriangle}
                   title="Nenhuma inconsistência encontrada"
-                  description="Importe um JSON ou aguarde a sincronização dos dados."
+                  description="Não há registros para este tipo de inconsistência no momento."
                 />
               ) : (
                 <div className="overflow-auto max-h-[60vh]">
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead>ID Curseduca</TableHead>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Plano</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Vigência</TableHead>
-                        <TableHead className="text-right">Valor</TableHead>
-                        <TableHead>Meio Pagamento</TableHead>
-                        <TableHead>Recorrência</TableHead>
-                        <TableHead>Cód. Assinatura</TableHead>
-                        <TableHead>Data Criação</TableHead>
-                        <TableHead className="text-center">Ações</TableHead>
+                      <TableRow className="bg-muted/30">
+                        <TableHead className="font-semibold">ID Curseduca</TableHead>
+                        <TableHead className="font-semibold">Nome</TableHead>
+                        <TableHead className="font-semibold">Plano</TableHead>
+                        <TableHead className="font-semibold">Status</TableHead>
+                        <TableHead className="font-semibold">Vigência</TableHead>
+                        <TableHead className="text-right font-semibold">Valor</TableHead>
+                        <TableHead className="font-semibold">Meio Pgto</TableHead>
+                        <TableHead className="font-semibold">Recorrência</TableHead>
+                        <TableHead className="font-semibold">Cód. Assinatura</TableHead>
+                        <TableHead className="font-semibold">Criação</TableHead>
+                        <TableHead className="text-center font-semibold">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filtered.map(r => (
-                        <TableRow key={r.id} className={r.resolvido ? 'opacity-50' : ''}>
+                        <TableRow key={r.id} className={r.resolvido ? 'opacity-40' : 'hover:bg-muted/30'}>
                           <TableCell className="font-mono text-xs">
-                            {r.id_curseduca || <span className="text-destructive font-medium">VAZIO</span>}
+                            {r.id_curseduca || (
+                              <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                                VAZIO
+                              </Badge>
+                            )}
                           </TableCell>
-                          <TableCell>{r.nome || <span className="text-muted-foreground italic">—</span>}</TableCell>
+                          <TableCell className="max-w-[150px] truncate">
+                            {r.nome || <span className="text-muted-foreground italic text-xs">sem nome</span>}
+                          </TableCell>
                           <TableCell>
-                            <div className="flex flex-col">
-                              <span className="text-sm">{r.plano || '—'}</span>
+                            <div className="flex flex-col gap-0.5">
+                              <span className="text-sm truncate max-w-[180px]">{r.plano || '—'}</span>
                               {r.nome_plano_master && (
-                                <span className="text-xs text-muted-foreground">{r.nome_plano_master}</span>
+                                <Badge variant="outline" className="text-[10px] w-fit px-1.5 py-0 text-muted-foreground">
+                                  {r.nome_plano_master}
+                                </Badge>
                               )}
                             </div>
                           </TableCell>
-                          <TableCell>{statusBadge(r.status)}</TableCell>
-                          <TableCell>{statusBadge(r.vigencia_assinatura)}</TableCell>
-                          <TableCell className="text-right font-mono text-sm">{formatCurrency(r.valor_contratado)}</TableCell>
-                          <TableCell className="text-xs">{r.meio_de_pagamento?.replace('PaymentMethod::', '') || '—'}</TableCell>
-                          <TableCell>{r.recorrencia_pagamento || '—'}</TableCell>
+                          <TableCell>
+                            {r.status ? (
+                              <Badge variant="outline" className={
+                                r.status === 'Adimplente' ? 'bg-emerald-500/10 text-emerald-700 border-emerald-200' :
+                                r.status === 'Inadimplente' ? 'bg-destructive/10 text-destructive border-destructive/20' :
+                                ''
+                              }>
+                                {r.status}
+                              </Badge>
+                            ) : <span className="text-muted-foreground">—</span>}
+                          </TableCell>
+                          <TableCell>
+                            {r.vigencia_assinatura ? (
+                              <Badge variant="outline" className={
+                                r.vigencia_assinatura === 'Ativa' ? 'bg-blue-500/10 text-blue-700 border-blue-200' :
+                                r.vigencia_assinatura === 'Cancelada' ? 'bg-destructive/10 text-destructive border-destructive/20' :
+                                ''
+                              }>
+                                {r.vigencia_assinatura}
+                              </Badge>
+                            ) : <span className="text-muted-foreground">—</span>}
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-sm tabular-nums">
+                            {formatCurrency(r.valor_contratado)}
+                          </TableCell>
+                          <TableCell className="text-xs">{cleanPaymentMethod(r.meio_de_pagamento)}</TableCell>
+                          <TableCell className="text-xs">{r.recorrencia_pagamento || '—'}</TableCell>
                           <TableCell className="font-mono text-xs">{r.codigo_assinatura_meio_pagamento || '—'}</TableCell>
-                          <TableCell className="text-xs">{r.data_criacao || '—'}</TableCell>
+                          <TableCell className="text-xs whitespace-nowrap">{r.data_criacao || '—'}</TableCell>
                           <TableCell className="text-center">
                             {!r.resolvido && (
                               <Button
                                 variant="ghost"
-                                size="sm"
+                                size="icon"
+                                className="h-7 w-7 hover:bg-emerald-500/10"
                                 onClick={() => handleResolve(r.id)}
                                 title="Marcar como resolvido"
                               >
