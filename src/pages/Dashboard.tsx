@@ -268,6 +268,7 @@ export default function Dashboard() {
     queryClient.invalidateQueries({ queryKey: ['briefing-requests'] });
     queryClient.invalidateQueries({ queryKey: ['briefing-reviews'] });
     queryClient.invalidateQueries({ queryKey: ['briefing-adjustments-merged'] });
+    queryClient.invalidateQueries({ queryKey: ['briefing-deliveries-all'] });
   };
 
   const [downloadingReport, setDownloadingReport] = useState(false);
