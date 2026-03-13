@@ -83,7 +83,7 @@ export default function InconsistenciasPage() {
   const [activeSource, setActiveSource] = useState('vindi');
   const [activeType, setActiveType] = useState<InconsistencyType>('sem_id_curseduca');
   const [loading, setLoading] = useState(true);
-  const [importing, setImporting] = useState(false);
+  
   const [records, setRecords] = useState<InconsistenciaRecord[]>([]);
   const [typeCounts, setTypeCounts] = useState<Record<string, number>>({});
   const [search, setSearch] = useState('');
