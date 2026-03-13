@@ -339,7 +339,7 @@ export default function ClientDetailSheet({ idCurseduca, open, onOpenChange }: P
           <TabsContent value="projects" className="flex-1 overflow-hidden mt-0">
             <ScrollArea className="h-full">
               <div className="px-6 py-4">
-                <ClientProjectsTab clientName={data?.cliente_nome || clientName || ''} clientIdCurseduca={idCurseduca || undefined} />
+                <ClientProjectsTab clientName={data?.cliente_nome || idCurseduca || ''} clientIdCurseduca={idCurseduca || undefined} />
               </div>
             </ScrollArea>
           </TabsContent>
