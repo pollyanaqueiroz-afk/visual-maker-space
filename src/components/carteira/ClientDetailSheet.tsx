@@ -271,6 +271,7 @@ export default function ClientDetailSheet({ idCurseduca, open, onOpenChange }: P
             <TabsList className="w-full">
               <TabsTrigger value="info" className="flex-1 gap-1 text-xs"><User className="h-3 w-3" /> Informações</TabsTrigger>
               <TabsTrigger value="tickets" className="flex-1 gap-1 text-xs"><TicketCheck className="h-3 w-3" /> Tickets</TabsTrigger>
+              <TabsTrigger value="projects" className="flex-1 gap-1 text-xs"><FolderKanban className="h-3 w-3" /> Projetos</TabsTrigger>
             </TabsList>
           </div>
 
