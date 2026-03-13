@@ -378,9 +378,15 @@ function MigrationForm({ projectId, isResubmission }: { projectId: string; isRes
                 <SelectValue placeholder="Selecione a plataforma" />
               </SelectTrigger>
               <SelectContent>
-                {['Hotmart', 'Academi', 'Kiwify', 'Memberkit', 'Greenn', 'The Members', 'Eduzz', 'Alpha Class', 'Outros'].map(p => (
-                  <SelectItem key={p} value={p}>{p}</SelectItem>
-                ))}
+                <SelectItem value="Hotmart">Hotmart</SelectItem>
+                <SelectItem value="Academi" disabled>Academi (em breve)</SelectItem>
+                <SelectItem value="Kiwify" disabled>Kiwify (em breve)</SelectItem>
+                <SelectItem value="Memberkit" disabled>Memberkit (em breve)</SelectItem>
+                <SelectItem value="Greenn" disabled>Greenn (em breve)</SelectItem>
+                <SelectItem value="The Members" disabled>The Members (em breve)</SelectItem>
+                <SelectItem value="Eduzz" disabled>Eduzz (em breve)</SelectItem>
+                <SelectItem value="Alpha Class" disabled>Alpha Class (em breve)</SelectItem>
+                <SelectItem value="Outros" disabled>Outros (em breve)</SelectItem>
               </SelectContent>
             </Select>
           </div>
