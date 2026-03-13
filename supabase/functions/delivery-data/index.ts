@@ -241,7 +241,7 @@ Deno.serve(async (req) => {
       if (status === "completed") {
         const { data: imgData } = await supabase
           .from("briefing_images")
-          .select("id, image_type, product_name, briefing_requests!inner(platform_url)")
+          .select("id, image_type, product_name, request_id, briefing_requests!inner(platform_url)")
           .eq("id", image_id)
           .single();
 
@@ -265,8 +265,25 @@ Deno.serve(async (req) => {
                   file_name: `${imgData.image_type}${imgData.product_name ? ` — ${imgData.product_name}` : ""}`,
                 });
               } catch (assetErr) {
-                // Ignore duplicate - idempotent operation
                 console.log("Brand asset already exists or insert failed:", assetErr);
+              }
+            }
+          }
+
+          // Sync parent request status: if all images in the request are completed, mark request as completed
+          if (imgData.request_id) {
+            const { data: siblings } = await supabase
+              .from("briefing_images")
+              .select("id, status")
+              .eq("request_id", imgData.request_id);
+
+            if (siblings) {
+              const allCompleted = siblings.every((s: any) => s.id === image_id ? true : s.status === "completed");
+              if (allCompleted) {
+                await supabase
+                  .from("briefing_requests")
+                  .update({ status: "completed" })
+                  .eq("id", imgData.request_id);
               }
             }
           }
