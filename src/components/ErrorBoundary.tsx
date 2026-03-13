@@ -1,8 +1,10 @@
 import { Component, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
+import { logSystemError } from '@/lib/errorLogger';
 
 interface Props {
   children: ReactNode;
+  module?: string;
 }
 
 interface State {
@@ -21,6 +23,13 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: any) {
     console.error('ErrorBoundary:', error, info);
+    logSystemError({
+      module: this.props.module || 'unknown',
+      screen: window.location.pathname,
+      action: 'component_crash',
+      error,
+      severity: 'critical',
+    });
   }
 
   render() {
