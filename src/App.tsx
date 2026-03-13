@@ -53,6 +53,7 @@ import EmailReportPage from "./pages/EmailReportPage";
 import ErrorCentralPage from "./pages/ErrorCentralPage";
 import ProdutoInsightsPage from "./pages/ProdutoInsightsPage";
 import ProdutoEntregasPage from "./pages/ProdutoEntregasPage";
+import InconsistenciasPage from "./pages/InconsistenciasPage";
 import ClienteLogin from "./pages/cliente/ClienteLogin";
 import ClienteHubLayout from "./pages/cliente/ClienteHubLayout";
 import ClienteHome from "./pages/cliente/ClienteHome";
