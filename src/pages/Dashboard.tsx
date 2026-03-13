@@ -709,7 +709,7 @@ export default function Dashboard() {
           {/* ───── DASHBOARD TAB ───── */}
           <TabsContent value="dashboard" className="space-y-6">
             <div className="flex gap-6 items-start">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 flex-1">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 flex-1">
                 {kpiDefs.map(kpi => (
                   <Card key={kpi.key} className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === kpi.key ? 'ring-2 ring-primary' : ''}`} onClick={() => toggleKPI(kpi.key)}>
                     <CardContent className="pt-3 pb-3 px-3">
