@@ -36,6 +36,7 @@ const VIEW_COLUMNS: Record<ViewType, { key: string; label: string }[]> = {
   financeiro: [
     { key: 'id_curseduca', label: 'ID' },
     { key: 'codigo_assinatura_meio_pagamento', label: 'ID Assinatura' },
+    { key: 'vigencia_assinatura', label: 'Vigência' },
     { key: 'nome', label: 'Cliente' },
     { key: 'email', label: 'Email' },
     { key: 'status', label: 'Status' },
@@ -692,6 +693,14 @@ export default function CarteiraGeralPage() {
                             <a href={row[col.key]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" onClick={e => e.stopPropagation()}>
                               {row[col.key]}
                             </a>
+                          ) : col.key === 'vigencia_assinatura' ? (
+                            (() => {
+                              const val = row[col.key];
+                              if (!val) return <span className="text-xs">—</span>;
+                              if (val === 'Ativa') return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-0 text-[11px]">Ativa</Badge>;
+                              if (val === 'Cancelada') return <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-0 text-[11px]">Cancelada</Badge>;
+                              return <span className="text-xs">{val}</span>;
+                            })()
                           ) : col.key === 'status' && activeView === 'financeiro' ? (
                             (() => {
                               const val = row['status'];
