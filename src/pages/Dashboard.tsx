@@ -698,6 +698,7 @@ export default function Dashboard() {
             <TabsTrigger value="dashboard" className="gap-2"><BarChart3 className="h-4 w-4" /> Dashboard</TabsTrigger>
             <TabsTrigger value="kanban" className="gap-2"><LayoutGrid className="h-4 w-4" /> Kanban</TabsTrigger>
             <TabsTrigger value="artes" className="gap-2"><FileImage className="h-4 w-4" /> Artes</TabsTrigger>
+            <TabsTrigger value="entregas" className="gap-2"><PackageCheck className="h-4 w-4" /> Entregas</TabsTrigger>
             <TabsTrigger value="revisoes" className="gap-2"><RefreshCw className="h-4 w-4" /> Refações</TabsTrigger>
             <TabsTrigger value="analytics" className="gap-2"><BarChart3 className="h-4 w-4" /> Analytics</TabsTrigger>
           </TabsList>
