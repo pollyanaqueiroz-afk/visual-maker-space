@@ -32,6 +32,7 @@ import BulkAssignDialog from '@/components/briefing/BulkAssignDialog';
 import { usePermissions } from '@/hooks/usePermissions';
 import BriefingKanban from '@/components/briefing/BriefingKanban';
 import EntregasTab from '@/components/briefing/EntregasTab';
+import { TopScrollableTable } from '@/components/ui/TopScrollableTable';
 function ChangeDesignerForm({ imageId, currentEmail, onChanged }: { imageId: string; currentEmail: string; onChanged: () => void }) {
   const [email, setEmail] = useState(currentEmail);
   const [saving, setSaving] = useState(false);
@@ -150,9 +151,6 @@ export default function Dashboard() {
   const [mockupClientSuggestions, setMockupClientSuggestions] = useState<string[]>([]);
   const [mockupObservations, setMockupObservations] = useState('');
   const [mockupSubmitting, setMockupSubmitting] = useState(false);
-  const topScrollRef = useRef<HTMLDivElement>(null);
-  const tableScrollRef = useRef<HTMLDivElement>(null);
-  const topScrollInnerRef = useRef<HTMLDivElement>(null);
 
   const { data: rawImages = [], isLoading: loadingImages } = useQuery({
     queryKey: ['briefing-images'],
@@ -320,17 +318,6 @@ export default function Dashboard() {
     setDownloadingReport(false);
   };
 
-  // Sync top scrollbar width with actual table scroll width
-  useEffect(() => {
-    const syncWidth = () => {
-      if (tableScrollRef.current && topScrollInnerRef.current) {
-        topScrollInnerRef.current.style.width = tableScrollRef.current.scrollWidth + 'px';
-      }
-    };
-    syncWidth();
-    window.addEventListener('resize', syncWidth);
-    return () => window.removeEventListener('resize', syncWidth);
-  }, [loading, images]);
 
   const updateImageStatus = async (id: string, status: RequestStatus, isAdjustment?: boolean) => {
     if (isAdjustment) {
@@ -1015,28 +1002,8 @@ export default function Dashboard() {
               <div className="text-center py-12 text-muted-foreground">Carregando...</div>
             ) : (
               <Card className="overflow-hidden">
-                {/* Top scrollbar */}
-                <div
-                  ref={topScrollRef}
-                  className="overflow-x-auto"
-                  style={{ overflowY: 'hidden' }}
-                  onScroll={() => {
-                    if (tableScrollRef.current && topScrollRef.current) {
-                      tableScrollRef.current.scrollLeft = topScrollRef.current.scrollLeft;
-                    }
-                  }}
-                >
-                  <div ref={topScrollInnerRef} style={{ height: 1 }} />
-                </div>
-                <div
-                  ref={tableScrollRef}
-                  className="overflow-x-auto"
-                  onScroll={() => {
-                    if (topScrollRef.current && tableScrollRef.current) {
-                      topScrollRef.current.scrollLeft = tableScrollRef.current.scrollLeft;
-                    }
-                  }}
-                >
+                <TopScrollableTable deps={[loading, images]}>
+
                 <table className="w-full caption-bottom text-sm min-w-[2400px]">
                   <TableHeader>
                     <TableRow>
@@ -1363,7 +1330,7 @@ export default function Dashboard() {
                     )}
                   </TableBody>
                 </table>
-                </div>
+                </TopScrollableTable>
               {artesTotalPages > 1 && (
                 <div className="flex items-center justify-between px-4 py-3 border-t">
                   <span className="text-xs text-muted-foreground">

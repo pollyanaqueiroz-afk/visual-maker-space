@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useClienteEmail } from '@/hooks/useClienteEmail';
 import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -38,12 +39,13 @@ export default function ClienteMigracao({ projectOverride }: { projectOverride?:
   const clientEmail = useClienteEmail();
   const queryClient = useQueryClient();
 
-  // Fetch migration project for this client
+  // Fetch migration project for this client (by email or by client_url)
   const { data: fetchedProject, isLoading } = useQuery({
     queryKey: ['cliente-migration', clientEmail],
     enabled: !!clientEmail && !projectOverride,
     queryFn: async () => {
-      const { data } = await supabase
+      // Try by email first
+      const { data: byEmail } = await supabase
         .from('migration_projects')
         .select('*')
         .eq('client_email', clientEmail)
@@ -51,7 +53,26 @@ export default function ClienteMigracao({ projectOverride }: { projectOverride?:
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
-      return data;
+      if (byEmail) return byEmail;
+
+      // Try by client_url matching email domain as a fallback
+      // Also allow lookup by client_url if someone registered with the curseduca URL
+      const { data: byUrl } = await supabase
+        .from('migration_projects')
+        .select('*')
+        .eq('has_migration', true)
+        .order('created_at', { ascending: false });
+      
+      // Match client_url against the client's email domain or URL
+      if (byUrl?.length) {
+        const emailDomain = clientEmail.split('@')[0];
+        const match = byUrl.find(p => 
+          p.client_url.toLowerCase().includes(emailDomain.toLowerCase())
+        );
+        if (match) return match;
+      }
+
+      return null;
     },
   });
 
@@ -249,6 +270,7 @@ function MigrationForm({ projectId, isResubmission }: { projectId: string; isRes
   const [apiClientSecret, setApiClientSecret] = useState('');
   const [apiBasic, setApiBasic] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [platformOrigin, setPlatformOrigin] = useState('Hotmart');
 
   const addClub = () => setClubs(c => [...c, { name: '', url: '' }]);
   const removeClub = (i: number) => setClubs(c => c.filter((_, idx) => idx !== i));
@@ -300,9 +322,10 @@ function MigrationForm({ projectId, isResubmission }: { projectId: string; isRes
         if (clubErr) throw clubErr;
       }
 
-      // Update project status to analysis
+      // Update project status and platform_origin
       await supabase.from('migration_projects').update({
         migration_status: 'analysis',
+        platform_origin: platformOrigin,
         rejected_tag: isResubmission ? true : false,
         updated_at: new Date().toISOString(),
       }).eq('id', projectId);
@@ -346,6 +369,23 @@ function MigrationForm({ projectId, isResubmission }: { projectId: string; isRes
             </h2>
             <p className="text-xs text-white/50 mt-1">Preencha as informações abaixo para iniciar sua migração</p>
           </div>
+
+          {/* 0. Platform Origin */}
+          <div className="space-y-3">
+            <Label className="text-white/80">Plataforma de origem <span className="text-destructive">*</span></Label>
+            <Select value={platformOrigin} onValueChange={setPlatformOrigin}>
+              <SelectTrigger className="bg-white/5 border-white/10 text-sm">
+                <SelectValue placeholder="Selecione a plataforma" />
+              </SelectTrigger>
+              <SelectContent>
+                {['Hotmart', 'Academi', 'Kiwify', 'Memberkit', 'Greenn', 'The Members', 'Eduzz', 'Alpha Class', 'Outros'].map(p => (
+                  <SelectItem key={p} value={p}>{p}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Separator className="bg-white/10" />
 
           {/* 1. Club Links */}
           <div className="space-y-3">
