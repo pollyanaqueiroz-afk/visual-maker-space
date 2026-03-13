@@ -132,10 +132,9 @@ Deno.serve(async (req) => {
     });
 
     // ── Auto-trigger migration if validation passed ──
-    if (autoTriggerMigration && MANUS_API_URL && MANUS_API_KEY) {
+    if (autoTriggerMigration) {
       console.log(`Auto-triggering migration for project ${project_id}`);
 
-      // Call our own trigger function to start migration
       const triggerUrl = `${SUPABASE_URL}/functions/v1/trigger-manus-migration`;
       const triggerResponse = await fetch(triggerUrl, {
         method: "POST",
