@@ -472,6 +472,7 @@ export default function ProcessosImplantacaoPage() {
                     })() : <span className="text-xs text-muted-foreground">—</span>}
                   </TableCell>
 
+                  <TableCell className="text-center">
                     {c.hasScorm ? (
                       <Badge variant="outline" className="text-[9px] border-purple-500/30 text-purple-500">
                         <GraduationCap className="h-2.5 w-2.5 mr-0.5" /> {c.scorm.length}
