@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     const body = await req.json();
     // action: "validation_result" | "migration_result"
     // status: "validated" | "validation_error" | "completed" | "failed"
-    const { project_id, action, status, details, errors: validationErrors } = body;
+    const { project_id, action, status, details, errors: validationErrors, auto_migration } = body;
 
     if (!project_id) throw new Error("project_id is required");
 
