@@ -72,12 +72,6 @@ Deno.serve(async (req) => {
       client_url: project.client_url,
       platform_origin: project.platform_origin,
       webhook_url: webhookUrl,
-      form_data: submission
-        ? {
-            members_spreadsheet_url: submission.members_spreadsheet_url,
-            members_spreadsheet_name: submission.members_spreadsheet_name,
-          }
-        : null,
       clubs: clubs.map((c: any) => ({
         club_name: c.club_name,
         club_url: c.club_url,
