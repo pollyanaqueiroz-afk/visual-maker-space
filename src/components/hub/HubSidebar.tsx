@@ -43,6 +43,7 @@ const csModules = [
   { title: 'Upsell', url: '/hub/upsell', icon: Rocket, permission: 'dashboards.view', badgeKey: null },
   { title: 'Reversão', url: '/hub/reversao', icon: RotateCcw, permission: 'funil.view', badgeKey: null },
   { title: 'Clientes Inativos', url: '/hub/inativos', icon: UserX, permission: 'dashboards.view', badgeKey: null },
+  { title: 'Inconsistências', url: '/hub/inconsistencias', icon: AlertTriangle, permission: 'dashboards.view', badgeKey: null },
 ];
 
 const auditoriaModules = [
