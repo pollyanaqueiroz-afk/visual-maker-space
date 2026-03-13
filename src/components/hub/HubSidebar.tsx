@@ -57,6 +57,7 @@ const migracaoModules = [
 
 const produtoModules = [
   { title: 'Insights de Produto', url: '/hub/produto', icon: Boxes, permission: 'carteira.view', badgeKey: null },
+  { title: 'Entregas', url: '/hub/produto/entregas', icon: Construction, permission: 'carteira.view', badgeKey: null },
 ];
 
 const adminModules = [
