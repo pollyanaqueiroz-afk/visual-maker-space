@@ -297,7 +297,16 @@ export default function CarteiraGeralPage() {
         .select('id', { count: 'exact', head: true })
         .eq('status_financeiro', 'Inadimplente');
 
+      // Calculate receita from cliente_financeiro where vigencia_assinatura = 'Ativa'
+      const { data: finData } = await supabase
+        .from('cliente_financeiro')
+        .select('valor_contratado')
+        .eq('vigencia_assinatura', 'Ativa');
+
+      const totalReceita = (finData || []).reduce((sum, row) => sum + (Number(row.valor_contratado) || 0), 0);
+
       setSummaryTotal(totalCount || 0);
+      setSummaryReceita(totalReceita);
       setSummaryAdimplentes(adimpCount || 0);
       setSummaryInadimplentes(inadimpCount || 0);
     } catch (err) {
@@ -420,7 +429,7 @@ export default function CarteiraGeralPage() {
                     <Info className="h-3 w-3 text-muted-foreground cursor-help" />
                   </TooltipTrigger>
                   <TooltipContent className="max-w-[260px] text-xs">
-                    Soma dos valores de fatura de todos os clientes adimplentes da base.
+                    Soma do valor contratado de todas as assinaturas com vigência Ativa.
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
