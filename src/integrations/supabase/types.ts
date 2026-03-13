@@ -1442,6 +1442,60 @@ export type Database = {
         }
         Relationships: []
       }
+      email_logs: {
+        Row: {
+          client_name: string | null
+          client_url: string | null
+          created_at: string
+          error_message: string | null
+          html_body: string | null
+          id: string
+          metadata: Json | null
+          origin: string | null
+          recipient_email: string
+          resend_id: string | null
+          send_type: string
+          sender_name: string | null
+          sender_type: string
+          status: string
+          subject: string | null
+        }
+        Insert: {
+          client_name?: string | null
+          client_url?: string | null
+          created_at?: string
+          error_message?: string | null
+          html_body?: string | null
+          id?: string
+          metadata?: Json | null
+          origin?: string | null
+          recipient_email: string
+          resend_id?: string | null
+          send_type?: string
+          sender_name?: string | null
+          sender_type?: string
+          status?: string
+          subject?: string | null
+        }
+        Update: {
+          client_name?: string | null
+          client_url?: string | null
+          created_at?: string
+          error_message?: string | null
+          html_body?: string | null
+          id?: string
+          metadata?: Json | null
+          origin?: string | null
+          recipient_email?: string
+          resend_id?: string | null
+          send_type?: string
+          sender_name?: string | null
+          sender_type?: string
+          status?: string
+          subject?: string | null
+        }
+        Relationships: []
+      }
       kanban_boards: {
         Row: {
           color: string
@@ -2105,6 +2159,54 @@ export type Database = {
           storage_path?: string
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      system_error_logs: {
+        Row: {
+          action: string | null
+          created_at: string
+          endpoint: string | null
+          error_message: string
+          id: string
+          metadata: Json | null
+          module: string | null
+          request_data: string | null
+          screen: string | null
+          severity: string
+          stack_trace: string | null
+          user_email: string | null
+          user_role: string | null
+        }
+        Insert: {
+          action?: string | null
+          created_at?: string
+          endpoint?: string | null
+          error_message: string
+          id?: string
+          metadata?: Json | null
+          module?: string | null
+          request_data?: string | null
+          screen?: string | null
+          severity?: string
+          stack_trace?: string | null
+          user_email?: string | null
+          user_role?: string | null
+        }
+        Update: {
+          action?: string | null
+          created_at?: string
+          endpoint?: string | null
+          error_message?: string
+          id?: string
+          metadata?: Json | null
+          module?: string | null
+          request_data?: string | null
+          screen?: string | null
+          severity?: string
+          stack_trace?: string | null
+          user_email?: string | null
+          user_role?: string | null
         }
         Relationships: []
       }
