@@ -4,10 +4,12 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   User, Mail, Globe, DollarSign, Calendar, Activity, HardDrive,
-  Cpu, Award, ShoppingCart, BookOpen, Clock, TrendingUp, ExternalLink,
+  Cpu, Award, ShoppingCart, BookOpen, Clock, TrendingUp, ExternalLink, TicketCheck,
 } from 'lucide-react';
+import ClientTicketsTab from './ClientTicketsTab';
 
 interface Props {
   idCurseduca: string | null;
