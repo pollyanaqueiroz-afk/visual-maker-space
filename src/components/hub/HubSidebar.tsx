@@ -62,6 +62,7 @@ const adminModules = [
   { title: 'Permissões por Perfil', url: '/hub/admin/permissoes', icon: ShieldCheck, permission: 'admin.manage_permissions', badgeKey: null },
   { title: 'Campos da Carteira', url: '/hub/admin/campos', icon: Database, permission: 'carteira.manage_fields', badgeKey: null },
   { title: 'Documentação de APIs', url: '/hub/admin/api-docs', icon: FileCode, permission: 'admin.view', badgeKey: null },
+  { title: 'Central de Erros', url: '/hub/admin/erros', icon: Bug, permission: 'admin.view', badgeKey: null },
   { title: 'Hub do Cliente', url: '/cliente', icon: ExternalLink, permission: 'admin.view', badgeKey: null },
 ];
 
