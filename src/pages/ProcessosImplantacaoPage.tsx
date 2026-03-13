@@ -703,6 +703,61 @@ export default function ProcessosImplantacaoPage() {
                     </div>
                   )}
                 </TabsContent>
+
+                {/* MIGRATION */}
+                <TabsContent value="migration" className="mt-4 space-y-3">
+                  {!selectedClient.hasMigration ? (
+                    <p className="text-sm text-muted-foreground text-center py-8">Nenhuma migração vinculada</p>
+                  ) : (() => {
+                    const m = selectedClient.migration;
+                    const statusLabel: Record<string, string> = {
+                      waiting_form: 'Aguardando formulário',
+                      analysis: 'Em análise',
+                      rejected: 'Ajustes solicitados',
+                      extraction: 'Extração de dados',
+                      in_progress: 'Migração em andamento',
+                      completed: 'Concluída',
+                    };
+                    const statusColor: Record<string, string> = {
+                      waiting_form: 'bg-amber-500/20 text-amber-500',
+                      analysis: 'bg-blue-500/20 text-blue-500',
+                      rejected: 'bg-destructive/20 text-destructive',
+                      extraction: 'bg-cyan-500/20 text-cyan-500',
+                      in_progress: 'bg-purple-500/20 text-purple-500',
+                      completed: 'bg-green-500/20 text-green-500',
+                    };
+                    return (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <Badge className={`border-0 text-xs ${statusColor[m?.migration_status || ''] || 'bg-muted'}`}>
+                            {statusLabel[m?.migration_status || ''] || m?.migration_status}
+                          </Badge>
+                          <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => { setSelectedClientUrl(null); navigate('/hub/migracao'); }}>
+                            <Eye className="h-3 w-3" /> Ver no Kanban
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Plataforma de origem</p>
+                            <p className="font-medium">{m?.platform_origin || '—'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">E-mail do cliente</p>
+                            <p className="font-medium">{m?.client_email || '—'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Criado em</p>
+                            <p className="font-medium">{m?.created_at ? format(new Date(m.created_at), 'dd/MM/yyyy') : '—'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Última atualização</p>
+                            <p className="font-medium">{m?.updated_at ? format(new Date(m.updated_at), 'dd/MM/yyyy') : '—'}</p>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </TabsContent>
               </Tabs>
             </>
           )}
