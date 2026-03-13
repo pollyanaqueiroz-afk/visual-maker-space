@@ -1,17 +1,21 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { TableSkeleton } from '@/components/ui/TableSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { supabase } from '@/integrations/supabase/client';
-import { AlertTriangle, Search, CreditCard, DollarSign, Users, Filter } from 'lucide-react';
+import { AlertTriangle, Search, CreditCard, DollarSign, Users, Filter, Upload, CheckCircle, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 
-type FinanceiroRecord = {
+type InconsistenciaRecord = {
   id: string;
+  fonte: string;
+  tipo: string;
   id_curseduca: string | null;
   nome: string | null;
   email: string | null;
@@ -31,6 +35,11 @@ type FinanceiroRecord = {
   status: string | null;
   vigencia_assinatura: string | null;
   data_criacao: string | null;
+  resolvido: boolean;
+  resolvido_em: string | null;
+  resolvido_por: string | null;
+  notas: string | null;
+  created_at: string;
 };
 
 type InconsistencyType = 'sem_id_curseduca' | 'inadimplente_ativo' | 'sem_nome_email';
@@ -65,6 +74,7 @@ function statusBadge(status: string | null) {
     Inadimplente: 'bg-red-500/15 text-red-700 border-red-200',
     Cancelado: 'bg-muted text-muted-foreground',
     Ativo: 'bg-emerald-500/15 text-emerald-700 border-emerald-200',
+    Ativa: 'bg-emerald-500/15 text-emerald-700 border-emerald-200',
   };
   return <Badge variant="outline" className={colors[status] || ''}>{status}</Badge>;
 }
@@ -73,46 +83,42 @@ export default function InconsistenciasPage() {
   const [activeSource, setActiveSource] = useState('vindi');
   const [activeType, setActiveType] = useState<InconsistencyType>('sem_id_curseduca');
   const [loading, setLoading] = useState(true);
-  const [records, setRecords] = useState<FinanceiroRecord[]>([]);
+  const [importing, setImporting] = useState(false);
+  const [records, setRecords] = useState<InconsistenciaRecord[]>([]);
+  const [typeCounts, setTypeCounts] = useState<Record<string, number>>({});
   const [search, setSearch] = useState('');
   const [filterPlano, setFilterPlano] = useState('all');
+  const [showResolved, setShowResolved] = useState(false);
 
-  useEffect(() => {
-    fetchInconsistencies();
-  }, [activeType]);
-
-  const fetchInconsistencies = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
-    let allData: FinanceiroRecord[] = [];
+    let allData: InconsistenciaRecord[] = [];
     let from = 0;
     const batchSize = 1000;
     let hasMore = true;
 
     while (hasMore) {
       let query = supabase
-        .from('cliente_financeiro')
-        .select('id, id_curseduca, nome, email, codigo_assinatura_meio_pagamento, codigo_cliente_meio_pagamento, plano, meio_de_pagamento, valor_contratado, numero_parcelas_pagas, numero_parcelas_inadimplentes, numero_parcelas_contrato, recorrencia_pagamento, is_plano, is_upsell, tipo_produto_master, nome_plano_master, status, vigencia_assinatura, data_criacao');
+        .from('inconsistencias' as any)
+        .select('*')
+        .eq('fonte', activeSource)
+        .eq('tipo', activeType);
 
-      // Apply filters based on inconsistency type
-      if (activeType === 'sem_id_curseduca') {
-        query = query.is('id_curseduca', null).eq('vigencia_assinatura', 'Ativa');
-      } else if (activeType === 'inadimplente_ativo') {
-        query = query.eq('vigencia_assinatura', 'Ativa').eq('status', 'Inadimplente').not('id_curseduca', 'is', null);
-      } else if (activeType === 'sem_nome_email') {
-        query = query.not('id_curseduca', 'is', null).or('nome.is.null,email.is.null').eq('vigencia_assinatura', 'Ativa');
+      if (!showResolved) {
+        query = query.eq('resolvido', false);
       }
 
       const { data, error } = await query
-        .order('data_criacao', { ascending: false })
+        .order('created_at', { ascending: false })
         .range(from, from + batchSize - 1);
 
       if (error) {
-        console.error('Error fetching inconsistencies:', error);
+        console.error('Error fetching inconsistencias:', error);
         break;
       }
 
       if (data && data.length > 0) {
-        allData = allData.concat(data as FinanceiroRecord[]);
+        allData = allData.concat(data as unknown as InconsistenciaRecord[]);
         from += batchSize;
         hasMore = data.length === batchSize;
       } else {
@@ -122,6 +128,93 @@ export default function InconsistenciasPage() {
 
     setRecords(allData);
     setLoading(false);
+  }, [activeSource, activeType, showResolved]);
+
+  const fetchCounts = useCallback(async () => {
+    const types: InconsistencyType[] = ['sem_id_curseduca', 'inadimplente_ativo', 'sem_nome_email'];
+    const counts: Record<string, number> = {};
+
+    await Promise.all(types.map(async (tipo) => {
+      const { count } = await supabase
+        .from('inconsistencias' as any)
+        .select('id', { count: 'exact', head: true })
+        .eq('fonte', activeSource)
+        .eq('tipo', tipo)
+        .eq('resolvido', false);
+      counts[tipo] = count ?? 0;
+    }));
+
+    setTypeCounts(counts);
+  }, [activeSource]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    fetchCounts();
+  }, [fetchCounts]);
+
+  const handleImportJson = async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      setImporting(true);
+      try {
+        const text = await file.text();
+        const parsed = JSON.parse(text);
+
+        // The JSON has a query key wrapping the array
+        const keys = Object.keys(parsed);
+        const records = parsed[keys[0]];
+
+        if (!Array.isArray(records)) {
+          toast.error('Formato inválido. Esperado um array de registros.');
+          return;
+        }
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          toast.error('Sessão expirada. Faça login novamente.');
+          return;
+        }
+
+        const res = await supabase.functions.invoke('import-inconsistencias', {
+          body: { fonte: activeSource, records },
+        });
+
+        if (res.error) throw res.error;
+
+        toast.success(`Importação concluída! ${res.data.inserted} inconsistências inseridas.`);
+        fetchData();
+        fetchCounts();
+      } catch (err: any) {
+        console.error('Import error:', err);
+        toast.error(`Erro na importação: ${err.message}`);
+      } finally {
+        setImporting(false);
+      }
+    };
+    input.click();
+  };
+
+  const handleResolve = async (id: string) => {
+    const { error } = await supabase
+      .from('inconsistencias' as any)
+      .update({ resolvido: true, resolvido_em: new Date().toISOString() } as any)
+      .eq('id', id);
+
+    if (error) {
+      toast.error('Erro ao resolver inconsistência');
+      return;
+    }
+    toast.success('Inconsistência marcada como resolvida');
+    setRecords(prev => prev.filter(r => r.id !== id));
+    setTypeCounts(prev => ({ ...prev, [activeType]: (prev[activeType] || 1) - 1 }));
   };
 
   const planos = useMemo(() => {
@@ -155,21 +248,33 @@ export default function InconsistenciasPage() {
   );
 
   const sources = [
-    { id: 'vindi', label: 'Vindi', count: null as number | null },
+    { id: 'vindi', label: 'Vindi' },
   ];
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Inconsistências</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Identificação e acompanhamento de dados inconsistentes nos sistemas financeiros
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Inconsistências</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Identificação e acompanhamento de dados inconsistentes nos sistemas financeiros
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => { fetchData(); fetchCounts(); }} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Atualizar
+          </Button>
+          <Button size="sm" onClick={handleImportJson} disabled={importing}>
+            <Upload className="h-4 w-4 mr-2" />
+            {importing ? 'Importando...' : 'Importar JSON'}
+          </Button>
+        </div>
       </div>
 
       {/* Source tabs */}
-      <Tabs value={activeSource} onValueChange={setActiveSource}>
+      <Tabs value={activeSource} onValueChange={(v) => { setActiveSource(v); setActiveType('sem_id_curseduca'); }}>
         <TabsList>
           {sources.map(s => (
             <TabsTrigger key={s.id} value={s.id} className="gap-2">
@@ -179,13 +284,14 @@ export default function InconsistenciasPage() {
           ))}
         </TabsList>
 
-        <TabsContent value="vindi" className="space-y-4 mt-4">
+        <TabsContent value={activeSource} className="space-y-4 mt-4">
           {/* Inconsistency type selector */}
           <div className="flex flex-wrap gap-3">
             {(Object.keys(inconsistencyLabels) as InconsistencyType[]).map(type => {
               const info = inconsistencyLabels[type];
               const Icon = info.icon;
               const isActive = activeType === type;
+              const count = typeCounts[type] ?? 0;
               return (
                 <button
                   key={type}
@@ -198,11 +304,9 @@ export default function InconsistenciasPage() {
                 >
                   <Icon className="h-4 w-4" />
                   {info.label}
-                  {!loading && isActive && (
-                    <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs">
-                      {records.length}
-                    </Badge>
-                  )}
+                  <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs">
+                    {count}
+                  </Badge>
                 </button>
               );
             })}
@@ -256,6 +360,14 @@ export default function InconsistenciasPage() {
                 ))}
               </SelectContent>
             </Select>
+            <Button
+              variant={showResolved ? "secondary" : "outline"}
+              size="sm"
+              onClick={() => setShowResolved(!showResolved)}
+            >
+              <CheckCircle className="h-4 w-4 mr-2" />
+              {showResolved ? 'Mostrando resolvidos' : 'Mostrar resolvidos'}
+            </Button>
           </div>
 
           {/* Table */}
@@ -267,7 +379,7 @@ export default function InconsistenciasPage() {
                 <EmptyState
                   icon={AlertTriangle}
                   title="Nenhuma inconsistência encontrada"
-                  description="Nenhum registro corresponde aos filtros selecionados."
+                  description="Importe um JSON ou aguarde a sincronização dos dados."
                 />
               ) : (
                 <div className="overflow-auto max-h-[60vh]">
@@ -284,11 +396,12 @@ export default function InconsistenciasPage() {
                         <TableHead>Recorrência</TableHead>
                         <TableHead>Cód. Assinatura</TableHead>
                         <TableHead>Data Criação</TableHead>
+                        <TableHead className="text-center">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filtered.map(r => (
-                        <TableRow key={r.id}>
+                        <TableRow key={r.id} className={r.resolvido ? 'opacity-50' : ''}>
                           <TableCell className="font-mono text-xs">
                             {r.id_curseduca || <span className="text-destructive font-medium">VAZIO</span>}
                           </TableCell>
@@ -308,6 +421,18 @@ export default function InconsistenciasPage() {
                           <TableCell>{r.recorrencia_pagamento || '—'}</TableCell>
                           <TableCell className="font-mono text-xs">{r.codigo_assinatura_meio_pagamento || '—'}</TableCell>
                           <TableCell className="text-xs">{r.data_criacao || '—'}</TableCell>
+                          <TableCell className="text-center">
+                            {!r.resolvido && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleResolve(r.id)}
+                                title="Marcar como resolvido"
+                              >
+                                <CheckCircle className="h-4 w-4 text-emerald-600" />
+                              </Button>
+                            )}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
