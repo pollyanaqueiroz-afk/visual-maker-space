@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +10,12 @@ import { toast } from 'sonner';
 import { Loader2, Smartphone, UserPlus, Eye, EyeOff } from 'lucide-react';
 
 export default function ClienteLogin() {
+  const { user, loading: authLoading } = useAuth();
+
+  // Redirect to portal if already authenticated
+  if (!authLoading && user) {
+    return <Navigate to="/cliente" replace />;
+  }
   const navigate = useNavigate();
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
