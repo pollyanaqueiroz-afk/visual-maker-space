@@ -302,9 +302,10 @@ function MigrationForm({ projectId, isResubmission }: { projectId: string; isRes
         if (clubErr) throw clubErr;
       }
 
-      // Update project status to analysis
+      // Update project status and platform_origin
       await supabase.from('migration_projects').update({
         migration_status: 'analysis',
+        platform_origin: platformOrigin,
         rejected_tag: isResubmission ? true : false,
         updated_at: new Date().toISOString(),
       }).eq('id', projectId);
