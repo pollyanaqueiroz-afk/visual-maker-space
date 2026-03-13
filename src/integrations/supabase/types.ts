@@ -1535,6 +1535,99 @@ export type Database = {
         }
         Relationships: []
       }
+      inconsistencias: {
+        Row: {
+          codigo_assinatura_meio_pagamento: string | null
+          codigo_cliente_meio_pagamento: string | null
+          created_at: string
+          data_criacao: string | null
+          email: string | null
+          fonte: string
+          id: string
+          id_curseduca: string | null
+          is_plano: boolean | null
+          is_upsell: boolean | null
+          meio_de_pagamento: string | null
+          nome: string | null
+          nome_plano_master: string | null
+          notas: string | null
+          numero_parcelas_contrato: number | null
+          numero_parcelas_inadimplentes: number | null
+          numero_parcelas_pagas: number | null
+          plano: string | null
+          recorrencia_pagamento: string | null
+          resolvido: boolean
+          resolvido_em: string | null
+          resolvido_por: string | null
+          status: string | null
+          tipo: string
+          tipo_produto_master: string | null
+          updated_at: string
+          valor_contratado: number | null
+          vigencia_assinatura: string | null
+        }
+        Insert: {
+          codigo_assinatura_meio_pagamento?: string | null
+          codigo_cliente_meio_pagamento?: string | null
+          created_at?: string
+          data_criacao?: string | null
+          email?: string | null
+          fonte?: string
+          id?: string
+          id_curseduca?: string | null
+          is_plano?: boolean | null
+          is_upsell?: boolean | null
+          meio_de_pagamento?: string | null
+          nome?: string | null
+          nome_plano_master?: string | null
+          notas?: string | null
+          numero_parcelas_contrato?: number | null
+          numero_parcelas_inadimplentes?: number | null
+          numero_parcelas_pagas?: number | null
+          plano?: string | null
+          recorrencia_pagamento?: string | null
+          resolvido?: boolean
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          status?: string | null
+          tipo: string
+          tipo_produto_master?: string | null
+          updated_at?: string
+          valor_contratado?: number | null
+          vigencia_assinatura?: string | null
+        }
+        Update: {
+          codigo_assinatura_meio_pagamento?: string | null
+          codigo_cliente_meio_pagamento?: string | null
+          created_at?: string
+          data_criacao?: string | null
+          email?: string | null
+          fonte?: string
+          id?: string
+          id_curseduca?: string | null
+          is_plano?: boolean | null
+          is_upsell?: boolean | null
+          meio_de_pagamento?: string | null
+          nome?: string | null
+          nome_plano_master?: string | null
+          notas?: string | null
+          numero_parcelas_contrato?: number | null
+          numero_parcelas_inadimplentes?: number | null
+          numero_parcelas_pagas?: number | null
+          plano?: string | null
+          recorrencia_pagamento?: string | null
+          resolvido?: boolean
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          status?: string | null
+          tipo?: string
+          tipo_produto_master?: string | null
+          updated_at?: string
+          valor_contratado?: number | null
+          vigencia_assinatura?: string | null
+        }
+        Relationships: []
+      }
       kanban_boards: {
         Row: {
           color: string
