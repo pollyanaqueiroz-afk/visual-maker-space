@@ -260,11 +260,12 @@ export default function ProcessosImplantacaoPage() {
       </div>
 
       {/* KPIs - clickable */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
           { key: 'all', value: totalWithProcess, label: 'Clientes com processos', icon: <Users className="h-4 w-4" />, bg: 'bg-muted' },
           { key: 'briefing', value: totalWithBriefing, label: 'Com design em aberto', icon: <FileImage className="h-4 w-4 text-primary" />, bg: 'bg-primary/10' },
           { key: 'app', value: totalWithApp, label: 'Com app em andamento', icon: <Smartphone className="h-4 w-4 text-blue-500" />, bg: 'bg-blue-500/10' },
+          { key: 'migration', value: totalWithMigration, label: 'Com migração', icon: <ArrowRightLeft className="h-4 w-4 text-orange-500" />, bg: 'bg-orange-500/10' },
           { key: 'scorm', value: totalWithScorm, label: 'Com SCORM', icon: <GraduationCap className="h-4 w-4 text-purple-500" />, bg: 'bg-purple-500/10' },
         ].map(kpi => (
           <Card
