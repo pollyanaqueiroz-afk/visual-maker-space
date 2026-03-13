@@ -318,17 +318,6 @@ export default function Dashboard() {
     setDownloadingReport(false);
   };
 
-  // Sync top scrollbar width with actual table scroll width
-  useEffect(() => {
-    const syncWidth = () => {
-      if (tableScrollRef.current && topScrollInnerRef.current) {
-        topScrollInnerRef.current.style.width = tableScrollRef.current.scrollWidth + 'px';
-      }
-    };
-    syncWidth();
-    window.addEventListener('resize', syncWidth);
-    return () => window.removeEventListener('resize', syncWidth);
-  }, [loading, images]);
 
   const updateImageStatus = async (id: string, status: RequestStatus, isAdjustment?: boolean) => {
     if (isAdjustment) {
