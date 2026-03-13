@@ -1384,6 +1384,11 @@ export default function Dashboard() {
             />
           </TabsContent>
 
+          {/* ───── ENTREGAS TAB ───── */}
+          <TabsContent value="entregas" className="space-y-6">
+            <EntregasTab />
+          </TabsContent>
+
           <TabsContent value="revisoes" className="space-y-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="relative flex-1 max-w-md">
