@@ -60,7 +60,7 @@ export default function ProcessosImplantacaoPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('clients')
-        .select('id, nome, id_curseduca, cs_atual, plano')
+        .select('id, nome, id_curseduca, cs_atual, plano, email')
         .order('nome');
       if (error) throw error;
       return data || [];
