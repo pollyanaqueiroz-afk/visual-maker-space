@@ -51,6 +51,7 @@ import MigracaoAjustesPage from "./pages/MigracaoAjustesPage";
 import MigracaoAnalyticsPage from "./pages/MigracaoAnalyticsPage";
 import EmailReportPage from "./pages/EmailReportPage";
 import ErrorCentralPage from "./pages/ErrorCentralPage";
+import ProdutoInsightsPage from "./pages/ProdutoInsightsPage";
 import ClienteLogin from "./pages/cliente/ClienteLogin";
 import ClienteHubLayout from "./pages/cliente/ClienteHubLayout";
 import ClienteHome from "./pages/cliente/ClienteHome";
