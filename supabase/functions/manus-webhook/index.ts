@@ -52,33 +52,27 @@ Deno.serve(async (req) => {
 
     // ── Handle validation results ──
     if (action === "validation_result" || status === "validated" || status === "validation_error") {
-      if (status === "validated") {
-        // Validation passed → move to extraction and auto-trigger migration
-        newStatus = "extraction";
-        notes = "✅ Validação automática aprovada pelo Manus IA";
-        autoTriggerMigration = true;
-      } else {
-        // Validation failed → reject and notify migrator
+      const hasErrors = validationErrors && Array.isArray(validationErrors) && validationErrors.length > 0;
+
+      if (hasErrors) {
+        // Errors found → go to analysis (rejected)
         newStatus = "rejected";
         notes = `❌ Validação falhou: ${details || validationErrors || "erros encontrados"}`;
 
         // Update validation items if errors provided
-        if (validationErrors && Array.isArray(validationErrors)) {
-          for (const err of validationErrors) {
-            if (err.item_key) {
-              await supabase
-                .from("migration_validations")
-                .update({ status: "rejected", observation: err.message || err.reason })
-                .eq("project_id", project_id)
-                .eq("item_key", err.item_key);
-            }
+        for (const err of validationErrors) {
+          if (err.item_key) {
+            await supabase
+              .from("migration_validations")
+              .update({ status: "rejected", observation: err.message || err.reason })
+              .eq("project_id", project_id)
+              .eq("item_key", err.item_key);
           }
         }
 
         // Notify migrator
         const migratorEmail = project.cs_responsible;
         if (migratorEmail) {
-          // Insert in-app notification (using a simple approach)
           await supabase.from("migration_status_history").insert({
             project_id,
             from_status: previousStatus,
@@ -87,6 +81,15 @@ Deno.serve(async (req) => {
             notes: `🔔 ATENÇÃO: Validação do Manus falhou para ${project.client_name}. ${details || "Verifique os dados."}`,
           });
         }
+      } else if (auto_migration === true) {
+        // No errors + auto_migration enabled → skip analysis, trigger migration directly
+        newStatus = "extraction";
+        notes = "✅ Validação aprovada — migração automática iniciada";
+        autoTriggerMigration = true;
+      } else {
+        // No errors + auto_migration disabled → go to analysis for manual review
+        newStatus = "analysis";
+        notes = "✅ Validação aprovada — aguardando análise manual";
       }
     }
     // ── Handle migration results ──
