@@ -347,6 +347,23 @@ function MigrationForm({ projectId, isResubmission }: { projectId: string; isRes
             <p className="text-xs text-white/50 mt-1">Preencha as informações abaixo para iniciar sua migração</p>
           </div>
 
+          {/* 0. Platform Origin */}
+          <div className="space-y-3">
+            <Label className="text-white/80">Plataforma de origem <span className="text-destructive">*</span></Label>
+            <Select value={platformOrigin} onValueChange={setPlatformOrigin}>
+              <SelectTrigger className="bg-white/5 border-white/10 text-sm">
+                <SelectValue placeholder="Selecione a plataforma" />
+              </SelectTrigger>
+              <SelectContent>
+                {['Hotmart', 'Academi', 'Kiwify', 'Memberkit', 'Greenn', 'The Members', 'Eduzz', 'Alpha Class', 'Outros'].map(p => (
+                  <SelectItem key={p} value={p}>{p}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Separator className="bg-white/10" />
+
           {/* 1. Club Links */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
