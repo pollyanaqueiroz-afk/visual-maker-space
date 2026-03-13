@@ -250,6 +250,7 @@ function MigrationForm({ projectId, isResubmission }: { projectId: string; isRes
   const [apiClientSecret, setApiClientSecret] = useState('');
   const [apiBasic, setApiBasic] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [platformOrigin, setPlatformOrigin] = useState('Hotmart');
 
   const addClub = () => setClubs(c => [...c, { name: '', url: '' }]);
   const removeClub = (i: number) => setClubs(c => c.filter((_, idx) => idx !== i));
