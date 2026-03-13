@@ -47,7 +47,8 @@ export default function EntregasTab() {
   const [editEmail, setEditEmail] = useState('');
   const [sending, setSending] = useState(false);
 
-  const { data: deliveries = [], isLoading } = useQuery({
+  // Fetch deliveries (images WITH delivery records)
+  const { data: deliveries = [], isLoading: loadingDeliveries } = useQuery({
     queryKey: ['briefing-deliveries-all'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -60,8 +61,30 @@ export default function EntregasTab() {
     staleTime: 30_000,
   });
 
+  // Also fetch completed/review images WITHOUT deliveries (e.g. imported arts with manual status change)
+  const { data: completedWithoutDelivery = [], isLoading: loadingCompleted } = useQuery({
+    queryKey: ['briefing-completed-no-delivery'],
+    queryFn: async () => {
+      const { data: completedImages, error } = await supabase
+        .from('briefing_images')
+        .select('id, image_type, product_name, status, request_id, assigned_email, created_at, briefing_requests!inner(requester_name, requester_email, platform_url, received_at)')
+        .in('status', ['completed', 'review'])
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      // Filter out images that already have deliveries
+      const idsWithDeliveries = new Set(deliveries.map((d: any) => d.briefing_images?.id).filter(Boolean));
+      return (completedImages || []).filter((img: any) => !idsWithDeliveries.has(img.id));
+    },
+    staleTime: 30_000,
+    enabled: !loadingDeliveries,
+  });
+
+  const isLoading = loadingDeliveries || loadingCompleted;
+
   const groups: DeliveryGroup[] = useMemo(() => {
     const map = new Map<string, DeliveryGroup>();
+
+    // Process images WITH deliveries
     for (const d of deliveries) {
       const img = d.briefing_images;
       const req = img?.briefing_requests;
@@ -92,8 +115,36 @@ export default function EntregasTab() {
         g.deliveryDate = d.created_at;
       }
     }
+
+    // Process completed/review images WITHOUT deliveries (imported arts)
+    for (const img of completedWithoutDelivery) {
+      const req = img.briefing_requests;
+      if (!req) continue;
+      const key = img.request_id;
+      if (!map.has(key)) {
+        map.set(key, {
+          requestId: key,
+          clientName: extractClientName(req.platform_url),
+          platformUrl: req.platform_url,
+          requesterEmail: req.requester_email,
+          requestDate: req.received_at || img.created_at,
+          deliveryDate: img.created_at,
+          artCount: 0,
+          approvedCount: 0,
+          deliveries: [],
+          images: [],
+        });
+      }
+      const g = map.get(key)!;
+      if (!g.images.find((i: any) => i.id === img.id)) {
+        g.images.push(img);
+        g.artCount += 1;
+        if (img.status === 'completed') g.approvedCount += 1;
+      }
+    }
+
     return Array.from(map.values()).sort((a, b) => new Date(b.deliveryDate).getTime() - new Date(a.deliveryDate).getTime());
-  }, [deliveries]);
+  }, [deliveries, completedWithoutDelivery]);
 
   const filtered = useMemo(() => {
     return groups.filter(g => {

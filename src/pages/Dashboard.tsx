@@ -326,7 +326,6 @@ export default function Dashboard() {
         adjData.items.some((i: any) => i.id === id && i.adjustment_id === a.id)
       );
       if (!parentAdj) { toast.error('Ajuste não encontrado'); return; }
-      // Map RequestStatus back to adjustment status
       const adjStatusMap: Record<string, string> = {
         pending: 'pending',
         in_progress: 'in_progress',
@@ -341,12 +340,37 @@ export default function Dashboard() {
       refreshAll();
       return;
     }
-    const { error } = await supabase.from('briefing_images').update({ status } as any).eq('id', id);
-    if (error) {
-      toast.error('Erro ao atualizar status');
-    } else {
+
+    // Use edge function for status changes to ensure side effects (brand_assets, reviews, request sync)
+    try {
+      const { error: fnError } = await supabase.functions.invoke('delivery-data', {
+        body: {
+          action: 'update_status',
+          image_id: id,
+          status,
+          reviewed_by: user?.email || 'admin',
+          reviewer_comments: `Status alterado para ${STATUS_LABELS[status]} por ${user?.email || 'admin'}`,
+        },
+      });
+      if (fnError) throw fnError;
+
+      // Sync parent request status when all images are completed
+      if (status === 'completed') {
+        const img = images?.find((i: any) => i.id === id);
+        if (img) {
+          const requestImages = images?.filter((i: any) => i.request_id === img.request_id) || [];
+          const allCompleted = requestImages.every((i: any) => i.id === id ? true : i.status === 'completed');
+          if (allCompleted) {
+            await supabase.from('briefing_requests').update({ status: 'completed' as any }).eq('id', img.request_id);
+          }
+        }
+      }
+
       toast.success('Status atualizado');
       refreshAll();
+    } catch (err: any) {
+      console.error('Status update error:', err);
+      toast.error('Erro ao atualizar status: ' + (err.message || ''));
     }
   };
 
