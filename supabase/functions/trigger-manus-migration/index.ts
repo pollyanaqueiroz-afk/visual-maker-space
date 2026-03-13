@@ -72,6 +72,7 @@ Deno.serve(async (req) => {
       client_url: project.client_url,
       platform_origin: project.platform_origin,
       webhook_url: webhookUrl,
+      auto_migration: true,
       clubs: clubs.map((c: any) => ({
         club_name: c.club_name,
         club_url: c.club_url,
