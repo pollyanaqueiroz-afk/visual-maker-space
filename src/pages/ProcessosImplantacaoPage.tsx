@@ -229,6 +229,7 @@ export default function ProcessosImplantacaoPage() {
     if (filterProcess === 'briefing') result = result.filter(c => c.hasOpenBriefing);
     if (filterProcess === 'app') result = result.filter(c => c.appOpen);
     if (filterProcess === 'scorm') result = result.filter(c => c.hasScorm);
+    if (filterProcess === 'migration') result = result.filter(c => c.hasMigration);
 
     return result;
   }, [consolidatedData, filterCS, searchQuery, filterProcess]);
