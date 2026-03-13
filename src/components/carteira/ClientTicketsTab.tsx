@@ -197,11 +197,11 @@ export default function ClientTicketsTab({ clientName, clientId }: Props) {
               <CollapsibleContent>
                 <div className="ml-5 mr-1 mt-1 p-3 rounded-lg bg-muted/20 border border-border/50 space-y-3">
                   {/* Details */}
-                  <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                     <div><span className="text-muted-foreground">Tipo:</span> <span className="font-medium">{ticket.type}</span></div>
                     <div><span className="text-muted-foreground">Severidade:</span> <span className="font-medium">{ticket.priority}</span></div>
                     {ticket.components.length > 0 && (
-                      <div className="col-span-2"><span className="text-muted-foreground">Componente:</span> <span className="font-medium">{ticket.components.join(', ')}</span></div>
+                      <div className="col-span-1 sm:col-span-2"><span className="text-muted-foreground">Componente:</span> <span className="font-medium">{ticket.components.join(', ')}</span></div>
                     )}
                     <div><span className="text-muted-foreground">Criado:</span> <span>{new Date(ticket.created).toLocaleDateString('pt-BR')}</span></div>
                     <div><span className="text-muted-foreground">Atualizado:</span> <span>{new Date(ticket.updated).toLocaleDateString('pt-BR')}</span></div>
