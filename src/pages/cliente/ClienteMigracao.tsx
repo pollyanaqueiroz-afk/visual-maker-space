@@ -39,12 +39,13 @@ export default function ClienteMigracao({ projectOverride }: { projectOverride?:
   const clientEmail = useClienteEmail();
   const queryClient = useQueryClient();
 
-  // Fetch migration project for this client
+  // Fetch migration project for this client (by email or by client_url)
   const { data: fetchedProject, isLoading } = useQuery({
     queryKey: ['cliente-migration', clientEmail],
     enabled: !!clientEmail && !projectOverride,
     queryFn: async () => {
-      const { data } = await supabase
+      // Try by email first
+      const { data: byEmail } = await supabase
         .from('migration_projects')
         .select('*')
         .eq('client_email', clientEmail)
@@ -52,7 +53,26 @@ export default function ClienteMigracao({ projectOverride }: { projectOverride?:
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
-      return data;
+      if (byEmail) return byEmail;
+
+      // Try by client_url matching email domain as a fallback
+      // Also allow lookup by client_url if someone registered with the curseduca URL
+      const { data: byUrl } = await supabase
+        .from('migration_projects')
+        .select('*')
+        .eq('has_migration', true)
+        .order('created_at', { ascending: false });
+      
+      // Match client_url against the client's email domain or URL
+      if (byUrl?.length) {
+        const emailDomain = clientEmail.split('@')[0];
+        const match = byUrl.find(p => 
+          p.client_url.toLowerCase().includes(emailDomain.toLowerCase())
+        );
+        if (match) return match;
+      }
+
+      return null;
     },
   });
 
