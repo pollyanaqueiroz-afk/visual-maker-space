@@ -1343,7 +1343,7 @@ export default function Dashboard() {
                     )}
                   </TableBody>
                 </table>
-                </div>
+                </TopScrollableTable>
               {artesTotalPages > 1 && (
                 <div className="flex items-center justify-between px-4 py-3 border-t">
                   <span className="text-xs text-muted-foreground">
