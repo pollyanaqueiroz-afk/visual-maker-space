@@ -16,7 +16,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import {
   Search, FileImage, Smartphone, GraduationCap, CheckCircle, Clock,
-  AlertTriangle, XCircle, Loader2, Eye, ExternalLink, Users, ClipboardCheck, Copy, ShieldCheck
+  AlertTriangle, XCircle, Loader2, Eye, ExternalLink, Users, ClipboardCheck, Copy, ShieldCheck,
+  ArrowRightLeft,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -59,7 +60,7 @@ export default function ProcessosImplantacaoPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('clients')
-        .select('id, nome, id_curseduca, cs_atual, plano')
+        .select('id, nome, id_curseduca, cs_atual, plano, email')
         .order('nome');
       if (error) throw error;
       return data || [];
@@ -100,6 +101,17 @@ export default function ProcessosImplantacaoPage() {
         .order('created_at', { ascending: false });
       if (error) return [];
       return (data || []) as any[];
+    },
+  });
+
+  const { data: migrationProjects = [] } = useQuery({
+    queryKey: ['processos-migrations'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('migration_projects')
+        .select('id, client_name, client_email, client_url, platform_origin, migration_status, has_migration, created_at, updated_at');
+      if (error) return [];
+      return data || [];
     },
   });
 
@@ -154,10 +166,16 @@ export default function ProcessosImplantacaoPage() {
 
       const clientScorm = scormPackages.filter((pkg: any) => pkg.platform_url === url);
 
+      const clientMigration = migrationProjects.find(m => 
+        m.client_url === url || (client.email && m.client_email === client.email)
+      );
+      const hasMigration = !!clientMigration && clientMigration.has_migration;
+      const migrationActive = hasMigration && clientMigration.migration_status !== 'completed';
+
       const hasOpenBriefing = briefingOpen > 0;
       const hasOpenApp = !!appOpen;
       const hasScorm = clientScorm.length > 0;
-      const hasAnyProcess = hasOpenBriefing || hasOpenApp || hasScorm;
+      const hasAnyProcess = hasOpenBriefing || hasOpenApp || hasScorm || hasMigration;
 
       // Overdue detection
       const briefingOverdue = clientBriefings.some((img: any) => {
@@ -178,13 +196,16 @@ export default function ProcessosImplantacaoPage() {
         scorm: clientScorm,
         hasScorm,
         hasOpenBriefing,
+        hasMigration,
+        migrationActive,
+        migration: clientMigration || null,
         hasAnyProcess,
         briefingOverdue,
         appOverdue,
         isOverdue,
       };
     });
-  }, [allClients, briefingImages, appClientes, scormPackages, allFases]);
+  }, [allClients, briefingImages, appClientes, scormPackages, allFases, migrationProjects]);
 
   // Filters
   const filteredClients = useMemo(() => {
@@ -208,6 +229,7 @@ export default function ProcessosImplantacaoPage() {
     if (filterProcess === 'briefing') result = result.filter(c => c.hasOpenBriefing);
     if (filterProcess === 'app') result = result.filter(c => c.appOpen);
     if (filterProcess === 'scorm') result = result.filter(c => c.hasScorm);
+    if (filterProcess === 'migration') result = result.filter(c => c.hasMigration);
 
     return result;
   }, [consolidatedData, filterCS, searchQuery, filterProcess]);
@@ -221,6 +243,7 @@ export default function ProcessosImplantacaoPage() {
   const totalWithBriefing = baseList.filter(c => c.hasOpenBriefing).length;
   const totalWithApp = baseList.filter(c => c.appOpen).length;
   const totalWithScorm = baseList.filter(c => c.hasScorm).length;
+  const totalWithMigration = baseList.filter(c => c.hasMigration).length;
 
   // Detail
   const selectedClient = selectedClientUrl ? consolidatedData.find(c => c.id_curseduca === selectedClientUrl) : null;
@@ -237,11 +260,12 @@ export default function ProcessosImplantacaoPage() {
       </div>
 
       {/* KPIs - clickable */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
           { key: 'all', value: totalWithProcess, label: 'Clientes com processos', icon: <Users className="h-4 w-4" />, bg: 'bg-muted' },
           { key: 'briefing', value: totalWithBriefing, label: 'Com design em aberto', icon: <FileImage className="h-4 w-4 text-primary" />, bg: 'bg-primary/10' },
           { key: 'app', value: totalWithApp, label: 'Com app em andamento', icon: <Smartphone className="h-4 w-4 text-blue-500" />, bg: 'bg-blue-500/10' },
+          { key: 'migration', value: totalWithMigration, label: 'Com migração', icon: <ArrowRightLeft className="h-4 w-4 text-orange-500" />, bg: 'bg-orange-500/10' },
           { key: 'scorm', value: totalWithScorm, label: 'Com SCORM', icon: <GraduationCap className="h-4 w-4 text-purple-500" />, bg: 'bg-purple-500/10' },
         ].map(kpi => (
           <Card
@@ -290,6 +314,7 @@ export default function ProcessosImplantacaoPage() {
             <SelectItem value="briefing">Com design em aberto</SelectItem>
             <SelectItem value="app">Com app em andamento</SelectItem>
             <SelectItem value="scorm">Com SCORM</SelectItem>
+            <SelectItem value="migration">Com migração</SelectItem>
           </SelectContent>
         </Select>
         <span className="text-sm text-muted-foreground">{filteredClients.length} cliente(s)</span>
@@ -309,6 +334,7 @@ export default function ProcessosImplantacaoPage() {
                 <TableHead>Plano</TableHead>
                 <TableHead className="text-center">Design</TableHead>
                 <TableHead className="text-center">Aplicativo</TableHead>
+                <TableHead className="text-center">Migração</TableHead>
                 <TableHead className="text-center">SCORM</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
                 <TableHead className="text-center">Portal</TableHead>
@@ -412,6 +438,40 @@ export default function ProcessosImplantacaoPage() {
                     })() : <span className="text-xs text-muted-foreground">—</span>}
                   </TableCell>
 
+                  {/* Migration column */}
+                  <TableCell className="text-center">
+                    {c.hasMigration ? (() => {
+                      const ms = c.migration?.migration_status;
+                      const statusLabel: Record<string, string> = {
+                        waiting_form: 'Aguardando formulário',
+                        analysis: 'Em análise',
+                        rejected: 'Ajustes solicitados',
+                        extraction: 'Extração',
+                        in_progress: 'Em andamento',
+                        completed: 'Concluída',
+                      };
+                      const statusColor: Record<string, string> = {
+                        waiting_form: 'border-amber-500/30 text-amber-500',
+                        analysis: 'border-blue-500/30 text-blue-500',
+                        rejected: 'border-destructive/30 text-destructive',
+                        extraction: 'border-cyan-500/30 text-cyan-500',
+                        in_progress: 'border-purple-500/30 text-purple-500',
+                        completed: 'border-green-500/30 text-green-500',
+                      };
+                      return (
+                        <div className="flex flex-col items-center gap-1">
+                          <Badge variant="outline" className={`text-[9px] ${statusColor[ms || ''] || ''}`}>
+                            <ArrowRightLeft className="h-2.5 w-2.5 mr-0.5" />
+                            {statusLabel[ms || ''] || ms}
+                          </Badge>
+                          {c.migration?.platform_origin && (
+                            <span className="text-[9px] text-muted-foreground">{c.migration.platform_origin}</span>
+                          )}
+                        </div>
+                      );
+                    })() : <span className="text-xs text-muted-foreground">—</span>}
+                  </TableCell>
+
                   <TableCell className="text-center">
                     {c.hasScorm ? (
                       <Badge variant="outline" className="text-[9px] border-purple-500/30 text-purple-500">
@@ -455,7 +515,7 @@ export default function ProcessosImplantacaoPage() {
                 </TableRow>
               ))}
               {filteredClients.length === 0 && (
-                <TableRow><TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
+                <TableRow><TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
                   {isCS ? 'Nenhum cliente da sua carteira possui processos de implantação ativos' : 'Nenhum cliente encontrado'}
                 </TableCell></TableRow>
               )}
@@ -491,6 +551,10 @@ export default function ProcessosImplantacaoPage() {
                   <TabsTrigger value="scorm" className="gap-1.5 text-xs">
                     <GraduationCap className="h-3.5 w-3.5" /> SCORM
                     {selectedClient.hasScorm && <Badge variant="secondary" className="text-[9px] ml-1 h-4 px-1">{selectedClient.scorm.length}</Badge>}
+                  </TabsTrigger>
+                  <TabsTrigger value="migration" className="gap-1.5 text-xs">
+                    <ArrowRightLeft className="h-3.5 w-3.5" /> Migração
+                    {selectedClient.hasMigration && <Badge variant="secondary" className="text-[9px] ml-1 h-4 px-1">1</Badge>}
                   </TabsTrigger>
                 </TabsList>
 
@@ -638,6 +702,61 @@ export default function ProcessosImplantacaoPage() {
                       ))}
                     </div>
                   )}
+                </TabsContent>
+
+                {/* MIGRATION */}
+                <TabsContent value="migration" className="mt-4 space-y-3">
+                  {!selectedClient.hasMigration ? (
+                    <p className="text-sm text-muted-foreground text-center py-8">Nenhuma migração vinculada</p>
+                  ) : (() => {
+                    const m = selectedClient.migration;
+                    const statusLabel: Record<string, string> = {
+                      waiting_form: 'Aguardando formulário',
+                      analysis: 'Em análise',
+                      rejected: 'Ajustes solicitados',
+                      extraction: 'Extração de dados',
+                      in_progress: 'Migração em andamento',
+                      completed: 'Concluída',
+                    };
+                    const statusColor: Record<string, string> = {
+                      waiting_form: 'bg-amber-500/20 text-amber-500',
+                      analysis: 'bg-blue-500/20 text-blue-500',
+                      rejected: 'bg-destructive/20 text-destructive',
+                      extraction: 'bg-cyan-500/20 text-cyan-500',
+                      in_progress: 'bg-purple-500/20 text-purple-500',
+                      completed: 'bg-green-500/20 text-green-500',
+                    };
+                    return (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <Badge className={`border-0 text-xs ${statusColor[m?.migration_status || ''] || 'bg-muted'}`}>
+                            {statusLabel[m?.migration_status || ''] || m?.migration_status}
+                          </Badge>
+                          <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => { setSelectedClientUrl(null); navigate('/hub/migracao'); }}>
+                            <Eye className="h-3 w-3" /> Ver no Kanban
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Plataforma de origem</p>
+                            <p className="font-medium">{m?.platform_origin || '—'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">E-mail do cliente</p>
+                            <p className="font-medium">{m?.client_email || '—'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Criado em</p>
+                            <p className="font-medium">{m?.created_at ? format(new Date(m.created_at), 'dd/MM/yyyy') : '—'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Última atualização</p>
+                            <p className="font-medium">{m?.updated_at ? format(new Date(m.updated_at), 'dd/MM/yyyy') : '—'}</p>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </TabsContent>
               </Tabs>
             </>
