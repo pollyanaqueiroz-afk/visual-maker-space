@@ -17,24 +17,37 @@ Deno.serve(async (req) => {
     );
 
     const body = await req.json();
-    
-    // Accept any JSON structure - extract the array from the first key
+    const fileUrl = body.file_url;
+
+    if (!fileUrl) {
+      return new Response(JSON.stringify({ error: "Missing file_url" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Fetch the JSON file
+    const fileRes = await fetch(fileUrl);
+    if (!fileRes.ok) {
+      throw new Error(`Failed to fetch file: ${fileRes.status}`);
+    }
+    const jsonData = await fileRes.json();
+
+    // Extract the array from the JSON (handles weird key structure)
     let records: any[] = [];
-    if (Array.isArray(body)) {
-      records = body;
+    if (Array.isArray(jsonData)) {
+      records = jsonData;
     } else {
-      // The JSON has a SQL query as key, get the first array value
-      const keys = Object.keys(body);
-      for (const key of keys) {
-        if (Array.isArray(body[key])) {
-          records = body[key];
+      for (const key of Object.keys(jsonData)) {
+        if (Array.isArray(jsonData[key])) {
+          records = jsonData[key];
           break;
         }
       }
     }
 
     if (records.length === 0) {
-      return new Response(JSON.stringify({ error: "No records found" }), {
+      return new Response(JSON.stringify({ error: "No records found in file" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
