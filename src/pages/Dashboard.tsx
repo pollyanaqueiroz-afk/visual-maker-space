@@ -31,6 +31,7 @@ import BulkPhotoUploadDialog from '@/components/briefing/BulkPhotoUploadDialog';
 import BulkAssignDialog from '@/components/briefing/BulkAssignDialog';
 import { usePermissions } from '@/hooks/usePermissions';
 import BriefingKanban from '@/components/briefing/BriefingKanban';
+import EntregasTab from '@/components/briefing/EntregasTab';
 function ChangeDesignerForm({ imageId, currentEmail, onChanged }: { imageId: string; currentEmail: string; onChanged: () => void }) {
   const [email, setEmail] = useState(currentEmail);
   const [saving, setSaving] = useState(false);
@@ -698,6 +699,7 @@ export default function Dashboard() {
             <TabsTrigger value="dashboard" className="gap-2"><BarChart3 className="h-4 w-4" /> Dashboard</TabsTrigger>
             <TabsTrigger value="kanban" className="gap-2"><LayoutGrid className="h-4 w-4" /> Kanban</TabsTrigger>
             <TabsTrigger value="artes" className="gap-2"><FileImage className="h-4 w-4" /> Artes</TabsTrigger>
+            <TabsTrigger value="entregas" className="gap-2"><PackageCheck className="h-4 w-4" /> Entregas</TabsTrigger>
             <TabsTrigger value="revisoes" className="gap-2"><RefreshCw className="h-4 w-4" /> Refações</TabsTrigger>
             <TabsTrigger value="analytics" className="gap-2"><BarChart3 className="h-4 w-4" /> Analytics</TabsTrigger>
           </TabsList>
@@ -1381,6 +1383,11 @@ export default function Dashboard() {
               imageIds={Array.from(selectedIds)}
               onAssigned={() => { setSelectedIds(new Set()); refreshAll(); }}
             />
+          </TabsContent>
+
+          {/* ───── ENTREGAS TAB ───── */}
+          <TabsContent value="entregas" className="space-y-6">
+            <EntregasTab />
           </TabsContent>
 
           <TabsContent value="revisoes" className="space-y-6">

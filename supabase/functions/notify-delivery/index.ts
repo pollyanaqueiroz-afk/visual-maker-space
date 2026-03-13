@@ -32,6 +32,77 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
+
+    // === BULK DELIVERY NOTIFICATION (from Entregas tab) ===
+    if (body.client_email && body.delivery_links) {
+      const clientEmail = typeof body.client_email === "string" ? body.client_email.replace(/<[^>]*>/g, "").trim().slice(0, 255) : "";
+      const clientName = typeof body.client_name === "string" ? body.client_name.replace(/<[^>]*>/g, "").trim().slice(0, 255) : "Cliente";
+      const platformUrl = typeof body.platform_url === "string" ? body.platform_url.slice(0, 500) : "";
+      const deliveryLinks: string[] = Array.isArray(body.delivery_links) ? body.delivery_links.filter((l: any) => typeof l === "string").slice(0, 50) : [];
+
+      if (!clientEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientEmail)) {
+        return new Response(
+          JSON.stringify({ error: "E-mail do cliente inválido" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const linksHtml = deliveryLinks.map((link: string, i: number) =>
+        `<tr><td style="padding:6px 0;"><a href="${link}" style="color:#2a9d6a;font-size:13px;text-decoration:underline;">📥 Arte ${i + 1}</a></td></tr>`
+      ).join("");
+
+      const bulkHtml = `
+        <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;padding:0;background:#ffffff;">
+          <div style="background:linear-gradient(135deg,#2a9d6a,#34b87a);border-radius:16px 16px 0 0;padding:32px 24px;text-align:center;">
+            <div style="font-size:48px;margin-bottom:8px;">🎨</div>
+            <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:700;">Suas artes estão prontas!</h1>
+            <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:14px;">${deliveryLinks.length} arte(s) disponíveis para visualização</p>
+          </div>
+          <div style="padding:28px 24px;">
+            <p style="color:#333;font-size:15px;line-height:1.6;margin:0 0 20px;">
+              Olá <strong>${clientName}</strong>,
+            </p>
+            <p style="color:#555;font-size:14px;line-height:1.6;margin:0 0 24px;">
+              Suas artes foram finalizadas e estão disponíveis para visualização e download. Confira os links abaixo:
+            </p>
+            <div style="background:#f8faf9;border:1px solid #e8ede9;border-radius:12px;padding:20px;margin-bottom:24px;">
+              <table style="width:100%;border-collapse:collapse;">${linksHtml}</table>
+            </div>
+            <p style="color:#999;font-size:12px;margin:0;">Qualquer dúvida, entre em contato conosco.</p>
+          </div>
+          <div style="background:#f5f5f5;border-radius:0 0 16px 16px;padding:16px 24px;text-align:center;">
+            <p style="margin:0;color:#aaa;font-size:11px;">Enviado automaticamente pelo sistema de gestão de artes • Curseduca Design</p>
+          </div>
+        </div>
+      `;
+
+      const resendRes = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: Deno.env.get("FROM_EMAIL") || "Curseduca <noreply@curseduca.com>",
+          to: [clientEmail],
+          subject: `🎨 Suas artes estão prontas — ${clientName}`,
+          html: bulkHtml,
+        }),
+      });
+
+      const resendData = await resendRes.json();
+      if (!resendRes.ok) {
+        console.error("Resend error:", resendData);
+        return new Response(
+          JSON.stringify({ success: true, email_warning: "Email sending failed", details: resendData }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, email_id: resendData.id }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // === SINGLE IMAGE NOTIFICATION (original flow) ===
     const image_id = typeof body.image_id === "string" ? body.image_id.trim().slice(0, 100) : "";
     const file_url = typeof body.file_url === "string" ? body.file_url.slice(0, 2000) : null;
     const delivered_by_email = typeof body.delivered_by_email === "string" ? body.delivered_by_email.replace(/<[^>]*>/g, "").trim().slice(0, 255) : null;
