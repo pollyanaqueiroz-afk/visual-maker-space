@@ -279,9 +279,9 @@ export default function ClientTicketsTab({ clientName, clientId }: Props) {
               value={form.description}
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
             />
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Select value={form.type} onValueChange={v => setForm(f => ({ ...f, type: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Bug">Bug</SelectItem>
                   <SelectItem value="Improvement">Melhoria</SelectItem>
@@ -289,7 +289,7 @@ export default function ClientTicketsTab({ clientName, clientId }: Props) {
                 </SelectContent>
               </Select>
               <Select value={form.priority} onValueChange={v => setForm(f => ({ ...f, priority: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Critical">Crítico</SelectItem>
                   <SelectItem value="High">Alto</SelectItem>
