@@ -510,7 +510,7 @@ export default function CarteiraGeralPage() {
       </Tabs>
 
       {activeView === 'cadastro' ? (
-        <CadastroTab />
+        <CadastroTab externalSearch={debouncedSearch} />
       ) : (
       /* Client Table */
       <>

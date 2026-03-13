@@ -50,10 +50,14 @@ const EMPTY_FORM = {
 
 const PER_PAGE = 50;
 
-export default function CadastroTab() {
+interface CadastroTabProps {
+  externalSearch?: string;
+}
+
+export default function CadastroTab({ externalSearch = '' }: CadastroTabProps) {
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const search = externalSearch;
   const [page, setPage] = useState(1);
 
   // Inline edit
