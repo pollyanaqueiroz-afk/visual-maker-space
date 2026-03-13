@@ -438,7 +438,40 @@ export default function ProcessosImplantacaoPage() {
                     })() : <span className="text-xs text-muted-foreground">—</span>}
                   </TableCell>
 
+                  {/* Migration column */}
                   <TableCell className="text-center">
+                    {c.hasMigration ? (() => {
+                      const ms = c.migration?.migration_status;
+                      const statusLabel: Record<string, string> = {
+                        waiting_form: 'Aguardando formulário',
+                        analysis: 'Em análise',
+                        rejected: 'Ajustes solicitados',
+                        extraction: 'Extração',
+                        in_progress: 'Em andamento',
+                        completed: 'Concluída',
+                      };
+                      const statusColor: Record<string, string> = {
+                        waiting_form: 'border-amber-500/30 text-amber-500',
+                        analysis: 'border-blue-500/30 text-blue-500',
+                        rejected: 'border-destructive/30 text-destructive',
+                        extraction: 'border-cyan-500/30 text-cyan-500',
+                        in_progress: 'border-purple-500/30 text-purple-500',
+                        completed: 'border-green-500/30 text-green-500',
+                      };
+                      return (
+                        <div className="flex flex-col items-center gap-1">
+                          <Badge variant="outline" className={`text-[9px] ${statusColor[ms || ''] || ''}`}>
+                            <ArrowRightLeft className="h-2.5 w-2.5 mr-0.5" />
+                            {statusLabel[ms || ''] || ms}
+                          </Badge>
+                          {c.migration?.platform_origin && (
+                            <span className="text-[9px] text-muted-foreground">{c.migration.platform_origin}</span>
+                          )}
+                        </div>
+                      );
+                    })() : <span className="text-xs text-muted-foreground">—</span>}
+                  </TableCell>
+
                     {c.hasScorm ? (
                       <Badge variant="outline" className="text-[9px] border-purple-500/30 text-purple-500">
                         <GraduationCap className="h-2.5 w-2.5 mr-0.5" /> {c.scorm.length}
