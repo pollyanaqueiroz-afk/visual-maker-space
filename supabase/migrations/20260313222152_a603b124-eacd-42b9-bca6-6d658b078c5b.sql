@@ -1,0 +1,3 @@
+ALTER TABLE public.cliente_financeiro
+ADD CONSTRAINT cliente_financeiro_codigo_assinatura_unique 
+UNIQUE (codigo_assinatura_meio_pagamento);
