@@ -1015,28 +1015,8 @@ export default function Dashboard() {
               <div className="text-center py-12 text-muted-foreground">Carregando...</div>
             ) : (
               <Card className="overflow-hidden">
-                {/* Top scrollbar */}
-                <div
-                  ref={topScrollRef}
-                  className="overflow-x-auto"
-                  style={{ overflowY: 'hidden' }}
-                  onScroll={() => {
-                    if (tableScrollRef.current && topScrollRef.current) {
-                      tableScrollRef.current.scrollLeft = topScrollRef.current.scrollLeft;
-                    }
-                  }}
-                >
-                  <div ref={topScrollInnerRef} style={{ height: 1 }} />
-                </div>
-                <div
-                  ref={tableScrollRef}
-                  className="overflow-x-auto"
-                  onScroll={() => {
-                    if (topScrollRef.current && tableScrollRef.current) {
-                      topScrollRef.current.scrollLeft = tableScrollRef.current.scrollLeft;
-                    }
-                  }}
-                >
+                <TopScrollableTable deps={[loading, images]}>
+
                 <table className="w-full caption-bottom text-sm min-w-[2400px]">
                   <TableHeader>
                     <TableRow>
