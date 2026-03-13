@@ -429,7 +429,7 @@ export default function CarteiraGeralPage() {
                     <Info className="h-3 w-3 text-muted-foreground cursor-help" />
                   </TooltipTrigger>
                   <TooltipContent className="max-w-[260px] text-xs">
-                    Soma dos valores de fatura de todos os clientes adimplentes da base.
+                    Soma do valor contratado de todas as assinaturas com vigência Ativa.
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
