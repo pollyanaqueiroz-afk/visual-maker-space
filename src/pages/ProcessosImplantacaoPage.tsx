@@ -16,7 +16,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import {
   Search, FileImage, Smartphone, GraduationCap, CheckCircle, Clock,
-  AlertTriangle, XCircle, Loader2, Eye, ExternalLink, Users, ClipboardCheck, Copy, ShieldCheck
+  AlertTriangle, XCircle, Loader2, Eye, ExternalLink, Users, ClipboardCheck, Copy, ShieldCheck,
+  ArrowRightLeft,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
