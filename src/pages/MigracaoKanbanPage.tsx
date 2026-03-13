@@ -112,7 +112,7 @@ export default function MigracaoKanbanPage() {
             <BarChart3 className="h-4 w-4" /> Analytics
           </Button>
           <Button onClick={() => setShowNewDialog(true)}>
-            <Plus className="h-4 w-4 mr-2" /> Novo Cliente
+            <Plus className="h-4 w-4 mr-2" /> Solicitação de Migração
           </Button>
         </div>
       </div>
