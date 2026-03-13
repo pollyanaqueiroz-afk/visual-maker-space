@@ -243,6 +243,7 @@ export default function ProcessosImplantacaoPage() {
   const totalWithBriefing = baseList.filter(c => c.hasOpenBriefing).length;
   const totalWithApp = baseList.filter(c => c.appOpen).length;
   const totalWithScorm = baseList.filter(c => c.hasScorm).length;
+  const totalWithMigration = baseList.filter(c => c.hasMigration).length;
 
   // Detail
   const selectedClient = selectedClientUrl ? consolidatedData.find(c => c.id_curseduca === selectedClientUrl) : null;
