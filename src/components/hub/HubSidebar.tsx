@@ -207,6 +207,7 @@ export function HubSidebar() {
         {renderGroup('Implantação', Package, implantacaoModules)}
         {renderGroup('CS', Headset, csModules)}
         {renderGroup('Migração', ArrowRightLeft, migracaoModules)}
+        {renderGroup('Produto', Boxes, produtoModules)}
         {/* {renderGroup('Operações', ClipboardCheck, auditoriaModules)} */}
         {renderGroup('Administração', Settings, adminModules)}
       </SidebarContent>
