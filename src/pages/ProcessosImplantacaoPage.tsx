@@ -314,6 +314,7 @@ export default function ProcessosImplantacaoPage() {
             <SelectItem value="briefing">Com design em aberto</SelectItem>
             <SelectItem value="app">Com app em andamento</SelectItem>
             <SelectItem value="scorm">Com SCORM</SelectItem>
+            <SelectItem value="migration">Com migração</SelectItem>
           </SelectContent>
         </Select>
         <span className="text-sm text-muted-foreground">{filteredClients.length} cliente(s)</span>
