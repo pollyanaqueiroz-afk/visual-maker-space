@@ -104,6 +104,17 @@ export default function ProcessosImplantacaoPage() {
     },
   });
 
+  const { data: migrationProjects = [] } = useQuery({
+    queryKey: ['processos-migrations'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('migration_projects')
+        .select('id, client_name, client_email, client_url, platform_origin, migration_status, has_migration, created_at, updated_at');
+      if (error) return [];
+      return data || [];
+    },
+  });
+
   const { data: allFases = [] } = useQuery({
     queryKey: ['processos-app-fases'],
     queryFn: async () => {
