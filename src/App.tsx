@@ -51,6 +51,7 @@ import MigracaoAjustesPage from "./pages/MigracaoAjustesPage";
 import MigracaoAnalyticsPage from "./pages/MigracaoAnalyticsPage";
 import EmailReportPage from "./pages/EmailReportPage";
 import ErrorCentralPage from "./pages/ErrorCentralPage";
+import ProdutoInsightsPage from "./pages/ProdutoInsightsPage";
 import ClienteLogin from "./pages/cliente/ClienteLogin";
 import ClienteHubLayout from "./pages/cliente/ClienteHubLayout";
 import ClienteHome from "./pages/cliente/ClienteHome";
@@ -120,6 +121,7 @@ const App = () => (
               <Route path="migracao" element={<PermissionGuard permission="migracao.view"><MigracaoKanbanPage /></PermissionGuard>} />
               <Route path="migracao/ajustes" element={<PermissionGuard permission="migracao.view"><MigracaoAjustesPage /></PermissionGuard>} />
               <Route path="migracao/analytics" element={<PermissionGuard permission="migracao.view"><MigracaoAnalyticsPage /></PermissionGuard>} />
+              <Route path="produto" element={<PermissionGuard permission="carteira.view"><ProdutoInsightsPage /></PermissionGuard>} />
             </Route>
             {/* CS Client Preview (impersonation) - outside hub layout */}
             <Route path="/hub/cliente-preview/:clienteId" element={<ClientePreviewWrapper />}>

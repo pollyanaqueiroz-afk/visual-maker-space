@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileImage, LayoutDashboard, LogOut, CalendarDays, Crown, Briefcase, BarChart3, Package, Headset, Home, Settings, Users, ShieldCheck, Smartphone, ExternalLink, Database, AlertTriangle, GraduationCap, PieChart, TrendingDown, ClipboardCheck, Activity, ArrowRightLeft, Construction, Rocket, RotateCcw, UserX, FileCode, Mail, Bug } from 'lucide-react';
+import { FileImage, LayoutDashboard, LogOut, CalendarDays, Crown, Briefcase, BarChart3, Package, Headset, Home, Settings, Users, ShieldCheck, Smartphone, ExternalLink, Database, AlertTriangle, GraduationCap, PieChart, TrendingDown, ClipboardCheck, Activity, ArrowRightLeft, Construction, Rocket, RotateCcw, UserX, FileCode, Mail, Bug, Boxes } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -53,6 +53,10 @@ const auditoriaModules = [
 const migracaoModules = [
   { title: 'Gestão de Migração', url: '/hub/migracao', icon: ArrowRightLeft, permission: 'migracao.view', badgeKey: null },
   { title: 'Ajustes de Migração', url: '/hub/migracao/ajustes', icon: Construction, permission: 'migracao.view', badgeKey: null },
+];
+
+const produtoModules = [
+  { title: 'Insights de Produto', url: '/hub/produto', icon: Boxes, permission: 'carteira.view', badgeKey: null },
 ];
 
 const adminModules = [
@@ -203,6 +207,7 @@ export function HubSidebar() {
         {renderGroup('Implantação', Package, implantacaoModules)}
         {renderGroup('CS', Headset, csModules)}
         {renderGroup('Migração', ArrowRightLeft, migracaoModules)}
+        {renderGroup('Produto', Boxes, produtoModules)}
         {/* {renderGroup('Operações', ClipboardCheck, auditoriaModules)} */}
         {renderGroup('Administração', Settings, adminModules)}
       </SidebarContent>

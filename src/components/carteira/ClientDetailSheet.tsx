@@ -4,10 +4,12 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   User, Mail, Globe, DollarSign, Calendar, Activity, HardDrive,
-  Cpu, Award, ShoppingCart, BookOpen, Clock, TrendingUp, ExternalLink,
+  Cpu, Award, ShoppingCart, BookOpen, Clock, TrendingUp, ExternalLink, TicketCheck,
 } from 'lucide-react';
+import ClientTicketsTab from './ClientTicketsTab';
 
 interface Props {
   idCurseduca: string | null;
@@ -263,56 +265,75 @@ export default function ClientDetailSheet({ idCurseduca, open, onOpenChange }: P
           )}
         </SheetHeader>
 
-        <ScrollArea className="flex-1">
-          <div className="px-6 py-4 space-y-6">
-            {loading && (
-              <div className="space-y-4">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="space-y-2">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-8 w-full" />
-                    <Skeleton className="h-8 w-3/4" />
-                  </div>
-                ))}
-              </div>
-            )}
+        <Tabs defaultValue="info" className="flex-1 flex flex-col overflow-hidden">
+          <div className="px-6 pt-2 shrink-0">
+            <TabsList className="w-full">
+              <TabsTrigger value="info" className="flex-1 gap-1 text-xs"><User className="h-3 w-3" /> Informações</TabsTrigger>
+              <TabsTrigger value="tickets" className="flex-1 gap-1 text-xs"><TicketCheck className="h-3 w-3" /> Tickets</TabsTrigger>
+            </TabsList>
+          </div>
 
-            {error && (
-              <p className="text-sm text-destructive text-center py-8">Erro: {error}</p>
-            )}
-
-            {!loading && !error && !data && (
-              <p className="text-sm text-muted-foreground text-center py-8">Nenhum dado encontrado</p>
-            )}
-
-            {!loading && data && visibleSections.map((section, idx) => {
-              const isMain = section.title === 'Identificação';
-              const fieldsToShow = isMain
-                ? section.fields
-                : section.fields.filter(f => data[f.key] != null && data[f.key] !== '');
-
-              return (
-                <div key={idx}>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-primary">{section.icon}</span>
-                    <h3 className="text-sm font-semibold text-foreground">{section.title}</h3>
-                  </div>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 ml-6">
-                    {fieldsToShow.map(f => (
-                      <div key={f.key} className="space-y-0.5">
-                        <span className="text-[11px] text-muted-foreground">{f.label}</span>
-                        <p className="text-sm text-foreground break-words">
-                          {formatValue(data[f.key], f.format, f.key)}
-                        </p>
+          <TabsContent value="info" className="flex-1 overflow-hidden mt-0">
+            <ScrollArea className="h-full">
+              <div className="px-6 py-4 space-y-6">
+                {loading && (
+                  <div className="space-y-4">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="space-y-2">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-8 w-full" />
+                        <Skeleton className="h-8 w-3/4" />
                       </div>
                     ))}
                   </div>
-                  {idx < visibleSections.length - 1 && <Separator className="mt-4" />}
-                </div>
-              );
-            })}
-          </div>
-        </ScrollArea>
+                )}
+
+                {error && (
+                  <p className="text-sm text-destructive text-center py-8">Erro: {error}</p>
+                )}
+
+                {!loading && !error && !data && (
+                  <p className="text-sm text-muted-foreground text-center py-8">Nenhum dado encontrado</p>
+                )}
+
+                {!loading && data && visibleSections.map((section, idx) => {
+                  const isMain = section.title === 'Identificação';
+                  const fieldsToShow = isMain
+                    ? section.fields
+                    : section.fields.filter(f => data[f.key] != null && data[f.key] !== '');
+
+                  return (
+                    <div key={idx}>
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-primary">{section.icon}</span>
+                        <h3 className="text-sm font-semibold text-foreground">{section.title}</h3>
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 ml-6">
+                        {fieldsToShow.map(f => (
+                          <div key={f.key} className="space-y-0.5">
+                            <span className="text-[11px] text-muted-foreground">{f.label}</span>
+                            <p className="text-sm text-foreground break-words">
+                              {formatValue(data[f.key], f.format, f.key)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                      {idx < visibleSections.length - 1 && <Separator className="mt-4" />}
+                    </div>
+                  );
+                })}
+              </div>
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="tickets" className="flex-1 overflow-hidden mt-0">
+            <ScrollArea className="h-full">
+              <div className="px-6 py-4">
+                <ClientTicketsTab clientName={data?.cliente_nome || idCurseduca || ''} clientId={idCurseduca || undefined} />
+              </div>
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
       </SheetContent>
     </Sheet>
   );
