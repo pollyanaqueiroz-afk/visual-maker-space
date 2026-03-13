@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
-import { Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle, CalendarIcon, AlertCircle, Link2, FolderOpen, FileText, Palette, UserCheck, FileSpreadsheet, Search, UserPen, X, LayoutGrid, XCircle, Smartphone } from 'lucide-react';
+import { Clock, FileImage, ExternalLink, Eye, Users, ImageIcon, CheckCircle, Loader2, Send, Download, PackageCheck, ThumbsUp, ThumbsDown, BarChart3, RefreshCw, AlertTriangle, CalendarIcon, AlertCircle, Link2, FolderOpen, FileText, Palette, UserCheck, FileSpreadsheet, Search, UserPen, X, LayoutGrid, XCircle, Smartphone, HelpCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -680,233 +680,110 @@ export default function Dashboard() {
     return acc;
   }, {});
 
-  return (
-      <div className="p-6 space-y-8 max-w-[1800px] mx-auto">
-        {/* Stats + Links */}
-        <div className="flex gap-4 items-start">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 flex-1">
-            <Card className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'total' ? 'ring-2 ring-primary' : ''}`} onClick={() => toggleKPI('total')}>
-              <CardContent className="pt-3 pb-3 px-3">
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <ImageIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                  <p className="text-xs text-muted-foreground whitespace-nowrap">Total Artes</p>
-                </div>
-                <p className="text-2xl font-bold">{totalImages}</p>
-                <p className="text-[9px] text-muted-foreground leading-tight mt-0.5">Total solicitado (inclui canceladas)</p>
-              </CardContent>
-            </Card>
-            <Card className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'requests' ? 'ring-2 ring-primary' : ''}`} onClick={() => toggleKPI('requests')}>
-              <CardContent className="pt-3 pb-3 px-3">
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-                  <p className="text-xs text-muted-foreground whitespace-nowrap">Solicitações</p>
-                </div>
-                <p className="text-2xl font-bold">{requests.length}</p>
-              </CardContent>
-            </Card>
-            <Card className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'pending' ? 'ring-2 ring-warning' : ''}`} onClick={() => toggleKPI('pending')}>
-              <CardContent className="pt-3 pb-3 px-3">
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <Clock className="h-3.5 w-3.5 text-warning" />
-                  <p className="text-xs text-muted-foreground">Pendentes</p>
-                </div>
-                <p className="text-2xl font-bold text-warning">{pendingImages}</p>
-              </CardContent>
-            </Card>
-            <Card className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'in_progress' ? 'ring-2 ring-info' : ''}`} onClick={() => toggleKPI('in_progress')}>
-              <CardContent className="pt-3 pb-3 px-3">
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <Loader2 className="h-3.5 w-3.5 text-info" />
-                  <p className="text-xs text-muted-foreground whitespace-nowrap">Em Produção</p>
-                </div>
-                <p className="text-2xl font-bold text-info">{inProgressImages}</p>
-              </CardContent>
-            </Card>
-            <Card className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'review' ? 'ring-2 ring-primary' : ''}`} onClick={() => toggleKPI('review')}>
-              <CardContent className="pt-3 pb-3 px-3">
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <Eye className="h-3.5 w-3.5 text-primary" />
-                  <p className="text-xs text-muted-foreground whitespace-nowrap">Em Revisão</p>
-                </div>
-                <p className="text-2xl font-bold text-primary">{reviewImages}</p>
-              </CardContent>
-            </Card>
-            <Card className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'completed' ? 'ring-2 ring-primary' : ''}`} onClick={() => toggleKPI('completed')}>
-              <CardContent className="pt-3 pb-3 px-3">
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <CheckCircle className="h-3.5 w-3.5 text-primary" />
-                  <p className="text-xs text-muted-foreground">Concluídas</p>
-                </div>
-                <p className="text-2xl font-bold text-primary">{completedImages}</p>
-              </CardContent>
-            </Card>
-            <Card className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'cancelled' ? 'ring-2 ring-destructive' : ''}`} onClick={() => toggleKPI('cancelled')}>
-              <CardContent className="pt-3 pb-3 px-3">
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <XCircle className="h-3.5 w-3.5 text-destructive" />
-                  <p className="text-xs text-muted-foreground">Canceladas</p>
-                </div>
-                <p className="text-2xl font-bold text-destructive">{cancelledImages}</p>
-              </CardContent>
-            </Card>
-            <Card className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === 'clients' ? 'ring-2 ring-primary' : ''}`} onClick={() => toggleKPI('clients')}>
-              <CardContent className="pt-3 pb-3 px-3">
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <Users className="h-3.5 w-3.5 text-muted-foreground" />
-                  <p className="text-xs text-muted-foreground whitespace-nowrap">Clientes Abertos</p>
-                </div>
-                <p className="text-2xl font-bold">{openClients}</p>
-              </CardContent>
-            </Card>
-          </div>
-          <div className="flex flex-col gap-1.5 shrink-0">
-            <Button
-              variant="destructive"
-              size="sm"
-              className="flex items-center gap-2 justify-start text-xs h-8"
-              onClick={() => {
-                navigator.clipboard.writeText(`${window.location.origin}/briefing`);
-                toast.success('Link do formulário copiado!');
-              }}
-            >
-              <FileText className="h-3.5 w-3.5" />
-              Link Formulário
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="flex items-center gap-2 justify-start text-xs h-8"
-              onClick={() => setMockupSolicitationOpen(true)}
-            >
-              <Smartphone className="h-3.5 w-3.5" />
-              Solicitar Mockup
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2 justify-start text-xs h-8"
-              onClick={async () => {
-                toast.info('Enviando lembretes...');
-                const { data, error } = await supabase.functions.invoke('follow-up-review');
-                if (error) { toast.error('Erro: ' + error.message); return; }
-                toast.success(`Lembretes enviados para ${data?.clients || 0} cliente(s) com ${data?.staleArts || 0} arte(s) pendentes`);
-              }}
-            >
-              <Send className="h-3.5 w-3.5" />
-              Enviar Lembretes
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2 justify-start text-xs h-8"
-              onClick={async () => {
-                toast.info('Gerando relatório semanal...');
-                const { data, error } = await supabase.functions.invoke('weekly-team-report');
-                if (error) { toast.error('Erro: ' + error.message); return; }
-                toast.success(`Relatório enviado! ${data?.completed || 0} concluídas, ${data?.overdue || 0} atrasadas, SLA ${data?.sla || 0}%`);
-              }}
-            >
-              <BarChart3 className="h-3.5 w-3.5" />
-              Relatório Semanal
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2 justify-start text-xs h-8"
-              onClick={() => {
-                navigator.clipboard.writeText(`${window.location.origin}/designer`);
-                toast.success('Link do painel do designer copiado!');
-              }}
-            >
-              <Palette className="h-3.5 w-3.5" />
-              Link Designer
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2 justify-start text-xs h-8"
-              onClick={() => {
-                navigator.clipboard.writeText(`${window.location.origin}/client-review`);
-                toast.success('Link da validação do cliente copiado!');
-              }}
-            >
-              <UserCheck className="h-3.5 w-3.5" />
-              Link Validação
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2 justify-start text-xs h-8"
-              onClick={handleDownloadReport}
-              disabled={downloadingReport}
-            >
-              {downloadingReport ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileSpreadsheet className="h-3.5 w-3.5" />}
-              Relatório
-            </Button>
-          </div>
-        </div>
+  const kpiDefs = [
+    { key: 'total', label: 'Total Artes', value: totalImages, Icon: ImageIcon, color: 'text-muted-foreground', valueColor: '', help: 'Total de artes solicitadas, incluindo canceladas.', sub: 'Total solicitado (inclui canceladas)' },
+    { key: 'requests', label: 'Solicitações', value: requests.length, Icon: FileText, color: 'text-muted-foreground', valueColor: '', help: 'Número de pedidos de briefing recebidos.' },
+    { key: 'pending', label: 'Pendentes', value: pendingImages, Icon: Clock, color: 'text-warning', valueColor: 'text-warning', help: 'Artes aguardando início da produção pelo designer.' },
+    { key: 'in_progress', label: 'Em Produção', value: inProgressImages, Icon: Loader2, color: 'text-info', valueColor: 'text-info', help: 'Artes sendo produzidas pelo designer.' },
+    { key: 'review', label: 'Em Revisão', value: reviewImages, Icon: Eye, color: 'text-primary', valueColor: 'text-primary', help: 'Artes entregues pelo designer que aguardam avaliação do cliente.' },
+    { key: 'completed', label: 'Concluídas', value: completedImages, Icon: CheckCircle, color: 'text-primary', valueColor: 'text-primary', help: 'Artes aprovadas pelo cliente.' },
+    { key: 'cancelled', label: 'Canceladas', value: cancelledImages, Icon: XCircle, color: 'text-destructive', valueColor: 'text-destructive', help: 'Artes que foram canceladas.' },
+    { key: 'clients', label: 'Clientes Abertos', value: openClients, Icon: Users, color: 'text-muted-foreground', valueColor: '', help: 'Clientes com pelo menos uma arte em aberto (não concluída/cancelada).' },
+  ];
 
-        <Tabs defaultValue="kanban" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="kanban" className="flex items-center gap-2">
-              <LayoutGrid className="h-4 w-4" /> Kanban
-            </TabsTrigger>
-            <TabsTrigger value="artes">Artes</TabsTrigger>
-            <TabsTrigger value="revisoes" className="flex items-center gap-2">
-              <RefreshCw className="h-4 w-4" /> Refações
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" /> Analytics
-            </TabsTrigger>
+  return (
+      <div className="p-6 space-y-6 max-w-[1800px] mx-auto">
+        <Tabs defaultValue="dashboard" className="space-y-6">
+          <TabsList className="h-auto flex-wrap">
+            <TabsTrigger value="dashboard" className="gap-2"><BarChart3 className="h-4 w-4" /> Dashboard</TabsTrigger>
+            <TabsTrigger value="kanban" className="gap-2"><LayoutGrid className="h-4 w-4" /> Kanban</TabsTrigger>
+            <TabsTrigger value="artes" className="gap-2"><FileImage className="h-4 w-4" /> Artes</TabsTrigger>
+            <TabsTrigger value="revisoes" className="gap-2"><RefreshCw className="h-4 w-4" /> Refações</TabsTrigger>
+            <TabsTrigger value="analytics" className="gap-2"><BarChart3 className="h-4 w-4" /> Analytics</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="kanban" className="space-y-6">
-            <BriefingKanban images={rawImages} loading={loadingImages} />
-          </TabsContent>
+          {/* ───── DASHBOARD TAB ───── */}
+          <TabsContent value="dashboard" className="space-y-6">
+            <div className="flex gap-6 items-start">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 flex-1">
+                {kpiDefs.map(kpi => (
+                  <Card key={kpi.key} className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === kpi.key ? 'ring-2 ring-primary' : ''}`} onClick={() => toggleKPI(kpi.key)}>
+                    <CardContent className="pt-3 pb-3 px-3">
+                      <div className="flex items-center justify-between mb-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <kpi.Icon className={`h-3.5 w-3.5 ${kpi.color}`} />
+                          <p className="text-xs text-muted-foreground whitespace-nowrap">{kpi.label}</p>
+                        </div>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button type="button" className="focus:outline-none"><HelpCircle className="h-3 w-3 text-muted-foreground/40 hover:text-muted-foreground cursor-help" /></button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[220px] text-xs">{kpi.help}</TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <p className={`text-2xl font-bold ${kpi.valueColor}`}>{kpi.value}</p>
+                      {kpi.sub && <p className="text-[9px] text-muted-foreground leading-tight mt-0.5">{kpi.sub}</p>}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
 
-          <TabsContent value="artes" className="space-y-6">
-            {/* Active KPI indicator */}
+              <Card className="shrink-0 w-52">
+                <CardHeader className="pb-2 pt-4 px-4">
+                  <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Ações Rápidas</CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 pb-4 space-y-1.5">
+                  <Button variant="destructive" size="sm" className="flex items-center gap-2 justify-start text-xs h-8 w-full" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/briefing`); toast.success('Link do formulário copiado!'); }}>
+                    <FileText className="h-3.5 w-3.5" /> Link Formulário
+                  </Button>
+                  <Button variant="secondary" size="sm" className="flex items-center gap-2 justify-start text-xs h-8 w-full" onClick={() => setMockupSolicitationOpen(true)}>
+                    <Smartphone className="h-3.5 w-3.5" /> Solicitar Mockup
+                  </Button>
+                  <Button variant="outline" size="sm" className="flex items-center gap-2 justify-start text-xs h-8 w-full" onClick={async () => { toast.info('Enviando lembretes...'); const { data, error } = await supabase.functions.invoke('follow-up-review'); if (error) { toast.error('Erro: ' + error.message); return; } toast.success(`Lembretes enviados para ${data?.clients || 0} cliente(s) com ${data?.staleArts || 0} arte(s) pendentes`); }}>
+                    <Send className="h-3.5 w-3.5" /> Enviar Lembretes
+                  </Button>
+                  <Button variant="outline" size="sm" className="flex items-center gap-2 justify-start text-xs h-8 w-full" onClick={async () => { toast.info('Gerando relatório semanal...'); const { data, error } = await supabase.functions.invoke('weekly-team-report'); if (error) { toast.error('Erro: ' + error.message); return; } toast.success(`Relatório enviado! ${data?.completed || 0} concluídas, ${data?.overdue || 0} atrasadas, SLA ${data?.sla || 0}%`); }}>
+                    <BarChart3 className="h-3.5 w-3.5" /> Relatório Semanal
+                  </Button>
+                  <Button variant="outline" size="sm" className="flex items-center gap-2 justify-start text-xs h-8 w-full" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/designer`); toast.success('Link do painel do designer copiado!'); }}>
+                    <Palette className="h-3.5 w-3.5" /> Link Designer
+                  </Button>
+                  <Button variant="outline" size="sm" className="flex items-center gap-2 justify-start text-xs h-8 w-full" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/client-review`); toast.success('Link da validação do cliente copiado!'); }}>
+                    <UserCheck className="h-3.5 w-3.5" /> Link Validação
+                  </Button>
+                  <Button variant="outline" size="sm" className="flex items-center gap-2 justify-start text-xs h-8 w-full" onClick={handleDownloadReport} disabled={downloadingReport}>
+                    {downloadingReport ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileSpreadsheet className="h-3.5 w-3.5" />} Relatório
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
             {activeKPI && (
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/10">
                 <span className="text-sm text-muted-foreground">
                   Filtro ativo: <span className="font-semibold text-foreground">
-                    {activeKPI === 'total' ? 'Todas as artes' :
-                     activeKPI === 'requests' ? 'Solicitações' :
-                     activeKPI === 'pending' ? 'Pendentes' :
-                     activeKPI === 'in_progress' ? 'Em Produção' :
-                     activeKPI === 'review' ? 'Em Revisão' :
-                     activeKPI === 'completed' ? 'Concluídas' :
-                     activeKPI === 'cancelled' ? 'Canceladas' :
-                     'Clientes Abertos'}
+                    {activeKPI === 'total' ? 'Todas as artes' : activeKPI === 'requests' ? 'Solicitações' : activeKPI === 'pending' ? 'Pendentes' : activeKPI === 'in_progress' ? 'Em Produção' : activeKPI === 'review' ? 'Em Revisão' : activeKPI === 'completed' ? 'Concluídas' : activeKPI === 'cancelled' ? 'Canceladas' : 'Clientes Abertos'}
                   </span>
                 </span>
-                <Button variant="ghost" size="sm" className="h-6 text-xs ml-auto" onClick={() => { setActiveKPI(null); setFilterStatus('all'); }}>
-                  Limpar ✕
-                </Button>
+                <Button variant="ghost" size="sm" className="h-6 text-xs ml-auto" onClick={() => { setActiveKPI(null); setFilterStatus('all'); }}>Limpar ✕</Button>
               </div>
             )}
 
-            {/* Requests detail table */}
             {activeKPI === 'requests' && (
               <Card className="animate-in fade-in slide-in-from-top-2 duration-300">
                 <CardContent className="pt-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-primary" />
-                      Solicitações ({requests.length})
-                    </h3>
+                    <h3 className="text-sm font-semibold flex items-center gap-2"><FileText className="h-4 w-4 text-primary" /> Solicitações ({requests.length})</h3>
                     <button onClick={() => setActiveKPI(null)} className="text-muted-foreground hover:text-foreground text-xs">✕</button>
                   </div>
                   <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-[11px]">Cliente</TableHead>
-                        <TableHead className="text-[11px]">URL</TableHead>
-                        <TableHead className="text-[11px] text-center">Artes</TableHead>
-                        <TableHead className="text-[11px]">Recebido em</TableHead>
-                        <TableHead className="text-[11px]">Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
+                    <TableHeader><TableRow>
+                      <TableHead className="text-[11px]">Cliente</TableHead>
+                      <TableHead className="text-[11px]">URL</TableHead>
+                      <TableHead className="text-[11px] text-center">Artes</TableHead>
+                      <TableHead className="text-[11px]">Recebido em</TableHead>
+                      <TableHead className="text-[11px]">Status</TableHead>
+                    </TableRow></TableHeader>
                     <TableBody>
                       {requests.map((req: any) => {
                         const reqImages = images.filter(img => img.request_id === req.id);
@@ -915,27 +792,14 @@ export default function Dashboard() {
                         return (
                           <TableRow key={req.id}>
                             <TableCell className="text-sm font-medium">{extractClientName(req.platform_url)}</TableCell>
+                            <TableCell><a href={req.platform_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">{req.platform_url}</a></TableCell>
+                            <TableCell className="text-center"><Badge variant="outline" className="text-xs">{reqCompleted}/{reqTotal}</Badge></TableCell>
+                            <TableCell className="text-xs">{req.received_at ? format(new Date(req.received_at), 'dd/MM/yyyy') : format(new Date(req.created_at), 'dd/MM/yyyy')}</TableCell>
                             <TableCell>
-                              <a href={req.platform_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
-                                {req.platform_url}
-                              </a>
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <Badge variant="outline" className="text-xs">{reqCompleted}/{reqTotal}</Badge>
-                            </TableCell>
-                            <TableCell className="text-xs">
-                              {req.received_at ? format(new Date(req.received_at), 'dd/MM/yyyy') : format(new Date(req.created_at), 'dd/MM/yyyy')}
-                            </TableCell>
-                            <TableCell>
-                              {reqCompleted === reqTotal && reqTotal > 0 ? (
-                                <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0 text-[10px]">Concluída</Badge>
-                              ) : reqImages.some(img => img.status === 'review') ? (
-                                <Badge className="bg-primary/20 text-primary border-0 text-[10px]">Em revisão</Badge>
-                              ) : reqImages.some(img => img.status === 'in_progress') ? (
-                                <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-0 text-[10px]">Em produção</Badge>
-                              ) : (
-                                <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-0 text-[10px]">Pendente</Badge>
-                              )}
+                              {reqCompleted === reqTotal && reqTotal > 0 ? <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0 text-[10px]">Concluída</Badge>
+                              : reqImages.some(img => img.status === 'review') ? <Badge className="bg-primary/20 text-primary border-0 text-[10px]">Em revisão</Badge>
+                              : reqImages.some(img => img.status === 'in_progress') ? <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-0 text-[10px]">Em produção</Badge>
+                              : <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-0 text-[10px]">Pendente</Badge>}
                             </TableCell>
                           </TableRow>
                         );
@@ -946,7 +810,6 @@ export default function Dashboard() {
               </Card>
             )}
 
-            {/* Clients detail table */}
             {activeKPI === 'clients' && (() => {
               const clientMap: Record<string, { url: string; name: string; total: number; pending: number; inProgress: number; review: number }> = {};
               images.filter(i => i.status !== 'completed' && i.status !== 'cancelled').forEach(img => {
@@ -962,31 +825,21 @@ export default function Dashboard() {
                 <Card className="animate-in fade-in slide-in-from-top-2 duration-300">
                   <CardContent className="pt-4">
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-semibold flex items-center gap-2">
-                        <Users className="h-4 w-4 text-primary" />
-                        Clientes com artes em aberto ({clientList.length})
-                      </h3>
+                      <h3 className="text-sm font-semibold flex items-center gap-2"><Users className="h-4 w-4 text-primary" /> Clientes com artes em aberto ({clientList.length})</h3>
                       <button onClick={() => setActiveKPI(null)} className="text-muted-foreground hover:text-foreground text-xs">✕</button>
                     </div>
                     <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-[11px]">Cliente</TableHead>
-                          <TableHead className="text-[11px] text-center">Em aberto</TableHead>
-                          <TableHead className="text-[11px] text-center">Pendentes</TableHead>
-                          <TableHead className="text-[11px] text-center">Em Produção</TableHead>
-                          <TableHead className="text-[11px] text-center">Em Revisão</TableHead>
-                        </TableRow>
-                      </TableHeader>
+                      <TableHeader><TableRow>
+                        <TableHead className="text-[11px]">Cliente</TableHead>
+                        <TableHead className="text-[11px] text-center">Em aberto</TableHead>
+                        <TableHead className="text-[11px] text-center">Pendentes</TableHead>
+                        <TableHead className="text-[11px] text-center">Em Produção</TableHead>
+                        <TableHead className="text-[11px] text-center">Em Revisão</TableHead>
+                      </TableRow></TableHeader>
                       <TableBody>
                         {clientList.map(c => (
-                          <TableRow key={c.url} className="cursor-pointer" onClick={() => { setFilterClient(c.url); setActiveKPI(null); }}>
-                            <TableCell>
-                              <div>
-                                <p className="text-sm font-medium">{c.name}</p>
-                                <p className="text-xs text-muted-foreground">{c.url}</p>
-                              </div>
-                            </TableCell>
+                          <TableRow key={c.url}>
+                            <TableCell><div><p className="text-sm font-medium">{c.name}</p><p className="text-xs text-muted-foreground">{c.url}</p></div></TableCell>
                             <TableCell className="text-center font-semibold">{c.total}</TableCell>
                             <TableCell className="text-center"><Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-0 text-[10px]">{c.pending}</Badge></TableCell>
                             <TableCell className="text-center"><Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-0 text-[10px]">{c.inProgress}</Badge></TableCell>
@@ -995,70 +848,47 @@ export default function Dashboard() {
                         ))}
                       </TableBody>
                     </Table>
-                    <p className="text-[10px] text-muted-foreground mt-2">Clique em um cliente para filtrar a tabela de artes</p>
                   </CardContent>
                 </Card>
               );
             })()}
-            {/* Designer Workload */}
+
             {overloadedDesigners.length > 0 && (
               <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 flex items-start gap-3">
                 <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-semibold text-destructive">
-                    {overloadedDesigners.length} designer(s) sobrecarregado(s) — mais de 5 artes simultâneas
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {overloadedDesigners.map(d => `${d.email} (${d.totalActive} artes)`).join(' · ')}
-                  </p>
+                  <p className="text-sm font-semibold text-destructive">{overloadedDesigners.length} designer(s) sobrecarregado(s) — mais de 5 artes simultâneas</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{overloadedDesigners.map(d => `${d.email} (${d.totalActive} artes)`).join(' · ')}</p>
                 </div>
               </div>
             )}
             <Card className="border-none shadow-sm">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <Users className="h-4 w-4 text-primary" /> Carga de Trabalho por Designer
-                </CardTitle>
+                <CardTitle className="text-sm font-semibold flex items-center gap-2"><Users className="h-4 w-4 text-primary" /> Carga de Trabalho por Designer</CardTitle>
               </CardHeader>
               <CardContent>
                 {designerWorkload.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-4">Nenhum designer com artes atribuídas</p>
                 ) : (
                   <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Designer</TableHead>
-                        <TableHead className="text-center">Em aberto</TableHead>
-                        <TableHead className="text-center">Pendentes</TableHead>
-                        <TableHead className="text-center">Produzindo</TableHead>
-                        <TableHead className="text-center">Em revisão</TableHead>
-                        <TableHead className="text-center">Atrasadas</TableHead>
-                        <TableHead className="text-center">Concluídas</TableHead>
-                      </TableRow>
-                    </TableHeader>
+                    <TableHeader><TableRow>
+                      <TableHead>Designer</TableHead>
+                      <TableHead className="text-center">Em aberto</TableHead>
+                      <TableHead className="text-center">Pendentes</TableHead>
+                      <TableHead className="text-center">Produzindo</TableHead>
+                      <TableHead className="text-center">Em revisão</TableHead>
+                      <TableHead className="text-center">Atrasadas</TableHead>
+                      <TableHead className="text-center">Concluídas</TableHead>
+                    </TableRow></TableHeader>
                     <TableBody>
                       {designerWorkload.map(d => (
                         <TableRow key={d.email} className={d.totalActive > 5 ? 'bg-destructive/5' : ''}>
-                          <TableCell className="font-medium text-sm">
-                            {d.email}
-                            {d.totalActive > 5 && <Badge variant="destructive" className="ml-2 text-[9px]">Sobrecarregado</Badge>}
-                          </TableCell>
+                          <TableCell className="font-medium text-sm">{d.email}{d.totalActive > 5 && <Badge variant="destructive" className="ml-2 text-[9px]">Sobrecarregado</Badge>}</TableCell>
                           <TableCell className="text-center font-bold">{d.totalActive}</TableCell>
-                          <TableCell className="text-center">
-                            <Badge className="bg-amber-500/20 text-amber-600 dark:text-amber-400 border-0 text-xs">{d.pending}</Badge>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge className="bg-blue-500/20 text-blue-600 dark:text-blue-400 border-0 text-xs">{d.inProgress}</Badge>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge className="bg-primary/20 text-primary border-0 text-xs">{d.review}</Badge>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {d.overdue > 0
-                              ? <Badge variant="destructive" className="text-xs">{d.overdue}</Badge>
-                              : <span className="text-xs text-muted-foreground">0</span>
-                            }
-                          </TableCell>
+                          <TableCell className="text-center"><Badge className="bg-amber-500/20 text-amber-600 dark:text-amber-400 border-0 text-xs">{d.pending}</Badge></TableCell>
+                          <TableCell className="text-center"><Badge className="bg-blue-500/20 text-blue-600 dark:text-blue-400 border-0 text-xs">{d.inProgress}</Badge></TableCell>
+                          <TableCell className="text-center"><Badge className="bg-primary/20 text-primary border-0 text-xs">{d.review}</Badge></TableCell>
+                          <TableCell className="text-center">{d.overdue > 0 ? <Badge variant="destructive" className="text-xs">{d.overdue}</Badge> : <span className="text-xs text-muted-foreground">0</span>}</TableCell>
                           <TableCell className="text-center text-xs text-muted-foreground">{d.completed}</TableCell>
                         </TableRow>
                       ))}
@@ -1067,6 +897,15 @@ export default function Dashboard() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* ───── KANBAN TAB ───── */}
+          <TabsContent value="kanban" className="space-y-6">
+            <BriefingKanban images={rawImages} loading={loadingImages} />
+          </TabsContent>
+
+          {/* ───── ARTES TAB ───── */}
+          <TabsContent value="artes" className="space-y-6">
             {/* Filters */}
             <div className="flex flex-wrap items-center gap-4">
               {canCreate && <ImportBriefingDialog onImported={refreshAll} />}
