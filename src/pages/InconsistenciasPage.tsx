@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { TableSkeleton } from '@/components/ui/TableSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { supabase } from '@/integrations/supabase/client';
-import { AlertTriangle, Search, CreditCard, DollarSign, Users, Filter, Upload, CheckCircle, RefreshCw } from 'lucide-react';
+import { AlertTriangle, Search, CreditCard, DollarSign, Users, Filter, CheckCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 type InconsistenciaRecord = {
@@ -83,7 +83,7 @@ export default function InconsistenciasPage() {
   const [activeSource, setActiveSource] = useState('vindi');
   const [activeType, setActiveType] = useState<InconsistencyType>('sem_id_curseduca');
   const [loading, setLoading] = useState(true);
-  const [importing, setImporting] = useState(false);
+  
   const [records, setRecords] = useState<InconsistenciaRecord[]>([]);
   const [typeCounts, setTypeCounts] = useState<Record<string, number>>({});
   const [search, setSearch] = useState('');
@@ -155,52 +155,6 @@ export default function InconsistenciasPage() {
     fetchCounts();
   }, [fetchCounts]);
 
-  const handleImportJson = async () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
-
-      setImporting(true);
-      try {
-        const text = await file.text();
-        const parsed = JSON.parse(text);
-
-        // The JSON has a query key wrapping the array
-        const keys = Object.keys(parsed);
-        const records = parsed[keys[0]];
-
-        if (!Array.isArray(records)) {
-          toast.error('Formato inválido. Esperado um array de registros.');
-          return;
-        }
-
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          toast.error('Sessão expirada. Faça login novamente.');
-          return;
-        }
-
-        const res = await supabase.functions.invoke('import-inconsistencias', {
-          body: { fonte: activeSource, records },
-        });
-
-        if (res.error) throw res.error;
-
-        toast.success(`Importação concluída! ${res.data.inserted} inconsistências inseridas.`);
-        fetchData();
-        fetchCounts();
-      } catch (err: any) {
-        console.error('Import error:', err);
-        toast.error(`Erro na importação: ${err.message}`);
-      } finally {
-        setImporting(false);
-      }
-    };
-    input.click();
-  };
 
   const handleResolve = async (id: string) => {
     const { error } = await supabase
@@ -265,10 +219,6 @@ export default function InconsistenciasPage() {
           <Button variant="outline" size="sm" onClick={() => { fetchData(); fetchCounts(); }} disabled={loading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Atualizar
-          </Button>
-          <Button size="sm" onClick={handleImportJson} disabled={importing}>
-            <Upload className="h-4 w-4 mr-2" />
-            {importing ? 'Importando...' : 'Importar JSON'}
           </Button>
         </div>
       </div>
