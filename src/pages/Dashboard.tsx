@@ -151,9 +151,6 @@ export default function Dashboard() {
   const [mockupClientSuggestions, setMockupClientSuggestions] = useState<string[]>([]);
   const [mockupObservations, setMockupObservations] = useState('');
   const [mockupSubmitting, setMockupSubmitting] = useState(false);
-  const topScrollRef = useRef<HTMLDivElement>(null);
-  const tableScrollRef = useRef<HTMLDivElement>(null);
-  const topScrollInnerRef = useRef<HTMLDivElement>(null);
 
   const { data: rawImages = [], isLoading: loadingImages } = useQuery({
     queryKey: ['briefing-images'],
