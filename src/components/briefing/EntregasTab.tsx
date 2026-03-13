@@ -1,20 +1,20 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TopScrollableTable } from '@/components/ui/TopScrollableTable';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Download, Eye, Mail, Share2, PackageCheck, Loader2, ExternalLink, Search, MessageSquare, CheckCircle, Clock, AlertCircle } from 'lucide-react';
-import { IMAGE_TYPE_LABELS, ImageType, STATUS_LABELS, STATUS_COLORS, RequestStatus } from '@/types/briefing';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Download, Eye, Mail, PackageCheck, Loader2, ExternalLink, Search, MessageSquare, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { IMAGE_TYPE_LABELS, ImageType } from '@/types/briefing';
 
 interface DeliveryGroup {
   requestId: string;
@@ -39,17 +39,14 @@ function extractClientName(url: string) {
 }
 
 export default function EntregasTab() {
+  const queryClient = useQueryClient();
   const [selectedGroup, setSelectedGroup] = useState<DeliveryGroup | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [editEmail, setEditEmail] = useState('');
   const [sending, setSending] = useState(false);
-  const topScrollRef = useRef<HTMLDivElement>(null);
-  const tableScrollRef = useRef<HTMLDivElement>(null);
-  const topScrollInnerRef = useRef<HTMLDivElement>(null);
 
-  // Fetch deliveries with related data
   const { data: deliveries = [], isLoading } = useQuery({
     queryKey: ['briefing-deliveries-all'],
     queryFn: async () => {
@@ -63,7 +60,6 @@ export default function EntregasTab() {
     staleTime: 30_000,
   });
 
-  // Group deliveries by request
   const groups: DeliveryGroup[] = useMemo(() => {
     const map = new Map<string, DeliveryGroup>();
     for (const d of deliveries) {
@@ -92,7 +88,6 @@ export default function EntregasTab() {
         g.artCount += 1;
         if (img.status === 'completed') g.approvedCount += 1;
       }
-      // Keep latest delivery date
       if (new Date(d.created_at) > new Date(g.deliveryDate)) {
         g.deliveryDate = d.created_at;
       }
@@ -112,33 +107,7 @@ export default function EntregasTab() {
     });
   }, [groups, filterStatus, searchQuery]);
 
-  // Sync top scrollbar
-  useEffect(() => {
-    const syncWidth = () => {
-      if (tableScrollRef.current && topScrollInnerRef.current) {
-        topScrollInnerRef.current.style.width = tableScrollRef.current.scrollWidth + 'px';
-      }
-    };
-    syncWidth();
-    window.addEventListener('resize', syncWidth);
-    return () => window.removeEventListener('resize', syncWidth);
-  }, [isLoading, filtered]);
-
-  useEffect(() => {
-    const topEl = topScrollRef.current;
-    const tableEl = tableScrollRef.current;
-    if (!topEl || !tableEl) return;
-    const syncTop = () => { tableEl.scrollLeft = topEl.scrollLeft; };
-    const syncTable = () => { topEl.scrollLeft = tableEl.scrollLeft; };
-    topEl.addEventListener('scroll', syncTop);
-    tableEl.addEventListener('scroll', syncTable);
-    return () => {
-      topEl.removeEventListener('scroll', syncTop);
-      tableEl.removeEventListener('scroll', syncTable);
-    };
-  }, []);
-
-  const isValidEmail = (email: string) => /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email);
+  const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleSendEmail = async () => {
     if (!selectedGroup) return;
@@ -176,7 +145,6 @@ export default function EntregasTab() {
 
   const handleShareWhatsApp = (group: DeliveryGroup) => {
     const links = group.deliveries.map((d: any) => d.file_url).filter(Boolean).join('\n');
-
     const msg = encodeURIComponent(`Olá ${group.clientName}! 🎨\n\nSuas artes estão prontas para visualização:\n\n${links}\n\nQualquer dúvida, estamos à disposição!`);
     window.open(`https://wa.me/?text=${msg}`, '_blank');
   };
@@ -202,9 +170,9 @@ export default function EntregasTab() {
 
   const getStatusBadge = (group: DeliveryGroup) => {
     if (group.approvedCount === group.artCount) {
-      return <Badge className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/20"><CheckCircle className="h-3 w-3 mr-1" /> Aprovada</Badge>;
+      return <Badge className="bg-primary/15 text-primary border border-primary/20"><CheckCircle className="h-3 w-3 mr-1" /> Aprovada</Badge>;
     }
-    return <Badge className="bg-amber-500/15 text-amber-400 border border-amber-500/20"><Clock className="h-3 w-3 mr-1" /> Aguardando aprovação</Badge>;
+    return <Badge className="bg-accent text-accent-foreground border border-border"><Clock className="h-3 w-3 mr-1" /> Aguardando aprovação</Badge>;
   };
 
   return (
@@ -222,7 +190,7 @@ export default function EntregasTab() {
         </Card>
         <Card>
           <CardContent className="pt-4 pb-4 flex items-center gap-3">
-            <CheckCircle className="h-8 w-8 text-emerald-500" />
+            <CheckCircle className="h-8 w-8 text-primary" />
             <div>
               <p className="text-2xl font-bold">{groups.filter(g => g.approvedCount === g.artCount).length}</p>
               <p className="text-xs text-muted-foreground">Totalmente Aprovadas</p>
@@ -231,7 +199,7 @@ export default function EntregasTab() {
         </Card>
         <Card>
           <CardContent className="pt-4 pb-4 flex items-center gap-3">
-            <Clock className="h-8 w-8 text-amber-500" />
+            <Clock className="h-8 w-8 text-muted-foreground" />
             <div>
               <p className="text-2xl font-bold">{groups.filter(g => g.approvedCount < g.artCount).length}</p>
               <p className="text-xs text-muted-foreground">Aguardando Aprovação</p>
@@ -258,13 +226,8 @@ export default function EntregasTab() {
         </Select>
       </div>
 
-      {/* Top scrollbar */}
-      <div ref={topScrollRef} className="overflow-x-auto" style={{ height: '12px' }}>
-        <div ref={topScrollInnerRef} style={{ height: '1px' }} />
-      </div>
-
-      {/* Table */}
-      <div ref={tableScrollRef} className="relative w-full overflow-auto rounded-lg border">
+      {/* Table with top scrollbar */}
+      <TopScrollableTable className="rounded-lg border" deps={[isLoading, filtered]}>
         <table className="w-full caption-bottom text-sm">
           <thead className="[&_tr]:border-b">
             <tr className="border-b transition-colors hover:bg-muted/50">
@@ -308,7 +271,7 @@ export default function EntregasTab() {
             )}
           </tbody>
         </table>
-      </div>
+      </TopScrollableTable>
 
       {/* Detail Modal */}
       <Dialog open={!!selectedGroup && !emailDialogOpen} onOpenChange={open => { if (!open) setSelectedGroup(null); }}>
@@ -361,7 +324,7 @@ export default function EntregasTab() {
                           <div className="p-2 space-y-1">
                             <p className="text-xs font-medium truncate">{label}</p>
                             <div className="flex items-center justify-between">
-                              <Badge className={isApproved ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 text-[10px]' : 'bg-amber-500/15 text-amber-400 border border-amber-500/20 text-[10px]'}>
+                              <Badge className={isApproved ? 'bg-primary/15 text-primary border border-primary/20 text-[10px]' : 'bg-accent text-accent-foreground border border-border text-[10px]'}>
                                 {isApproved ? 'Aprovada' : 'Aguardando'}
                               </Badge>
                               <span className="text-[10px] text-muted-foreground">{d.delivered_by_email}</span>

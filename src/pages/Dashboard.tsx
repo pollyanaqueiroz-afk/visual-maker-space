@@ -268,6 +268,7 @@ export default function Dashboard() {
     queryClient.invalidateQueries({ queryKey: ['briefing-requests'] });
     queryClient.invalidateQueries({ queryKey: ['briefing-reviews'] });
     queryClient.invalidateQueries({ queryKey: ['briefing-adjustments-merged'] });
+    queryClient.invalidateQueries({ queryKey: ['briefing-deliveries-all'] });
   };
 
   const [downloadingReport, setDownloadingReport] = useState(false);
@@ -686,7 +687,8 @@ export default function Dashboard() {
     { key: 'requests', label: 'Solicitações', value: requests.length, Icon: FileText, color: 'text-muted-foreground', valueColor: '', help: 'Número de pedidos de briefing recebidos.' },
     { key: 'pending', label: 'Pendentes', value: pendingImages, Icon: Clock, color: 'text-warning', valueColor: 'text-warning', help: 'Artes aguardando início da produção pelo designer.' },
     { key: 'in_progress', label: 'Em Produção', value: inProgressImages, Icon: Loader2, color: 'text-info', valueColor: 'text-info', help: 'Artes sendo produzidas pelo designer.' },
-    { key: 'review', label: 'Em Revisão', value: reviewImages, Icon: Eye, color: 'text-primary', valueColor: 'text-primary', help: 'Artes entregues pelo designer que aguardam avaliação do cliente.' },
+    { key: 'review', label: 'Aguardando Validação', value: reviewImages, Icon: Eye, color: 'text-primary', valueColor: 'text-primary', help: 'Artes entregues pelo designer que aguardam avaliação do cliente.' },
+    { key: 'revision', label: 'Em Refação', value: revisionImages, Icon: RefreshCw, color: 'text-warning', valueColor: 'text-warning', help: 'Artes em processo de refação após solicitação do cliente.' },
     { key: 'completed', label: 'Concluídas', value: completedImages, Icon: CheckCircle, color: 'text-primary', valueColor: 'text-primary', help: 'Artes aprovadas pelo cliente.' },
     { key: 'cancelled', label: 'Canceladas', value: cancelledImages, Icon: XCircle, color: 'text-destructive', valueColor: 'text-destructive', help: 'Artes que foram canceladas.' },
     { key: 'clients', label: 'Clientes Abertos', value: openClients, Icon: Users, color: 'text-muted-foreground', valueColor: '', help: 'Clientes com pelo menos uma arte em aberto (não concluída/cancelada).' },
@@ -707,7 +709,7 @@ export default function Dashboard() {
           {/* ───── DASHBOARD TAB ───── */}
           <TabsContent value="dashboard" className="space-y-6">
             <div className="flex gap-6 items-start">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 flex-1">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 flex-1">
                 {kpiDefs.map(kpi => (
                   <Card key={kpi.key} className={`cursor-pointer transition-all hover:shadow-md ${activeKPI === kpi.key ? 'ring-2 ring-primary' : ''}`} onClick={() => toggleKPI(kpi.key)}>
                     <CardContent className="pt-3 pb-3 px-3">

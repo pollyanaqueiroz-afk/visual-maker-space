@@ -21,6 +21,8 @@ const IMAGE_TYPE_LABELS: Record<string, string> = {
   trail_banner: 'Banner de Trilha',
   challenge_banner: 'Banner de Desafio',
   community_banner: 'Banner de Comunidade',
+  app_mockup: 'Mockup do Aplicativo',
+  adjustment: 'Ajuste de Briefing',
 };
 
 interface BriefingImage {
