@@ -334,6 +334,7 @@ export default function ProcessosImplantacaoPage() {
                 <TableHead>Plano</TableHead>
                 <TableHead className="text-center">Design</TableHead>
                 <TableHead className="text-center">Aplicativo</TableHead>
+                <TableHead className="text-center">Migração</TableHead>
                 <TableHead className="text-center">SCORM</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
                 <TableHead className="text-center">Portal</TableHead>
