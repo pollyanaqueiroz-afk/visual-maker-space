@@ -80,13 +80,34 @@ export default function CadastroTab({ externalSearch = '' }: CadastroTabProps) {
 
   const fetchClients = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('clients')
-      .select('id, id_curseduca, nome, email, email_alternativo, telefone_alternativo, plano, cs_atual, cs_anterior, status_financeiro, status_curseduca, indice_fidelidade, data_criacao')
-      .order('nome', { ascending: true });
-    if (!error && data) {
-      setClients(data as ClientRecord[]);
+    // Fetch all clients using pagination to bypass the 1000-row limit
+    let allData: ClientRecord[] = [];
+    let from = 0;
+    const batchSize = 1000;
+    let hasMore = true;
+
+    while (hasMore) {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, id_curseduca, nome, email, email_alternativo, telefone_alternativo, plano, cs_atual, cs_anterior, status_financeiro, status_curseduca, indice_fidelidade, data_criacao')
+        .order('nome', { ascending: true })
+        .range(from, from + batchSize - 1);
+
+      if (error) {
+        console.error('Error fetching clients:', error);
+        break;
+      }
+
+      if (data && data.length > 0) {
+        allData = allData.concat(data as ClientRecord[]);
+        from += batchSize;
+        hasMore = data.length === batchSize;
+      } else {
+        hasMore = false;
+      }
     }
+
+    setClients(allData);
     setLoading(false);
   }, []);
 
