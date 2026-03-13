@@ -230,15 +230,6 @@ export default function CadastroTab({ externalSearch = '' }: CadastroTabProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar por nome, email ou ID..."
-            className="pl-9 h-9"
-          />
-        </div>
         <Badge variant="secondary" className="text-xs">{filtered.length} clientes</Badge>
         <Button size="sm" className="gap-1.5" onClick={() => setShowNew(true)}>
           <Plus className="h-4 w-4" />
