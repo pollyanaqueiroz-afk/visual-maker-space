@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useDashboardBI } from '@/hooks/useDashboardBI';
-import { RefreshCw, X, BarChart3, DollarSign, Headset, Activity, UserPlus, Construction } from 'lucide-react';
+import { RefreshCw, X, BarChart3, DollarSign, Headset, Activity, UserPlus, Construction, ClipboardCheck } from 'lucide-react';
 import BIOverviewPage from './bi/BIOverviewPage';
 import BIFinanceiroPage from './bi/BIFinanceiroPage';
 import BICustomerSuccessPage from './bi/BICustomerSuccessPage';
@@ -12,6 +12,7 @@ import BIEngajamentoPage from './bi/BIEngajamentoPage';
 import BIOrigensPage from './bi/BIOrigensPage';
 import BINovosClientesPage from './bi/BINovosClientesPage';
 import BIImplantacaoPage from './bi/BIImplantacaoPage';
+import BIValidacaoPage from './bi/BIValidacaoPage';
 
 interface CSItem { cs_nome: string; cs_email: string; total: number; }
 
@@ -70,6 +71,7 @@ export default function BIDashboardPage() {
           <TabsTrigger value="financeiro" className="text-xs gap-1.5"><DollarSign className="h-3.5 w-3.5" />Financeiro</TabsTrigger>
           <TabsTrigger value="cs" className="text-xs gap-1.5"><Headset className="h-3.5 w-3.5" />Customer Success</TabsTrigger>
           <TabsTrigger value="engajamento" className="text-xs gap-1.5"><Activity className="h-3.5 w-3.5" />Engajamento</TabsTrigger>
+          <TabsTrigger value="validacao" className="text-xs gap-1.5"><ClipboardCheck className="h-3.5 w-3.5" />Validação</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview"><BIOverviewPage csEmail={csEmail} /></TabsContent>
@@ -78,6 +80,7 @@ export default function BIDashboardPage() {
         <TabsContent value="financeiro"><BIFinanceiroPage csEmail={csEmail} /></TabsContent>
         <TabsContent value="cs"><BICustomerSuccessPage csEmail={csEmail} onSelectCS={(email) => setCsFilter(email)} /></TabsContent>
         <TabsContent value="engajamento"><BIEngajamentoPage csEmail={csEmail} /></TabsContent>
+        <TabsContent value="validacao"><BIValidacaoPage /></TabsContent>
       </Tabs>
     </div>
   );
