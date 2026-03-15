@@ -15,19 +15,17 @@ interface OverviewData {
   ativos: number;
   em_implantacao: number;
   em_risco: number;
+  cancelados: number;
   adimplentes: number;
   inadimplentes: number;
   receita_total: number;
-  receita_adimplente: number;
-  receita_inadimplente?: number;
-  mrr_upsell?: number;
+  receita_planos: number;
+  receita_upsell: number;
+  receita_inadimplente: number;
+  mrr_upsell: number;
   ticket_medio: number;
   media_dias_sem_login: number;
   media_alunos: number;
-}
-
-interface CanceladosData {
-  total_cancelados: number;
 }
 
 interface ClientDetail {
