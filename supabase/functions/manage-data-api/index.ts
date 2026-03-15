@@ -124,6 +124,25 @@ Deno.serve(async (req) => {
 
       const body = await req.json();
       const payload = sanitizePayload(body, entity);
+
+      // For cliente_engajamento_produto: UPSERT mode
+      if (entity === "cliente_engajamento_produto") {
+        payload.id_curseduca = idCurseduca;
+        payload.updated_at = new Date().toISOString();
+
+        const { data, error } = await supabase
+          .from(entity)
+          .upsert(payload, { onConflict: "id_curseduca" })
+          .select();
+
+        if (error) throw error;
+
+        return new Response(
+          JSON.stringify({ success: true, data: data && data.length === 1 ? data[0] : data }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       delete payload.id_curseduca;
       delete payload.codigo_assinatura_meio_pagamento;
 
@@ -136,7 +155,7 @@ Deno.serve(async (req) => {
 
       let query = supabase.from(entity).update(payload).eq("id_curseduca", idCurseduca);
 
-      // For cliente_financeiro, use composite key: id_curseduca + codigo_assinatura_meio_pagamento
+      // For cliente_financeiro, use composite key
       if (entity === "cliente_financeiro") {
         const codigoAssinatura = url.searchParams.get("codigo_assinatura_meio_pagamento");
         if (codigoAssinatura) {
