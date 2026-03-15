@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 
 export function formatBRL(value: number | null | undefined): string {
   if (value == null) return '—';
@@ -31,24 +30,12 @@ export function useDashboardBI<T = any>(metric: string, csEmail?: string) {
     setLoading(true);
     setError(null);
     try {
-      const params: Record<string, string> = { metric };
-      if (csEmail) params.cs_email_atual = csEmail;
-
-      const { data: result, error: fnError } = await supabase.functions.invoke('bi-dashboard', {
-        body: null,
-        headers: {},
-      });
-
-      // supabase.functions.invoke doesn't support query params natively,
-      // so we'll construct the URL manually
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
       let url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bi-dashboard?metric=${metric}`;
       if (csEmail) url += `&cs_email_atual=${encodeURIComponent(csEmail)}`;
 
       const res = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          'Content-Type': 'application/json',
         },
       });
 
