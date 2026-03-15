@@ -1,8 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const BASE_URL = 'https://us-central1-curseduca-inc-ia.cloudfunctions.net/hub-dashboard';
-const AUTH_HEADER = import.meta.env.VITE_HUB_API_AUTH || 'Basic Y3Vyc2VkdWNhOnZpc2FvMzYwQGN1cnNlZHVjYTIwMjYh';
-
 export function formatBRL(value: number | null | undefined): string {
   if (value == null) return '—';
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -33,9 +30,15 @@ export function useDashboardBI<T = any>(metric: string, csEmail?: string) {
     setLoading(true);
     setError(null);
     try {
-      let url = `${BASE_URL}?metric=${metric}`;
+      let url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bi-dashboard?metric=${metric}`;
       if (csEmail) url += `&cs_email_atual=${encodeURIComponent(csEmail)}`;
-      const res = await fetch(url, { headers: { Authorization: AUTH_HEADER } });
+
+      const res = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+      });
+
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       setData(json.data as T);
