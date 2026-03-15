@@ -1,0 +1,1 @@
+ALTER TABLE public.cliente_financeiro DROP COLUMN IF EXISTS tipo_plano_master;
