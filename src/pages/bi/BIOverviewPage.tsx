@@ -15,19 +15,17 @@ interface OverviewData {
   ativos: number;
   em_implantacao: number;
   em_risco: number;
+  cancelados: number;
   adimplentes: number;
   inadimplentes: number;
   receita_total: number;
-  receita_adimplente: number;
-  receita_inadimplente?: number;
-  mrr_upsell?: number;
+  receita_planos: number;
+  receita_upsell: number;
+  receita_inadimplente: number;
+  mrr_upsell: number;
   ticket_medio: number;
   media_dias_sem_login: number;
   media_alunos: number;
-}
-
-interface CanceladosData {
-  total_cancelados: number;
 }
 
 interface ClientDetail {
@@ -128,7 +126,6 @@ export default function BIOverviewPage({ csEmail }: { csEmail?: string }) {
   const { data, loading, error } = useDashboardBI<OverviewData>('overview', csEmail);
   const { data: statusData, loading: l2 } = useDashboardBI<StatusItem[]>('status', csEmail);
   const { data: receitaData, loading: l3 } = useDashboardBI<ReceitaItem[]>('receita_por_status', csEmail);
-  const { data: canceladosData, loading: l4 } = useDashboardBI<CanceladosData>('cancelados', csEmail);
   const { data: mrrSemanal } = useDashboardBI<MRRWeekly[]>('mrr_semanal', csEmail);
   const { data: mrrMensal } = useDashboardBI<MRRWeekly[]>('mrr_mensal', csEmail);
 
@@ -137,13 +134,13 @@ export default function BIOverviewPage({ csEmail }: { csEmail?: string }) {
   const [modalType, setModalType] = useState<string | null>(null);
   const [mrrView, setMrrView] = useState<'semanal' | 'mensal'>('mensal');
 
-  if (loading || l2 || l3 || l4) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  if (loading || l2 || l3) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   if (error || !data) return <div className="text-destructive p-4">Erro: {error}</div>;
 
   const mrrTotal = data.receita_total;
   const mrrUpsell = data.mrr_upsell || 0;
-  const mrrPlanos = mrrTotal - mrrUpsell;
-  const valorInadimplente = data.receita_inadimplente || (data.receita_total - data.receita_adimplente);
+  const mrrPlanos = data.receita_planos || (mrrTotal - mrrUpsell);
+  const valorInadimplente = data.receita_inadimplente || 0;
 
   const getModalClients = (): ClientDetail[] => {
     if (!allClients || !Array.isArray(allClients)) return [];
@@ -173,7 +170,7 @@ export default function BIOverviewPage({ csEmail }: { csEmail?: string }) {
     { label: 'Ativados', raw: data.ativos, formatted: formatNumber(data.ativos), icon: UserCheck, color: 'bg-success/10 text-success', key: 'ativos' },
     { label: 'Em Risco', raw: data.em_risco, formatted: formatNumber(data.em_risco), icon: AlertTriangle, color: 'bg-warning/10 text-warning', key: 'risco' },
     { label: 'Em Implantação', raw: data.em_implantacao, formatted: formatNumber(data.em_implantacao), icon: Construction, color: 'bg-info/10 text-info', key: 'implantacao' },
-    { label: 'Cancelados', raw: canceladosData?.total_cancelados ?? 0, formatted: formatNumber(canceladosData?.total_cancelados ?? 0), icon: UserX, color: 'bg-destructive/10 text-destructive', key: 'cancelados' },
+    { label: 'Cancelados', raw: data.cancelados ?? 0, formatted: formatNumber(data.cancelados ?? 0), icon: UserX, color: 'bg-destructive/10 text-destructive', key: 'cancelados' },
   ];
 
   const kpiRow2 = [
