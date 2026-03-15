@@ -113,7 +113,9 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
         <Card className="border-none shadow-[var(--shadow-kpi)]">
           <CardContent className="p-4 flex items-start justify-between gap-2">
             <div>
-              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">MRR Novos</p>
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                MRR Novos <InfoTip text="Soma da receita recorrente mensal (MRR) de todos os novos clientes. Mostra o impacto financeiro das novas aquisições." />
+              </p>
               <p className="text-2xl font-extrabold tracking-tight">{formatBRL(totalReceita)}</p>
             </div>
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-success/10 text-success">
