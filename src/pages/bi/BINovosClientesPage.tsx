@@ -4,23 +4,10 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { useDashboardBI, formatBRL, formatNumber } from '@/hooks/useDashboardBI';
-import { Loader2, Search, UserPlus, ChevronUp, ChevronDown, Info, Users, DollarSign, Layers } from 'lucide-react';
+import { Loader2, Search, ChevronUp, ChevronDown, Users, DollarSign, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, PieChart, Pie, Cell } from 'recharts';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-
-const InfoTip = ({ text }: { text: string }) => (
-  <TooltipProvider delayDuration={200}>
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help inline ml-1.5 shrink-0" />
-      </TooltipTrigger>
-      <TooltipContent side="top" className="max-w-xs text-xs">
-        {text}
-      </TooltipContent>
-    </Tooltip>
-  </TooltipProvider>
-);
+import { InfoTip } from '@/components/ui/InfoTip';
 
 interface NovoCliente {
   nome: string;
@@ -90,13 +77,12 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
 
   return (
     <div className="space-y-6">
-      {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <Card className="bg-card border shadow-sm">
           <CardContent className="p-4 flex items-start justify-between gap-2">
             <div>
               <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                Novos Clientes <InfoTip text="Clientes com data_criacao nos últimos 15 dias. Contagem distinta por id_curseduca." />
+                Novos Clientes <InfoTip text="clients.data_criacao nos últimos 15 dias (excluindo datas futuras). Contagem distinta por id_curseduca." />
               </p>
               <p className="text-2xl font-extrabold tracking-tight text-foreground">{formatNumber(totalNovos)}</p>
             </div>
@@ -109,7 +95,7 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
           <CardContent className="p-4 flex items-start justify-between gap-2">
             <div>
               <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                MRR Novos <InfoTip text="Soma de valor_contratado com is_plano=TRUE e vigencia_assinatura='Ativa' dos novos clientes (15 dias)." />
+                MRR Novos <InfoTip text="cliente_financeiro.valor_contratado — Soma onde is_plano=TRUE e vigencia_assinatura=Ativa, filtrado pelos novos clientes (15 dias)." />
               </p>
               <p className="text-2xl font-extrabold tracking-tight text-foreground">{formatBRL(totalReceita)}</p>
             </div>
@@ -122,7 +108,7 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
           <CardContent className="p-4 flex items-start justify-between gap-2">
             <div>
               <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                Planos Distintos <InfoTip text="Quantidade de tipo_plano distintos entre os novos clientes (is_plano=TRUE)." />
+                Planos Distintos <InfoTip text="cliente_financeiro.tipo_plano — Quantidade de tipos distintos entre os novos clientes (is_plano=TRUE)." />
               </p>
               <p className="text-2xl font-extrabold tracking-tight text-foreground">{planosDistintos}</p>
             </div>
@@ -133,10 +119,9 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
         </Card>
       </div>
 
-      {/* Timeline chart */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-semibold">Novos Clientes — Quantidade e MRR <InfoTip text="Barras = quantidade de novos clientes. Eixo direito = MRR (is_plano + vigencia Ativa). Filtro: últimos 15 dias." /></CardTitle>
+          <CardTitle className="text-sm font-semibold">Novos Clientes — Quantidade e MRR <InfoTip text="Barras: contagem de novos clientes por período (clients.data_criacao). MRR = soma de cliente_financeiro.valor_contratado (is_plano + vigencia Ativa). Filtro: últimos 15 dias, excluindo datas futuras." /></CardTitle>
           <div className="flex gap-1">
             {(['dia', 'semana', 'mes'] as const).map(v => (
               <button key={v} onClick={() => setViewMode(v)}
@@ -167,9 +152,8 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
       </Card>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* By tipo_plano pie */}
         <Card>
-          <CardHeader><CardTitle className="text-sm font-semibold">Novos por Tipo de Plano <InfoTip text="Distribuição por tipo_plano (is_plano=TRUE) dos novos clientes. Contagem distinta de id_curseduca por tipo." /></CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-semibold">Novos por Tipo de Plano <InfoTip text="cliente_financeiro.tipo_plano (is_plano=TRUE) dos novos clientes (15 dias). Contagem distinta de id_curseduca por tipo." /></CardTitle></CardHeader>
           <CardContent>
             {planoData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
@@ -186,10 +170,9 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
           </CardContent>
         </Card>
 
-        {/* Client table */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-4">
-            <CardTitle className="text-sm font-semibold">Lista de Novos ({filtered.length}) <InfoTip text="Novos clientes (15 dias). Colunas: nome, email, plano, MRR (vigência ativa), data de ativação." /></CardTitle>
+            <CardTitle className="text-sm font-semibold">Lista de Novos ({filtered.length}) <InfoTip text="Novos clientes (15 dias). Colunas: clients.nome, clients.email, cliente_financeiro.tipo_plano, valor_contratado (vigência ativa), clients.data_criacao." /></CardTitle>
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <Input placeholder="Buscar nome ou email..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 max-w-xs h-8 text-sm" />

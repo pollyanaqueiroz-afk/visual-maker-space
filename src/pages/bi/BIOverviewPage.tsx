@@ -9,6 +9,7 @@ import { Loader2, Users, UserCheck, AlertTriangle, Construction, UserX, DollarSi
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ComposedChart } from 'recharts';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { InfoTip } from '@/components/ui/InfoTip';
 
 interface OverviewData {
   total_clientes: number;
@@ -43,12 +44,30 @@ interface StatusItem { status: string; total: number; receita: number; }
 interface ReceitaItem { status: string; total: number; receita: number; ticket_medio: number | null; }
 interface MRRWeekly { periodo: string; mrr: number; mrr_planos?: number; mrr_upsell?: number; }
 
+// KPI tooltip descriptions
+const KPI_TIPS: Record<string, string> = {
+  'Total Clientes': 'clients.id — Contagem distinta de clientes com status_financeiro = Ativa.',
+  'Ativados': 'clients.status_curseduca = Ativo. Calculado pela função compute_client_status_curseduca.',
+  'Em Risco': 'clients.status_curseduca = Risco por Engajamento. Cliente ativo com último login > 30 dias.',
+  'Em Implantação': 'clients.status_curseduca = Implantacao. Cliente com membros_ativos_total < 5.',
+  'Cancelados': 'clients.status_curseduca = Cancelado. Cliente com status_financeiro = Cancelada.',
+  'MRR Total': 'cliente_financeiro.valor_contratado — Soma onde vigencia_assinatura = Ativa.',
+  'MRR Planos': 'cliente_financeiro.valor_contratado — Soma onde is_plano = TRUE e vigencia_assinatura = Ativa.',
+  'MRR Upsell': 'cliente_financeiro.valor_contratado — Soma onde is_upsell = TRUE e vigencia_assinatura = Ativa.',
+  'Valor Inadimplente': 'cliente_financeiro.valor_contratado — Soma onde status = Inadimplente e vigencia_assinatura = Ativa.',
+  'Ticket Médio': 'MRR Total / Total Clientes Ativos. Baseado em cliente_financeiro.valor_contratado.',
+  'Adimplentes / Inadimplentes': 'clients.status_financeiro_inadimplencia — Contagem de Adimplente vs Inadimplente.',
+  'Média dias sem login': 'cliente_engajamento_produto.dias_desde_ultimo_login — Média dos clientes ativos.',
+  'Média de alunos': 'cliente_engajamento_produto.membros_ativos_total — Média dos clientes ativos.',
+};
+
 function AnimatedKPI({ label, rawValue, formatted, icon: Icon, color, extra, delay, onClick }: {
   label: string; rawValue: number; formatted: string; icon: any; color: string; extra?: string; delay: number; onClick?: () => void;
 }) {
   const isCurrency = formatted.startsWith('R$');
   const countDisplay = useCountUp({ end: rawValue, duration: 1200, decimals: 0, separator: '.' });
   const display = isCurrency ? formatted : countDisplay;
+  const tip = KPI_TIPS[label];
 
   return (
     <motion.div
@@ -62,7 +81,10 @@ function AnimatedKPI({ label, rawValue, formatted, icon: Icon, color, extra, del
       >
         <CardContent className="p-4 flex items-start justify-between gap-2">
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              {label}
+              {tip && <InfoTip text={tip} />}
+            </p>
             <p className="text-2xl font-extrabold tracking-tight">{display}</p>
             {extra && <p className="text-[10px] text-muted-foreground mt-0.5">{extra}</p>}
           </div>
@@ -129,7 +151,6 @@ export default function BIOverviewPage({ csEmail }: { csEmail?: string }) {
   const { data: mrrSemanal } = useDashboardBI<MRRWeekly[]>('mrr_semanal', csEmail);
   const { data: mrrMensal } = useDashboardBI<MRRWeekly[]>('mrr_mensal', csEmail);
 
-  // Client lists for modals
   const { data: allClients, loading: lClients } = useDashboardBI<ClientDetail[]>('clientes_lista', csEmail);
   const [modalType, setModalType] = useState<string | null>(null);
   const [mrrView, setMrrView] = useState<'semanal' | 'mensal'>('mensal');
@@ -199,7 +220,6 @@ export default function BIOverviewPage({ csEmail }: { csEmail?: string }) {
     );
   };
 
-  // Filter MRR data to start from Jan 2026
   const filterFrom2026 = (arr: MRRWeekly[] | null) => {
     if (!arr) return [];
     return arr.filter(d => d.periodo >= '2026-01');
@@ -209,7 +229,6 @@ export default function BIOverviewPage({ csEmail }: { csEmail?: string }) {
 
   return (
     <div className="space-y-6">
-      {/* Row 1 — Clickable client KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {kpiRow1.map((k, i) => (
           <AnimatedKPI
@@ -220,25 +239,25 @@ export default function BIOverviewPage({ csEmail }: { csEmail?: string }) {
         ))}
       </div>
 
-      {/* Row 2 — MRR */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {kpiRow2.map((k, i) => (
           <AnimatedKPI key={k.label} label={k.label} rawValue={k.raw} formatted={k.formatted} icon={k.icon} color={k.color} delay={0.4 + i * 0.08} />
         ))}
       </div>
 
-      {/* Row 3 — extras */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {kpiRow3.map((k, i) => (
           <AnimatedKPI key={k.label} label={k.label} rawValue={k.raw} formatted={k.formatted} icon={k.icon} color={k.color} delay={0.7 + i * 0.08} />
         ))}
       </div>
 
-      {/* MRR Semanal / Mensal Chart */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.85, duration: 0.5 }}>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-sm font-semibold">Acompanhamento MRR</CardTitle>
+            <CardTitle className="text-sm font-semibold">
+              Acompanhamento MRR
+              <InfoTip text="cliente_financeiro.valor_contratado agrupado por período. mrr_planos = is_plano=TRUE, mrr_upsell = is_upsell=TRUE. Filtro: vigencia_assinatura = Ativa." />
+            </CardTitle>
             <div className="flex gap-1">
               {(['semanal', 'mensal'] as const).map(v => (
                 <button key={v} onClick={() => setMrrView(v)}
@@ -270,11 +289,15 @@ export default function BIOverviewPage({ csEmail }: { csEmail?: string }) {
         </Card>
       </motion.div>
 
-      {/* Charts Row */}
       <div className="grid lg:grid-cols-2 gap-6">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9, duration: 0.5 }}>
           <Card>
-            <CardHeader><CardTitle className="text-sm font-semibold">Distribuição por Status</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-sm font-semibold">
+                Distribuição por Status
+                <InfoTip text="clients.status_curseduca — Contagem de clientes agrupados por status (Ativo, Cancelado, Implantação, Risco por Engajamento). Receita = soma de cliente_financeiro.valor_contratado onde vigencia_assinatura = Ativa." />
+              </CardTitle>
+            </CardHeader>
             <CardContent>
               {statusData && statusData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
@@ -293,7 +316,12 @@ export default function BIOverviewPage({ csEmail }: { csEmail?: string }) {
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.0, duration: 0.5 }}>
           <Card>
-            <CardHeader><CardTitle className="text-sm font-semibold">MRR por Status</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-sm font-semibold">
+                MRR por Status
+                <InfoTip text="cliente_financeiro.valor_contratado agrupado por clients.status_curseduca. Filtro: vigencia_assinatura = Ativa." />
+              </CardTitle>
+            </CardHeader>
             <CardContent>
               {receitaData && receitaData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
@@ -313,7 +341,6 @@ export default function BIOverviewPage({ csEmail }: { csEmail?: string }) {
         </motion.div>
       </div>
 
-      {/* Client detail modal */}
       <ClientListModal
         open={!!modalType}
         onClose={() => setModalType(null)}

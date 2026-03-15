@@ -6,6 +6,7 @@ import {
   PieChart, Pie, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
 } from 'recharts';
 import { Progress } from '@/components/ui/progress';
+import { InfoTip } from '@/components/ui/InfoTip';
 
 interface EngajItem { faixa: string; total: number; receita_em_risco: number; }
 interface MembrosItem { faixa_alunos: string; total: number; receita: number; }
@@ -37,6 +38,16 @@ const VAR_COLORS: Record<string, string> = {
 };
 const PIE_COLORS = ['#3b82f6', '#22c55e', '#f97316', '#8b5cf6', '#ec4899', '#eab308', '#06b6d4', '#6b7280'];
 
+// KPI tooltip texts
+const RET_TIPS: Record<string, string> = {
+  'Retenção Cliente': 'cliente_engajamento_produto.taxa_retencao_cliente — Média dos clientes ativos (status_financeiro=Ativa).',
+  'Retenção Membro': 'cliente_engajamento_produto.taxa_retencao_membro — Média dos clientes ativos.',
+  'Ativação Cliente': 'cliente_engajamento_produto.taxa_ativacao_cliente — Média dos clientes ativos.',
+  'Ativação Membro': 'cliente_engajamento_produto.taxa_ativacao_membro — Média dos clientes ativos.',
+  'Adoção App': 'cliente_engajamento_produto.taxa_adocao_app — Média dos clientes ativos.',
+  'Tempo Uso (min)': 'cliente_engajamento_produto.tempo_medio_uso_web_minutos — Média dos clientes ativos.',
+};
+
 export default function BIEngajamentoPage({ csEmail }: { csEmail?: string }) {
   const { data: engData, loading: l1 } = useDashboardBI<EngajItem[]>('engajamento', csEmail);
   const { data: membrosData, loading: l2 } = useDashboardBI<MembrosItem[]>('membros', csEmail);
@@ -49,25 +60,19 @@ export default function BIEngajamentoPage({ csEmail }: { csEmail?: string }) {
 
   if (l1 || l2 || l3) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
-  // KPI cards from retencao
   const ret = retencaoData;
 
-  // Resource usage gauges
   const gauges = usoData ? [
     { label: 'Banda', pct: (usoData.pct_uso_banda * 100), contratado: `${usoData.media_banda_contratada_gb?.toFixed(0)} GB`, utilizado: `${usoData.media_banda_utilizada_gb?.toFixed(0)} GB` },
     { label: 'Storage', pct: (usoData.pct_uso_storage * 100), contratado: `${usoData.media_storage_contratado_gb?.toFixed(0)} GB`, utilizado: `${usoData.media_storage_utilizado_gb?.toFixed(0)} GB` },
     { label: 'Tokens IA', pct: (usoData.pct_uso_tokens * 100), contratado: formatNumber(usoData.media_tokens_contratados), utilizado: formatNumber(usoData.media_tokens_utilizados) },
   ] : [];
 
-  // Adocao radar
   const radarData = (adocaoData || []).map(d => ({ recurso: d.recurso, pct: Math.round(d.pct * 100) }));
-
-  // Recorrencia pie
   const recPie = (recorrenciaData || []).map((d, i) => ({ name: d.recorrencia, value: d.total, fill: PIE_COLORS[i % PIE_COLORS.length] }));
 
   return (
     <div className="space-y-6">
-      {/* KPI Row: Retention & Activation */}
       {ret && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {[
@@ -80,7 +85,10 @@ export default function BIEngajamentoPage({ csEmail }: { csEmail?: string }) {
           ].map(k => (
             <Card key={k.label} className="border-none shadow-[var(--shadow-kpi)]">
               <CardContent className="p-4 text-center">
-                <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{k.label}</p>
+                <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                  {k.label}
+                  <InfoTip text={RET_TIPS[k.label]} />
+                </p>
                 <p className="text-2xl font-extrabold">
                   {k.value != null ? (k.pct ? formatPct(k.value, true) : k.value.toFixed(1)) : '—'}
                 </p>
@@ -90,10 +98,9 @@ export default function BIEngajamentoPage({ csEmail }: { csEmail?: string }) {
         </div>
       )}
 
-      {/* Row: Engagement Bands + Member Variation */}
       <div className="grid lg:grid-cols-2 gap-6">
         <Card>
-          <CardHeader><CardTitle className="text-sm font-semibold">Faixas de Engajamento (dias sem login)</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-semibold">Faixas de Engajamento (dias sem login) <InfoTip text="cliente_engajamento_produto.dias_desde_ultimo_login — Faixas: 0-7, 8-30, 31-60, 61-90 dias. Total = contagem de clientes. Receita em risco = soma de cliente_financeiro.valor_contratado. Filtro: clients.status_financeiro = Ativa." /></CardTitle></CardHeader>
           <CardContent>
             {engData && engData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
@@ -122,7 +129,7 @@ export default function BIEngajamentoPage({ csEmail }: { csEmail?: string }) {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-sm font-semibold">Variação de Membros (MoM)</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-semibold">Variação de Membros (MoM) <InfoTip text="cliente_engajamento_produto.variacao_m0_vs_m1 — Categoriza por faixa de variação (Queda >50%, Queda 20-50%, Estável, Crescimento, etc). Contagem de clientes por faixa." /></CardTitle></CardHeader>
           <CardContent>
             {variacaoData && variacaoData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
@@ -141,10 +148,9 @@ export default function BIEngajamentoPage({ csEmail }: { csEmail?: string }) {
         </Card>
       </div>
 
-      {/* Row: Members Distribution + Access Recurrence */}
       <div className="grid lg:grid-cols-2 gap-6">
         <Card>
-          <CardHeader><CardTitle className="text-sm font-semibold">Distribuição por Alunos Ativos</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-semibold">Distribuição por Alunos Ativos <InfoTip text="cliente_engajamento_produto.membros_ativos_total — Faixas de quantidade de alunos. Contagem de clientes por faixa. Filtro: clients.status_financeiro = Ativa." /></CardTitle></CardHeader>
           <CardContent>
             {membrosData && membrosData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
@@ -162,7 +168,7 @@ export default function BIEngajamentoPage({ csEmail }: { csEmail?: string }) {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-sm font-semibold">Recorrência de Acesso</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-semibold">Recorrência de Acesso <InfoTip text="cliente_engajamento_produto.recorrencia_acesso — Contagem de clientes por tipo de recorrência (Diário, Semanal, Mensal, etc). Filtro: clients.status_financeiro = Ativa." /></CardTitle></CardHeader>
           <CardContent>
             {recPie.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
@@ -180,10 +186,9 @@ export default function BIEngajamentoPage({ csEmail }: { csEmail?: string }) {
         </Card>
       </div>
 
-      {/* Row: Product Adoption Radar + Excedentes */}
       <div className="grid lg:grid-cols-2 gap-6">
         <Card>
-          <CardHeader><CardTitle className="text-sm font-semibold">Adoção de Produto (%)</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-semibold">Adoção de Produto (%) <InfoTip text="cliente_engajamento_produto — % de clientes que usam cada recurso: Player (player_bandwidth_used>0), Storage (player_storage_used>0), Tokens IA (ai_tokens_used>0), App (taxa_adocao_app>0), Certificados MEC (certificates_mec_used>0)." /></CardTitle></CardHeader>
           <CardContent>
             {radarData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
@@ -200,7 +205,7 @@ export default function BIEngajamentoPage({ csEmail }: { csEmail?: string }) {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-sm font-semibold">Clientes com Uso Excedente</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-semibold">Clientes com Uso Excedente <InfoTip text="cliente_engajamento_produto — Clientes com pct_uso > 100%: player_bandwidth_pct_uso, player_storage_pct_uso, ai_tokens_pct_uso. Receita = soma de cliente_financeiro.valor_contratado desses clientes." /></CardTitle></CardHeader>
           <CardContent>
             {excedenteData && excedenteData.length > 0 ? (
               <div className="space-y-4 pt-2">
@@ -226,10 +231,9 @@ export default function BIEngajamentoPage({ csEmail }: { csEmail?: string }) {
         </Card>
       </div>
 
-      {/* Resource Usage Gauges */}
       {usoData && (
         <Card>
-          <CardHeader><CardTitle className="text-sm font-semibold">Uso Médio de Recursos ({usoData.total_ativos} clientes ativos)</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-semibold">Uso Médio de Recursos ({usoData.total_ativos} clientes ativos) <InfoTip text="cliente_engajamento_produto — Médias: Banda = player_bandwidth_used / player_bandwidth_hired. Storage = player_storage_used / player_storage_hired. Tokens IA = ai_tokens_used / ai_tokens_hired. Filtro: clients.status_financeiro = Ativa." /></CardTitle></CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-3 gap-6">
               {gauges.map(g => (

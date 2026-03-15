@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { useDashboardBI, formatBRL, formatNumber } from '@/hooks/useDashboardBI';
 import { Loader2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts';
+import { InfoTip } from '@/components/ui/InfoTip';
 
 interface CSItem {
   cs_nome: string; cs_email: string; total: number; ativos: number;
@@ -28,9 +29,13 @@ export default function BICustomerSuccessPage({ csEmail, onSelectCS }: { csEmail
 
   return (
     <div className="space-y-6">
-      {/* CS Table */}
       <Card>
-        <CardHeader><CardTitle className="text-sm font-semibold">Carteira por CS</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="text-sm font-semibold">
+            Carteira por CS
+            <InfoTip text="clients.cs_atual — Agrupamento por CS. Total = contagem de id_curseduca. Ativos = status_curseduca=Ativo. Inadimplentes = status_financeiro_inadimplencia=Inadimplente. Receita = soma de cliente_financeiro.valor_contratado (vigencia_assinatura=Ativa). Dias s/ Login = média de cliente_engajamento_produto.dias_desde_ultimo_login." />
+          </CardTitle>
+        </CardHeader>
         <CardContent className="overflow-x-auto">
           <p className="text-xs text-muted-foreground mb-3">Clique em uma linha para filtrar todo o dashboard por esse CS.</p>
           <Table>
@@ -64,9 +69,13 @@ export default function BICustomerSuccessPage({ csEmail, onSelectCS }: { csEmail
         </CardContent>
       </Card>
 
-      {/* Etapas CS - Horizontal Bar */}
       <Card>
-        <CardHeader><CardTitle className="text-sm font-semibold">Funil de Etapas do CS</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="text-sm font-semibold">
+            Funil de Etapas do CS
+            <InfoTip text="carteirizacao_etapas.nome × clients — Contagem de clientes por etapa do funil CS. Inadimplentes = clients.status_financeiro_inadimplencia = Inadimplente naquela etapa." />
+          </CardTitle>
+        </CardHeader>
         <CardContent>
           {etapasData && etapasData.length > 0 ? (
             <ResponsiveContainer width="100%" height={Math.max(400, etapasData.length * 36)}>
