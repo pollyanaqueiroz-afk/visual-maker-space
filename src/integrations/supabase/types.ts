@@ -2561,6 +2561,10 @@ export type Database = {
         Args: { col_name: string; col_type?: string }
         Returns: undefined
       }
+      compute_client_status_curseduca: {
+        Args: { p_id_curseduca: string }
+        Returns: string
+      }
       compute_client_status_financeiro: {
         Args: { p_id_curseduca: string }
         Returns: string
