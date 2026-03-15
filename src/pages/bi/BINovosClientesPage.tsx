@@ -4,9 +4,23 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { useDashboardBI, formatBRL, formatNumber } from '@/hooks/useDashboardBI';
-import { Loader2, Search, UserPlus, ChevronUp, ChevronDown } from 'lucide-react';
+import { Loader2, Search, UserPlus, ChevronUp, ChevronDown, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, PieChart, Pie, Cell } from 'recharts';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
+const InfoTip = ({ text }: { text: string }) => (
+  <TooltipProvider delayDuration={200}>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help inline ml-1.5 shrink-0" />
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-xs text-xs">
+        {text}
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+);
 
 interface NovoCliente {
   nome: string;
@@ -86,7 +100,9 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
         <Card className="border-none shadow-[var(--shadow-kpi)]">
           <CardContent className="p-4 flex items-start justify-between gap-2">
             <div>
-              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Novos Clientes</p>
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                Novos Clientes <InfoTip text="Contagem total de clientes novos retornados pela API. Representa todos os clientes ativados no período selecionado." />
+              </p>
               <p className="text-2xl font-extrabold tracking-tight">{formatNumber(totalNovos)}</p>
             </div>
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-success/10 text-success">
@@ -97,7 +113,9 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
         <Card className="border-none shadow-[var(--shadow-kpi)]">
           <CardContent className="p-4 flex items-start justify-between gap-2">
             <div>
-              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">MRR Novos</p>
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                MRR Novos <InfoTip text="Soma da receita recorrente mensal (MRR) de todos os novos clientes. Mostra o impacto financeiro das novas aquisições." />
+              </p>
               <p className="text-2xl font-extrabold tracking-tight">{formatBRL(totalReceita)}</p>
             </div>
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-success/10 text-success">
@@ -108,7 +126,9 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
         <Card className="border-none shadow-[var(--shadow-kpi)]">
           <CardContent className="p-4 flex items-start justify-between gap-2">
             <div>
-              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Planos Distintos</p>
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                Planos Distintos <InfoTip text="Quantidade de tipos de plano diferentes entre os novos clientes. Ajuda a entender a diversificação de planos nas novas aquisições." />
+              </p>
               <p className="text-2xl font-extrabold tracking-tight">{planoData.length}</p>
             </div>
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-info/10 text-info">
@@ -121,7 +141,7 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
       {/* Timeline chart */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-semibold">Novos Clientes — Por Valor e Quantidade</CardTitle>
+          <CardTitle className="text-sm font-semibold">Novos Clientes — Por Valor e Quantidade <InfoTip text="Gráfico de barras duplas mostrando a evolução temporal da quantidade de novos clientes (eixo esquerdo) e o MRR gerado (eixo direito). Permite comparar volume vs. valor das aquisições ao longo do tempo. Filtro a partir de Jan/2026." /></CardTitle>
           <div className="flex gap-1">
             {(['dia', 'semana', 'mes'] as const).map(v => (
               <button key={v} onClick={() => setViewMode(v)}
@@ -141,7 +161,7 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
                 <XAxis dataKey="periodo" tick={{ fontSize: 10 }} />
                 <YAxis yAxisId="left" tick={{ fontSize: 10 }} />
                 <YAxis yAxisId="right" orientation="right" tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 10 }} />
-                <Tooltip formatter={(v: number, name: string) => name === 'receita' ? formatBRL(v) : formatNumber(v)} />
+                <RechartsTooltip formatter={(v: number, name: string) => name === 'receita' ? formatBRL(v) : formatNumber(v)} />
                 <Legend />
                 <Bar yAxisId="left" dataKey="total" name="Qtd Novos" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
                 <Bar yAxisId="right" dataKey="receita" name="MRR Novos" fill="hsl(var(--info))" radius={[4, 4, 0, 0]} />
@@ -154,7 +174,7 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
       <div className="grid lg:grid-cols-2 gap-6">
         {/* By plan pie */}
         <Card>
-          <CardHeader><CardTitle className="text-sm font-semibold">Novos por Tipo de Plano</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-semibold">Novos por Tipo de Plano <InfoTip text="Distribuição percentual dos novos clientes por tipo de plano. Identifica quais planos atraem mais clientes e ajuda no direcionamento comercial." /></CardTitle></CardHeader>
           <CardContent>
             {planoData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
@@ -163,7 +183,7 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
                     label={({ plano, percent }) => `${plano} ${(percent * 100).toFixed(0)}%`}>
                     {planoData.map((entry, idx) => <Cell key={idx} fill={entry.fill} />)}
                   </Pie>
-                  <Tooltip formatter={(v: number, name: string, props: any) => [formatNumber(v), props.payload.plano]} />
+                  <RechartsTooltip formatter={(v: number, name: string, props: any) => [formatNumber(v), props.payload.plano]} />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -174,7 +194,7 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
         {/* Client table */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-4">
-            <CardTitle className="text-sm font-semibold">Lista de Novos ({filtered.length})</CardTitle>
+            <CardTitle className="text-sm font-semibold">Lista de Novos ({filtered.length}) <InfoTip text="Tabela com todos os novos clientes, ordenável por nome, MRR e data de ativação. Permite busca por nome ou plano. Exibe até 50 registros." /></CardTitle>
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <Input placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 max-w-xs h-8 text-sm" />
