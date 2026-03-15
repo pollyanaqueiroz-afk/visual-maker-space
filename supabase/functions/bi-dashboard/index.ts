@@ -278,8 +278,8 @@ Deno.serve(async (req) => {
     // METRIC: clientes_lista
     // ═══════════════════════════════════════════
     if (metric === "clientes_lista") {
-      const eng = filterByCS(await getEngajamento(), csEmail);
-      const fin = await getFinanceiro();
+      const eng = await filterActive(filterByCS(await getEngajamento(), csEmail));
+      const fin = await filterActive(await getFinanceiro());
       const finMap: Record<string, number> = {};
       for (const f of fin) {
         if (f.is_plano) {
