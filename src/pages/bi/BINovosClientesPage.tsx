@@ -194,7 +194,7 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
         {/* Client table */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-4">
-            <CardTitle className="text-sm font-semibold">Lista de Novos ({filtered.length})</CardTitle>
+            <CardTitle className="text-sm font-semibold">Lista de Novos ({filtered.length}) <InfoTip text="Tabela com todos os novos clientes, ordenável por nome, MRR e data de ativação. Permite busca por nome ou plano. Exibe até 50 registros." /></CardTitle>
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <Input placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 max-w-xs h-8 text-sm" />
