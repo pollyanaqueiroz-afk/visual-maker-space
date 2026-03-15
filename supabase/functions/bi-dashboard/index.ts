@@ -304,8 +304,8 @@ Deno.serve(async (req) => {
     // METRIC: mrr_mensal / mrr_semanal
     // ═══════════════════════════════════════════
     if (metric === "mrr_mensal" || metric === "mrr_semanal") {
-      const fin = await getFinanceiro();
-      const eng = filterByCS(await getEngajamento(), csEmail);
+      const fin = await filterActive(await getFinanceiro());
+      const eng = await filterActive(filterByCS(await getEngajamento(), csEmail));
       const engIds = new Set(eng.map(e => e.id_curseduca));
       const relevant = fin.filter(f => engIds.has(f.id_curseduca));
 
