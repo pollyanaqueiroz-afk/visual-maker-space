@@ -27,6 +27,7 @@ interface ImplantacaoOverview {
   pct_inadimplente: number;
   churn_em_implantacao: number;
   pct_churn_implantacao: number;
+  above_5_students: number;
 }
 
 interface ImplantacaoFinalizada {
@@ -52,7 +53,7 @@ export default function BIImplantacaoPage({ csEmail }: { csEmail?: string }) {
   if (l1) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   const clientes = Array.isArray(clientesData) ? clientesData : [];
-  const ov = overview || { total_implantacao: clientes.length, pct_adimplente: 0, pct_inadimplente: 0, churn_em_implantacao: 0, pct_churn_implantacao: 0 };
+  const ov = overview || { total_implantacao: clientes.length, pct_adimplente: 0, pct_inadimplente: 0, churn_em_implantacao: 0, pct_churn_implantacao: 0, above_5_students: 0 };
 
   // By plan
   const planCounts: Record<string, number> = {};
@@ -118,7 +119,7 @@ export default function BIImplantacaoPage({ csEmail }: { csEmail?: string }) {
         <Card className="border-none shadow-[var(--shadow-kpi)]">
           <CardContent className="p-4 text-center">
             <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{">"} 5 Alunos (Sair)</p>
-            <p className="text-2xl font-extrabold text-warning">{formatNumber(clientes.filter(c => (c.membros_mes_atual || 0) > 5).length)}</p>
+            <p className="text-2xl font-extrabold text-warning">{formatNumber(ov.above_5_students)}</p>
           </CardContent>
         </Card>
       </div>
