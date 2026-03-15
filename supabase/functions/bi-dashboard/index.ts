@@ -283,7 +283,7 @@ Deno.serve(async (req) => {
       const fin = await filterActive(await getFinanceiro());
       const finMap: Record<string, number> = {};
       for (const f of fin) {
-        if (f.is_plano) {
+        if (f.is_plano && f.vigencia_assinatura === 'Ativa') {
           finMap[f.id_curseduca] = (finMap[f.id_curseduca] || 0) + (Number(f.valor_contratado) || 0);
         }
       }
