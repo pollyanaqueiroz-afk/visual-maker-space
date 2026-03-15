@@ -57,6 +57,7 @@ const TABLE_NAMES = [
   'profiles',
   'role_permissions',
   'user_roles',
+  'cliente_engajamento_produto',
 ] as const;
 
 type TableData = {
