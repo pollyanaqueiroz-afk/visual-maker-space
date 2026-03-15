@@ -385,6 +385,12 @@ export default function ClientDetailPage() {
           <TabsTrigger value="dados" className="gap-1.5">
             <Settings className="h-3.5 w-3.5" /> Dados
           </TabsTrigger>
+          <TabsTrigger value="engajamento" className="gap-1.5">
+            <BarChart3 className="h-3.5 w-3.5" /> Engajamento
+          </TabsTrigger>
+          <TabsTrigger value="produto" className="gap-1.5">
+            <Globe className="h-3.5 w-3.5" /> Produto
+          </TabsTrigger>
           <TabsTrigger value="csat" className="gap-1.5">
             <MessageSquare className="h-3.5 w-3.5" /> CSAT
           </TabsTrigger>
