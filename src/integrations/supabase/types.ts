@@ -1303,12 +1303,9 @@ export type Database = {
           certificates_mec_used: number | null
           cobranca_automatica_banda_excedente: boolean | null
           cobranca_automatica_token_excedente: boolean | null
-          cs_atual: string | null
-          data_criacao: string | null
           data_ultimo_login: string | null
           dias_desde_ultimo_login: number | null
           dias_sem_interacao: number | null
-          email: string | null
           gatilho_upgrade_100alunos: boolean | null
           id_curseduca: string
           indice_fidelidade: number | null
@@ -1318,8 +1315,6 @@ export type Database = {
           membros_mes_m2: number | null
           membros_mes_m3: number | null
           membros_mes_m4: number | null
-          nome: string | null
-          plano: string | null
           player_bandwidth_hired: number | null
           player_bandwidth_pct_uso: number | null
           player_bandwidth_used: number | null
@@ -1328,8 +1323,6 @@ export type Database = {
           player_storage_used: number | null
           processed_at: string | null
           recorrencia_acesso: string | null
-          status_curseduca: string | null
-          status_financeiro: string | null
           taxa_adocao_app: number | null
           taxa_ativacao_cliente: number | null
           taxa_ativacao_membro: number | null
@@ -1352,12 +1345,9 @@ export type Database = {
           certificates_mec_used?: number | null
           cobranca_automatica_banda_excedente?: boolean | null
           cobranca_automatica_token_excedente?: boolean | null
-          cs_atual?: string | null
-          data_criacao?: string | null
           data_ultimo_login?: string | null
           dias_desde_ultimo_login?: number | null
           dias_sem_interacao?: number | null
-          email?: string | null
           gatilho_upgrade_100alunos?: boolean | null
           id_curseduca: string
           indice_fidelidade?: number | null
@@ -1367,8 +1357,6 @@ export type Database = {
           membros_mes_m2?: number | null
           membros_mes_m3?: number | null
           membros_mes_m4?: number | null
-          nome?: string | null
-          plano?: string | null
           player_bandwidth_hired?: number | null
           player_bandwidth_pct_uso?: number | null
           player_bandwidth_used?: number | null
@@ -1377,8 +1365,6 @@ export type Database = {
           player_storage_used?: number | null
           processed_at?: string | null
           recorrencia_acesso?: string | null
-          status_curseduca?: string | null
-          status_financeiro?: string | null
           taxa_adocao_app?: number | null
           taxa_ativacao_cliente?: number | null
           taxa_ativacao_membro?: number | null
@@ -1401,12 +1387,9 @@ export type Database = {
           certificates_mec_used?: number | null
           cobranca_automatica_banda_excedente?: boolean | null
           cobranca_automatica_token_excedente?: boolean | null
-          cs_atual?: string | null
-          data_criacao?: string | null
           data_ultimo_login?: string | null
           dias_desde_ultimo_login?: number | null
           dias_sem_interacao?: number | null
-          email?: string | null
           gatilho_upgrade_100alunos?: boolean | null
           id_curseduca?: string
           indice_fidelidade?: number | null
@@ -1416,8 +1399,6 @@ export type Database = {
           membros_mes_m2?: number | null
           membros_mes_m3?: number | null
           membros_mes_m4?: number | null
-          nome?: string | null
-          plano?: string | null
           player_bandwidth_hired?: number | null
           player_bandwidth_pct_uso?: number | null
           player_bandwidth_used?: number | null
@@ -1426,8 +1407,6 @@ export type Database = {
           player_storage_used?: number | null
           processed_at?: string | null
           recorrencia_acesso?: string | null
-          status_curseduca?: string | null
-          status_financeiro?: string | null
           taxa_adocao_app?: number | null
           taxa_ativacao_cliente?: number | null
           taxa_ativacao_membro?: number | null
