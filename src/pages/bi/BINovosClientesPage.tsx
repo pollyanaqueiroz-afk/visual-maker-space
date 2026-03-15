@@ -161,7 +161,7 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
                 <XAxis dataKey="periodo" tick={{ fontSize: 10 }} />
                 <YAxis yAxisId="left" tick={{ fontSize: 10 }} />
                 <YAxis yAxisId="right" orientation="right" tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 10 }} />
-                <Tooltip formatter={(v: number, name: string) => name === 'receita' ? formatBRL(v) : formatNumber(v)} />
+                <RechartsTooltip formatter={(v: number, name: string) => name === 'receita' ? formatBRL(v) : formatNumber(v)} />
                 <Legend />
                 <Bar yAxisId="left" dataKey="total" name="Qtd Novos" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
                 <Bar yAxisId="right" dataKey="receita" name="MRR Novos" fill="hsl(var(--info))" radius={[4, 4, 0, 0]} />
