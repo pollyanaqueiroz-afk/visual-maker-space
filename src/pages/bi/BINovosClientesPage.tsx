@@ -174,7 +174,7 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
       <div className="grid lg:grid-cols-2 gap-6">
         {/* By plan pie */}
         <Card>
-          <CardHeader><CardTitle className="text-sm font-semibold">Novos por Tipo de Plano</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-semibold">Novos por Tipo de Plano <InfoTip text="Distribuição percentual dos novos clientes por tipo de plano. Identifica quais planos atraem mais clientes e ajuda no direcionamento comercial." /></CardTitle></CardHeader>
           <CardContent>
             {planoData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
