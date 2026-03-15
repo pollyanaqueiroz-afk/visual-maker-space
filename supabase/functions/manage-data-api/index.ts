@@ -25,6 +25,24 @@ const ALLOWED_FIELDS: Record<string, string[]> = {
     "tipo_upsell", "status", "vigencia_assinatura", "data_criacao",
     "processed_at", "tipo_produto_master", "nome_plano_master",
   ],
+  cliente_engajamento_produto: [
+    "id_curseduca", "nome", "email", "cs_atual", "plano",
+    "status_financeiro", "status_curseduca", "indice_fidelidade",
+    "data_criacao", "data_ultimo_login", "recorrencia_acesso",
+    "tempo_medio_uso_web_minutos", "membros_mes_atual", "membros_mes_m1",
+    "membros_mes_m2", "membros_mes_m3", "membros_mes_m4",
+    "membros_ativos_total", "variacao_m0_vs_m1", "variacao_m1_vs_m2",
+    "variacao_m2_vs_m3", "variacao_m3_vs_m4", "taxa_retencao_cliente",
+    "taxa_retencao_membro", "taxa_ativacao_cliente", "taxa_ativacao_membro",
+    "taxa_adocao_app", "dias_desde_ultimo_login", "dias_sem_interacao",
+    "alerta_inatividade", "player_bandwidth_hired", "player_bandwidth_used",
+    "player_bandwidth_pct_uso", "player_storage_hired", "player_storage_used",
+    "player_storage_pct_uso", "ai_tokens_hired", "ai_tokens_used",
+    "ai_tokens_pct_uso", "certificates_mec_hired", "certificates_mec_used",
+    "certificates_mec_pct_uso", "cobranca_automatica_banda_excedente",
+    "cobranca_automatica_token_excedente", "gatilho_upgrade_100alunos",
+    "processed_at",
+  ],
 };
 
 function sanitizePayload(body: Record<string, unknown>, entity: string): Record<string, unknown> {
