@@ -42,6 +42,9 @@ const ALLOWED_FIELDS: Record<string, string[]> = {
     "certificates_mec_pct_uso", "cobranca_automatica_banda_excedente",
     "cobranca_automatica_token_excedente", "gatilho_upgrade_100alunos",
     "processed_at",
+    "leadtime_purchase_first", "leadtime_purchase_first10",
+    "leadtime_purchase_first50", "leadtime_purchase_first100",
+    "leadtime_purchase_first200",
   ],
 };
 
