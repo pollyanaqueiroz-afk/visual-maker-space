@@ -183,7 +183,7 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
                     label={({ plano, percent }) => `${plano} ${(percent * 100).toFixed(0)}%`}>
                     {planoData.map((entry, idx) => <Cell key={idx} fill={entry.fill} />)}
                   </Pie>
-                  <Tooltip formatter={(v: number, name: string, props: any) => [formatNumber(v), props.payload.plano]} />
+                  <RechartsTooltip formatter={(v: number, name: string, props: any) => [formatNumber(v), props.payload.plano]} />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
