@@ -105,6 +105,20 @@ Deno.serve(async (req) => {
       return clients;
     };
 
+    // Helper: get set of id_curseduca where clients.status_financeiro = 'Ativa'
+    let _activeIds: Set<string> | null = null;
+    const getActiveClientIds = async (): Promise<Set<string>> => {
+      if (!_activeIds) {
+        const cls = await getClients();
+        _activeIds = new Set(cls.filter((c: any) => c.status_financeiro === 'Ativa').map((c: any) => c.id_curseduca).filter(Boolean));
+      }
+      return _activeIds;
+    };
+    const filterActive = async (rows: any[], field = "id_curseduca") => {
+      const ids = await getActiveClientIds();
+      return rows.filter((r: any) => ids.has(r[field]));
+    };
+
     // ═══════════════════════════════════════════
     // METRIC: cs
     // ═══════════════════════════════════════════
@@ -152,8 +166,8 @@ Deno.serve(async (req) => {
     // METRIC: overview
     // ═══════════════════════════════════════════
     if (metric === "overview") {
-      const eng = filterByCS(await getEngajamento(), csEmail);
-      const fin = await getFinanceiro();
+      const eng = await filterActive(filterByCS(await getEngajamento(), csEmail));
+      const fin = await filterActive(await getFinanceiro());
       const inat = await getInativos();
 
       const ativos = eng.filter(r => {
@@ -216,8 +230,8 @@ Deno.serve(async (req) => {
     // METRIC: status
     // ═══════════════════════════════════════════
     if (metric === "status") {
-      const eng = filterByCS(await getEngajamento(), csEmail);
-      const fin = await getFinanceiro();
+      const eng = await filterActive(filterByCS(await getEngajamento(), csEmail));
+      const fin = await filterActive(await getFinanceiro());
       const statusMap: Record<string, { total: number; ids: Set<string> }> = {};
 
       for (const r of eng) {
@@ -240,8 +254,8 @@ Deno.serve(async (req) => {
     // METRIC: receita_por_status
     // ═══════════════════════════════════════════
     if (metric === "receita_por_status") {
-      const eng = filterByCS(await getEngajamento(), csEmail);
-      const fin = await getFinanceiro();
+      const eng = await filterActive(filterByCS(await getEngajamento(), csEmail));
+      const fin = await filterActive(await getFinanceiro());
       const statusMap: Record<string, { total: number; ids: Set<string> }> = {};
 
       for (const r of eng) {
@@ -264,8 +278,8 @@ Deno.serve(async (req) => {
     // METRIC: clientes_lista
     // ═══════════════════════════════════════════
     if (metric === "clientes_lista") {
-      const eng = filterByCS(await getEngajamento(), csEmail);
-      const fin = await getFinanceiro();
+      const eng = await filterActive(filterByCS(await getEngajamento(), csEmail));
+      const fin = await filterActive(await getFinanceiro());
       const finMap: Record<string, number> = {};
       for (const f of fin) {
         if (f.is_plano) {
@@ -290,8 +304,8 @@ Deno.serve(async (req) => {
     // METRIC: mrr_mensal / mrr_semanal
     // ═══════════════════════════════════════════
     if (metric === "mrr_mensal" || metric === "mrr_semanal") {
-      const fin = await getFinanceiro();
-      const eng = filterByCS(await getEngajamento(), csEmail);
+      const fin = await filterActive(await getFinanceiro());
+      const eng = await filterActive(filterByCS(await getEngajamento(), csEmail));
       const engIds = new Set(eng.map(e => e.id_curseduca));
       const relevant = fin.filter(f => engIds.has(f.id_curseduca));
 
