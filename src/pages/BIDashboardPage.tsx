@@ -71,6 +71,7 @@ export default function BIDashboardPage() {
           <TabsTrigger value="financeiro" className="text-xs gap-1.5"><DollarSign className="h-3.5 w-3.5" />Financeiro</TabsTrigger>
           <TabsTrigger value="cs" className="text-xs gap-1.5"><Headset className="h-3.5 w-3.5" />Customer Success</TabsTrigger>
           <TabsTrigger value="engajamento" className="text-xs gap-1.5"><Activity className="h-3.5 w-3.5" />Engajamento</TabsTrigger>
+          <TabsTrigger value="validacao" className="text-xs gap-1.5"><ClipboardCheck className="h-3.5 w-3.5" />Validação</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview"><BIOverviewPage csEmail={csEmail} /></TabsContent>
