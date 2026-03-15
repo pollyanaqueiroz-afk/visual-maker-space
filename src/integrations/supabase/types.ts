@@ -1444,7 +1444,6 @@ export type Database = {
           recorrencia_pagamento: string | null
           status: string | null
           tipo_plano: string | null
-          tipo_plano_master: string | null
           tipo_produto_master: string | null
           tipo_upsell: string | null
           updated_at: string
@@ -1473,7 +1472,6 @@ export type Database = {
           recorrencia_pagamento?: string | null
           status?: string | null
           tipo_plano?: string | null
-          tipo_plano_master?: string | null
           tipo_produto_master?: string | null
           tipo_upsell?: string | null
           updated_at?: string
@@ -1502,7 +1500,6 @@ export type Database = {
           recorrencia_pagamento?: string | null
           status?: string | null
           tipo_plano?: string | null
-          tipo_plano_master?: string | null
           tipo_produto_master?: string | null
           tipo_upsell?: string | null
           updated_at?: string
