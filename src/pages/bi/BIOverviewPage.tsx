@@ -182,7 +182,7 @@ export default function BIOverviewPage({ csEmail }: { csEmail?: string }) {
 
   const kpiRow3 = [
     { label: 'Ticket Médio', raw: data.ticket_medio, formatted: formatBRL(data.ticket_medio), icon: TrendingDown, color: 'bg-info/10 text-info' },
-    { label: 'Adimplentes / Inadimplentes', raw: data.adimplentes, formatted: `${formatNumber(data.adimplentes)} / ${formatNumber(data.inadimplentes)}`, icon: Users, color: 'bg-warning/10 text-warning' },
+    { label: 'Adimplentes / Inadimplentes', raw: data.adimplentes, formatted: `${formatNumber(data.adimplentes)} / ${formatNumber(data.inadimplentes)}`, icon: Users, color: 'bg-warning/10 text-warning', extra: `${((data.inadimplentes / (data.adimplentes + data.inadimplentes)) * 100).toFixed(1)}% inadimplentes` },
     { label: 'Média dias sem login', raw: data.media_dias_sem_login || 0, formatted: data.media_dias_sem_login?.toFixed(1) ?? '—', icon: Clock, color: 'bg-warning/10 text-warning' },
     { label: 'Média de alunos', raw: data.media_alunos || 0, formatted: data.media_alunos?.toFixed(1) ?? '—', icon: GraduationCap, color: 'bg-info/10 text-info' },
   ];
