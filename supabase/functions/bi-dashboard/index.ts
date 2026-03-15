@@ -269,7 +269,7 @@ Deno.serve(async (req) => {
       }
 
       const result = Object.entries(statusMap).map(([status, v]) => {
-        const receita = sum(fin.filter(f => v.ids.has(f.id_curseduca) && f.is_plano).map(f => Number(f.valor_contratado) || 0));
+        const receita = sum(fin.filter(f => v.ids.has(f.id_curseduca) && f.is_plano && f.vigencia_assinatura === 'Ativa').map(f => Number(f.valor_contratado) || 0));
         return { status, total: v.total, receita, ticket_medio: v.total > 0 ? receita / v.total : null };
       });
       return json(result);
