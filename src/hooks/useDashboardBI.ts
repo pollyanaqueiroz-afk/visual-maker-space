@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-
-const BASE_URL = 'https://us-central1-curseduca-inc-ia.cloudfunctions.net/hub-dashboard';
-const AUTH_HEADER = import.meta.env.VITE_HUB_API_AUTH || 'Basic Y3Vyc2VkdWNhOnZpc2FvMzYwQGN1cnNlZHVjYTIwMjYh';
+import { supabase } from '@/integrations/supabase/client';
 
 export function formatBRL(value: number | null | undefined): string {
   if (value == null) return '—';
@@ -33,9 +31,27 @@ export function useDashboardBI<T = any>(metric: string, csEmail?: string) {
     setLoading(true);
     setError(null);
     try {
-      let url = `${BASE_URL}?metric=${metric}`;
+      const params: Record<string, string> = { metric };
+      if (csEmail) params.cs_email_atual = csEmail;
+
+      const { data: result, error: fnError } = await supabase.functions.invoke('bi-dashboard', {
+        body: null,
+        headers: {},
+      });
+
+      // supabase.functions.invoke doesn't support query params natively,
+      // so we'll construct the URL manually
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      let url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bi-dashboard?metric=${metric}`;
       if (csEmail) url += `&cs_email_atual=${encodeURIComponent(csEmail)}`;
-      const res = await fetch(url, { headers: { Authorization: AUTH_HEADER } });
+
+      const res = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       setData(json.data as T);
