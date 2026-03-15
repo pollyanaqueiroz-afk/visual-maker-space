@@ -366,25 +366,33 @@ Deno.serve(async (req) => {
     // METRIC: planos
     // ═══════════════════════════════════════════
     if (metric === "planos") {
-      const eng = filterByCS(await getEngajamento(), csEmail);
-      const fin = await getFinanceiro();
-      const engIds = new Set(eng.map(e => e.id_curseduca));
+      const cls = await getClients();
+      const clsMap = new Map(cls.map(c => [c.id_curseduca, c]));
+      const eng = await getEngajamento();
       const engMap = new Map(eng.map(e => [e.id_curseduca, e]));
+      const fin = await getFinanceiro();
+
+      // If csEmail filter, only include clients assigned to that CS
+      const allowedIds = csEmail
+        ? new Set(cls.filter(c => c.cs_atual === csEmail).map(c => c.id_curseduca))
+        : null;
 
       const planoMap: Record<string, { total: number; ativos: number; cancelados: number; receita: number; alunos: number[] }> = {};
       for (const f of fin) {
-        if (!engIds.has(f.id_curseduca) || !f.is_plano) continue;
+        if (!f.is_plano) continue;
+        if (allowedIds && !allowedIds.has(f.id_curseduca)) continue;
         const p = f.nome_plano_master || f.plano || "Sem plano";
         if (!planoMap[p]) planoMap[p] = { total: 0, ativos: 0, cancelados: 0, receita: 0, alunos: [] };
         planoMap[p].total++;
         planoMap[p].receita += Number(f.valor_contratado) || 0;
-        const e = engMap.get(f.id_curseduca);
-        if (e) {
-          const s = (e.status_curseduca || "").toLowerCase();
-          if (s === "ativo" || s === "active") planoMap[p].ativos++;
-          if (s === "cancelado" || s === "block") planoMap[p].cancelados++;
-          if (e.membros_mes_atual != null) planoMap[p].alunos.push(e.membros_mes_atual);
+        const client = clsMap.get(f.id_curseduca);
+        if (client) {
+          const s = (client.status_curseduca || "").toLowerCase();
+          if (s === "ativo") planoMap[p].ativos++;
+          if (s === "cancelado") planoMap[p].cancelados++;
         }
+        const e = engMap.get(f.id_curseduca);
+        if (e && e.membros_ativos_total != null) planoMap[p].alunos.push(e.membros_ativos_total);
       }
 
       const result = Object.entries(planoMap)
