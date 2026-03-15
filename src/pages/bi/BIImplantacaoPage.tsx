@@ -27,6 +27,7 @@ interface ImplantacaoOverview {
   pct_inadimplente: number;
   churn_em_implantacao: number;
   pct_churn_implantacao: number;
+  above_5_students: number;
 }
 
 interface ImplantacaoFinalizada {
