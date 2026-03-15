@@ -254,8 +254,8 @@ Deno.serve(async (req) => {
     // METRIC: receita_por_status
     // ═══════════════════════════════════════════
     if (metric === "receita_por_status") {
-      const eng = filterByCS(await getEngajamento(), csEmail);
-      const fin = await getFinanceiro();
+      const eng = await filterActive(filterByCS(await getEngajamento(), csEmail));
+      const fin = await filterActive(await getFinanceiro());
       const statusMap: Record<string, { total: number; ids: Set<string> }> = {};
 
       for (const r of eng) {
