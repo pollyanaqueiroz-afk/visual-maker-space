@@ -1309,6 +1309,11 @@ export type Database = {
           gatilho_upgrade_100alunos: boolean | null
           id_curseduca: string
           indice_fidelidade: number | null
+          leadtime_purchase_first: string | null
+          leadtime_purchase_first10: string | null
+          leadtime_purchase_first100: string | null
+          leadtime_purchase_first200: string | null
+          leadtime_purchase_first50: string | null
           membros_ativos_total: number | null
           membros_mes_atual: number | null
           membros_mes_m1: number | null
@@ -1351,6 +1356,11 @@ export type Database = {
           gatilho_upgrade_100alunos?: boolean | null
           id_curseduca: string
           indice_fidelidade?: number | null
+          leadtime_purchase_first?: string | null
+          leadtime_purchase_first10?: string | null
+          leadtime_purchase_first100?: string | null
+          leadtime_purchase_first200?: string | null
+          leadtime_purchase_first50?: string | null
           membros_ativos_total?: number | null
           membros_mes_atual?: number | null
           membros_mes_m1?: number | null
@@ -1393,6 +1403,11 @@ export type Database = {
           gatilho_upgrade_100alunos?: boolean | null
           id_curseduca?: string
           indice_fidelidade?: number | null
+          leadtime_purchase_first?: string | null
+          leadtime_purchase_first10?: string | null
+          leadtime_purchase_first100?: string | null
+          leadtime_purchase_first200?: string | null
+          leadtime_purchase_first50?: string | null
           membros_ativos_total?: number | null
           membros_mes_atual?: number | null
           membros_mes_m1?: number | null
