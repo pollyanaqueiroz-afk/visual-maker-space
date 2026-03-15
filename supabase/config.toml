@@ -89,3 +89,6 @@ verify_jwt = false
 
 [functions.list-users-api]
 verify_jwt = false
+
+[functions.import-engajamento-csv]
+verify_jwt = false
