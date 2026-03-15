@@ -170,7 +170,7 @@ export default function BIOverviewPage({ csEmail }: { csEmail?: string }) {
     { label: 'Ativados', raw: data.ativos, formatted: formatNumber(data.ativos), icon: UserCheck, color: 'bg-success/10 text-success', key: 'ativos' },
     { label: 'Em Risco', raw: data.em_risco, formatted: formatNumber(data.em_risco), icon: AlertTriangle, color: 'bg-warning/10 text-warning', key: 'risco' },
     { label: 'Em Implantação', raw: data.em_implantacao, formatted: formatNumber(data.em_implantacao), icon: Construction, color: 'bg-info/10 text-info', key: 'implantacao' },
-    { label: 'Cancelados', raw: canceladosData?.total_cancelados ?? 0, formatted: formatNumber(canceladosData?.total_cancelados ?? 0), icon: UserX, color: 'bg-destructive/10 text-destructive', key: 'cancelados' },
+    { label: 'Cancelados', raw: data.cancelados ?? 0, formatted: formatNumber(data.cancelados ?? 0), icon: UserX, color: 'bg-destructive/10 text-destructive', key: 'cancelados' },
   ];
 
   const kpiRow2 = [
