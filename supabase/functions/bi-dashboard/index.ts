@@ -759,7 +759,7 @@ Deno.serve(async (req) => {
       // "Novo" = data_criacao within last 15 days (based on hub_clients)
       const now = new Date();
       const cutoff = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000);
-      const novos = cls.filter(r => r.data_criacao && new Date(r.data_criacao) >= cutoff);
+      const novos = cls.filter(r => r.data_criacao && new Date(r.data_criacao) >= cutoff && new Date(r.data_criacao) <= now);
       const novosIds = new Set(novos.map(r => r.id_curseduca).filter(Boolean));
 
       // Build finMap: only is_plano + vigencia_assinatura = 'Ativa' for MRR
@@ -797,7 +797,7 @@ Deno.serve(async (req) => {
 
       const now = new Date();
       const cutoff = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000);
-      const novos = cls.filter(r => r.data_criacao && new Date(r.data_criacao) >= cutoff);
+      const novos = cls.filter(r => r.data_criacao && new Date(r.data_criacao) >= cutoff && new Date(r.data_criacao) <= now);
       const novosIds = new Set(novos.map(r => r.id_curseduca).filter(Boolean));
 
       // MRR map: only is_plano + vigencia_assinatura = 'Ativa'
@@ -834,7 +834,7 @@ Deno.serve(async (req) => {
 
       const now = new Date();
       const cutoff = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000);
-      const novos = cls.filter(r => r.data_criacao && new Date(r.data_criacao) >= cutoff);
+      const novos = cls.filter(r => r.data_criacao && new Date(r.data_criacao) >= cutoff && new Date(r.data_criacao) <= now);
       const novosIds = new Set(novos.map(r => r.id_curseduca).filter(Boolean));
 
       // Group by tipo_plano from financeiro
