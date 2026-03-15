@@ -374,7 +374,7 @@ Deno.serve(async (req) => {
       const planoMap: Record<string, { total: number; ativos: number; cancelados: number; receita: number; alunos: number[] }> = {};
       for (const f of fin) {
         if (!engIds.has(f.id_curseduca) || !f.is_plano) continue;
-        const p = f.plano || f.nome_plano_master || "Sem plano";
+        const p = f.nome_plano_master || f.plano || "Sem plano";
         if (!planoMap[p]) planoMap[p] = { total: 0, ativos: 0, cancelados: 0, receita: 0, alunos: [] };
         planoMap[p].total++;
         planoMap[p].receita += Number(f.valor_contratado) || 0;
