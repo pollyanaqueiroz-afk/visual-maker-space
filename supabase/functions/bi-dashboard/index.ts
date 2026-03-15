@@ -166,54 +166,55 @@ Deno.serve(async (req) => {
     // METRIC: overview
     // ═══════════════════════════════════════════
     if (metric === "overview") {
-      const eng = await filterActive(filterByCS(await getEngajamento(), csEmail));
-      const fin = await filterActive(await getFinanceiro());
-      const inat = await getInativos();
+      const cls = filterByCS(await getClients(), csEmail, "cs_atual");
+      const eng = await getEngajamento();
+      const fin = await getFinanceiro();
 
-      const ativos = eng.filter(r => {
-        const s = (r.status_curseduca || "").toLowerCase();
-        return s === "ativo" || s === "active";
-      });
-      const emImpl = eng.filter(r => {
-        const s = (r.status_curseduca || "").toLowerCase();
-        return s.includes("implant");
-      });
-      const emRisco = eng.filter(r => r.alerta_inatividade === true);
+      // Row 1: counts from clients.status_curseduca (no filterActive for total)
+      const totalClientes = cls.length;
+      const ativos = cls.filter(r => r.status_curseduca === 'Ativo').length;
+      const emImpl = cls.filter(r => r.status_curseduca === 'Implantacao').length;
+      const emRisco = cls.filter(r => r.status_curseduca === 'Risco por Engajamento').length;
+      const cancelados = cls.filter(r => r.status_curseduca === 'Cancelado').length;
 
-      // receita from financeiro where is_plano
-      const engIds = new Set(eng.map(e => e.id_curseduca));
-      const relevantFin = fin.filter(f => engIds.has(f.id_curseduca));
-      const activeFin = relevantFin.filter(f => f.vigencia_assinatura === 'Ativa');
-      const receitaPlano = sum(activeFin.filter(f => f.is_plano).map(f => Number(f.valor_contratado) || 0));
-      const receitaUpsell = sum(activeFin.filter(f => f.is_upsell).map(f => Number(f.valor_contratado) || 0));
+      // Row 2: MRR from financeiro where vigencia_assinatura = 'Ativa'
+      const clsIds = new Set(cls.map(c => c.id_curseduca).filter(Boolean));
+      const relevantFin = fin.filter(f => clsIds.has(f.id_curseduca) && f.vigencia_assinatura === 'Ativa');
+      const receitaPlano = sum(relevantFin.filter(f => f.is_plano).map(f => Number(f.valor_contratado) || 0));
+      const receitaUpsell = sum(relevantFin.filter(f => f.is_upsell).map(f => Number(f.valor_contratado) || 0));
       const receitaTotal = receitaPlano + receitaUpsell;
 
-      const inadimplentes = eng.filter(r => (r.status_financeiro || "").toLowerCase().includes("inadimplente"));
-      const adimplentes = eng.filter(r => {
-        const sf = (r.status_financeiro || "").toLowerCase();
-        return sf.includes("adimplente") && !sf.includes("inadimplente");
-      });
+      // Valor inadimplente: assinaturas ativas com parcelas inadimplentes > 0
+      const receitaInadimplente = sum(relevantFin.filter(f => (Number(f.numero_parcelas_inadimplentes) || 0) > 0).map(f => Number(f.valor_contratado) || 0));
 
-      // Receita inadimplente
-      const inadIds = new Set(inadimplentes.map(e => e.id_curseduca));
-      const receitaInadimplente = sum(activeFin.filter(f => inadIds.has(f.id_curseduca) && f.is_plano).map(f => Number(f.valor_contratado) || 0));
-      const receitaAdimplente = receitaTotal - receitaInadimplente;
+      // Row 3: Adimplentes/Inadimplentes from clients.status_financeiro_inadimplencia
+      const adimplentes = cls.filter(r => r.status_financeiro_inadimplencia === 'Adimplente').length;
+      const inadimplentes = cls.filter(r => r.status_financeiro_inadimplencia === 'Inadimplente').length;
 
-      const diasLogin = ativos.map(r => r.dias_desde_ultimo_login).filter((d: any) => d != null);
-      const alunos = ativos.map(r => r.membros_mes_atual).filter((d: any) => d != null);
+      // Ticket medio: MRR Total / clientes não cancelados
+      const naoCanc = cls.filter(r => r.status_curseduca !== 'Cancelado').length;
+      const ticketMedio = naoCanc > 0 ? receitaTotal / naoCanc : 0;
+
+      // Média dias sem login e média alunos: de engajamento, apenas clientes ativos
+      const ativosIds = new Set(cls.filter(r => r.status_curseduca === 'Ativo').map(r => r.id_curseduca).filter(Boolean));
+      const engAtivos = eng.filter(e => ativosIds.has(e.id_curseduca));
+      const diasLogin = engAtivos.map(r => r.dias_desde_ultimo_login).filter((d: any) => d != null);
+      const alunos = engAtivos.map(r => r.membros_ativos_total).filter((d: any) => d != null);
 
       return json({
-        total_clientes: eng.length,
-        ativos: ativos.length,
-        em_implantacao: emImpl.length,
-        em_risco: emRisco.length,
-        adimplentes: adimplentes.length,
-        inadimplentes: inadimplentes.length,
+        total_clientes: totalClientes,
+        ativos,
+        em_implantacao: emImpl,
+        em_risco: emRisco,
+        cancelados,
+        adimplentes,
+        inadimplentes,
         receita_total: receitaTotal,
-        receita_adimplente: receitaAdimplente,
+        receita_planos: receitaPlano,
+        receita_upsell: receitaUpsell,
         receita_inadimplente: receitaInadimplente,
         mrr_upsell: receitaUpsell,
-        ticket_medio: eng.length > 0 ? receitaTotal / eng.length : 0,
+        ticket_medio: ticketMedio,
         media_dias_sem_login: diasLogin.length ? avg(diasLogin) : 0,
         media_alunos: alunos.length ? avg(alunos) : 0,
       });
@@ -223,25 +224,24 @@ Deno.serve(async (req) => {
     // METRIC: cancelados
     // ═══════════════════════════════════════════
     if (metric === "cancelados") {
-      const inat = await getInativos();
-      return json({ total_cancelados: inat.length });
+      const cls = filterByCS(await getClients(), csEmail, "cs_atual");
+      const cancelados = cls.filter(r => r.status_curseduca === 'Cancelado').length;
+      return json({ total_cancelados: cancelados });
     }
 
     // ═══════════════════════════════════════════
-    // METRIC: status
+    // METRIC: status (distribution by status_curseduca — NO filterActive)
     // ═══════════════════════════════════════════
     if (metric === "status") {
-      const eng = await filterActive(filterByCS(await getEngajamento(), csEmail));
-      const fin = await filterActive(await getFinanceiro());
+      const cls = filterByCS(await getClients(), csEmail, "cs_atual");
+      const fin = await getFinanceiro();
       const statusMap: Record<string, { total: number; ids: Set<string> }> = {};
 
-      for (const r of eng) {
-        let s = r.status_curseduca || "Sem status";
-        if (s.toLowerCase() === "active") s = "Ativo";
-        if (s.toLowerCase() === "block") s = "Cancelado";
+      for (const r of cls) {
+        const s = r.status_curseduca || "Sem status";
         if (!statusMap[s]) statusMap[s] = { total: 0, ids: new Set() };
         statusMap[s].total++;
-        statusMap[s].ids.add(r.id_curseduca);
+        if (r.id_curseduca) statusMap[s].ids.add(r.id_curseduca);
       }
 
       const result = Object.entries(statusMap).map(([status, v]) => {
@@ -252,20 +252,18 @@ Deno.serve(async (req) => {
     }
 
     // ═══════════════════════════════════════════
-    // METRIC: receita_por_status
+    // METRIC: receita_por_status (by status_curseduca — NO filterActive)
     // ═══════════════════════════════════════════
     if (metric === "receita_por_status") {
-      const eng = await filterActive(filterByCS(await getEngajamento(), csEmail));
-      const fin = await filterActive(await getFinanceiro());
+      const cls = filterByCS(await getClients(), csEmail, "cs_atual");
+      const fin = await getFinanceiro();
       const statusMap: Record<string, { total: number; ids: Set<string> }> = {};
 
-      for (const r of eng) {
-        let s = r.status_curseduca || "Sem status";
-        if (s.toLowerCase() === "active") s = "Ativo";
-        if (s.toLowerCase() === "block") s = "Cancelado";
+      for (const r of cls) {
+        const s = r.status_curseduca || "Sem status";
         if (!statusMap[s]) statusMap[s] = { total: 0, ids: new Set() };
         statusMap[s].total++;
-        statusMap[s].ids.add(r.id_curseduca);
+        if (r.id_curseduca) statusMap[s].ids.add(r.id_curseduca);
       }
 
       const result = Object.entries(statusMap).map(([status, v]) => {
@@ -276,11 +274,11 @@ Deno.serve(async (req) => {
     }
 
     // ═══════════════════════════════════════════
-    // METRIC: clientes_lista
+    // METRIC: clientes_lista (NO filterActive on clients)
     // ═══════════════════════════════════════════
     if (metric === "clientes_lista") {
-      const eng = await filterActive(filterByCS(await getEngajamento(), csEmail));
-      const fin = await filterActive(await getFinanceiro());
+      const cls = filterByCS(await getClients(), csEmail, "cs_atual");
+      const fin = await getFinanceiro();
       const finMap: Record<string, number> = {};
       for (const f of fin) {
         if (f.is_plano && f.vigencia_assinatura === 'Ativa') {
@@ -288,7 +286,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      const result = eng.map(r => ({
+      const result = cls.map(r => ({
         nome: r.nome,
         id_curseduca: r.id_curseduca,
         plano: r.plano,
@@ -296,7 +294,8 @@ Deno.serve(async (req) => {
         contrato_status: r.status_curseduca || "Sem status",
         cs_nome: r.cs_atual,
         status_financeiro: r.status_financeiro,
-        risco_churn: r.alerta_inatividade ? "alto" : null,
+        status_financeiro_inadimplencia: r.status_financeiro_inadimplencia,
+        risco_churn: r.status_curseduca === 'Risco por Engajamento' ? "alto" : null,
       }));
       return json(result);
     }
