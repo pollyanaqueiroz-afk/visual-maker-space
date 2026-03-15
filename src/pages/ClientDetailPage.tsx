@@ -447,6 +447,22 @@ export default function ClientDetailPage() {
           </div>
         </TabsContent>
 
+        <TabsContent value="engajamento" className="mt-4">
+          {client.id_curseduca ? (
+            <ClientEngajamentoBI idCurseduca={client.id_curseduca} />
+          ) : (
+            <p className="text-sm text-muted-foreground">Cliente sem ID Curseduca configurado.</p>
+          )}
+        </TabsContent>
+
+        <TabsContent value="produto" className="mt-4">
+          {client.id_curseduca ? (
+            <ClientProdutoBI idCurseduca={client.id_curseduca} />
+          ) : (
+            <p className="text-sm text-muted-foreground">Cliente sem ID Curseduca configurado.</p>
+          )}
+        </TabsContent>
+
         <TabsContent value="csat" className="mt-4">
           <ClientCsatSection
             clientUrl={client.client_url}
