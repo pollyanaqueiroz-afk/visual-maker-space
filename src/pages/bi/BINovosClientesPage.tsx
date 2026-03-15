@@ -4,9 +4,23 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { useDashboardBI, formatBRL, formatNumber } from '@/hooks/useDashboardBI';
-import { Loader2, Search, UserPlus, ChevronUp, ChevronDown } from 'lucide-react';
+import { Loader2, Search, UserPlus, ChevronUp, ChevronDown, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, PieChart, Pie, Cell } from 'recharts';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
+const InfoTip = ({ text }: { text: string }) => (
+  <TooltipProvider delayDuration={200}>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help inline ml-1.5 shrink-0" />
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-xs text-xs">
+        {text}
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+);
 
 interface NovoCliente {
   nome: string;
