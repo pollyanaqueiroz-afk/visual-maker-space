@@ -54,6 +54,7 @@ import ErrorCentralPage from "./pages/ErrorCentralPage";
 import ProdutoInsightsPage from "./pages/ProdutoInsightsPage";
 import ProdutoEntregasPage from "./pages/ProdutoEntregasPage";
 import InconsistenciasPage from "./pages/InconsistenciasPage";
+import DatabaseExplorerPage from "./pages/DatabaseExplorerPage";
 import ClienteLogin from "./pages/cliente/ClienteLogin";
 import ClienteHubLayout from "./pages/cliente/ClienteHubLayout";
 import ClienteHome from "./pages/cliente/ClienteHome";
@@ -126,6 +127,7 @@ const App = () => (
               <Route path="produto" element={<PermissionGuard permission="carteira.view"><ProdutoInsightsPage /></PermissionGuard>} />
               <Route path="produto/entregas" element={<PermissionGuard permission="carteira.view"><ProdutoEntregasPage /></PermissionGuard>} />
               <Route path="inconsistencias" element={<PermissionGuard permission="dashboards.view"><InconsistenciasPage /></PermissionGuard>} />
+              <Route path="admin/database" element={<PermissionGuard permission="admin.view"><DatabaseExplorerPage /></PermissionGuard>} />
             </Route>
             {/* CS Client Preview (impersonation) - outside hub layout */}
             <Route path="/hub/cliente-preview/:clienteId" element={<ClientePreviewWrapper />}>
