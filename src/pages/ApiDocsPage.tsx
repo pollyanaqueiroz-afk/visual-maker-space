@@ -400,7 +400,7 @@ export default function ApiDocsPage() {
             <CardHeader>
               <CardTitle className="text-lg">manage-data-api</CardTitle>
               <CardDescription>
-                Criar e atualizar registros nas entidades <code className="font-mono text-xs bg-muted px-1 rounded">clients</code> e <code className="font-mono text-xs bg-muted px-1 rounded">cliente_financeiro</code>.
+                Criar e atualizar registros nas entidades <code className="font-mono text-xs bg-muted px-1 rounded">clients</code>, <code className="font-mono text-xs bg-muted px-1 rounded">cliente_financeiro</code> e <code className="font-mono text-xs bg-muted px-1 rounded">cliente_engajamento_produto</code>.
                 Use o parâmetro <code className="font-mono text-xs bg-muted px-1 rounded">?entity=</code> para escolher a entidade (default: clients).
               </CardDescription>
             </CardHeader>
