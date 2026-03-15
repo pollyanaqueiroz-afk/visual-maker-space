@@ -563,15 +563,15 @@ Deno.serve(async (req) => {
     // METRIC: engajamento
     // ═══════════════════════════════════════════
     if (metric === "engajamento") {
-      const eng = filterByCS(await getEngajamento(), csEmail);
+      const cls = await getClients();
+      const activeIds = new Set(cls.filter(c => c.status_financeiro === 'Ativa').map(c => c.id_curseduca).filter(Boolean));
+      const eng = filterByCS(await getEngajamento(), csEmail).filter(r => activeIds.has(r.id_curseduca));
       const fin = await getFinanceiro();
       const finMap: Record<string, number> = {};
-      for (const f of fin) { if (f.is_plano) finMap[f.id_curseduca] = (finMap[f.id_curseduca] || 0) + (Number(f.valor_contratado) || 0); }
+      for (const f of fin) { if (f.is_plano && f.vigencia_assinatura === 'Ativa') finMap[f.id_curseduca] = (finMap[f.id_curseduca] || 0) + (Number(f.valor_contratado) || 0); }
 
       const faixas: Record<string, { total: number; receita: number }> = {};
       for (const r of eng) {
-        const s = (r.status_curseduca || "").toLowerCase();
-        if (s === "cancelado" || s === "block") continue;
         const faixa = bucketDias(r.dias_desde_ultimo_login);
         if (!faixas[faixa]) faixas[faixa] = { total: 0, receita: 0 };
         faixas[faixa].total++;
@@ -587,10 +587,12 @@ Deno.serve(async (req) => {
     // METRIC: membros
     // ═══════════════════════════════════════════
     if (metric === "membros") {
-      const eng = filterByCS(await getEngajamento(), csEmail);
+      const cls = await getClients();
+      const activeIds = new Set(cls.filter(c => c.status_financeiro === 'Ativa').map(c => c.id_curseduca).filter(Boolean));
+      const eng = filterByCS(await getEngajamento(), csEmail).filter(r => activeIds.has(r.id_curseduca));
       const fin = await getFinanceiro();
       const finMap: Record<string, number> = {};
-      for (const f of fin) { if (f.is_plano) finMap[f.id_curseduca] = (finMap[f.id_curseduca] || 0) + (Number(f.valor_contratado) || 0); }
+      for (const f of fin) { if (f.is_plano && f.vigencia_assinatura === 'Ativa') finMap[f.id_curseduca] = (finMap[f.id_curseduca] || 0) + (Number(f.valor_contratado) || 0); }
 
       const faixas: Record<string, { total: number; receita: number }> = {};
       const buckets = [
@@ -604,14 +606,11 @@ Deno.serve(async (req) => {
       ];
 
       for (const r of eng) {
-        const s = (r.status_curseduca || "").toLowerCase();
-        if (s === "cancelado" || s === "block") continue;
-        const m = r.membros_mes_atual ?? 0;
+        const m = r.membros_ativos_total ?? 0;
         const bucket = buckets.find(b => m >= b.min && m <= b.max) || { label: "Sem dado" };
-        const label = bucket.label;
-        if (!faixas[label]) faixas[label] = { total: 0, receita: 0 };
-        faixas[label].total++;
-        faixas[label].receita += finMap[r.id_curseduca] || 0;
+        if (!faixas[bucket.label]) faixas[bucket.label] = { total: 0, receita: 0 };
+        faixas[bucket.label].total++;
+        faixas[bucket.label].receita += finMap[r.id_curseduca] || 0;
       }
 
       const result = buckets.map(b => ({ faixa_alunos: b.label, total: faixas[b.label]?.total || 0, receita: faixas[b.label]?.receita || 0 }));
@@ -622,23 +621,21 @@ Deno.serve(async (req) => {
     // METRIC: uso_recursos
     // ═══════════════════════════════════════════
     if (metric === "uso_recursos") {
-      const eng = filterByCS(await getEngajamento(), csEmail);
-      const ativos = eng.filter(r => {
-        const s = (r.status_curseduca || "").toLowerCase();
-        return s === "ativo" || s === "active";
-      });
+      const cls = await getClients();
+      const activeIds = new Set(cls.filter(c => c.status_financeiro === 'Ativa').map(c => c.id_curseduca).filter(Boolean));
+      const eng = filterByCS(await getEngajamento(), csEmail).filter(r => activeIds.has(r.id_curseduca));
 
-      const bh = ativos.map(r => r.player_bandwidth_hired).filter((v: any) => v != null && v > 0);
-      const bu = ativos.map(r => r.player_bandwidth_used).filter((v: any) => v != null);
-      const sh = ativos.map(r => r.player_storage_hired).filter((v: any) => v != null && v > 0);
-      const su = ativos.map(r => r.player_storage_used).filter((v: any) => v != null);
-      const th = ativos.map(r => r.ai_tokens_hired).filter((v: any) => v != null && v > 0);
-      const tu = ativos.map(r => r.ai_tokens_used).filter((v: any) => v != null);
+      const bh = eng.map(r => r.player_bandwidth_hired).filter((v: any) => v != null && v > 0);
+      const bu = eng.map(r => r.player_bandwidth_used).filter((v: any) => v != null);
+      const sh = eng.map(r => r.player_storage_hired).filter((v: any) => v != null && v > 0);
+      const su = eng.map(r => r.player_storage_used).filter((v: any) => v != null);
+      const th = eng.map(r => r.ai_tokens_hired).filter((v: any) => v != null && v > 0);
+      const tu = eng.map(r => r.ai_tokens_used).filter((v: any) => v != null);
 
       const toGB = (bytes: number) => bytes / (1024 * 1024 * 1024);
 
       return json({
-        total_ativos: ativos.length,
+        total_ativos: eng.length,
         media_banda_contratada_gb: bh.length ? toGB(avg(bh)) : 0,
         media_banda_utilizada_gb: bu.length ? toGB(avg(bu)) : 0,
         media_storage_contratado_gb: sh.length ? toGB(avg(sh)) : 0,
@@ -651,6 +648,135 @@ Deno.serve(async (req) => {
         pct_uso_storage: sh.length ? avg(su) / avg(sh) : 0,
         pct_uso_tokens: th.length ? avg(tu) / avg(th) : 0,
       });
+    }
+
+    // ═══════════════════════════════════════════
+    // METRIC: eng_adocao_produto (product adoption rates)
+    // ═══════════════════════════════════════════
+    if (metric === "eng_adocao_produto") {
+      const cls = await getClients();
+      const activeIds = new Set(cls.filter(c => c.status_financeiro === 'Ativa').map(c => c.id_curseduca).filter(Boolean));
+      const eng = filterByCS(await getEngajamento(), csEmail).filter(r => activeIds.has(r.id_curseduca));
+      const total = eng.length || 1;
+
+      const usandoBanda = eng.filter(r => r.player_bandwidth_used != null && r.player_bandwidth_used > 0).length;
+      const usandoStorage = eng.filter(r => r.player_storage_used != null && r.player_storage_used > 0).length;
+      const usandoTokens = eng.filter(r => r.ai_tokens_used != null && r.ai_tokens_used > 0).length;
+      const usandoApp = eng.filter(r => r.taxa_adocao_app != null && r.taxa_adocao_app > 0).length;
+      const usandoCerts = eng.filter(r => r.certificates_mec_used != null && r.certificates_mec_used > 0).length;
+
+      return json([
+        { recurso: "Player (Banda)", usando: usandoBanda, pct: usandoBanda / total },
+        { recurso: "Player (Storage)", usando: usandoStorage, pct: usandoStorage / total },
+        { recurso: "Tokens IA", usando: usandoTokens, pct: usandoTokens / total },
+        { recurso: "App Mobile", usando: usandoApp, pct: usandoApp / total },
+        { recurso: "Certificados MEC", usando: usandoCerts, pct: usandoCerts / total },
+      ]);
+    }
+
+    // ═══════════════════════════════════════════
+    // METRIC: eng_retencao (retention & activation rates)
+    // ═══════════════════════════════════════════
+    if (metric === "eng_retencao") {
+      const cls = await getClients();
+      const activeIds = new Set(cls.filter(c => c.status_financeiro === 'Ativa').map(c => c.id_curseduca).filter(Boolean));
+      const eng = filterByCS(await getEngajamento(), csEmail).filter(r => activeIds.has(r.id_curseduca));
+
+      const retCliente = eng.map(r => r.taxa_retencao_cliente).filter((v: any) => v != null);
+      const retMembro = eng.map(r => r.taxa_retencao_membro).filter((v: any) => v != null);
+      const atiCliente = eng.map(r => r.taxa_ativacao_cliente).filter((v: any) => v != null);
+      const atiMembro = eng.map(r => r.taxa_ativacao_membro).filter((v: any) => v != null);
+      const adocaoApp = eng.map(r => r.taxa_adocao_app).filter((v: any) => v != null);
+      const tempoUso = eng.map(r => r.tempo_medio_uso_web_minutos).filter((v: any) => v != null);
+
+      return json({
+        total: eng.length,
+        media_retencao_cliente: retCliente.length ? avg(retCliente) : null,
+        media_retencao_membro: retMembro.length ? avg(retMembro) : null,
+        media_ativacao_cliente: atiCliente.length ? avg(atiCliente) : null,
+        media_ativacao_membro: atiMembro.length ? avg(atiMembro) : null,
+        media_adocao_app: adocaoApp.length ? avg(adocaoApp) : null,
+        media_tempo_uso_min: tempoUso.length ? avg(tempoUso) : null,
+      });
+    }
+
+    // ═══════════════════════════════════════════
+    // METRIC: eng_variacao_membros (member growth MoM)
+    // ═══════════════════════════════════════════
+    if (metric === "eng_variacao_membros") {
+      const cls = await getClients();
+      const activeIds = new Set(cls.filter(c => c.status_financeiro === 'Ativa').map(c => c.id_curseduca).filter(Boolean));
+      const eng = filterByCS(await getEngajamento(), csEmail).filter(r => activeIds.has(r.id_curseduca));
+
+      const buckets = [
+        { label: "Queda > 50%", min: -Infinity, max: -0.5 },
+        { label: "Queda 20-50%", min: -0.5, max: -0.2 },
+        { label: "Queda 1-20%", min: -0.2, max: -0.01 },
+        { label: "Estável", min: -0.01, max: 0.01 },
+        { label: "Crescimento 1-20%", min: 0.01, max: 0.2 },
+        { label: "Crescimento 20-50%", min: 0.2, max: 0.5 },
+        { label: "Crescimento > 50%", min: 0.5, max: Infinity },
+      ];
+
+      const varMap: Record<string, number> = {};
+      let semDado = 0;
+      for (const r of eng) {
+        const v = r.variacao_m0_vs_m1;
+        if (v == null) { semDado++; continue; }
+        const bucket = buckets.find(b => v > b.min && v <= b.max);
+        const label = bucket?.label || "Estável";
+        varMap[label] = (varMap[label] || 0) + 1;
+      }
+
+      const result = buckets.map(b => ({ faixa: b.label, total: varMap[b.label] || 0 }));
+      if (semDado > 0) result.push({ faixa: "Sem dado", total: semDado });
+      return json(result);
+    }
+
+    // ═══════════════════════════════════════════
+    // METRIC: eng_recorrencia_acesso
+    // ═══════════════════════════════════════════
+    if (metric === "eng_recorrencia_acesso") {
+      const cls = await getClients();
+      const activeIds = new Set(cls.filter(c => c.status_financeiro === 'Ativa').map(c => c.id_curseduca).filter(Boolean));
+      const eng = filterByCS(await getEngajamento(), csEmail).filter(r => activeIds.has(r.id_curseduca));
+
+      const map: Record<string, number> = {};
+      for (const r of eng) {
+        const rec = r.recorrencia_acesso || "Sem dado";
+        map[rec] = (map[rec] || 0) + 1;
+      }
+
+      const result = Object.entries(map)
+        .map(([recorrencia, total]) => ({ recorrencia, total }))
+        .sort((a, b) => b.total - a.total);
+      return json(result);
+    }
+
+    // ═══════════════════════════════════════════
+    // METRIC: eng_uso_excedente (clients exceeding hired resources)
+    // ═══════════════════════════════════════════
+    if (metric === "eng_uso_excedente") {
+      const cls = await getClients();
+      const activeIds = new Set(cls.filter(c => c.status_financeiro === 'Ativa').map(c => c.id_curseduca).filter(Boolean));
+      const eng = filterByCS(await getEngajamento(), csEmail).filter(r => activeIds.has(r.id_curseduca));
+      const fin = await getFinanceiro();
+      const finMap: Record<string, number> = {};
+      for (const f of fin) { if (f.is_plano && f.vigencia_assinatura === 'Ativa') finMap[f.id_curseduca] = (finMap[f.id_curseduca] || 0) + (Number(f.valor_contratado) || 0); }
+
+      const excedentesBanda = eng.filter(r => r.player_bandwidth_pct_uso != null && r.player_bandwidth_pct_uso > 1);
+      const excedentesStorage = eng.filter(r => r.player_storage_pct_uso != null && r.player_storage_pct_uso > 1);
+      const excedentesTokens = eng.filter(r => r.ai_tokens_pct_uso != null && r.ai_tokens_pct_uso > 1);
+
+      const receitaExcBanda = sum(excedentesBanda.map(r => finMap[r.id_curseduca] || 0));
+      const receitaExcStorage = sum(excedentesStorage.map(r => finMap[r.id_curseduca] || 0));
+      const receitaExcTokens = sum(excedentesTokens.map(r => finMap[r.id_curseduca] || 0));
+
+      return json([
+        { recurso: "Banda", excedentes: excedentesBanda.length, receita: receitaExcBanda },
+        { recurso: "Storage", excedentes: excedentesStorage.length, receita: receitaExcStorage },
+        { recurso: "Tokens IA", excedentes: excedentesTokens.length, receita: receitaExcTokens },
+      ]);
     }
 
     // ═══════════════════════════════════════════
