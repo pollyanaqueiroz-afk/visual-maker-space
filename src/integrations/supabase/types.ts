@@ -1573,6 +1573,7 @@ export type Database = {
           plano: string | null
           status_curseduca: string | null
           status_financeiro: string | null
+          status_financeiro_inadimplencia: string | null
           telefone_alternativo: string | null
           updated_at: string
         }
@@ -1589,6 +1590,7 @@ export type Database = {
           plano?: string | null
           status_curseduca?: string | null
           status_financeiro?: string | null
+          status_financeiro_inadimplencia?: string | null
           telefone_alternativo?: string | null
           updated_at?: string
         }
@@ -1605,6 +1607,7 @@ export type Database = {
           plano?: string | null
           status_curseduca?: string | null
           status_financeiro?: string | null
+          status_financeiro_inadimplencia?: string | null
           telefone_alternativo?: string | null
           updated_at?: string
         }
