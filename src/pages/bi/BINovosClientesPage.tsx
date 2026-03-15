@@ -141,7 +141,7 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
       {/* Timeline chart */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-semibold">Novos Clientes — Por Valor e Quantidade</CardTitle>
+          <CardTitle className="text-sm font-semibold">Novos Clientes — Por Valor e Quantidade <InfoTip text="Gráfico de barras duplas mostrando a evolução temporal da quantidade de novos clientes (eixo esquerdo) e o MRR gerado (eixo direito). Permite comparar volume vs. valor das aquisições ao longo do tempo. Filtro a partir de Jan/2026." /></CardTitle>
           <div className="flex gap-1">
             {(['dia', 'semana', 'mes'] as const).map(v => (
               <button key={v} onClick={() => setViewMode(v)}
