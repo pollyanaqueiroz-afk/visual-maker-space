@@ -183,8 +183,9 @@ Deno.serve(async (req) => {
       // receita from financeiro where is_plano
       const engIds = new Set(eng.map(e => e.id_curseduca));
       const relevantFin = fin.filter(f => engIds.has(f.id_curseduca));
-      const receitaPlano = sum(relevantFin.filter(f => f.is_plano).map(f => Number(f.valor_contratado) || 0));
-      const receitaUpsell = sum(relevantFin.filter(f => f.is_upsell).map(f => Number(f.valor_contratado) || 0));
+      const activeFin = relevantFin.filter(f => f.vigencia_assinatura === 'Ativa');
+      const receitaPlano = sum(activeFin.filter(f => f.is_plano).map(f => Number(f.valor_contratado) || 0));
+      const receitaUpsell = sum(activeFin.filter(f => f.is_upsell).map(f => Number(f.valor_contratado) || 0));
       const receitaTotal = receitaPlano + receitaUpsell;
 
       const inadimplentes = eng.filter(r => (r.status_financeiro || "").toLowerCase().includes("inadimplente"));
