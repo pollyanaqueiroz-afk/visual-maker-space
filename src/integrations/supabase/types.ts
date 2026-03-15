@@ -2561,6 +2561,10 @@ export type Database = {
         Args: { col_name: string; col_type?: string }
         Returns: undefined
       }
+      compute_client_status_financeiro: {
+        Args: { p_id_curseduca: string }
+        Returns: string
+      }
       criar_fases_cliente: {
         Args: { p_cliente_id: string; p_plataforma: string }
         Returns: undefined
