@@ -337,18 +337,26 @@ Deno.serve(async (req) => {
     // METRIC: financeiro
     // ═══════════════════════════════════════════
     if (metric === "financeiro") {
-      const eng = filterByCS(await getEngajamento(), csEmail);
+      const cls = await getClients();
+      const clsMap = new Map(cls.map(c => [c.id_curseduca, c]));
       const fin = await getFinanceiro();
-      const engIds = new Set(eng.map(e => e.id_curseduca));
-      const engMap = new Map(eng.map(e => [e.id_curseduca, e]));
 
-      // Group by status_financeiro × inadimplencia
+      const allowedIds = csEmail
+        ? new Set(cls.filter(c => c.cs_atual === csEmail).map(c => c.id_curseduca))
+        : null;
+
+      // Group by status_financeiro × inadimplencia — only active subscriptions
       const grouped: Record<string, { total: number; receita: number }> = {};
       for (const f of fin) {
-        if (!engIds.has(f.id_curseduca)) continue;
-        const e = engMap.get(f.id_curseduca);
+        if (f.vigencia_assinatura !== "Ativa") continue;
+        if (allowedIds && !allowedIds.has(f.id_curseduca)) continue;
+        const client = clsMap.get(f.id_curseduca);
         const sf = f.status || "Sem info";
-        const inadStr = (e?.status_financeiro || "").toLowerCase().includes("inadimplente") ? "Inadimplente" : (e?.status_financeiro || "").toLowerCase().includes("adimplente") ? "Adimplente" : "Sem info";
+        const inadStr = (client?.status_financeiro_inadimplencia || "").toLowerCase().includes("inadimplente")
+          ? "Inadimplente"
+          : (client?.status_financeiro_inadimplencia || "").toLowerCase().includes("adimplente")
+            ? "Adimplente"
+            : "Sem info";
         const key = `${sf}|${inadStr}`;
         if (!grouped[key]) grouped[key] = { total: 0, receita: 0 };
         grouped[key].total++;
@@ -372,13 +380,13 @@ Deno.serve(async (req) => {
       const engMap = new Map(eng.map(e => [e.id_curseduca, e]));
       const fin = await getFinanceiro();
 
-      // If csEmail filter, only include clients assigned to that CS
       const allowedIds = csEmail
         ? new Set(cls.filter(c => c.cs_atual === csEmail).map(c => c.id_curseduca))
         : null;
 
       const planoMap: Record<string, { total: number; ativos: number; cancelados: number; receita: number; alunos: number[] }> = {};
       for (const f of fin) {
+        if (f.vigencia_assinatura !== "Ativa") continue;
         if (!f.is_plano) continue;
         if (allowedIds && !allowedIds.has(f.id_curseduca)) continue;
         const p = f.nome_plano_master || f.plano || "Sem plano";
@@ -404,6 +412,106 @@ Deno.serve(async (req) => {
           receita: v.receita,
           media_alunos: v.alunos.length ? avg(v.alunos) : 0,
         }))
+        .sort((a, b) => b.receita - a.receita);
+      return json(result);
+    }
+
+    // ═══════════════════════════════════════════
+    // METRIC: financeiro_recorrencia
+    // ═══════════════════════════════════════════
+    if (metric === "financeiro_recorrencia") {
+      const cls = await getClients();
+      const fin = await getFinanceiro();
+      const allowedIds = csEmail
+        ? new Set(cls.filter(c => c.cs_atual === csEmail).map(c => c.id_curseduca))
+        : null;
+
+      const map: Record<string, { total: number; receita: number }> = {};
+      for (const f of fin) {
+        if (f.vigencia_assinatura !== "Ativa") continue;
+        if (allowedIds && !allowedIds.has(f.id_curseduca)) continue;
+        const key = f.recorrencia_pagamento || "Sem info";
+        if (!map[key]) map[key] = { total: 0, receita: 0 };
+        map[key].total++;
+        map[key].receita += Number(f.valor_contratado) || 0;
+      }
+      const result = Object.entries(map)
+        .map(([recorrencia, v]) => ({ recorrencia, ...v }))
+        .sort((a, b) => b.receita - a.receita);
+      return json(result);
+    }
+
+    // ═══════════════════════════════════════════
+    // METRIC: financeiro_meio_pagamento
+    // ═══════════════════════════════════════════
+    if (metric === "financeiro_meio_pagamento") {
+      const cls = await getClients();
+      const fin = await getFinanceiro();
+      const allowedIds = csEmail
+        ? new Set(cls.filter(c => c.cs_atual === csEmail).map(c => c.id_curseduca))
+        : null;
+
+      const map: Record<string, { total: number; receita: number }> = {};
+      for (const f of fin) {
+        if (f.vigencia_assinatura !== "Ativa") continue;
+        if (allowedIds && !allowedIds.has(f.id_curseduca)) continue;
+        const key = f.meio_pagamento || f.meio_de_pagamento || "Sem info";
+        if (!map[key]) map[key] = { total: 0, receita: 0 };
+        map[key].total++;
+        map[key].receita += Number(f.valor_contratado) || 0;
+      }
+      const result = Object.entries(map)
+        .map(([meio, v]) => ({ meio, ...v }))
+        .sort((a, b) => b.receita - a.receita);
+      return json(result);
+    }
+
+    // ═══════════════════════════════════════════
+    // METRIC: financeiro_plano_vs_upsell
+    // ═══════════════════════════════════════════
+    if (metric === "financeiro_plano_vs_upsell") {
+      const cls = await getClients();
+      const fin = await getFinanceiro();
+      const allowedIds = csEmail
+        ? new Set(cls.filter(c => c.cs_atual === csEmail).map(c => c.id_curseduca))
+        : null;
+
+      let receitaPlano = 0, receitaUpsell = 0, totalPlano = 0, totalUpsell = 0;
+      for (const f of fin) {
+        if (f.vigencia_assinatura !== "Ativa") continue;
+        if (allowedIds && !allowedIds.has(f.id_curseduca)) continue;
+        const val = Number(f.valor_contratado) || 0;
+        if (f.is_upsell) { receitaUpsell += val; totalUpsell++; }
+        else { receitaPlano += val; totalPlano++; }
+      }
+      return json([
+        { tipo: "Planos", total: totalPlano, receita: receitaPlano },
+        { tipo: "Upsells", total: totalUpsell, receita: receitaUpsell },
+      ]);
+    }
+
+    // ═══════════════════════════════════════════
+    // METRIC: financeiro_top_upsells
+    // ═══════════════════════════════════════════
+    if (metric === "financeiro_top_upsells") {
+      const cls = await getClients();
+      const fin = await getFinanceiro();
+      const allowedIds = csEmail
+        ? new Set(cls.filter(c => c.cs_atual === csEmail).map(c => c.id_curseduca))
+        : null;
+
+      const map: Record<string, { total: number; receita: number }> = {};
+      for (const f of fin) {
+        if (f.vigencia_assinatura !== "Ativa") continue;
+        if (!f.is_upsell) continue;
+        if (allowedIds && !allowedIds.has(f.id_curseduca)) continue;
+        const key = f.nome_plano_master || f.plano || "Sem nome";
+        if (!map[key]) map[key] = { total: 0, receita: 0 };
+        map[key].total++;
+        map[key].receita += Number(f.valor_contratado) || 0;
+      }
+      const result = Object.entries(map)
+        .map(([upsell, v]) => ({ upsell, ...v }))
         .sort((a, b) => b.receita - a.receita);
       return json(result);
     }
