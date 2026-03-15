@@ -183,8 +183,9 @@ Deno.serve(async (req) => {
       // receita from financeiro where is_plano
       const engIds = new Set(eng.map(e => e.id_curseduca));
       const relevantFin = fin.filter(f => engIds.has(f.id_curseduca));
-      const receitaPlano = sum(relevantFin.filter(f => f.is_plano).map(f => Number(f.valor_contratado) || 0));
-      const receitaUpsell = sum(relevantFin.filter(f => f.is_upsell).map(f => Number(f.valor_contratado) || 0));
+      const activeFin = relevantFin.filter(f => f.vigencia_assinatura === 'Ativa');
+      const receitaPlano = sum(activeFin.filter(f => f.is_plano).map(f => Number(f.valor_contratado) || 0));
+      const receitaUpsell = sum(activeFin.filter(f => f.is_upsell).map(f => Number(f.valor_contratado) || 0));
       const receitaTotal = receitaPlano + receitaUpsell;
 
       const inadimplentes = eng.filter(r => (r.status_financeiro || "").toLowerCase().includes("inadimplente"));
@@ -195,7 +196,7 @@ Deno.serve(async (req) => {
 
       // Receita inadimplente
       const inadIds = new Set(inadimplentes.map(e => e.id_curseduca));
-      const receitaInadimplente = sum(relevantFin.filter(f => inadIds.has(f.id_curseduca) && f.is_plano).map(f => Number(f.valor_contratado) || 0));
+      const receitaInadimplente = sum(activeFin.filter(f => inadIds.has(f.id_curseduca) && f.is_plano).map(f => Number(f.valor_contratado) || 0));
       const receitaAdimplente = receitaTotal - receitaInadimplente;
 
       const diasLogin = ativos.map(r => r.dias_desde_ultimo_login).filter((d: any) => d != null);
@@ -244,7 +245,7 @@ Deno.serve(async (req) => {
       }
 
       const result = Object.entries(statusMap).map(([status, v]) => {
-        const receita = sum(fin.filter(f => v.ids.has(f.id_curseduca) && f.is_plano).map(f => Number(f.valor_contratado) || 0));
+        const receita = sum(fin.filter(f => v.ids.has(f.id_curseduca) && f.is_plano && f.vigencia_assinatura === 'Ativa').map(f => Number(f.valor_contratado) || 0));
         return { status, total: v.total, receita };
       });
       return json(result);
@@ -268,7 +269,7 @@ Deno.serve(async (req) => {
       }
 
       const result = Object.entries(statusMap).map(([status, v]) => {
-        const receita = sum(fin.filter(f => v.ids.has(f.id_curseduca) && f.is_plano).map(f => Number(f.valor_contratado) || 0));
+        const receita = sum(fin.filter(f => v.ids.has(f.id_curseduca) && f.is_plano && f.vigencia_assinatura === 'Ativa').map(f => Number(f.valor_contratado) || 0));
         return { status, total: v.total, receita, ticket_medio: v.total > 0 ? receita / v.total : null };
       });
       return json(result);
@@ -282,7 +283,7 @@ Deno.serve(async (req) => {
       const fin = await filterActive(await getFinanceiro());
       const finMap: Record<string, number> = {};
       for (const f of fin) {
-        if (f.is_plano) {
+        if (f.is_plano && f.vigencia_assinatura === 'Ativa') {
           finMap[f.id_curseduca] = (finMap[f.id_curseduca] || 0) + (Number(f.valor_contratado) || 0);
         }
       }
@@ -307,7 +308,7 @@ Deno.serve(async (req) => {
       const fin = await filterActive(await getFinanceiro());
       const eng = await filterActive(filterByCS(await getEngajamento(), csEmail));
       const engIds = new Set(eng.map(e => e.id_curseduca));
-      const relevant = fin.filter(f => engIds.has(f.id_curseduca));
+      const relevant = fin.filter(f => engIds.has(f.id_curseduca) && f.vigencia_assinatura === 'Ativa');
 
       const granularity = metric === "mrr_mensal" ? "mes" : "semana";
 
