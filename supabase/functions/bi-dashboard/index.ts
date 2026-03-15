@@ -166,8 +166,8 @@ Deno.serve(async (req) => {
     // METRIC: overview
     // ═══════════════════════════════════════════
     if (metric === "overview") {
-      const eng = filterByCS(await getEngajamento(), csEmail);
-      const fin = await getFinanceiro();
+      const eng = await filterActive(filterByCS(await getEngajamento(), csEmail));
+      const fin = await filterActive(await getFinanceiro());
       const inat = await getInativos();
 
       const ativos = eng.filter(r => {
