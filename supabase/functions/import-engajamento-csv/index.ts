@@ -125,7 +125,9 @@ Deno.serve(async (req) => {
         if (!h) continue;
         row[h] = toVal(values[j] || "", h);
       }
-      if (row.id_curseduca) {
+      if (row.id_curseduca && String(row.id_curseduca).trim()) {
+        // Trim the id_curseduca value
+        row.id_curseduca = String(row.id_curseduca).trim();
         row.updated_at = new Date().toISOString();
         rows.push(row);
       }
