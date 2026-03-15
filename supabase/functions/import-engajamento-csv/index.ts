@@ -86,7 +86,26 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const csvText = await req.text();
+    let csvText: string;
+    const contentType = req.headers.get("content-type") || "";
+    
+    if (contentType.includes("application/json")) {
+      const body = await req.json();
+      if (body.csv_url) {
+        const resp = await fetch(body.csv_url);
+        csvText = await resp.text();
+      } else if (body.csv_text) {
+        csvText = body.csv_text;
+      } else {
+        return new Response(
+          JSON.stringify({ error: "Provide csv_url or csv_text in JSON body" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    } else {
+      csvText = await req.text();
+    }
+
     const lines = csvText.split("\n").filter((l) => l.trim().length > 0);
     if (lines.length < 2) {
       return new Response(
