@@ -855,28 +855,27 @@ Deno.serve(async (req) => {
     // METRIC: implantacao_clientes
     // ═══════════════════════════════════════════
     if (metric === "implantacao_clientes") {
-      const eng = filterByCS(await getEngajamento(), csEmail);
+      const cls = filterByCS(await getClients(), csEmail, "cs_atual");
+      const impl = cls.filter(r => r.status_curseduca === 'Implantacao');
       const fin = await getFinanceiro();
+      const eng = await getEngajamento();
       const finMap: Record<string, number> = {};
-      for (const f of fin) { if (f.is_plano) finMap[f.id_curseduca] = (finMap[f.id_curseduca] || 0) + (Number(f.valor_contratado) || 0); }
-
-      const impl = eng.filter(r => {
-        const s = (r.status_curseduca || "").toLowerCase();
-        return s.includes("implant");
-      });
+      for (const f of fin) { if (f.is_plano && f.vigencia_assinatura === 'Ativa') finMap[f.id_curseduca] = (finMap[f.id_curseduca] || 0) + (Number(f.valor_contratado) || 0); }
+      const engMap = new Map(eng.map((e: any) => [e.id_curseduca, e]));
 
       const result = impl.map(r => {
+        const e = engMap.get(r.id_curseduca);
         const diasContrato = r.data_criacao ? Math.floor((Date.now() - new Date(r.data_criacao).getTime()) / (1000 * 60 * 60 * 24)) : null;
         return {
           nome: r.nome,
           id_curseduca: r.id_curseduca,
           plano: r.plano,
           receita: finMap[r.id_curseduca] || 0,
-          status_financeiro: r.status_financeiro,
-          risco_churn: r.alerta_inatividade ? "alto" : null,
+          status_financeiro: r.status_financeiro_inadimplencia || '—',
+          risco_churn: r.status_curseduca === 'Risco por Engajamento' ? 'alto' : null,
           dias_contrato: diasContrato,
           dias_desde_primeiro_aluno: null,
-          membros_mes_atual: r.membros_mes_atual,
+          membros_mes_atual: e?.membros_ativos_total ?? 0,
           cs_nome: r.cs_atual,
         };
       });
@@ -887,17 +886,22 @@ Deno.serve(async (req) => {
     // METRIC: implantacao_overview
     // ═══════════════════════════════════════════
     if (metric === "implantacao_overview") {
-      const eng = filterByCS(await getEngajamento(), csEmail);
-      const impl = eng.filter(r => (r.status_curseduca || "").toLowerCase().includes("implant"));
+      const cls = filterByCS(await getClients(), csEmail, "cs_atual");
+      const impl = cls.filter(r => r.status_curseduca === 'Implantacao');
 
-      const adimplente = impl.filter(r => !(r.status_financeiro || "").toLowerCase().includes("inadimplente"));
-      const inadimplente = impl.filter(r => (r.status_financeiro || "").toLowerCase().includes("inadimplente"));
+      const adimplente = impl.filter(r => r.status_financeiro_inadimplencia === 'Adimplente');
+      const inadimplente = impl.filter(r => r.status_financeiro_inadimplencia === 'Inadimplente');
+
+      const eng = await getEngajamento();
+      const engMap = new Map(eng.map((e: any) => [e.id_curseduca, e]));
+      const above5 = impl.filter(r => {
+        const e = engMap.get(r.id_curseduca);
+        return e && (e.membros_ativos_total || 0) > 5;
+      });
 
       const churnData = filterByCS(await getChurn(), csEmail, "cs_email");
-      const churnImpl = churnData.filter(c => {
-        const e = eng.find(r => r.id_curseduca === c.id_curseduca);
-        return e && (e.status_curseduca || "").toLowerCase().includes("implant");
-      });
+      const implIds = new Set(impl.map(r => r.id_curseduca).filter(Boolean));
+      const churnImpl = churnData.filter(c => implIds.has(c.id_curseduca));
 
       return json({
         total_implantacao: impl.length,
@@ -905,6 +909,7 @@ Deno.serve(async (req) => {
         pct_inadimplente: impl.length > 0 ? (inadimplente.length / impl.length) * 100 : 0,
         churn_em_implantacao: churnImpl.length,
         pct_churn_implantacao: impl.length > 0 ? (churnImpl.length / impl.length) * 100 : 0,
+        above_5_students: above5.length,
       });
     }
 
@@ -912,15 +917,11 @@ Deno.serve(async (req) => {
     // METRIC: implantacao_finalizada_dia/semana/mes
     // ═══════════════════════════════════════════
     if (metric === "implantacao_finalizada_dia" || metric === "implantacao_finalizada_semana" || metric === "implantacao_finalizada_mes") {
-      // Approximate: clients that were in implantation and now are active
-      // Use data_criacao as proxy since we don't have exact "finished implantation" date
-      const eng = await getEngajamento();
+      const cls = await getClients();
       const granularity = metric.endsWith("dia") ? "dia" : metric.endsWith("semana") ? "semana" : "mes";
 
-      const active = eng.filter(r => {
-        const s = (r.status_curseduca || "").toLowerCase();
-        return s === "ativo" || s === "active";
-      });
+      // Clients that are now Ativo (graduated from implantation)
+      const active = cls.filter(r => r.status_curseduca === 'Ativo');
 
       const periodMap: Record<string, number> = {};
       for (const r of active) {
