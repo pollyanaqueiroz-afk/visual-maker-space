@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import ClientInteractionHistory from '@/components/carteira/ClientInteractionHistory';
 import ClientCsatSection from '@/components/carteira/ClientCsatSection';
+import ClientEngajamentoBI from '@/components/carteira/ClientEngajamentoBI';
+import ClientProdutoBI from '@/components/carteira/ClientProdutoBI';
 import { usePermissions } from '@/hooks/usePermissions';
 import {
   ArrowLeft, Save, Loader2, Edit2, Check, X, Plus, User, Globe, DollarSign,
@@ -383,6 +385,12 @@ export default function ClientDetailPage() {
           <TabsTrigger value="dados" className="gap-1.5">
             <Settings className="h-3.5 w-3.5" /> Dados
           </TabsTrigger>
+          <TabsTrigger value="engajamento" className="gap-1.5">
+            <BarChart3 className="h-3.5 w-3.5" /> Engajamento
+          </TabsTrigger>
+          <TabsTrigger value="produto" className="gap-1.5">
+            <Globe className="h-3.5 w-3.5" /> Produto
+          </TabsTrigger>
           <TabsTrigger value="csat" className="gap-1.5">
             <MessageSquare className="h-3.5 w-3.5" /> CSAT
           </TabsTrigger>
@@ -437,6 +445,22 @@ export default function ClientDetailPage() {
             <span>Criado em: {client.created_at ? new Date(client.created_at).toLocaleDateString('pt-BR') : '—'}</span>
             <span>Atualizado em: {client.updated_at ? new Date(client.updated_at).toLocaleDateString('pt-BR') : '—'}</span>
           </div>
+        </TabsContent>
+
+        <TabsContent value="engajamento" className="mt-4">
+          {client.id_curseduca ? (
+            <ClientEngajamentoBI idCurseduca={client.id_curseduca} />
+          ) : (
+            <p className="text-sm text-muted-foreground">Cliente sem ID Curseduca configurado.</p>
+          )}
+        </TabsContent>
+
+        <TabsContent value="produto" className="mt-4">
+          {client.id_curseduca ? (
+            <ClientProdutoBI idCurseduca={client.id_curseduca} />
+          ) : (
+            <p className="text-sm text-muted-foreground">Cliente sem ID Curseduca configurado.</p>
+          )}
         </TabsContent>
 
         <TabsContent value="csat" className="mt-4">
