@@ -98,7 +98,6 @@ export default function DatabaseExplorerPage() {
 
   // Fetch data for active table
   useEffect(() => {
-    if (tableData[activeTable]?.rows.length) return; // already loaded
     fetchTableData(activeTable);
   }, [activeTable]);
 
