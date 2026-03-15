@@ -80,6 +80,7 @@ export default function BIDashboardPage() {
         <TabsContent value="financeiro"><BIFinanceiroPage csEmail={csEmail} /></TabsContent>
         <TabsContent value="cs"><BICustomerSuccessPage csEmail={csEmail} onSelectCS={(email) => setCsFilter(email)} /></TabsContent>
         <TabsContent value="engajamento"><BIEngajamentoPage csEmail={csEmail} /></TabsContent>
+        <TabsContent value="validacao"><BIValidacaoPage /></TabsContent>
       </Tabs>
     </div>
   );
