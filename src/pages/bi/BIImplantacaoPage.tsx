@@ -119,7 +119,7 @@ export default function BIImplantacaoPage({ csEmail }: { csEmail?: string }) {
         <Card className="border-none shadow-[var(--shadow-kpi)]">
           <CardContent className="p-4 text-center">
             <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{">"} 5 Alunos (Sair)</p>
-            <p className="text-2xl font-extrabold text-warning">{formatNumber(clientes.filter(c => (c.membros_mes_atual || 0) > 5).length)}</p>
+            <p className="text-2xl font-extrabold text-warning">{formatNumber(ov.above_5_students)}</p>
           </CardContent>
         </Card>
       </div>
