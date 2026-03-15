@@ -308,7 +308,7 @@ Deno.serve(async (req) => {
       const fin = await filterActive(await getFinanceiro());
       const eng = await filterActive(filterByCS(await getEngajamento(), csEmail));
       const engIds = new Set(eng.map(e => e.id_curseduca));
-      const relevant = fin.filter(f => engIds.has(f.id_curseduca));
+      const relevant = fin.filter(f => engIds.has(f.id_curseduca) && f.vigencia_assinatura === 'Ativa');
 
       const granularity = metric === "mrr_mensal" ? "mes" : "semana";
 
