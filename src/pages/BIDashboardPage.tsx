@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useDashboardBI } from '@/hooks/useDashboardBI';
-import { RefreshCw, X, BarChart3, DollarSign, Headset, Activity, AlertTriangle, Globe, UserPlus, Construction } from 'lucide-react';
+import { RefreshCw, X, BarChart3, DollarSign, Headset, Activity, UserPlus, Construction } from 'lucide-react';
 import BIOverviewPage from './bi/BIOverviewPage';
 import BIFinanceiroPage from './bi/BIFinanceiroPage';
 import BICustomerSuccessPage from './bi/BICustomerSuccessPage';
