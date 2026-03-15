@@ -1,10 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { useDashboardBI, formatBRL, formatNumber } from '@/hooks/useDashboardBI';
-import { Loader2, Search, UserPlus, ChevronUp, ChevronDown, Info } from 'lucide-react';
+import { Loader2, Search, UserPlus, ChevronUp, ChevronDown, Info, Users, DollarSign, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, PieChart, Pie, Cell } from 'recharts';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -24,6 +24,7 @@ const InfoTip = ({ text }: { text: string }) => (
 
 interface NovoCliente {
   nome: string;
+  email?: string;
   id_curseduca?: string;
   plano?: string;
   receita?: number;
@@ -41,10 +42,9 @@ interface NovosTimeline {
 interface NovosPorPlano {
   plano: string;
   total: number;
-  receita: number;
 }
 
-const PIE_COLORS = ['#22c55e', '#3b82f6', '#eab308', '#8b5cf6', '#ec4899', '#f97316', '#6b7280'];
+const PIE_COLORS = ['#64748b', '#3b82f6', '#94a3b8', '#6366f1', '#a1a1aa', '#475569', '#818cf8'];
 
 export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
   const { data: clientesData, loading: l1 } = useDashboardBI<NovoCliente[]>('novos_clientes', csEmail);
@@ -54,7 +54,7 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
   const { data: porPlanoData } = useDashboardBI<NovosPorPlano[]>('novos_por_plano', csEmail);
 
   const [search, setSearch] = useState('');
-  const [viewMode, setViewMode] = useState<'dia' | 'semana' | 'mes'>('mes');
+  const [viewMode, setViewMode] = useState<'dia' | 'semana' | 'mes'>('dia');
   const [sortKey, setSortKey] = useState<'nome' | 'receita' | 'data_ativacao'>('data_ativacao');
   const [sortAsc, setSortAsc] = useState(false);
 
@@ -64,21 +64,16 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
   const totalNovos = clientes.length;
   const totalReceita = clientes.reduce((s, c) => s + (c.receita || 0), 0);
 
-  // Filter from Jan 2026
-  const filterFrom2026 = (arr: NovosTimeline[] | null) => {
-    if (!arr) return [];
-    return arr.filter(d => d.periodo >= '2026-01');
-  };
-
-  const timelineData = viewMode === 'dia' ? filterFrom2026(timelineDia) :
-    viewMode === 'semana' ? filterFrom2026(timelineSemana) : filterFrom2026(timelineMes);
+  const timelineData = viewMode === 'dia' ? (timelineDia || []) :
+    viewMode === 'semana' ? (timelineSemana || []) : (timelineMes || []);
 
   const planoData = (porPlanoData || []).map((p, i) => ({ ...p, fill: PIE_COLORS[i % PIE_COLORS.length] }));
+  const planosDistintos = planoData.length;
 
   const filtered = clientes.filter(c => {
     if (!search) return true;
     const q = search.toLowerCase();
-    return (c.nome || '').toLowerCase().includes(q) || (c.plano || '').toLowerCase().includes(q);
+    return (c.nome || '').toLowerCase().includes(q) || (c.email || '').toLowerCase().includes(q) || (c.plano || '').toLowerCase().includes(q);
   });
 
   const sorted = [...filtered].sort((a, b) => {
@@ -97,42 +92,42 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
     <div className="space-y-6">
       {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        <Card className="border-none shadow-[var(--shadow-kpi)]">
+        <Card className="bg-card border shadow-sm">
           <CardContent className="p-4 flex items-start justify-between gap-2">
             <div>
               <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                Novos Clientes <InfoTip text="Contagem total de clientes novos retornados pela API. Representa todos os clientes ativados no período selecionado." />
+                Novos Clientes <InfoTip text="Clientes com data_criacao nos últimos 15 dias. Contagem distinta por id_curseduca." />
               </p>
-              <p className="text-2xl font-extrabold tracking-tight">{formatNumber(totalNovos)}</p>
+              <p className="text-2xl font-extrabold tracking-tight text-foreground">{formatNumber(totalNovos)}</p>
             </div>
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-success/10 text-success">
-              <UserPlus className="h-4 w-4" />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+              <Users className="h-4 w-4" />
             </div>
           </CardContent>
         </Card>
-        <Card className="border-none shadow-[var(--shadow-kpi)]">
+        <Card className="bg-card border shadow-sm">
           <CardContent className="p-4 flex items-start justify-between gap-2">
             <div>
               <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                MRR Novos <InfoTip text="Soma da receita recorrente mensal (MRR) de todos os novos clientes. Mostra o impacto financeiro das novas aquisições." />
+                MRR Novos <InfoTip text="Soma de valor_contratado com is_plano=TRUE e vigencia_assinatura='Ativa' dos novos clientes (15 dias)." />
               </p>
-              <p className="text-2xl font-extrabold tracking-tight">{formatBRL(totalReceita)}</p>
+              <p className="text-2xl font-extrabold tracking-tight text-foreground">{formatBRL(totalReceita)}</p>
             </div>
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-success/10 text-success">
-              <UserPlus className="h-4 w-4" />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+              <DollarSign className="h-4 w-4" />
             </div>
           </CardContent>
         </Card>
-        <Card className="border-none shadow-[var(--shadow-kpi)]">
+        <Card className="bg-card border shadow-sm">
           <CardContent className="p-4 flex items-start justify-between gap-2">
             <div>
               <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                Planos Distintos <InfoTip text="Quantidade de tipos de plano diferentes entre os novos clientes. Ajuda a entender a diversificação de planos nas novas aquisições." />
+                Planos Distintos <InfoTip text="Quantidade de tipo_plano distintos entre os novos clientes (is_plano=TRUE)." />
               </p>
-              <p className="text-2xl font-extrabold tracking-tight">{planoData.length}</p>
+              <p className="text-2xl font-extrabold tracking-tight text-foreground">{planosDistintos}</p>
             </div>
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-info/10 text-info">
-              <UserPlus className="h-4 w-4" />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+              <Layers className="h-4 w-4" />
             </div>
           </CardContent>
         </Card>
@@ -141,7 +136,7 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
       {/* Timeline chart */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-semibold">Novos Clientes — Por Valor e Quantidade <InfoTip text="Gráfico de barras duplas mostrando a evolução temporal da quantidade de novos clientes (eixo esquerdo) e o MRR gerado (eixo direito). Permite comparar volume vs. valor das aquisições ao longo do tempo. Filtro a partir de Jan/2026." /></CardTitle>
+          <CardTitle className="text-sm font-semibold">Novos Clientes — Quantidade e MRR <InfoTip text="Barras = quantidade de novos clientes. Eixo direito = MRR (is_plano + vigencia Ativa). Filtro: últimos 15 dias." /></CardTitle>
           <div className="flex gap-1">
             {(['dia', 'semana', 'mes'] as const).map(v => (
               <button key={v} onClick={() => setViewMode(v)}
@@ -163,18 +158,18 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
                 <YAxis yAxisId="right" orientation="right" tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 10 }} />
                 <RechartsTooltip formatter={(v: number, name: string) => name === 'receita' ? formatBRL(v) : formatNumber(v)} />
                 <Legend />
-                <Bar yAxisId="left" dataKey="total" name="Qtd Novos" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
-                <Bar yAxisId="right" dataKey="receita" name="MRR Novos" fill="hsl(var(--info))" radius={[4, 4, 0, 0]} />
+                <Bar yAxisId="left" dataKey="total" name="Qtd Novos" fill="#64748b" radius={[4, 4, 0, 0]} />
+                <Bar yAxisId="right" dataKey="receita" name="MRR Novos" fill="#3b82f6" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
-          ) : <p className="text-muted-foreground text-sm text-center py-8">Dados ainda não disponíveis na API</p>}
+          ) : <p className="text-muted-foreground text-sm text-center py-8">Sem dados no período</p>}
         </CardContent>
       </Card>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* By plan pie */}
+        {/* By tipo_plano pie */}
         <Card>
-          <CardHeader><CardTitle className="text-sm font-semibold">Novos por Tipo de Plano <InfoTip text="Distribuição percentual dos novos clientes por tipo de plano. Identifica quais planos atraem mais clientes e ajuda no direcionamento comercial." /></CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-semibold">Novos por Tipo de Plano <InfoTip text="Distribuição por tipo_plano (is_plano=TRUE) dos novos clientes. Contagem distinta de id_curseduca por tipo." /></CardTitle></CardHeader>
           <CardContent>
             {planoData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
@@ -194,10 +189,10 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
         {/* Client table */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-4">
-            <CardTitle className="text-sm font-semibold">Lista de Novos ({filtered.length}) <InfoTip text="Tabela com todos os novos clientes, ordenável por nome, MRR e data de ativação. Permite busca por nome ou plano. Exibe até 50 registros." /></CardTitle>
+            <CardTitle className="text-sm font-semibold">Lista de Novos ({filtered.length}) <InfoTip text="Novos clientes (15 dias). Colunas: nome, email, plano, MRR (vigência ativa), data de ativação." /></CardTitle>
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 max-w-xs h-8 text-sm" />
+              <Input placeholder="Buscar nome ou email..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 max-w-xs h-8 text-sm" />
             </div>
           </CardHeader>
           <CardContent className="overflow-y-auto max-h-[400px]">
@@ -213,7 +208,12 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
               <TableBody>
                 {sorted.slice(0, 50).map((c, i) => (
                   <TableRow key={i}>
-                    <TableCell className="font-medium text-sm">{c.nome || '—'}</TableCell>
+                    <TableCell>
+                      <div>
+                        <span className="font-medium text-sm">{c.nome || '—'}</span>
+                        {c.email && <p className="text-[11px] text-muted-foreground">{c.email}</p>}
+                      </div>
+                    </TableCell>
                     <TableCell><Badge variant="outline" className="text-[10px]">{c.plano || '—'}</Badge></TableCell>
                     <TableCell className="text-right">{formatBRL(c.receita)}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{c.data_ativacao || '—'}</TableCell>
