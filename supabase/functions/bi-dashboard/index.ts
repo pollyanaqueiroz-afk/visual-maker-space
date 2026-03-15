@@ -196,7 +196,7 @@ Deno.serve(async (req) => {
 
       // Receita inadimplente
       const inadIds = new Set(inadimplentes.map(e => e.id_curseduca));
-      const receitaInadimplente = sum(relevantFin.filter(f => inadIds.has(f.id_curseduca) && f.is_plano).map(f => Number(f.valor_contratado) || 0));
+      const receitaInadimplente = sum(activeFin.filter(f => inadIds.has(f.id_curseduca) && f.is_plano).map(f => Number(f.valor_contratado) || 0));
       const receitaAdimplente = receitaTotal - receitaInadimplente;
 
       const diasLogin = ativos.map(r => r.dias_desde_ultimo_login).filter((d: any) => d != null);
