@@ -7,6 +7,7 @@ import { useDashboardBI, formatBRL, formatNumber, formatPct } from '@/hooks/useD
 import { Loader2, Search, Construction, ChevronUp, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
+import { InfoTip } from '@/components/ui/InfoTip';
 
 interface ImplantacaoCliente {
   nome: string;
@@ -55,17 +56,14 @@ export default function BIImplantacaoPage({ csEmail }: { csEmail?: string }) {
   const clientes = Array.isArray(clientesData) ? clientesData : [];
   const ov = overview || { total_implantacao: clientes.length, pct_adimplente: 0, pct_inadimplente: 0, churn_em_implantacao: 0, pct_churn_implantacao: 0, above_5_students: 0 };
 
-  // By plan
   const planCounts: Record<string, number> = {};
   clientes.forEach(c => { const p = c.plano || 'Sem plano'; planCounts[p] = (planCounts[p] || 0) + 1; });
   const planData = Object.entries(planCounts).sort((a, b) => b[1] - a[1]).map(([name, value], i) => ({ name, value, fill: PIE_COLORS[i % PIE_COLORS.length] }));
 
-  // By risk
   const riskCounts: Record<string, number> = {};
   clientes.forEach(c => { const r = c.risco_churn || 'sem_info'; riskCounts[r] = (riskCounts[r] || 0) + 1; });
   const riskData = Object.entries(riskCounts).sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value, fill: RISK_COLORS[name] || '#9ca3af' }));
 
-  // Finalized timeline
   const filterFrom2026 = (arr: ImplantacaoFinalizada[] | null) => (arr || []).filter(d => d.periodo >= '2026-01');
   const finData = finView === 'dia' ? filterFrom2026(finDia) : finView === 'semana' ? filterFrom2026(finSemana) : filterFrom2026(finMes);
 
@@ -75,7 +73,6 @@ export default function BIImplantacaoPage({ csEmail }: { csEmail?: string }) {
     return (c.nome || '').toLowerCase().includes(q) || (c.plano || '').toLowerCase().includes(q);
   });
 
-  // Clients with >5 students should exit implantation - flag them
   const sorted = [...filtered].sort((a, b) => {
     const va = a[sortKey] ?? 0, vb = b[sortKey] ?? 0;
     return sortAsc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
@@ -89,45 +86,43 @@ export default function BIImplantacaoPage({ csEmail }: { csEmail?: string }) {
 
   return (
     <div className="space-y-6">
-      {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <Card className="border-none shadow-[var(--shadow-kpi)]">
           <CardContent className="p-4 text-center">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Em Implantação</p>
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Em Implantação <InfoTip text="clients.status_curseduca = Implantacao. Critério: membros_ativos_total < 5." /></p>
             <p className="text-2xl font-extrabold">{formatNumber(ov.total_implantacao)}</p>
           </CardContent>
         </Card>
         <Card className="border-none shadow-[var(--shadow-kpi)]">
           <CardContent className="p-4 text-center">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">% Adimplente</p>
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">% Adimplente <InfoTip text="clients.status_financeiro_inadimplencia = Adimplente ÷ total em implantação." /></p>
             <p className="text-2xl font-extrabold text-success">{formatPct(ov.pct_adimplente)}</p>
           </CardContent>
         </Card>
         <Card className="border-none shadow-[var(--shadow-kpi)]">
           <CardContent className="p-4 text-center">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">% Inadimplente</p>
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">% Inadimplente <InfoTip text="clients.status_financeiro_inadimplencia = Inadimplente ÷ total em implantação." /></p>
             <p className="text-2xl font-extrabold text-destructive">{formatPct(ov.pct_inadimplente)}</p>
           </CardContent>
         </Card>
         <Card className="border-none shadow-[var(--shadow-kpi)]">
           <CardContent className="p-4 text-center">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Churn em Implantação</p>
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Churn em Implantação <InfoTip text="clients.status_financeiro = Cancelada dentre os clientes em implantação." /></p>
             <p className="text-2xl font-extrabold text-destructive">{formatNumber(ov.churn_em_implantacao)}</p>
             <span className="text-[10px] text-muted-foreground">{formatPct(ov.pct_churn_implantacao)}</span>
           </CardContent>
         </Card>
         <Card className="border-none shadow-[var(--shadow-kpi)]">
           <CardContent className="p-4 text-center">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{">"} 5 Alunos (Sair)</p>
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{">"} 5 Alunos (Sair) <InfoTip text="cliente_engajamento_produto.membros_ativos_total >= 5 dentre os em implantação. Estes deveriam sair da fase de implantação." /></p>
             <p className="text-2xl font-extrabold text-warning">{formatNumber(ov.above_5_students)}</p>
           </CardContent>
         </Card>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* By plan */}
         <Card>
-          <CardHeader><CardTitle className="text-sm font-semibold">Por Tipo de Plano</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-semibold">Por Tipo de Plano <InfoTip text="clients.plano — Contagem de clientes em implantação agrupados por plano." /></CardTitle></CardHeader>
           <CardContent>
             {planData.length > 0 ? (
               <ResponsiveContainer width="100%" height={250}>
@@ -144,9 +139,8 @@ export default function BIImplantacaoPage({ csEmail }: { csEmail?: string }) {
           </CardContent>
         </Card>
 
-        {/* By risk */}
         <Card>
-          <CardHeader><CardTitle className="text-sm font-semibold">Por Nível de Risco</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-semibold">Por Nível de Risco <InfoTip text="Calculado pelo BI: clientes em implantação classificados por risco de churn (baixo, médio, alto, crítico) com base em dias_desde_ultimo_login e variação de membros." /></CardTitle></CardHeader>
           <CardContent>
             {riskData.length > 0 ? (
               <ResponsiveContainer width="100%" height={250}>
@@ -164,10 +158,9 @@ export default function BIImplantacaoPage({ csEmail }: { csEmail?: string }) {
         </Card>
       </div>
 
-      {/* Implantação finalizada timeline */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-semibold">Implantação Finalizada</CardTitle>
+          <CardTitle className="text-sm font-semibold">Implantação Finalizada <InfoTip text="Contagem de clientes que saíram do status Implantacao (membros_ativos_total >= 5) agrupados por período (data em que atingiram 5 alunos)." /></CardTitle>
           <div className="flex gap-1">
             {(['dia', 'semana', 'mes'] as const).map(v => (
               <button key={v} onClick={() => setFinView(v)}
@@ -194,10 +187,9 @@ export default function BIImplantacaoPage({ csEmail }: { csEmail?: string }) {
         </CardContent>
       </Card>
 
-      {/* Client table */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4">
-          <CardTitle className="text-sm font-semibold">Clientes em Implantação ({filtered.length})</CardTitle>
+          <CardTitle className="text-sm font-semibold">Clientes em Implantação ({filtered.length}) <InfoTip text="clients + cliente_financeiro + cliente_engajamento_produto. Colunas: nome, plano, MRR (valor_contratado vigência Ativa), status financeiro (inadimplência), risco churn, dias de contrato (CURRENT_DATE - data_criacao), alunos (membros_mes_atual), CS (cs_atual)." /></CardTitle>
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 max-w-xs h-8 text-sm" />

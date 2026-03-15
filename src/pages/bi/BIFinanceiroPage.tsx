@@ -8,6 +8,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   PieChart, Pie, Cell,
 } from 'recharts';
+import { InfoTip } from '@/components/ui/InfoTip';
 
 interface FinItem { status_financeiro: string; inadimplencia: string; total: number; receita: number; }
 interface PlanoItem { plano: string; total: number; ativos: number; cancelados: number; receita: number; media_alunos: number; }
@@ -36,7 +37,6 @@ export default function BIFinanceiroPage({ csEmail }: { csEmail?: string }) {
 
   if (l1 || l2) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
-  // Group financeiro data by status_financeiro
   const grouped = (finData || []).reduce((acc, item) => {
     if (!acc[item.status_financeiro]) acc[item.status_financeiro] = [];
     acc[item.status_financeiro].push(item);
@@ -49,7 +49,6 @@ export default function BIFinanceiroPage({ csEmail }: { csEmail?: string }) {
     return row;
   });
 
-  // Planos
   const top15 = (planosData || []).slice(0, 15);
   const filteredPlanos = (planosData || []).filter(p => p.plano.toLowerCase().includes(search.toLowerCase()));
   const sorted = [...filteredPlanos].sort((a, b) => {
@@ -66,25 +65,17 @@ export default function BIFinanceiroPage({ csEmail }: { csEmail?: string }) {
 
   const SortIcon = ({ col }: { col: keyof PlanoItem }) => sortKey === col ? (sortAsc ? <ChevronUp className="h-3 w-3 inline ml-1" /> : <ChevronDown className="h-3 w-3 inline ml-1" />) : null;
 
-  // Plano vs Upsell pie data
   const pvuData = (planoVsUpsell || []).map((d, i) => ({ ...d, fill: PLANO_UPSELL_COLORS[i] || PIE_COLORS[i] }));
   const pvuTotal = pvuData.reduce((s, d) => s + d.receita, 0);
-
-  // Recorrencia pie data
   const recData = (recorrenciaData || []).map((d, i) => ({ name: d.recorrencia, value: d.receita, total: d.total, fill: PIE_COLORS[i % PIE_COLORS.length] }));
-
-  // Meio pagamento pie data
   const meioChartData = (meioData || []).map((d, i) => ({ name: d.meio, value: d.receita, total: d.total, fill: PIE_COLORS[i % PIE_COLORS.length] }));
-
-  // Top upsells
   const top15Upsells = (topUpsells || []).slice(0, 15);
 
   return (
     <div className="space-y-6">
-      {/* Row 1: Plano vs Upsell + Recorrência */}
       <div className="grid lg:grid-cols-2 gap-6">
         <Card>
-          <CardHeader><CardTitle className="text-sm font-semibold">Plano vs Upsell (Receita Ativa)</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-semibold">Plano vs Upsell (Receita Ativa) <InfoTip text="cliente_financeiro.valor_contratado — Segmenta por is_plano e is_upsell. Filtro: vigencia_assinatura = Ativa." /></CardTitle></CardHeader>
           <CardContent>
             {pvuData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
@@ -105,7 +96,7 @@ export default function BIFinanceiroPage({ csEmail }: { csEmail?: string }) {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-sm font-semibold">Receita por Recorrência</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-semibold">Receita por Recorrência <InfoTip text="cliente_financeiro.recorrencia_pagamento — Soma de valor_contratado agrupado por tipo de recorrência (Mensal, Anual, etc). Filtro: vigencia_assinatura = Ativa." /></CardTitle></CardHeader>
           <CardContent>
             {recData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
@@ -126,10 +117,9 @@ export default function BIFinanceiroPage({ csEmail }: { csEmail?: string }) {
         </Card>
       </div>
 
-      {/* Row 2: Meio Pagamento + Distribuição Financeira */}
       <div className="grid lg:grid-cols-2 gap-6">
         <Card>
-          <CardHeader><CardTitle className="text-sm font-semibold">Receita por Meio de Pagamento</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-semibold">Receita por Meio de Pagamento <InfoTip text="cliente_financeiro.meio_de_pagamento — Soma de valor_contratado agrupado por meio (Cartão, Pix, Boleto, etc). Filtro: vigencia_assinatura = Ativa." /></CardTitle></CardHeader>
           <CardContent>
             {meioChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
@@ -150,7 +140,7 @@ export default function BIFinanceiroPage({ csEmail }: { csEmail?: string }) {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-sm font-semibold">Distribuição Financeira</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-semibold">Distribuição Financeira <InfoTip text="cliente_financeiro — Contagem agrupada por clients.status_financeiro (Ativa/Cancelada) × cliente_financeiro.status (Adimplente/Inadimplente). Filtro: vigencia_assinatura = Ativa." /></CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={stackedData}>
@@ -168,9 +158,8 @@ export default function BIFinanceiroPage({ csEmail }: { csEmail?: string }) {
         </Card>
       </div>
 
-      {/* Top 15 Planos Chart */}
       <Card>
-        <CardHeader><CardTitle className="text-sm font-semibold">Top 15 Planos por Receita</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-sm font-semibold">Top 15 Planos por Receita <InfoTip text="cliente_financeiro.tipo_plano — Soma de valor_contratado agrupado por plano (is_plano=TRUE). Filtro: vigencia_assinatura = Ativa. Ordenado por receita desc." /></CardTitle></CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={400}>
             <BarChart data={top15} layout="vertical" margin={{ left: 10 }}>
@@ -184,9 +173,8 @@ export default function BIFinanceiroPage({ csEmail }: { csEmail?: string }) {
         </CardContent>
       </Card>
 
-      {/* Top 15 Upsells Chart */}
       <Card>
-        <CardHeader><CardTitle className="text-sm font-semibold">Top 15 Upsells por Receita</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-sm font-semibold">Top 15 Upsells por Receita <InfoTip text="cliente_financeiro.tipo_plano — Soma de valor_contratado onde is_upsell=TRUE. Filtro: vigencia_assinatura = Ativa. Ordenado por receita desc." /></CardTitle></CardHeader>
         <CardContent>
           {top15Upsells.length > 0 ? (
             <ResponsiveContainer width="100%" height={400}>
@@ -202,10 +190,9 @@ export default function BIFinanceiroPage({ csEmail }: { csEmail?: string }) {
         </CardContent>
       </Card>
 
-      {/* Full Planos Table */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4">
-          <CardTitle className="text-sm font-semibold">Todos os Planos ({(planosData || []).length})</CardTitle>
+          <CardTitle className="text-sm font-semibold">Todos os Planos ({(planosData || []).length}) <InfoTip text="cliente_financeiro — Agrupado por tipo_plano. Colunas: total (contagem), ativos (vigencia_assinatura=Ativa), receita (soma valor_contratado), média alunos (cliente_engajamento_produto.membros_ativos_total)." /></CardTitle>
           <Input placeholder="Buscar plano..." value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} className="max-w-xs h-8 text-sm" />
         </CardHeader>
         <CardContent className="overflow-x-auto">
