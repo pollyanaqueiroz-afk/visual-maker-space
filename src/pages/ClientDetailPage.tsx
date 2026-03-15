@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import ClientInteractionHistory from '@/components/carteira/ClientInteractionHistory';
 import ClientCsatSection from '@/components/carteira/ClientCsatSection';
+import ClientEngajamentoBI from '@/components/carteira/ClientEngajamentoBI';
+import ClientProdutoBI from '@/components/carteira/ClientProdutoBI';
 import { usePermissions } from '@/hooks/usePermissions';
 import {
   ArrowLeft, Save, Loader2, Edit2, Check, X, Plus, User, Globe, DollarSign,
