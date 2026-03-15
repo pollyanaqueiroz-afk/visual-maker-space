@@ -126,6 +126,55 @@ const financeiroFields = [
   { name: 'processed_at', type: 'timestamp', required: false, description: 'Data de processamento' },
 ];
 
+const engajamentoProdutoFields = [
+  { name: 'id_curseduca', type: 'text', required: true, description: 'Identificador único do cliente no Curseduca' },
+  { name: 'nome', type: 'text', required: false, description: 'Nome do cliente' },
+  { name: 'email', type: 'text', required: false, description: 'E-mail do cliente' },
+  { name: 'cs_atual', type: 'text', required: false, description: 'CS responsável atual' },
+  { name: 'plano', type: 'text', required: false, description: 'Plano contratado' },
+  { name: 'status_financeiro', type: 'text', required: false, description: 'Status financeiro' },
+  { name: 'status_curseduca', type: 'text', required: false, description: 'Status na plataforma' },
+  { name: 'indice_fidelidade', type: 'integer', required: false, description: 'Índice de fidelização (1-5)' },
+  { name: 'data_criacao', type: 'timestamp', required: false, description: 'Data de criação do cliente' },
+  { name: 'data_ultimo_login', type: 'timestamp', required: false, description: 'Data do último login' },
+  { name: 'recorrencia_acesso', type: 'text', required: false, description: 'Recorrência de acesso' },
+  { name: 'tempo_medio_uso_web_minutos', type: 'integer', required: false, description: 'Tempo médio de uso web (minutos)' },
+  { name: 'membros_mes_atual', type: 'integer', required: false, description: 'Membros no mês atual' },
+  { name: 'membros_mes_m1', type: 'integer', required: false, description: 'Membros M-1' },
+  { name: 'membros_mes_m2', type: 'integer', required: false, description: 'Membros M-2' },
+  { name: 'membros_mes_m3', type: 'integer', required: false, description: 'Membros M-3' },
+  { name: 'membros_mes_m4', type: 'integer', required: false, description: 'Membros M-4' },
+  { name: 'membros_ativos_total', type: 'integer', required: false, description: 'Total de membros ativos' },
+  { name: 'variacao_m0_vs_m1', type: 'numeric', required: false, description: 'Variação % M0 vs M1' },
+  { name: 'variacao_m1_vs_m2', type: 'numeric', required: false, description: 'Variação % M1 vs M2' },
+  { name: 'variacao_m2_vs_m3', type: 'numeric', required: false, description: 'Variação % M2 vs M3' },
+  { name: 'variacao_m3_vs_m4', type: 'numeric', required: false, description: 'Variação % M3 vs M4' },
+  { name: 'taxa_retencao_cliente', type: 'numeric', required: false, description: 'Taxa de retenção do cliente (%)' },
+  { name: 'taxa_retencao_membro', type: 'numeric', required: false, description: 'Taxa de retenção de membros (%)' },
+  { name: 'taxa_ativacao_cliente', type: 'numeric', required: false, description: 'Taxa de ativação do cliente (%)' },
+  { name: 'taxa_ativacao_membro', type: 'numeric', required: false, description: 'Taxa de ativação de membros (%)' },
+  { name: 'taxa_adocao_app', type: 'numeric', required: false, description: 'Taxa de adoção do app (%)' },
+  { name: 'dias_desde_ultimo_login', type: 'integer', required: false, description: 'Dias desde o último login' },
+  { name: 'dias_sem_interacao', type: 'integer', required: false, description: 'Dias sem interação' },
+  { name: 'alerta_inatividade', type: 'boolean', required: false, description: 'Alerta de inatividade ativo?' },
+  { name: 'player_bandwidth_hired', type: 'numeric', required: false, description: 'Banda contratada (Player)' },
+  { name: 'player_bandwidth_used', type: 'numeric', required: false, description: 'Banda usada (Player)' },
+  { name: 'player_bandwidth_pct_uso', type: 'numeric', required: false, description: '% de uso de banda (Player)' },
+  { name: 'player_storage_hired', type: 'numeric', required: false, description: 'Storage contratado (Player)' },
+  { name: 'player_storage_used', type: 'numeric', required: false, description: 'Storage usado (Player)' },
+  { name: 'player_storage_pct_uso', type: 'numeric', required: false, description: '% de uso de storage (Player)' },
+  { name: 'ai_tokens_hired', type: 'integer', required: false, description: 'Tokens IA contratados' },
+  { name: 'ai_tokens_used', type: 'integer', required: false, description: 'Tokens IA usados' },
+  { name: 'ai_tokens_pct_uso', type: 'numeric', required: false, description: '% de uso de tokens IA' },
+  { name: 'certificates_mec_hired', type: 'integer', required: false, description: 'Certificados MEC contratados' },
+  { name: 'certificates_mec_used', type: 'integer', required: false, description: 'Certificados MEC usados' },
+  { name: 'certificates_mec_pct_uso', type: 'numeric', required: false, description: '% de uso de certificados MEC' },
+  { name: 'cobranca_automatica_banda_excedente', type: 'boolean', required: false, description: 'Cobrança automática de banda excedente' },
+  { name: 'cobranca_automatica_token_excedente', type: 'boolean', required: false, description: 'Cobrança automática de tokens excedentes' },
+  { name: 'gatilho_upgrade_100alunos', type: 'boolean', required: false, description: 'Gatilho de upgrade para 100 alunos' },
+  { name: 'processed_at', type: 'timestamp', required: false, description: 'Data de processamento' },
+];
+
 const ENTITIES_LIST = [
   'clients', 'meetings', 'briefing_requests', 'briefing_images', 'briefing_adjustments',
   'briefing_deliveries', 'briefing_reviews', 'brand_assets', 'app_clientes', 'app_fases',
@@ -133,7 +182,7 @@ const ENTITIES_LIST = [
   'app_notificacoes', 'kanban_boards', 'kanban_columns', 'kanban_card_positions',
   'carteirizacao_planos', 'carteirizacao_etapas', 'carteirizacao_cs', 'carteirizacao_ferias',
   'client_interactions', 'client_field_definitions', 'meeting_csat', 'meeting_reschedules',
-  'scorm_packages', 'profiles', 'cliente_financeiro',
+  'scorm_packages', 'profiles', 'cliente_financeiro', 'cliente_engajamento_produto',
 ];
 
 export default function ApiDocsPage() {
@@ -351,7 +400,7 @@ export default function ApiDocsPage() {
             <CardHeader>
               <CardTitle className="text-lg">manage-data-api</CardTitle>
               <CardDescription>
-                Criar e atualizar registros nas entidades <code className="font-mono text-xs bg-muted px-1 rounded">clients</code> e <code className="font-mono text-xs bg-muted px-1 rounded">cliente_financeiro</code>.
+                Criar e atualizar registros nas entidades <code className="font-mono text-xs bg-muted px-1 rounded">clients</code>, <code className="font-mono text-xs bg-muted px-1 rounded">cliente_financeiro</code> e <code className="font-mono text-xs bg-muted px-1 rounded">cliente_engajamento_produto</code>.
                 Use o parâmetro <code className="font-mono text-xs bg-muted px-1 rounded">?entity=</code> para escolher a entidade (default: clients).
               </CardDescription>
             </CardHeader>
@@ -470,6 +519,50 @@ export default function ApiDocsPage() {
     "numero_parcelas_inadimplentes": 2,
     "valor_contratado": 497
   }'`} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* PATCH cliente_engajamento_produto */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Badge className="bg-amber-500/10 text-amber-600 border-amber-200">PATCH</Badge>
+                <CardTitle className="text-base font-mono">/manage-data-api?entity=cliente_engajamento_produto&id_curseduca=12345</CardTitle>
+              </div>
+              <CardDescription>
+                Atualizar/upsert dados de engajamento e produto pelo <code className="font-mono text-xs bg-muted px-1 rounded">id_curseduca</code>.
+                Se o registro não existir, será criado automaticamente (modo UPSERT).
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div>
+                <h4 className="text-sm font-semibold mb-2">Parâmetros de query</h4>
+                <FieldsTable fields={[
+                  { name: 'entity', type: 'text', required: true, description: 'cliente_engajamento_produto' },
+                  { name: 'id_curseduca', type: 'text', required: true, description: 'Identificador do cliente' },
+                ]} />
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold mb-2">Exemplo</h4>
+                <CodeBlock code={`curl -X PATCH '${BASE_URL}/manage-data-api?entity=cliente_engajamento_produto&id_curseduca=12345' \\
+  -H 'Authorization: Basic ${API_TOKEN}' \\
+  -H 'Content-Type: application/json' \\
+  -d '{
+    "membros_mes_atual": 150,
+    "taxa_retencao_cliente": 85.5,
+    "player_bandwidth_pct_uso": 72,
+    "alerta_inatividade": false
+  }'`} />
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold mb-2">Campos aceitos (cliente_engajamento_produto)</h4>
+                <FieldsTable fields={engajamentoProdutoFields} />
+              </div>
+              <div className="bg-blue-500/10 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-700 font-medium">
+                  💡 <strong>Modo UPSERT:</strong> Esta entidade suporta criação automática. Se o <code className="font-mono text-xs bg-blue-100 px-1 rounded">id_curseduca</code> não existir na tabela, um novo registro será criado com os dados enviados.
+                </p>
               </div>
             </CardContent>
           </Card>
