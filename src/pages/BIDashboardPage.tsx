@@ -10,6 +10,7 @@ import BIFinanceiroPage from './bi/BIFinanceiroPage';
 import BICustomerSuccessPage from './bi/BICustomerSuccessPage';
 import BIEngajamentoPage from './bi/BIEngajamentoPage';
 import BIOrigensPage from './bi/BIOrigensPage';
+import BINovosClientesPage from './bi/BINovosClientesPage';
 import BIImplantacaoPage from './bi/BIImplantacaoPage';
 
 interface CSItem { cs_nome: string; cs_email: string; total: number; }
