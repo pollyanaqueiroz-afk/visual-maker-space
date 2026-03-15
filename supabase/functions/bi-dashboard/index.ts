@@ -105,6 +105,20 @@ Deno.serve(async (req) => {
       return clients;
     };
 
+    // Helper: get set of id_curseduca where clients.status_financeiro = 'Ativa'
+    let _activeIds: Set<string> | null = null;
+    const getActiveClientIds = async (): Promise<Set<string>> => {
+      if (!_activeIds) {
+        const cls = await getClients();
+        _activeIds = new Set(cls.filter((c: any) => c.status_financeiro === 'Ativa').map((c: any) => c.id_curseduca).filter(Boolean));
+      }
+      return _activeIds;
+    };
+    const filterActive = async (rows: any[], field = "id_curseduca") => {
+      const ids = await getActiveClientIds();
+      return rows.filter((r: any) => ids.has(r[field]));
+    };
+
     // ═══════════════════════════════════════════
     // METRIC: cs
     // ═══════════════════════════════════════════
