@@ -126,7 +126,6 @@ export default function BIOverviewPage({ csEmail }: { csEmail?: string }) {
   const { data, loading, error } = useDashboardBI<OverviewData>('overview', csEmail);
   const { data: statusData, loading: l2 } = useDashboardBI<StatusItem[]>('status', csEmail);
   const { data: receitaData, loading: l3 } = useDashboardBI<ReceitaItem[]>('receita_por_status', csEmail);
-  const { data: canceladosData, loading: l4 } = useDashboardBI<CanceladosData>('cancelados', csEmail);
   const { data: mrrSemanal } = useDashboardBI<MRRWeekly[]>('mrr_semanal', csEmail);
   const { data: mrrMensal } = useDashboardBI<MRRWeekly[]>('mrr_mensal', csEmail);
 
@@ -135,13 +134,13 @@ export default function BIOverviewPage({ csEmail }: { csEmail?: string }) {
   const [modalType, setModalType] = useState<string | null>(null);
   const [mrrView, setMrrView] = useState<'semanal' | 'mensal'>('mensal');
 
-  if (loading || l2 || l3 || l4) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  if (loading || l2 || l3) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   if (error || !data) return <div className="text-destructive p-4">Erro: {error}</div>;
 
   const mrrTotal = data.receita_total;
   const mrrUpsell = data.mrr_upsell || 0;
-  const mrrPlanos = mrrTotal - mrrUpsell;
-  const valorInadimplente = data.receita_inadimplente || (data.receita_total - data.receita_adimplente);
+  const mrrPlanos = data.receita_planos || (mrrTotal - mrrUpsell);
+  const valorInadimplente = data.receita_inadimplente || 0;
 
   const getModalClients = (): ClientDetail[] => {
     if (!allClients || !Array.isArray(allClients)) return [];
