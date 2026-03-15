@@ -1292,6 +1292,156 @@ export type Database = {
         }
         Relationships: []
       }
+      cliente_engajamento_produto: {
+        Row: {
+          ai_tokens_hired: number | null
+          ai_tokens_pct_uso: number | null
+          ai_tokens_used: number | null
+          alerta_inatividade: boolean | null
+          certificates_mec_hired: number | null
+          certificates_mec_pct_uso: number | null
+          certificates_mec_used: number | null
+          cobranca_automatica_banda_excedente: boolean | null
+          cobranca_automatica_token_excedente: boolean | null
+          cs_atual: string | null
+          data_criacao: string | null
+          data_ultimo_login: string | null
+          dias_desde_ultimo_login: number | null
+          dias_sem_interacao: number | null
+          email: string | null
+          gatilho_upgrade_100alunos: boolean | null
+          id_curseduca: string
+          indice_fidelidade: number | null
+          membros_ativos_total: number | null
+          membros_mes_atual: number | null
+          membros_mes_m1: number | null
+          membros_mes_m2: number | null
+          membros_mes_m3: number | null
+          membros_mes_m4: number | null
+          nome: string | null
+          plano: string | null
+          player_bandwidth_hired: number | null
+          player_bandwidth_pct_uso: number | null
+          player_bandwidth_used: number | null
+          player_storage_hired: number | null
+          player_storage_pct_uso: number | null
+          player_storage_used: number | null
+          processed_at: string | null
+          recorrencia_acesso: string | null
+          status_curseduca: string | null
+          status_financeiro: string | null
+          taxa_adocao_app: number | null
+          taxa_ativacao_cliente: number | null
+          taxa_ativacao_membro: number | null
+          taxa_retencao_cliente: number | null
+          taxa_retencao_membro: number | null
+          tempo_medio_uso_web_minutos: number | null
+          updated_at: string
+          variacao_m0_vs_m1: number | null
+          variacao_m1_vs_m2: number | null
+          variacao_m2_vs_m3: number | null
+          variacao_m3_vs_m4: number | null
+        }
+        Insert: {
+          ai_tokens_hired?: number | null
+          ai_tokens_pct_uso?: number | null
+          ai_tokens_used?: number | null
+          alerta_inatividade?: boolean | null
+          certificates_mec_hired?: number | null
+          certificates_mec_pct_uso?: number | null
+          certificates_mec_used?: number | null
+          cobranca_automatica_banda_excedente?: boolean | null
+          cobranca_automatica_token_excedente?: boolean | null
+          cs_atual?: string | null
+          data_criacao?: string | null
+          data_ultimo_login?: string | null
+          dias_desde_ultimo_login?: number | null
+          dias_sem_interacao?: number | null
+          email?: string | null
+          gatilho_upgrade_100alunos?: boolean | null
+          id_curseduca: string
+          indice_fidelidade?: number | null
+          membros_ativos_total?: number | null
+          membros_mes_atual?: number | null
+          membros_mes_m1?: number | null
+          membros_mes_m2?: number | null
+          membros_mes_m3?: number | null
+          membros_mes_m4?: number | null
+          nome?: string | null
+          plano?: string | null
+          player_bandwidth_hired?: number | null
+          player_bandwidth_pct_uso?: number | null
+          player_bandwidth_used?: number | null
+          player_storage_hired?: number | null
+          player_storage_pct_uso?: number | null
+          player_storage_used?: number | null
+          processed_at?: string | null
+          recorrencia_acesso?: string | null
+          status_curseduca?: string | null
+          status_financeiro?: string | null
+          taxa_adocao_app?: number | null
+          taxa_ativacao_cliente?: number | null
+          taxa_ativacao_membro?: number | null
+          taxa_retencao_cliente?: number | null
+          taxa_retencao_membro?: number | null
+          tempo_medio_uso_web_minutos?: number | null
+          updated_at?: string
+          variacao_m0_vs_m1?: number | null
+          variacao_m1_vs_m2?: number | null
+          variacao_m2_vs_m3?: number | null
+          variacao_m3_vs_m4?: number | null
+        }
+        Update: {
+          ai_tokens_hired?: number | null
+          ai_tokens_pct_uso?: number | null
+          ai_tokens_used?: number | null
+          alerta_inatividade?: boolean | null
+          certificates_mec_hired?: number | null
+          certificates_mec_pct_uso?: number | null
+          certificates_mec_used?: number | null
+          cobranca_automatica_banda_excedente?: boolean | null
+          cobranca_automatica_token_excedente?: boolean | null
+          cs_atual?: string | null
+          data_criacao?: string | null
+          data_ultimo_login?: string | null
+          dias_desde_ultimo_login?: number | null
+          dias_sem_interacao?: number | null
+          email?: string | null
+          gatilho_upgrade_100alunos?: boolean | null
+          id_curseduca?: string
+          indice_fidelidade?: number | null
+          membros_ativos_total?: number | null
+          membros_mes_atual?: number | null
+          membros_mes_m1?: number | null
+          membros_mes_m2?: number | null
+          membros_mes_m3?: number | null
+          membros_mes_m4?: number | null
+          nome?: string | null
+          plano?: string | null
+          player_bandwidth_hired?: number | null
+          player_bandwidth_pct_uso?: number | null
+          player_bandwidth_used?: number | null
+          player_storage_hired?: number | null
+          player_storage_pct_uso?: number | null
+          player_storage_used?: number | null
+          processed_at?: string | null
+          recorrencia_acesso?: string | null
+          status_curseduca?: string | null
+          status_financeiro?: string | null
+          taxa_adocao_app?: number | null
+          taxa_ativacao_cliente?: number | null
+          taxa_ativacao_membro?: number | null
+          taxa_retencao_cliente?: number | null
+          taxa_retencao_membro?: number | null
+          tempo_medio_uso_web_minutos?: number | null
+          updated_at?: string
+          variacao_m0_vs_m1?: number | null
+          variacao_m1_vs_m2?: number | null
+          variacao_m2_vs_m3?: number | null
+          variacao_m3_vs_m4?: number | null
+        }
+        Relationships: []
+      }
       cliente_financeiro: {
         Row: {
           codigo_assinatura_meio_pagamento: string | null
