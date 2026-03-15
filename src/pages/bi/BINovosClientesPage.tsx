@@ -100,7 +100,9 @@ export default function BINovosClientesPage({ csEmail }: { csEmail?: string }) {
         <Card className="border-none shadow-[var(--shadow-kpi)]">
           <CardContent className="p-4 flex items-start justify-between gap-2">
             <div>
-              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Novos Clientes</p>
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                Novos Clientes <InfoTip text="Contagem total de clientes novos retornados pela API. Representa todos os clientes ativados no período selecionado." />
+              </p>
               <p className="text-2xl font-extrabold tracking-tight">{formatNumber(totalNovos)}</p>
             </div>
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-success/10 text-success">
