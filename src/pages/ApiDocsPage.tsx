@@ -523,6 +523,50 @@ export default function ApiDocsPage() {
             </CardContent>
           </Card>
 
+          {/* PATCH cliente_engajamento_produto */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Badge className="bg-amber-500/10 text-amber-600 border-amber-200">PATCH</Badge>
+                <CardTitle className="text-base font-mono">/manage-data-api?entity=cliente_engajamento_produto&id_curseduca=12345</CardTitle>
+              </div>
+              <CardDescription>
+                Atualizar/upsert dados de engajamento e produto pelo <code className="font-mono text-xs bg-muted px-1 rounded">id_curseduca</code>.
+                Se o registro não existir, será criado automaticamente (modo UPSERT).
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div>
+                <h4 className="text-sm font-semibold mb-2">Parâmetros de query</h4>
+                <FieldsTable fields={[
+                  { name: 'entity', type: 'text', required: true, description: 'cliente_engajamento_produto' },
+                  { name: 'id_curseduca', type: 'text', required: true, description: 'Identificador do cliente' },
+                ]} />
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold mb-2">Exemplo</h4>
+                <CodeBlock code={`curl -X PATCH '${BASE_URL}/manage-data-api?entity=cliente_engajamento_produto&id_curseduca=12345' \\
+  -H 'Authorization: Basic ${API_TOKEN}' \\
+  -H 'Content-Type: application/json' \\
+  -d '{
+    "membros_mes_atual": 150,
+    "taxa_retencao_cliente": 85.5,
+    "player_bandwidth_pct_uso": 72,
+    "alerta_inatividade": false
+  }'`} />
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold mb-2">Campos aceitos (cliente_engajamento_produto)</h4>
+                <FieldsTable fields={engajamentoProdutoFields} />
+              </div>
+              <div className="bg-blue-500/10 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-700 font-medium">
+                  💡 <strong>Modo UPSERT:</strong> Esta entidade suporta criação automática. Se o <code className="font-mono text-xs bg-blue-100 px-1 rounded">id_curseduca</code> não existir na tabela, um novo registro será criado com os dados enviados.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Erros */}
           <Card>
             <CardHeader>
