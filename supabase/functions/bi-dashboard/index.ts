@@ -834,7 +834,7 @@ Deno.serve(async (req) => {
 
       const now = new Date();
       const cutoff = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000);
-      const novos = cls.filter(r => r.data_criacao && new Date(r.data_criacao) >= cutoff);
+      const novos = cls.filter(r => r.data_criacao && new Date(r.data_criacao) >= cutoff && new Date(r.data_criacao) <= now);
       const novosIds = new Set(novos.map(r => r.id_curseduca).filter(Boolean));
 
       // Group by tipo_plano from financeiro
