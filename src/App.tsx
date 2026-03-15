@@ -127,6 +127,7 @@ const App = () => (
               <Route path="produto" element={<PermissionGuard permission="carteira.view"><ProdutoInsightsPage /></PermissionGuard>} />
               <Route path="produto/entregas" element={<PermissionGuard permission="carteira.view"><ProdutoEntregasPage /></PermissionGuard>} />
               <Route path="inconsistencias" element={<PermissionGuard permission="dashboards.view"><InconsistenciasPage /></PermissionGuard>} />
+              <Route path="admin/database" element={<PermissionGuard permission="admin.view"><DatabaseExplorerPage /></PermissionGuard>} />
             </Route>
             {/* CS Client Preview (impersonation) - outside hub layout */}
             <Route path="/hub/cliente-preview/:clienteId" element={<ClientePreviewWrapper />}>

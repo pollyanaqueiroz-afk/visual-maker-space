@@ -69,6 +69,7 @@ const adminModules = [
   { title: 'Campos da Carteira', url: '/hub/admin/campos', icon: Database, permission: 'carteira.manage_fields', badgeKey: null },
   { title: 'Documentação de APIs', url: '/hub/admin/api-docs', icon: FileCode, permission: 'admin.view', badgeKey: null },
   { title: 'Central de Erros', url: '/hub/admin/erros', icon: Bug, permission: 'admin.view', badgeKey: null },
+  { title: 'Explorador de Dados', url: '/hub/admin/database', icon: Database, permission: 'admin.view', badgeKey: null },
   { title: 'Hub do Cliente', url: '/cliente', icon: ExternalLink, permission: 'admin.view', badgeKey: null },
 ];
 
