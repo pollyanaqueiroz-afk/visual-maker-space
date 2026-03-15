@@ -182,7 +182,7 @@ const ENTITIES_LIST = [
   'app_notificacoes', 'kanban_boards', 'kanban_columns', 'kanban_card_positions',
   'carteirizacao_planos', 'carteirizacao_etapas', 'carteirizacao_cs', 'carteirizacao_ferias',
   'client_interactions', 'client_field_definitions', 'meeting_csat', 'meeting_reschedules',
-  'scorm_packages', 'profiles', 'cliente_financeiro',
+  'scorm_packages', 'profiles', 'cliente_financeiro', 'cliente_engajamento_produto',
 ];
 
 export default function ApiDocsPage() {
