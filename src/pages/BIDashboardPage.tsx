@@ -9,7 +9,6 @@ import BIOverviewPage from './bi/BIOverviewPage';
 import BIFinanceiroPage from './bi/BIFinanceiroPage';
 import BICustomerSuccessPage from './bi/BICustomerSuccessPage';
 import BIEngajamentoPage from './bi/BIEngajamentoPage';
-import BIChurnRiskPage from './bi/BIChurnRiskPage';
 import BIOrigensPage from './bi/BIOrigensPage';
 import BINovosClientesPage from './bi/BINovosClientesPage';
 import BIImplantacaoPage from './bi/BIImplantacaoPage';
