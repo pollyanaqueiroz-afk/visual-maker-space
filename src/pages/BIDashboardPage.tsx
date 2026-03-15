@@ -4,12 +4,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useDashboardBI } from '@/hooks/useDashboardBI';
-import { RefreshCw, X, BarChart3, DollarSign, Headset, Activity, AlertTriangle, Globe, UserPlus, Construction } from 'lucide-react';
+import { RefreshCw, X, BarChart3, DollarSign, Headset, Activity, UserPlus, Construction } from 'lucide-react';
 import BIOverviewPage from './bi/BIOverviewPage';
 import BIFinanceiroPage from './bi/BIFinanceiroPage';
 import BICustomerSuccessPage from './bi/BICustomerSuccessPage';
 import BIEngajamentoPage from './bi/BIEngajamentoPage';
-import BIChurnRiskPage from './bi/BIChurnRiskPage';
 import BIOrigensPage from './bi/BIOrigensPage';
 import BINovosClientesPage from './bi/BINovosClientesPage';
 import BIImplantacaoPage from './bi/BIImplantacaoPage';
@@ -71,8 +70,6 @@ export default function BIDashboardPage() {
           <TabsTrigger value="financeiro" className="text-xs gap-1.5"><DollarSign className="h-3.5 w-3.5" />Financeiro</TabsTrigger>
           <TabsTrigger value="cs" className="text-xs gap-1.5"><Headset className="h-3.5 w-3.5" />Customer Success</TabsTrigger>
           <TabsTrigger value="engajamento" className="text-xs gap-1.5"><Activity className="h-3.5 w-3.5" />Engajamento</TabsTrigger>
-          <TabsTrigger value="churn-risk" className="text-xs gap-1.5"><AlertTriangle className="h-3.5 w-3.5" />Risco de Churn</TabsTrigger>
-          <TabsTrigger value="origens" className="text-xs gap-1.5"><Globe className="h-3.5 w-3.5" />Origens</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview"><BIOverviewPage csEmail={csEmail} /></TabsContent>
@@ -81,8 +78,6 @@ export default function BIDashboardPage() {
         <TabsContent value="financeiro"><BIFinanceiroPage csEmail={csEmail} /></TabsContent>
         <TabsContent value="cs"><BICustomerSuccessPage csEmail={csEmail} onSelectCS={(email) => setCsFilter(email)} /></TabsContent>
         <TabsContent value="engajamento"><BIEngajamentoPage csEmail={csEmail} /></TabsContent>
-        <TabsContent value="churn-risk"><BIChurnRiskPage csEmail={csEmail} /></TabsContent>
-        <TabsContent value="origens"><BIOrigensPage csEmail={csEmail} /></TabsContent>
       </Tabs>
     </div>
   );
