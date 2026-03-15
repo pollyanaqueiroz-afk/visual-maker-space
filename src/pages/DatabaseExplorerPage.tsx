@@ -57,6 +57,7 @@ const TABLE_NAMES = [
   'profiles',
   'role_permissions',
   'user_roles',
+  'cliente_engajamento_produto',
 ] as const;
 
 type TableData = {
@@ -97,7 +98,6 @@ export default function DatabaseExplorerPage() {
 
   // Fetch data for active table
   useEffect(() => {
-    if (tableData[activeTable]?.rows.length) return; // already loaded
     fetchTableData(activeTable);
   }, [activeTable]);
 
