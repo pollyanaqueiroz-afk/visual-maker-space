@@ -753,24 +753,33 @@ Deno.serve(async (req) => {
     // METRIC: novos_clientes
     // ═══════════════════════════════════════════
     if (metric === "novos_clientes") {
-      const eng = filterByCS(await getEngajamento(), csEmail);
+      const cls = filterByCS(await getClients(), csEmail, "cs_atual");
       const fin = await getFinanceiro();
-      const finMap: Record<string, number> = {};
-      for (const f of fin) { if (f.is_plano) finMap[f.id_curseduca] = (finMap[f.id_curseduca] || 0) + (Number(f.valor_contratado) || 0); }
 
-      // Consider "new" as created in the last 90 days
+      // "Novo" = data_criacao within last 15 days (based on hub_clients)
       const now = new Date();
-      const cutoff = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+      const cutoff = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000);
+      const novos = cls.filter(r => r.data_criacao && new Date(r.data_criacao) >= cutoff);
+      const novosIds = new Set(novos.map(r => r.id_curseduca).filter(Boolean));
 
-      const novos = eng.filter(r => {
-        if (!r.data_criacao) return false;
-        return new Date(r.data_criacao) >= cutoff;
-      });
+      // Build finMap: only is_plano + vigencia_assinatura = 'Ativa' for MRR
+      const finMap: Record<string, number> = {};
+      const planoMap: Record<string, string> = {};
+      for (const f of fin) {
+        if (!novosIds.has(f.id_curseduca)) continue;
+        if (f.is_plano) {
+          if (!planoMap[f.id_curseduca]) planoMap[f.id_curseduca] = f.plano || "Sem plano";
+          if (f.vigencia_assinatura === 'Ativa') {
+            finMap[f.id_curseduca] = (finMap[f.id_curseduca] || 0) + (Number(f.valor_contratado) || 0);
+          }
+        }
+      }
 
       const result = novos.map(r => ({
         nome: r.nome,
+        email: r.email,
         id_curseduca: r.id_curseduca,
-        plano: r.plano,
+        plano: planoMap[r.id_curseduca] || r.plano || "—",
         receita: finMap[r.id_curseduca] || 0,
         data_ativacao: r.data_criacao ? new Date(r.data_criacao).toISOString().split("T")[0] : null,
         cs_nome: r.cs_atual,
@@ -783,25 +792,36 @@ Deno.serve(async (req) => {
     // METRIC: novos_por_dia / novos_por_semana / novos_por_mes
     // ═══════════════════════════════════════════
     if (metric === "novos_por_dia" || metric === "novos_por_semana" || metric === "novos_por_mes") {
-      const eng = filterByCS(await getEngajamento(), csEmail);
+      const cls = filterByCS(await getClients(), csEmail, "cs_atual");
       const fin = await getFinanceiro();
+
+      const now = new Date();
+      const cutoff = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000);
+      const novos = cls.filter(r => r.data_criacao && new Date(r.data_criacao) >= cutoff);
+      const novosIds = new Set(novos.map(r => r.id_curseduca).filter(Boolean));
+
+      // MRR map: only is_plano + vigencia_assinatura = 'Ativa'
       const finMap: Record<string, number> = {};
-      for (const f of fin) { if (f.is_plano) finMap[f.id_curseduca] = (finMap[f.id_curseduca] || 0) + (Number(f.valor_contratado) || 0); }
-
-      const granularity = metric === "novos_por_dia" ? "dia" : metric === "novos_por_semana" ? "semana" : "mes";
-      const periodMap: Record<string, { total: number; receita: number }> = {};
-
-      for (const r of eng) {
-        const pk = periodKey(r.data_criacao, granularity as any);
-        if (!pk) continue;
-        if (!periodMap[pk]) periodMap[pk] = { total: 0, receita: 0 };
-        periodMap[pk].total++;
-        periodMap[pk].receita += finMap[r.id_curseduca] || 0;
+      for (const f of fin) {
+        if (novosIds.has(f.id_curseduca) && f.is_plano && f.vigencia_assinatura === 'Ativa') {
+          finMap[f.id_curseduca] = (finMap[f.id_curseduca] || 0) + (Number(f.valor_contratado) || 0);
+        }
       }
 
-      const result = Object.entries(periodMap)
+      const granularity = metric === "novos_por_dia" ? "dia" : metric === "novos_por_semana" ? "semana" : "mes";
+      const periodBuckets: Record<string, { total: Set<string>; receita: number }> = {};
+
+      for (const r of novos) {
+        const pk = periodKey(r.data_criacao, granularity as any);
+        if (!pk) continue;
+        if (!periodBuckets[pk]) periodBuckets[pk] = { total: new Set(), receita: 0 };
+        periodBuckets[pk].total.add(r.id_curseduca);
+        periodBuckets[pk].receita += finMap[r.id_curseduca] || 0;
+      }
+
+      const result = Object.entries(periodBuckets)
         .sort(([a], [b]) => a.localeCompare(b))
-        .map(([periodo, v]) => ({ periodo, ...v }));
+        .map(([periodo, v]) => ({ periodo, total: v.total.size, receita: v.receita }));
       return json(result);
     }
 
@@ -809,25 +829,25 @@ Deno.serve(async (req) => {
     // METRIC: novos_por_plano
     // ═══════════════════════════════════════════
     if (metric === "novos_por_plano") {
-      const eng = filterByCS(await getEngajamento(), csEmail);
+      const cls = filterByCS(await getClients(), csEmail, "cs_atual");
       const fin = await getFinanceiro();
-      const finMap: Record<string, number> = {};
-      for (const f of fin) { if (f.is_plano) finMap[f.id_curseduca] = (finMap[f.id_curseduca] || 0) + (Number(f.valor_contratado) || 0); }
 
       const now = new Date();
-      const cutoff = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-      const novos = eng.filter(r => r.data_criacao && new Date(r.data_criacao) >= cutoff);
+      const cutoff = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000);
+      const novos = cls.filter(r => r.data_criacao && new Date(r.data_criacao) >= cutoff);
+      const novosIds = new Set(novos.map(r => r.id_curseduca).filter(Boolean));
 
-      const planoMap: Record<string, { total: number; receita: number }> = {};
-      for (const r of novos) {
-        const p = r.plano || "Sem plano";
-        if (!planoMap[p]) planoMap[p] = { total: 0, receita: 0 };
-        planoMap[p].total++;
-        planoMap[p].receita += finMap[r.id_curseduca] || 0;
+      // Group by tipo_plano from financeiro
+      const tipoPlanoMap: Record<string, Set<string>> = {};
+      for (const f of fin) {
+        if (!novosIds.has(f.id_curseduca) || !f.is_plano) continue;
+        const tp = f.tipo_plano || f.plano || "Sem tipo";
+        if (!tipoPlanoMap[tp]) tipoPlanoMap[tp] = new Set();
+        tipoPlanoMap[tp].add(f.id_curseduca);
       }
 
-      const result = Object.entries(planoMap)
-        .map(([plano, v]) => ({ plano, ...v }))
+      const result = Object.entries(tipoPlanoMap)
+        .map(([plano, ids]) => ({ plano, total: ids.size }))
         .sort((a, b) => b.total - a.total);
       return json(result);
     }
